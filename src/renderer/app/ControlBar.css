@@ -1,0 +1,31 @@
+.vc-controlbar {
+  display: flex;
+  align-items: center;
+  flex: none;
+  gap: 8px;
+  height: var(--h-control-bar);
+  padding: 0 10px;
+  overflow: hidden;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+  font-size: var(--fs-label);
+  color: var(--text);
+  white-space: nowrap;
+}
+.vc-controlbar__title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.vc-controlbar__title .vc-icon {
+  color: var(--icon);
+}
+.vc-controlbar__muted {
+  color: var(--text-muted);
+}
+.vc-controlbar__muted--gap {
+  margin-left: 4px;
+}
+.vc-controlbar__spacer {
+  flex: 1;
+}

@@ -57,3 +57,10 @@ pnpm build:linux # AppImage + .deb + .rpm
 ## Licencia
 
 Por definir.
+
+## Notas de desarrollo
+
+- Requiere Node 24 y pnpm 12 (`packageManager` en `package.json`).
+- `pnpm test:e2e` construye la app y lanza Electron; si tu terminal define `ELECTRON_RUN_AS_NODE`, quítala.
+- Detrás de un proxy que intercepta TLS: `NODE_OPTIONS=--use-system-ca` para instalar Electron y empaquetar.
+- Variables de desarrollo: `VICTORIA_CHROME=custom|system|native-overlay`, `VICTORIA_DEVTOOLS=1`.

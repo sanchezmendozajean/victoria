@@ -1,0 +1,40 @@
+appId: app.victoria.editor
+productName: Victoria
+copyright: Victoria
+directories:
+  output: release
+  buildResources: build
+files:
+  - dist/**
+  - dist-electron/**
+  - package.json
+asar: true
+icon: build/icon.png
+fileAssociations:
+  - ext: vict
+    name: Documento de Victoria
+    description: Documento de Victoria
+    mimeType: application/x-victoria
+    role: Editor
+win:
+  target:
+    - nsis
+    - portable
+  artifactName: ${productName}-${version}-${os}-${arch}.${ext}
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  artifactName: ${productName}-Setup-${version}.${ext}
+linux:
+  target:
+    - AppImage
+    - deb
+    - rpm
+  category: Graphics
+  executableName: victoria
+  maintainer: Victoria <victoria@example.invalid>
+  synopsis: Editor vectorial de escritorio
+  mimeTypes:
+    - application/x-victoria
+  artifactName: ${productName}-${version}-${os}-${arch}.${ext}

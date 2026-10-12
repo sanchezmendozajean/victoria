@@ -1,0 +1,21 @@
+.vc-app {
+  display: flex;
+  flex-direction: column;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--bg-app);
+  color: var(--text);
+  font-family: var(--font-ui);
+}
+.vc-app__middle {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+.vc-app__work {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}

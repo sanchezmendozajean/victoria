@@ -1,0 +1,102 @@
+.vc-titlebar {
+  display: flex;
+  align-items: center;
+  flex: none;
+  height: var(--h-titlebar);
+  background: var(--bg-app);
+  border-bottom: 1px solid var(--border);
+  user-select: none;
+  -webkit-app-region: drag;
+}
+/* Windows draws its own caption buttons over the right end; keep our content clear of them. */
+.vc-titlebar--native-overlay {
+  width: env(titlebar-area-width, 100%);
+}
+.vc-titlebar__logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: var(--w-toolbar);
+  color: var(--accent);
+}
+.vc-titlebar__menus {
+  display: flex;
+  align-items: center;
+  font-size: var(--fs-menu);
+  -webkit-app-region: no-drag;
+}
+.vc-titlebar__menu {
+  display: flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  cursor: default;
+}
+.vc-titlebar__menu:hover {
+  background: var(--bg-hover);
+}
+.vc-titlebar__menu.is-open {
+  background: var(--bg-active);
+  color: var(--icon-active);
+}
+.vc-titlebar__spacer {
+  flex: 1;
+}
+.vc-titlebar__workspace {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--h-control);
+  margin-right: 8px;
+  padding: 0 6px 0 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--bg-panel);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-label);
+  cursor: default;
+  -webkit-app-region: no-drag;
+}
+.vc-titlebar__workspace:hover,
+.vc-titlebar__workspace.is-open {
+  background: var(--bg-hover);
+}
+.vc-titlebar__workspace .vc-icon:first-child {
+  color: var(--icon);
+}
+.vc-titlebar__chevron {
+  color: var(--text-muted);
+}
+.vc-titlebar__controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px 0 4px;
+  -webkit-app-region: no-drag;
+}
+.vc-titlebar__control {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--bg-hover);
+  color: var(--icon);
+}
+.vc-titlebar__control:hover {
+  background: var(--bg-active);
+}
+.vc-titlebar__control--close:hover {
+  background: var(--danger);
+  color: #fff;
+}

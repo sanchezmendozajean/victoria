@@ -1,0 +1,153 @@
+.vc-dock {
+  position: relative;
+  display: flex;
+  flex: none;
+  min-height: 0;
+  font-size: var(--fs-label);
+  color: var(--text);
+}
+
+/* Collapsed panels · 36 px */
+.vc-dock__strip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: none;
+  gap: 2px;
+  width: var(--w-panel-strip);
+  padding: 6px 0;
+  background: var(--bg-panel);
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+}
+.vc-dock__strip.is-drop {
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.vc-dock__stripbutton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--icon);
+}
+.vc-dock__stripbutton:hover,
+.vc-dock__stripbutton.is-open {
+  background: var(--bg-hover);
+  color: var(--icon-active);
+}
+
+.vc-dock__column {
+  display: flex;
+  flex-direction: column;
+  flex: none;
+  width: var(--w-panels);
+  min-height: 0;
+  overflow: hidden;
+  background: var(--bg-app);
+}
+
+.vc-group {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  min-height: 0;
+  margin-bottom: 2px;
+  overflow: hidden;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+}
+.vc-group.is-open {
+  flex: 1 1 0;
+  min-height: 96px;
+}
+.vc-group.is-drop {
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.vc-group__tabs {
+  display: flex;
+  align-items: stretch;
+  flex: none;
+  height: var(--h-panel-tabs);
+  background: var(--bg-panel-alt);
+  border-bottom: 1px solid var(--border);
+}
+.vc-group__tab {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 7px;
+  border-right: 1px solid var(--border);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.vc-group__tab:hover {
+  color: var(--text);
+}
+.vc-group__tab.is-active {
+  background: var(--bg-panel);
+  color: var(--text);
+}
+.vc-group__tab.is-active .vc-icon {
+  color: var(--icon-active);
+}
+.vc-group__tab.is-compact {
+  padding: 0 6px;
+}
+.vc-group__spacer {
+  flex: 1;
+}
+.vc-group__button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--icon);
+}
+.vc-group__button:hover {
+  background: var(--bg-hover);
+  color: var(--icon-active);
+}
+.vc-group__body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* Floating window of a collapsed panel, opened beside the strip */
+.vc-floatpanel {
+  position: absolute;
+  right: 100%;
+  top: 6px;
+  z-index: 700;
+  display: flex;
+  flex-direction: column;
+  width: var(--w-panels);
+  height: 240px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-float);
+  box-shadow: var(--shadow-float);
+  overflow: hidden;
+}
+.vc-floatpanel__header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  height: var(--h-panel-tabs);
+  padding-left: 7px;
+  background: var(--bg-panel-alt);
+  border-bottom: 1px solid var(--border);
+}
+.vc-floatpanel__body {
+  flex: 1;
+}

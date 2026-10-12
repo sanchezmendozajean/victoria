@@ -1,0 +1,82 @@
+.vc-statusbar {
+  display: flex;
+  align-items: center;
+  flex: none;
+  height: var(--h-status);
+  background: var(--bg-panel);
+  border-top: 1px solid var(--border);
+  font-size: var(--fs-label);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.vc-statusbar__cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--h-status);
+  padding: 0 10px;
+  border-right: 1px solid var(--border);
+}
+.vc-statusbar__cell--strong {
+  color: var(--text);
+}
+.vc-statusbar__cell--last {
+  border-right: 0;
+}
+.vc-statusbar__cell b {
+  font-weight: 400;
+  color: var(--text);
+}
+.vc-statusbar__icon {
+  color: var(--icon);
+}
+.vc-statusbar__saved {
+  color: var(--success);
+}
+.vc-statusbar__spacer {
+  flex: 1;
+}
+.vc-statusbar__input,
+.vc-statusbar__select {
+  display: flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 4px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  color: var(--text);
+}
+.vc-statusbar__input {
+  width: 52px;
+  justify-content: flex-end;
+  margin-left: 2px;
+}
+.vc-statusbar__select {
+  gap: 6px;
+  min-width: 120px;
+  padding-left: 6px;
+}
+.vc-statusbar__select .vc-icon:first-child {
+  color: var(--text-muted);
+}
+.vc-statusbar__select span {
+  flex: 1;
+}
+.vc-statusbar__step {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--icon);
+}
+.vc-statusbar__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}

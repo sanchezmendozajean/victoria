@@ -1,0 +1,92 @@
+.vc-sep {
+  flex: none;
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+}
+
+.vc-field {
+  display: flex;
+  align-items: center;
+  flex: none;
+  gap: 4px;
+  height: var(--h-control);
+  padding: 0 6px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  font-size: var(--fs-label);
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+.vc-field--scrub {
+  cursor: ew-resize;
+}
+.vc-field__label,
+.vc-field__icon {
+  color: var(--text-muted);
+}
+.vc-field__value {
+  flex: 1;
+  text-align: right;
+}
+.vc-field__unit {
+  font-size: var(--fs-micro);
+  color: var(--text-muted);
+}
+
+.vc-segmented {
+  display: flex;
+  flex: none;
+  height: var(--h-control);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+}
+.vc-segmented__button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-left: 1px solid var(--border);
+  background: transparent;
+  color: var(--icon);
+}
+.vc-segmented__button:first-child {
+  border-left: 0;
+}
+.vc-segmented__button:hover {
+  background: var(--bg-hover);
+}
+.vc-segmented__button.is-active {
+  background: var(--bg-active);
+  color: var(--icon-active);
+}
+
+.vc-barbutton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  gap: 5px;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--icon);
+  font: inherit;
+  font-size: var(--fs-label);
+}
+.vc-barbutton--label {
+  width: auto;
+  padding: 0 6px;
+}
+.vc-barbutton--label span {
+  color: var(--text);
+}
+.vc-barbutton:hover {
+  background: var(--bg-hover);
+}

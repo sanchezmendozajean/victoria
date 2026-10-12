@@ -1,0 +1,15 @@
+.vc-canvas {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--canvas);
+}
+.vc-canvas__surface {
+  position: absolute;
+  left: var(--h-ruler);
+  top: var(--h-ruler);
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+}

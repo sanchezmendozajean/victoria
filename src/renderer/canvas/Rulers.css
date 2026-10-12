@@ -1,0 +1,80 @@
+.vc-rulers {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+.vc-ruler {
+  position: absolute;
+  overflow: hidden;
+  background: var(--bg-panel);
+}
+.vc-ruler i {
+  position: absolute;
+  background: var(--text-muted);
+  opacity: 0.7;
+}
+.vc-ruler b {
+  position: absolute;
+  font-weight: 400;
+}
+.vc-ruler--h {
+  left: var(--h-ruler);
+  right: 0;
+  top: 0;
+  height: var(--h-ruler);
+  border-bottom: 1px solid var(--border);
+}
+.vc-ruler--h i {
+  bottom: 0;
+  width: 1px;
+}
+.vc-ruler--h b {
+  top: 1px;
+}
+.vc-ruler--v {
+  left: 0;
+  top: var(--h-ruler);
+  bottom: 0;
+  width: var(--h-ruler);
+  border-right: 1px solid var(--border);
+}
+.vc-ruler--v i {
+  right: 0;
+  height: 1px;
+}
+.vc-ruler--v b {
+  left: 2px;
+  line-height: 9px;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+.vc-ruler__corner {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--h-ruler);
+  height: var(--h-ruler);
+  background: var(--bg-panel);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.vc-ruler__corner span:first-child {
+  position: absolute;
+  left: 4px;
+  top: 8px;
+  width: 9px;
+  height: 1px;
+  background: var(--text-muted);
+}
+.vc-ruler__corner span:last-child {
+  position: absolute;
+  left: 8px;
+  top: 4px;
+  width: 1px;
+  height: 9px;
+  background: var(--text-muted);
+}

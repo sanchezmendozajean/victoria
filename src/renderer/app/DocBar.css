@@ -1,0 +1,222 @@
+.vc-docbar {
+  position: relative;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  flex: none;
+}
+
+/* Document tabs · 30 px */
+.vc-doctabs {
+  display: flex;
+  align-items: flex-end;
+  gap: 1px;
+  height: var(--h-doc-tabs);
+  padding: 0 4px;
+  background: var(--bg-app);
+  border-bottom: 1px solid var(--border);
+}
+.vc-doctab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  max-width: 220px;
+  margin-bottom: 2px;
+  padding: 0 12px 0 10px;
+  border-radius: 4px 4px 0 0;
+  color: var(--text-muted);
+  font-size: var(--fs-menu);
+}
+.vc-doctab:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+.vc-doctab.is-active {
+  height: var(--h-doc-tabs);
+  margin-bottom: -1px;
+  padding: 0 6px 0 10px;
+  /* The active tab takes the canvas colour so it melts into the Spaces bar. */
+  background: var(--canvas);
+  color: var(--text);
+}
+.vc-doctab.is-active .vc-icon {
+  color: var(--icon);
+}
+.vc-doctab__dirty {
+  width: 6px;
+  height: 6px;
+  margin-left: 2px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+.vc-doctab.is-active .vc-doctab__dirty {
+  background: var(--text);
+}
+.vc-doctab__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--icon);
+}
+.vc-doctab__close:hover {
+  background: var(--bg-hover);
+}
+.vc-doctabs__new {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin: 0 0 3px 4px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--icon);
+}
+.vc-doctabs__new:hover {
+  background: var(--bg-hover);
+}
+
+/* Spaces bar · 28 px (the new concept: it must stand out without getting in the way) */
+.vc-spacesbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: var(--h-spaces-bar);
+  padding: 0 6px 0 8px;
+  background: var(--canvas);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.vc-spacesbar__icon {
+  display: flex;
+  align-items: center;
+  margin-right: 4px;
+  color: var(--text);
+  opacity: 0.7;
+}
+.vc-spacesbar__spacer {
+  flex: 1;
+}
+.vc-spacetab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--h-space-pill);
+  padding: 0 10px;
+  border-radius: 11px;
+  color: var(--text);
+  font-size: var(--fs-menu);
+}
+.vc-spacetab:hover {
+  background: var(--bg-hover);
+  padding-right: 4px;
+}
+.vc-spacetab__name {
+  opacity: 0.85;
+}
+.vc-spacetab__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--space);
+}
+.vc-spacetab.is-active {
+  background: var(--bg-panel-alt);
+  font-weight: 500;
+}
+.vc-spacetab.is-active .vc-spacetab__name {
+  opacity: 1;
+}
+.vc-spacetab.is-active::after {
+  content: '';
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 0;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--space);
+}
+.vc-spacetab__excluded {
+  color: var(--text-muted);
+}
+.vc-spacetab__more {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--icon-active);
+}
+.vc-spacetab:hover .vc-spacetab__more {
+  display: flex;
+}
+.vc-spacetab__more:hover {
+  background: var(--bg-active);
+}
+.vc-spacesbar__add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  margin-left: 2px;
+  padding: 0;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  color: var(--text);
+}
+.vc-spacesbar__add:hover {
+  background: var(--bg-hover);
+}
+.vc-spacesbar__nav {
+  display: flex;
+  color: var(--text);
+  opacity: 0.8;
+}
+.vc-spacesbar__nav button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: inherit;
+}
+.vc-spacesbar__nav button:hover {
+  background: var(--bg-hover);
+}
+.vc-spacesbar__panel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-label);
+}
+.vc-spacesbar__panel:hover {
+  background: var(--bg-hover);
+}
