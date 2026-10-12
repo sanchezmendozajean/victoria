@@ -99,6 +99,12 @@ test('holding a grouped tool opens its flyout and picking one swaps the slot', a
   const flyout = page.getByTestId('tool-flyout');
   await expect(flyout).toBeVisible();
   await expect(flyout.locator('.vc-flyout__item')).toHaveCount(4);
+  // The flyout must be the topmost element at its own centre (not hidden behind the document tabs).
+  const covered = await flyout.evaluate((el) => {
+    const r = el.getBoundingClientRect();
+    return document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)?.closest('.vc-flyout') === null;
+  });
+  expect(covered).toBe(false);
   await flyout.locator('[data-tool="tool-anchor-add"]').click();
   await expect(flyout).toHaveCount(0);
   await expect(page.getByTestId('status-tool')).toContainText('Añadir ancla');

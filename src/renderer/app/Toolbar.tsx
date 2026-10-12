@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import { createPortal } from 'react-dom';
 import { Icon } from '../components/Icon';
 import { cx } from '../components/cx';
 import { tip } from '../components/Tooltip';
@@ -152,7 +153,9 @@ export function Toolbar() {
         </button>
       </div>
 
-      {flyout && (
+      {flyout &&
+        // Portal: the toolbar's stacking context sits below the document tabs.
+        createPortal(
         <div className="vc-flyout" role="menu" style={{ left: flyout.left, top: flyout.top }} data-testid="tool-flyout">
           {flyout.slot.tools.map((tool) => {
             const key = keyOf(tool);
@@ -174,7 +177,8 @@ export function Toolbar() {
               </button>
             );
           })}
-        </div>
+        </div>,
+        document.body,
       )}
     </aside>
   );

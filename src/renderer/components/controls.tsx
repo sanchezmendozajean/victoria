@@ -15,15 +15,13 @@ interface FieldProps {
   unit?: string;
   width: number;
   tooltip?: string;
-  /** Draggable "scrubby" number: shows the horizontal-resize cursor. */
-  scrub?: boolean;
   chevron?: boolean;
 }
 
 /** 22 px number field of specs/10. Display only in Phase 1 (no document to edit yet). */
-export function NumberField({ label, icon, value, unit, width, tooltip, scrub = true, chevron }: FieldProps) {
+export function NumberField({ label, icon, value, unit, width, tooltip, chevron }: FieldProps) {
   return (
-    <div className={cx('vc-field', scrub && 'vc-field--scrub')} style={{ width }} {...(tooltip ? tip(tooltip) : {})}>
+    <div className={'vc-field'} style={{ width }} {...(tooltip ? tip(tooltip) : {})}>
       {icon && <Icon id={icon} size={12} className="vc-field__icon" />}
       {label && <span className="vc-field__label">{label}</span>}
       <span className="vc-field__value">{value}</span>

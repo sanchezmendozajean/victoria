@@ -19,9 +19,6 @@
   font-variant-numeric: tabular-nums;
   color: var(--text);
 }
-.vc-field--scrub {
-  cursor: ew-resize;
-}
 .vc-field__label,
 .vc-field__icon {
   color: var(--text-muted);

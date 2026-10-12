@@ -152,7 +152,7 @@ Zoom (campo editable + ▾) · navegador de mesas (◂ nombre ▾ ▸) · herram
 |---|---|
 | Botón ícono | 24×24, ícono 16, estados: normal, hover, presionado, activo (toggle), deshabilitado, foco (anillo 2 px `--accent`) |
 | Grupo segmentado | Botones ícono unidos, borde común, 1 activo |
-| Campo numérico | 22 px alto, ícono o etiqueta a la izquierda (arrastrable = scrubby, cursor ↔), valor alineado a la derecha, unidad en `--text-muted`, flechas ▴▾ al pasar, ▾ con valores comunes |
+| Campo numérico | 22 px alto, ícono o etiqueta a la izquierda (sin arrastre scrubby ni cursor ↔; ver «Comportamiento de los campos numéricos»), valor alineado a la derecha, unidad en `--text-muted`, flechas ▴▾ al pasar, ▾ con valores comunes |
 | Campo con candado | Dos campos + ícono de cadena entre ellos (An/Al) |
 | Selector de punto de referencia | Cuadrícula 3×3 de cuadritos 5 px |
 | Muestra de color | 16×16 / 22×22, tablero de ajedrez para transparencia, diagonal roja = Ninguno |
@@ -166,6 +166,14 @@ Zoom (campo editable + ▾) · navegador de mesas (◂ nombre ▾ ▸) · herram
 | Tooltip | Nombre + atajo en chip: "Pluma  (P)", demora 500 ms |
 | Diálogo | Título 13 px, cuerpo con secciones, casilla "Previsualizar" a la izquierda del pie, Cancelar / Aceptar a la derecha |
 | Notificación (toast) | Abajo a la derecha, ícono + texto + acción |
+
+### Comportamiento de los campos numéricos
+
+Decisión del usuario (Fase 1, revisión), tiene prioridad sobre la maqueta y sobre las menciones a «scrubby» de las specs 05 y 06:
+
+- **Rueda del ratón** sobre un campo enfocado o bajo el cursor incrementa/decrementa el valor (Mayús = ×10, Alt = ×0,1). No se usa arrastre horizontal ni cursor ↔.
+- **Expresiones aritméticas**: al pulsar Intro (o salir del campo) se evalúa la expresión como en Illustrator: `15 + 5` → `20`; admite `+ − × / * ( )`, decimales con coma o punto y unidades (`2 cm + 5 mm`, convertidas a la unidad del campo). Una expresión inválida restaura el valor anterior. El evaluador es TypeScript puro en `core` (sin `eval`) y se prueba con Vitest.
+- Pendiente de implementar con el primer campo editable real (Fase 4/6); en la Fase 1 los campos son solo de lectura.
 
 ## Pantallas a maquetar (entregables)
 
