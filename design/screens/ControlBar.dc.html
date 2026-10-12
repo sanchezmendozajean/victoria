@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="../tokens.css">
+<script src="../icons.js"></script>
+</helmet>
+<div data-vc="control-bar" style="display:flex;align-items:center;gap:8px;height:36px;padding:0 10px;background:var(--bg-panel);border-bottom:1px solid var(--border);font-family:var(--font-ui);font-size:11px;color:var(--text);white-space:nowrap;overflow:hidden">
+
+  <sc-if value="{{ isObject }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex;align-items:center;gap:6px;padding-right:2px"><v-icon i="{{ typeIcon }}" s="16" style="color:var(--icon)"></v-icon><span style="font-size:11px;color:var(--text)">{{ label }}</span></div>
+    <div style="width:1px;height:20px;background:var(--border)"></div>
+    <div title="Relleno" style="display:flex;align-items:center;gap:4px"><v-icon i="fill" s="14" style="color:var(--text-muted)"></v-icon><div style="display:flex;align-items:center;gap:2px;height:22px;padding:0 3px;border:1px solid var(--border);border-radius:3px;background:var(--bg-input)"><span style="width:16px;height:16px;border-radius:2px;background:{{ fill }};box-shadow:inset 0 0 0 1px rgba(0,0,0,.25)"></span><v-icon i="chevron-down" s="10" style="color:var(--text-muted)"></v-icon></div></div>
+    <div title="Trazo" style="display:flex;align-items:center;gap:4px"><v-icon i="stroke" s="14" style="color:var(--text-muted)"></v-icon><div style="display:flex;align-items:center;gap:2px;height:22px;padding:0 3px;border:1px solid var(--border);border-radius:3px;background:var(--bg-input)"><span style="width:16px;height:16px;border-radius:2px;background:linear-gradient(to top right,transparent calc(50% - 1px),#F0524F calc(50% - 1px),#F0524F calc(50% + 1px),transparent calc(50% + 1px)),#FFFFFF;box-shadow:inset 0 0 0 1px rgba(0,0,0,.25)"></span><v-icon i="chevron-down" s="10" style="color:var(--text-muted)"></v-icon></div>
+      <div style="display:flex;align-items:center;gap:4px;width:64px;height:22px;padding:0 4px 0 6px;background:var(--bg-input);border:1px solid var(--border);border-radius:3px;font-variant-numeric:tabular-nums"><v-icon i="stroke-weight" s="12" style="color:var(--text-muted)"></v-icon><span style="flex:1;text-align:right">0</span><span style="font-size:10px;color:var(--text-muted)">pt</span><v-icon i="chevron-down" s="10" style="color:var(--text-muted)"></v-icon></div></div>
+    <div title="Perfil de ancho variable" style="display:flex;align-items:center;gap:4px;height:22px;padding:0 4px 0 6px;border:1px solid var(--border);border-radius:3px;background:var(--bg-input)"><v-icon i="width-profile" s="14" style="color:var(--icon)"></v-icon><span>Uniforme</span><v-icon i="chevron-down" s="10" style="color:var(--text-muted)"></v-icon></div>
+    <div title="Opacidad" style="display:flex;align-items:center;gap:4px;width:68px;height:22px;padding:0 6px;background:var(--bg-input);border:1px solid var(--border);border-radius:3px;font-variant-numeric:tabular-nums"><v-icon i="opacity" s="12" style="color:var(--text-muted)"></v-icon><span style="flex:1;text-align:right">100</span><span style="font-size:10px;color:var(--text-muted)">%</span></div>
+    <div title="Añadir modificador" style="display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:3px;color:var(--icon)" style-hover="background:var(--bg-hover)"><v-icon i="fx" s="16"></v-icon></div>
+    <div style="width:1px;height:20px;background:var(--border)"></div>
+    <div style="display:flex;gap:0">
+      <div title="Alinear a la izquierda" style="width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:3px;color:var(--icon)" style-hover="background:var(--bg-hover)"><v-icon i="align-left" s="16"></v-icon></div>
+      <div title="Centrar horizontalmente" style="width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:3px;color:var(--icon)" style-hover="background:var(--bg-hover)"><v-icon i="align-hcenter" s="16"></v-icon></div>
+      <div title="Alinear a la derecha" style="width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:3px;color:var(--icon)" style-hover="background:var(--bg-hover)"><v-icon i="align-right" s="16"></v-icon></div>
+      <div title="Alinear arriba" style="width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:3px;color:var(--icon)" style-hover="background:var(--bg-hover)"><v-icon i="align-top" s="16"></v-icon></div>
+      <div title="Centrar verticalmente" style="width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:3px;color:var(--icon)" style-hover="background:var(--bg-hover)"><v-icon i="align-vcenter" s="16"></v-icon></div>
+      <div title="Alinear abajo" style="width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:3px;color:var(--icon)" style-hover="background:var(--bg-hover)"><v-icon i="align-bottom" s="16"></v-icon></div>
+    </div>
+    <div style="width:1px;height:20px;background:var(--border)"></div>
+    <div title="Punto de referencia" style="display:grid;grid-template-columns:repeat(3,5px);gap:2px"><span style="width:5px;height:5px;border:1px solid var(--text-muted)"></span><span style="width:5px;height:5px;border:1px solid var(--text-muted)"></span><span style="width:5px;height:5px;border:1px solid var(--text-muted)"></span><span style="width:5px;height:5px;border:1px solid var(--text-muted)"></span><span style="width:5px;height:5px;background:var(--accent)"></span><span style="width:5px;height:5px;border:1px solid var(--text-muted)"></span><span style="width:5px;height:5px;border:1px solid var(--text-muted)"></span><span style="width:5px;height:5px;border:1px solid var(--text-muted)"></span><span style="width:5px;height:5px;border:1px solid var(--text-muted)"></span></div>
+    <div style="display:flex;align-items:center;gap:4px;width:78px;height:22px;padding:0 6px;background:var(--bg-input);border:1px solid var(--border);border-radius:3px;font-variant-numeric:tabular-nums;cursor:ew-resize"><span style="color:var(--text-muted)">X</span><span style="flex:1;text-align:right">{{ x }}</span><span style="font-size:10px;color:var(--text-muted)">pt</span></div>
+    <div style="display:flex;align-items:center;gap:4px;width:78px;height:22px;padding:0 6px;background:var(--bg-input);border:1px solid var(--border);border-radius:3px;font-variant-numeric:tabular-nums;cursor:ew-resize"><span style="color:var(--text-muted)">Y</span><span style="flex:1;text-align:right">{{ y }}</span><span style="font-size:10px;color:var(--text-muted)">pt</span></div>
+    <div style="display:flex;align-items:center;gap:2px">
+      <div style="display:flex;align-items:center;gap:4px;width:78px;height:22px;padding:0 6px;background:var(--bg-input);border:1px solid var(--border);border-radius:3px;font-variant-numeric:tabular-nums;cursor:ew-resize"><span style="color:var(--text-muted)">An</span><span style="flex:1;text-align:right">{{ w }}</span><span style="font-size:10px;color:var(--text-muted)">pt</span></div>
+      <div title="Mantener proporciones" style="width:20px;height:22px;display:flex;align-items:center;justify-content:center;color:var(--accent)"><v-icon i="link" s="14"></v-icon></div>
+      <div style="display:flex;align-items:center;gap:4px;width:78px;height:22px;padding:0 6px;background:var(--bg-input);border:1px solid var(--border);border-radius:3px;font-variant-numeric:tabular-nums;cursor:ew-resize"><span style="color:var(--text-muted)">Al</span><span style="flex:1;text-align:right">{{ h }}</span><span style="font-size:10px;color:var(--text-muted)">pt</span></div>
+    </div>
+    <div title="Ángulo" style="display:flex;align-items:center;gap:4px;width:64px;height:22px;padding:0 6px;background:var(--bg-input);border:1px solid var(--border);border-radius:3px;font-variant-numeric:tabular-nums"><v-icon i="angle" s="12" style="color:var(--text-muted)"></v-icon><span style="flex:1;text-align:right">0</span><span style="font-size:10px;color:var(--text-muted)">°</span></div>
+    <div style="width:1px;height:20px;background:var(--border)"></div>
+    <div title="Aislar objeto" style="display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:3px;color:var(--icon)" style-hover="background:var(--bg-hover)"><v-icon i="isolate" s="16"></v-icon></div>
+  </sc-if>
+
+  <sc-if value="{{ isNodes }}">
+    <div style="display:flex;align-items:center;gap:6px"><v-icon i="tool-pen" s="16" style="color:var(--icon)"></v-icon><span>{{ label }}</span></div>
+    <div style="width:1px;height:20px;background:var(--border)"></div>
+    <span style="color:var(--text-muted)">Convertir:</span>
+    <div style="display:flex;border:1px solid var(--border);border-radius:3px;overflow:hidden;height:22px">
+      <div title="Convertir en esquina" style="width:28px;display:flex;align-items:center;justify-content:center;color:var(--icon)"><v-icon i="tool-anchor-convert" s="16"></v-icon></div>
+      <div title="Convertir en suave" style="width:28px;display:flex;align-items:center;justify-content:center;background:var(--bg-active);color:var(--icon-active);border-left:1px solid var(--border)"><v-icon i="tool-curvature" s="16"></v-icon></div>
+    </div>
+    <span style="color:var(--text-muted);margin-left:4px">Manejadores:</span>
+    <div style="display:flex;border:1px solid var(--border);border-radius:3px;overflow:hidden;height:22px">
+      <div title="Mostrar manejadores" style="width:28px;display:flex;align-items:center;justify-content:center;background:var(--bg-active);color:var(--icon-active)"><v-icon i="visibility" s="16"></v-icon></div>
+      <div title="Ocultar manejadores" style="width:28px;display:flex;align-items:center;justify-content:center;color:var(--icon);border-left:1px solid var(--border)"><v-icon i="visibility-off" s="16"></v-icon></div>
+    </div>
+    <div style="width:1px;height:20px;background:var(--border)"></div>
+    <div title="Eliminar punto de ancla" style="display:flex;align-items:center;gap:5px;height:24px;padding:0 6px;border-radius:3px;color:var(--icon)" style-hover="background:var(--bg-hover)"><v-icon i="tool-anchor-delete" s="16"></v-icon><span style="color:var(--text)">Eliminar ancla</span></div>
+    <div title="Cortar trazado en el ancla" style="display:flex;align-items:center;gap:5px;height:24px;padding:0 6px;border-radius:3px;color:var(--icon)" style-hover="background:var(--bg-hover)"><v-icon i="tool-scissors" s="16"></v-icon><span style="color:var(--text)">Cortar en ancla</span></div>
+    <div title="Unir extremos (Ctrl+J)" style="display:flex;align-items:center;gap:5px;height:24px;padding:0 6px;border-radius:3px;color:var(--icon)" style-hover="background:var(--bg-hover)"><v-icon i="join" s="16"></v-icon><span style="color:var(--text)">Unir</span></div>
+    <div style="width:1px;height:20px;background:var(--border)"></div>
+    <div title="Radio de esquina" style="display:flex;align-items:center;gap:4px;width:84px;height:22px;padding:0 6px;background:var(--bg-input);border:1px solid var(--border);border-radius:3px;font-variant-numeric:tabular-nums;cursor:ew-resize"><v-icon i="round-corners" s="12" style="color:var(--text-muted)"></v-icon><span style="flex:1;text-align:right">0</span><span style="font-size:10px;color:var(--text-muted)">pt</span></div>
+    <div style="width:1px;height:20px;background:var(--border)"></div>
+    <span style="color:var(--text-muted)">Ancla:</span>
+    <div style="display:flex;align-items:center;gap:4px;width:78px;height:22px;padding:0 6px;background:var(--bg-input);border:1px solid var(--border);border-radius:3px;font-variant-numeric:tabular-nums;cursor:ew-resize"><span style="color:var(--text-muted)">X</span><span style="flex:1;text-align:right">{{ x }}</span><span style="font-size:10px;color:var(--text-muted)">pt</span></div>
+    <div style="display:flex;align-items:center;gap:4px;width:78px;height:22px;padding:0 6px;background:var(--bg-input);border:1px solid var(--border);border-radius:3px;font-variant-numeric:tabular-nums;cursor:ew-resize"><span style="color:var(--text-muted)">Y</span><span style="flex:1;text-align:right">{{ y }}</span><span style="font-size:10px;color:var(--text-muted)">pt</span></div>
+  </sc-if>
+
+  <sc-if value="{{ isText }}">
+    <div style="display:flex;align-items:center;gap:6px"><v-icon i="tool-type-on-path" s="16" style="color:var(--icon)"></v-icon><span>Texto en trazado</span></div>
+    <div style="width:1px;height:20px;background:var(--border)"></div>
+    <div title="Fuente" style="display:flex;align-items:center;gap:6px;width:200px;height:22px;padding:0 4px 0 6px;background:var(--bg-input);border:1px solid var(--accent);box-shadow:0 0 0 1px var(--accent);border-radius:3px"><v-icon i="font" s="14" style="color:var(--text-muted)"></v-icon><span style="flex:1;font-family:'Space Grotesk',var(--font-ui);font-size:12px">Space Grotesk</span><v-icon i="chevron-up" s="10" style="color:var(--text-muted)"></v-icon></div>
+    <div title="Estilo de fuente" style="display:flex;align-items:center;gap:6px;width:104px;height:22px;padding:0 4px 0 6px;background:var(--bg-input);border:1px solid var(--border);border-radius:3px"><v-icon i="font-style" s="14" style="color:var(--text-muted)"></v-icon><span style="flex:1">Medium</span><v-icon i="chevron-down" s="10" style="color:var(--text-muted)"></v-icon></div>
+    <div title="Tamaño de fuente" style="display:flex;align-items:center;gap:4px;width:76px;height:22px;padding:0 4px 0 6px;background:var(--bg-input);border:1px solid var(--border);border-radius:3px;font-variant-numeric:tabular-nums"><v-icon i="font-size" s="14" style="color:var(--text-muted)"></v-icon><span style="flex:1;text-align:right">18</span><span style="font-size:10px;color:var(--text-muted)">pt</span><v-icon i="chevron-down" s="10" style="color:var(--text-muted)"></v-icon></div>
+    <div style="width:1px;height:20px;background:var(--border)"></div>
+    <div style="display:flex;border:1px solid var(--border);border-radius:3px;overflow:hidden;height:22px">
+      <div title="Alinear a la izquierda" style="width:26px;display:flex;align-items:center;justify-content:center;color:var(--icon)"><v-icon i="para-left" s="16"></v-icon></div>
+      <div title="Centrar" style="width:26px;display:flex;align-items:center;justify-content:center;background:var(--bg-active);color:var(--icon-active);border-left:1px solid var(--border)"><v-icon i="para-center" s="16"></v-icon></div>
+      <div title="Alinear a la derecha" style="width:26px;display:flex;align-items:center;justify-content:center;color:var(--icon);border-left:1px solid var(--border)"><v-icon i="para-right" s="16"></v-icon></div>
+    </div>
+    <div title="Color del texto" style="display:flex;align-items:center;gap:4px"><v-icon i="fill" s="14" style="color:var(--text-muted)"></v-icon><div style="display:flex;align-items:center;gap:2px;height:22px;padding:0 3px;border:1px solid var(--border);border-radius:3px;background:var(--bg-input)"><span style="width:16px;height:16px;border-radius:2px;background:#1F2124;box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)"></span><v-icon i="chevron-down" s="10" style="color:var(--text-muted)"></v-icon></div></div>
+    <div style="width:1px;height:20px;background:var(--border)"></div>
+    <div style="display:flex;align-items:center;gap:5px;height:24px;padding:0 6px;border-radius:3px;color:var(--icon)" style-hover="background:var(--bg-hover)"><v-icon i="type" s="16"></v-icon><span style="color:var(--text)">Carácter</span></div>
+    <div style="display:flex;align-items:center;gap:5px;height:24px;padding:0 6px;border-radius:3px;color:var(--icon)" style-hover="background:var(--bg-hover)"><v-icon i="pilcrow" s="16"></v-icon><span style="color:var(--text)">Párrafo</span></div>
+    <div title="Opciones de texto en trazado" style="display:flex;align-items:center;gap:5px;height:24px;padding:0 6px;border-radius:3px;color:var(--icon)" style-hover="background:var(--bg-hover)"><v-icon i="text-on-path-options" s="16"></v-icon><span style="color:var(--text)">Opciones de trazado</span></div>
+    <div title="Crear contornos (Mayús+Ctrl+O)" style="display:flex;align-items:center;gap:5px;height:24px;padding:0 6px;border-radius:3px;color:var(--icon)" style-hover="background:var(--bg-hover)"><v-icon i="create-outlines" s="16"></v-icon><span style="color:var(--text)">Crear contornos</span></div>
+  </sc-if>
+
+  <sc-if value="{{ isArtboard }}">
+    <div style="display:flex;align-items:center;gap:6px"><v-icon i="tool-artboard" s="16" style="color:var(--icon)"></v-icon><span>Mesa de trabajo</span></div>
+    <div style="width:1px;height:20px;background:var(--border)"></div>
+    <div title="Ajuste preestablecido" style="display:flex;align-items:center;gap:6px;width:150px;height:22px;padding:0 4px 0 6px;background:var(--bg-input);border:1px solid var(--border);border-radius:3px"><v-icon i="page" s="14" style="color:var(--text-muted)"></v-icon><span style="flex:1">Tarjeta 9×5 cm</span><v-icon i="chevron-down" s="10" style="color:var(--text-muted)"></v-icon></div>
+    <div style="display:flex;border:1px solid var(--border);border-radius:3px;overflow:hidden;height:22px">
+      <div title="Vertical" style="width:26px;display:flex;align-items:center;justify-content:center;color:var(--icon)"><v-icon i="artboard-portrait" s="16"></v-icon></div>
+      <div title="Horizontal" style="width:26px;display:flex;align-items:center;justify-content:center;background:var(--bg-active);color:var(--icon-active);border-left:1px solid var(--border)"><v-icon i="artboard-landscape" s="16"></v-icon></div>
+    </div>
+    <div title="Nombre" style="display:flex;align-items:center;gap:6px;width:130px;height:22px;padding:0 6px;background:var(--bg-input);border:1px solid var(--border);border-radius:3px"><v-icon i="space-rename" s="12" style="color:var(--text-muted)"></v-icon><span>Tarjeta frente</span></div>
+    <div title="Mover/copiar ilustración con la mesa" style="display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:3px;background:var(--bg-active);color:var(--icon-active)"><v-icon i="transform" s="16"></v-icon></div>
+    <div style="width:1px;height:20px;background:var(--border)"></div>
+    <div style="display:flex;align-items:center;gap:4px;width:84px;height:22px;padding:0 6px;background:var(--bg-input);border:1px solid var(--border);border-radius:3px;font-variant-numeric:tabular-nums;cursor:ew-resize"><span style="color:var(--text-muted)">X</span><span style="flex:1;text-align:right">0</span><span style="font-size:10px;color:var(--text-muted)">mm</span></div>
+    <div style="display:flex;align-items:center;gap:4px;width:84px;height:22px;padding:0 6px;background:var(--bg-input);border:1px solid var(--border);border-radius:3px;font-variant-numeric:tabular-nums;cursor:ew-resize"><span style="color:var(--text-muted)">Y</span><span style="flex:1;text-align:right">0</span><span style="font-size:10px;color:var(--text-muted)">mm</span></div>
+    <div style="display:flex;align-items:center;gap:2px">
+      <div style="display:flex;align-items:center;gap:4px;width:84px;height:22px;padding:0 6px;background:var(--bg-input);border:1px solid var(--border);border-radius:3px;font-variant-numeric:tabular-nums;cursor:ew-resize"><span style="color:var(--text-muted)">An</span><span style="flex:1;text-align:right">90</span><span style="font-size:10px;color:var(--text-muted)">mm</span></div>
+      <div title="Mantener proporciones" style="width:20px;height:22px;display:flex;align-items:center;justify-content:center;color:var(--text-muted)"><v-icon i="unlink" s="14"></v-icon></div>
+      <div style="display:flex;align-items:center;gap:4px;width:84px;height:22px;padding:0 6px;background:var(--bg-input);border:1px solid var(--border);border-radius:3px;font-variant-numeric:tabular-nums;cursor:ew-resize"><span style="color:var(--text-muted)">Al</span><span style="flex:1;text-align:right">50</span><span style="font-size:10px;color:var(--text-muted)">mm</span></div>
+    </div>
+    <div style="width:1px;height:20px;background:var(--border)"></div>
+    <div title="Nueva mesa de trabajo" style="display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:3px;color:var(--icon)" style-hover="background:var(--bg-hover)"><v-icon i="artboard-new" s="16"></v-icon></div>
+    <div title="Eliminar mesa de trabajo (Supr)" style="display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:3px;color:var(--icon)" style-hover="background:var(--bg-hover)"><v-icon i="artboard-delete" s="16"></v-icon></div>
+    <div title="Opciones de mesa de trabajo" style="display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:3px;color:var(--icon)" style-hover="background:var(--bg-hover)"><v-icon i="artboard-options" s="16"></v-icon></div>
+    <div title="Reorganizar todas" style="display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:3px;color:var(--icon)" style-hover="background:var(--bg-hover)"><v-icon i="artboard-rearrange" s="16"></v-icon></div>
+  </sc-if>
+
+  <sc-if value="{{ isImage }}">
+    <div style="display:flex;align-items:center;gap:6px"><v-icon i="image" s="16" style="color:var(--icon)"></v-icon><span>Imagen enlazada</span><span style="color:var(--text-muted);font-variant-numeric:tabular-nums">paisaje.jpg · RGB · 1200×900 px · 300 ppp</span></div>
+    <div style="width:1px;height:20px;background:var(--border)"></div>
+    <div style="display:flex;align-items:center;gap:5px;height:24px;padding:0 6px;border-radius:3px;color:var(--icon)" style-hover="background:var(--bg-hover)"><v-icon i="embed" s="16"></v-icon><span style="color:var(--text)">Incrustar</span></div>
+    <div style="display:flex;align-items:center;gap:5px;height:24px;padding:0 6px;border-radius:3px;color:var(--icon)" style-hover="background:var(--bg-hover)"><v-icon i="crop-image" s="16"></v-icon><span style="color:var(--text)">Recortar imagen</span></div>
+    <div style="width:1px;height:20px;background:var(--border)"></div>
+    <div style="display:flex;align-items:center;gap:6px;height:22px;padding:0 8px;border-radius:3px;background:var(--accent);color:#FFFFFF"><v-icon i="trace-image" s="14"></v-icon><span>Calco de imagen</span></div>
+    <div title="Ajuste preestablecido de calco" style="display:flex;align-items:center;gap:6px;width:140px;height:22px;padding:0 4px 0 6px;background:var(--bg-input);border:1px solid var(--border);border-radius:3px"><v-icon i="color-model" s="14" style="color:var(--text-muted)"></v-icon><span style="flex:1">6 colores</span><v-icon i="chevron-down" s="10" style="color:var(--text-muted)"></v-icon></div>
+    <div style="width:1px;height:20px;background:var(--border)"></div>
+    <div style="display:flex;align-items:center;gap:4px;width:84px;height:22px;padding:0 6px;background:var(--bg-input);border:1px solid var(--border);border-radius:3px;font-variant-numeric:tabular-nums"><span style="color:var(--text-muted)">An</span><span style="flex:1;text-align:right">101,6</span><span style="font-size:10px;color:var(--text-muted)">mm</span></div>
+    <div style="display:flex;align-items:center;gap:4px;width:84px;height:22px;padding:0 6px;background:var(--bg-input);border:1px solid var(--border);border-radius:3px;font-variant-numeric:tabular-nums"><span style="color:var(--text-muted)">Al</span><span style="flex:1;text-align:right">76,2</span><span style="font-size:10px;color:var(--text-muted)">mm</span></div>
+  </sc-if>
+
+  <div style="flex:1"></div>
+  <div title="Menú de la barra de control" style="display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:3px;color:var(--icon)" style-hover="background:var(--bg-hover)"><v-icon i="panel-menu" s="16"></v-icon></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:36},&quot;mode&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;object&quot;,&quot;nodes&quot;,&quot;text&quot;,&quot;artboard&quot;,&quot;image&quot;],&quot;default&quot;:&quot;object&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;label&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Trazado&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;typeIcon&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;tool-star&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;fill&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#F2B33D&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;x&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;120&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;y&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;48&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;w&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;64&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;h&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;64&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const m = this.props.mode ?? 'object';
+    const p = this.props;
+    return {
+      isObject: m === 'object', isNodes: m === 'nodes', isText: m === 'text', isArtboard: m === 'artboard', isImage: m === 'image',
+      label: p.label ?? (m === 'nodes' ? 'Ancla seleccionada' : 'Trazado'),
+      typeIcon: p.typeIcon ?? 'tool-star',
+      fill: p.fill ?? '#F2B33D',
+      x: p.x ?? '120', y: p.y ?? '48', w: p.w ?? '64', h: p.h ?? '64',
+    };
+  }
+}
+</script>
+</body>
+</html>

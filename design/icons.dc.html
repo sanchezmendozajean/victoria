@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="tokens.css">
+<script src="icons.js"></script>
+</helmet>
+<div data-theme="{{ theme }}" data-screen-label="17 Íconos" style="min-height:100vh;background:var(--bg-app);color:var(--text);font-family:var(--font-ui);font-size:11px;padding:32px clamp(16px,4vw,48px) 64px">
+  <div style="max-width:1320px;margin:0 auto;display:flex;flex-direction:column;gap:24px">
+    <header style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <v-icon i="shapes" s="24" style="color:var(--accent)"></v-icon>
+      <div style="display:flex;flex-direction:column"><span style="font-size:18px;font-weight:600">Victoria · Hoja de íconos</span><span style="color:var(--text-muted);font-size:12px">{{ summary }} · rejilla 24, trazo 1.5 px real, currentColor. Uso: &lt;v-icon i="id" s="16"&gt; → &lt;Icon id size /&gt;</span></div>
+      <span style="flex:1"></span>
+      <span style="display:flex;align-items:center;gap:6px;color:var(--text-muted)"><span style="width:8px;height:8px;border-radius:50%;background:var(--accent)"></span>custom</span>
+      <span style="display:flex;align-items:center;gap:6px;color:var(--text-muted)"><span style="width:8px;height:8px;border-radius:50%;background:var(--text-disabled)"></span>lucide</span>
+      <a href="index.dc.html" style="display:flex;align-items:center;gap:6px;font-size:12px"><v-icon i="chevron-left" s="14"></v-icon>Índice</a>
+    </header>
+    <sc-for list="{{ cats }}" as="c" hint-placeholder-count="4">
+      <section style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;align-items:baseline;gap:8px;padding-bottom:6px;border-bottom:1px solid var(--border)"><span style="font-size:13px;font-weight:600">{{ c.name }}</span><span style="color:var(--text-muted)">{{ c.count }}</span></div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px">
+          <sc-for list="{{ c.icons }}" as="i">
+            <div title="{{ i.src }}" style="display:flex;flex-direction:column;gap:8px;padding:10px;background:var(--bg-panel);border:1px solid var(--border);border-radius:6px" style-hover="border-color:var(--border-strong)">
+              <div style="display:flex;align-items:center;gap:12px;color:var(--icon)">
+                <v-icon i="{{ i.id }}" s="{{ size }}"></v-icon>
+                <v-icon i="{{ i.id }}" s="20"></v-icon>
+                <v-icon i="{{ i.id }}" s="16"></v-icon>
+                <span style="flex:1"></span>
+                <span style="width:6px;height:6px;border-radius:50%;background:{{ i.dot }}"></span>
+              </div>
+              <code style="font-size:10px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ i.id }}</code>
+              <span style="font-size:10px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ i.src }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </section>
+    </sc-for>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;dark&quot;,&quot;light&quot;],&quot;default&quot;:&quot;dark&quot;,&quot;tsType&quot;:&quot;'dark'|'light'&quot;},&quot;size&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;24&quot;,&quot;32&quot;,&quot;48&quot;],&quot;default&quot;:&quot;24&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  state = { ready: !!window.VICONS };
+  componentDidMount() {
+    if (!this.state.ready) this._t = setInterval(() => { if (window.VICONS) { clearInterval(this._t); this.setState({ ready: true }); } }, 50);
+  }
+  componentWillUnmount() { clearInterval(this._t); }
+  renderVals() {
+    const V = window.VICONS;
+    const cats = V ? V.cats.map(c => ({ name: c.name, count: `${c.icons.length}`, icons: c.icons.map(i => ({ id: i.id, src: i.src, dot: i.src.startsWith('custom') ? 'var(--accent)' : 'var(--text-disabled)' })) })) : [];
+    const total = cats.reduce((n, c) => n + c.icons.length, 0);
+    const custom = V ? V.cats.reduce((n, c) => n + c.icons.filter(i => i.src.startsWith('custom')).length, 0) : 0;
+    return { theme: this.props.theme ?? 'dark', size: String(this.props.size ?? 24), cats, summary: `${total} íconos · ${custom} propios` };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="../tokens.css">
+<script src="../icons.js"></script>
+</helmet>
+<div data-theme="dark" data-screen-label="09 Acomodar para imprimir" style="width:1440px;height:900px;display:flex;flex-direction:column;background:var(--bg-app);color:var(--text);font-family:var(--font-ui);overflow:hidden;position:relative">
+  <dc-import name="TitleBar" os="win" workspace="Impresión" hint-size="1440px,32px"></dc-import>
+  <dc-import name="ControlBar" mode="object" label="8 imágenes" type-icon="image" fill="#9AA0A6" x="10" y="10" w="190" h="277" hint-size="1440px,36px"></dc-import>
+  <div style="flex:1;display:flex;min-height:0">
+    <dc-import name="Toolbar" active="select" style="position:relative;z-index:11;overflow:visible" hint-size="48px,100%"></dc-import>
+    <div style="flex:1;display:flex;flex-direction:column;min-width:0">
+      <dc-import name="DocBar" doc="logo" active="1" style="position:relative;z-index:10;overflow:visible" hint-size="100%,58px"></dc-import>
+      <div data-vc="canvas" style="position:relative;flex:1;background:var(--canvas);overflow:hidden">
+        <dc-import name="Rulers" ox="291" oy="29" ppu="2.268" every="50" style="position:absolute;inset:0" hint-size="100%,100%"></dc-import>
+        <div style="position:absolute;left:18px;top:18px;right:0;bottom:0;overflow:hidden">
+          <span style="position:absolute;left:291px;top:13px;font-size:11px;color:var(--text);white-space:nowrap">Hoja A4</span>
+          <div style="position:absolute;left:284px;top:22px;width:490px;height:688px;border:1px solid #F0524F"></div>
+          <div style="position:absolute;left:291px;top:29px;width:476px;height:674px;background:#FFFFFF;box-shadow:0 1px 3px rgba(0,0,0,.4);outline:1px solid #000000;padding:22.7px;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(4,1fr);gap:11.3px">
+            <sc-for list="{{ photos }}" as="f" hint-placeholder-count="8">
+              <div style="position:relative;background:repeating-linear-gradient(135deg,{{ f.a }} 0 8px,{{ f.b }} 8px 16px);outline:1px solid var(--accent);display:flex;align-items:flex-end;padding:6px">
+                <span style="font-family:ui-monospace,'IBM Plex Mono',monospace;font-size:10px;color:#1F2124;background:rgba(255,255,255,.75);padding:1px 4px;border-radius:2px">{{ f.name }} · 10×15 cm</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="position:absolute;left:313.7px;top:51.7px;width:430.6px;height:628.6px;border:1px solid var(--accent);pointer-events:none"></div>
+          <sc-for list="{{ handles }}" as="h"><span style="position:absolute;left:{{ h.x }}px;top:{{ h.y }}px;width:7px;height:7px;background:#FFFFFF;border:1px solid var(--accent)"></span></sc-for>
+          <div style="position:absolute;left:523.3px;top:120px;width:11.3px;height:1px;background:var(--smart-guide)"></div>
+          <div style="position:absolute;left:523.3px;top:116px;width:1px;height:9px;background:var(--smart-guide)"></div>
+          <div style="position:absolute;left:533.6px;top:116px;width:1px;height:9px;background:var(--smart-guide)"></div>
+          <div style="position:absolute;left:509px;top:128px;height:16px;padding:0 5px;border-radius:2px;background:var(--smart-guide);color:#FFFFFF;font-size:10px;font-weight:600;display:flex;align-items:center">5 mm</div>
+          <div style="position:absolute;left:420px;top:200.3px;width:1px;height:11.3px;background:var(--smart-guide)"></div>
+          <div style="position:absolute;left:416px;top:200.3px;width:9px;height:1px;background:var(--smart-guide)"></div>
+          <div style="position:absolute;left:416px;top:210.6px;width:9px;height:1px;background:var(--smart-guide)"></div>
+          <div style="position:absolute;left:428px;top:198px;height:16px;padding:0 5px;border-radius:2px;background:var(--smart-guide);color:#FFFFFF;font-size:10px;font-weight:600;display:flex;align-items:center">5 mm</div>
+        </div>
+        <div data-vc="toast" style="position:absolute;right:16px;bottom:16px;display:flex;align-items:center;gap:10px;height:36px;padding:0 6px 0 12px;border-radius:6px;background:var(--bg-panel);border:1px solid var(--border-strong);box-shadow:0 8px 24px rgba(0,0,0,.35);font-size:12px;color:var(--text);white-space:nowrap;z-index:5">
+          <v-icon i="space-grid" s="16" style="color:var(--success)"></v-icon>8 imágenes en rejilla 4 × 2 · separación 5 mm
+          <div style="display:flex;align-items:center;gap:6px;height:24px;padding:0 8px;border-radius:3px;color:var(--accent)" style-hover="background:var(--bg-hover)"><v-icon i="undo" s="14"></v-icon>Deshacer</div>
+        </div>
+      </div>
+    </div>
+    <dc-import name="Panels" layout="properties,layers,spaces>layers+;fill,swatches,gradient>fill;stroke,appearance>stroke;character,paragraph>character;align,spacing,transform,pathfinder>spacing+" layers="print" layer-summary="2 capas · 8 seleccionadas" hint-size="316px,100%"></dc-import>
+  </div>
+  <dc-import name="StatusBar" zoom="80%" board="Hoja A4" tool="Selección" tool-icon="tool-select" x="105 mm" y="64 mm" space="Hoja A4" space-color="#3FB97A" boards="1 mesa" hint-size="1440px,24px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900}}">
+const TINTS = [['#E9D8C4','#E2CDB4'],['#C9DCE6','#BDD3DF'],['#D6E3C8','#CADBB9'],['#E6D0D6','#DEC2CA'],['#D9D2E8','#CEC5E1'],['#E8E0C2','#E0D6B1'],['#CFE2DF','#C1D9D5'],['#E3D5C9','#D9C7B8']];
+class Component extends DCLogic {
+  renderVals() {
+    const photos = TINTS.map(([a, b], i) => ({ a, b, name: `foto-0${i + 1}.jpg` }));
+    const x0 = 310.2, x1 = 525.5, x2 = 740.8, y0 = 48.2, y1 = 362.5, y2 = 676.8;
+    const handles = [[x0,y0],[x1,y0],[x2,y0],[x0,y1],[x2,y1],[x0,y2],[x1,y2],[x2,y2]].map(([x, y]) => ({ x, y }));
+    return { photos, handles };
+  }
+}
+</script>
+</body>
+</html>

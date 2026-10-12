@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500&display=swap">
+<link rel="stylesheet" href="../tokens.css">
+<script src="../icons.js"></script>
+</helmet>
+<div data-theme="{{ theme }}" data-screen-label="03 Pluma" style="width:1440px;height:900px;display:flex;flex-direction:column;background:var(--bg-app);color:var(--text);font-family:var(--font-ui);overflow:hidden;position:relative">
+  <dc-import name="TitleBar" os="{{ os }}" hint-size="1440px,32px"></dc-import>
+  <dc-import name="ControlBar" mode="nodes" label="Ancla seleccionada" x="19" y="20" hint-size="1440px,36px"></dc-import>
+  <div style="flex:1;display:flex;min-height:0">
+    <dc-import name="Toolbar" active="pen" fill="#FFFFFF" style="position:relative;z-index:11;overflow:visible" hint-size="48px,100%"></dc-import>
+    <div style="flex:1;display:flex;flex-direction:column;min-width:0">
+      <dc-import name="DocBar" doc="logo" active="0" style="position:relative;z-index:10;overflow:visible" hint-size="100%,58px"></dc-import>
+      <div data-vc="canvas" style="position:relative;flex:1;background:var(--canvas);overflow:hidden">
+        <dc-import name="Rulers" ox="221" oy="60" ppu="12" every="4" style="position:absolute;inset:0" hint-size="100%,100%"></dc-import>
+        <div style="position:absolute;left:18px;top:18px;right:0;bottom:0;overflow:hidden">
+          <svg width="1058" height="732" viewBox="0 0 1058 732" style="position:absolute;left:0;top:0;font-family:Inter,sans-serif">
+            <defs>
+              <pattern id="sbdots" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="#D9DBDE"></rect><circle cx="3" cy="3" r="1.2" fill="#8A8F96"></circle></pattern>
+              <clipPath id="c1clip"><circle cx="645" cy="544" r="72"></circle></clipPath>
+              
+            </defs>
+            <g style="filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.4))">
+              <rect x="221" y="60" width="288" height="288" fill="#FFFFFF"></rect>
+              <rect x="549" y="60" width="288" height="288" fill="#FFFFFF"></rect>
+              <rect x="221" y="400" width="288" height="288" fill="#FFFFFF"></rect>
+              <rect x="549" y="400" width="288" height="288" fill="#FFFFFF"></rect>
+            </g>
+            <rect x="221.5" y="60.5" width="287" height="287" fill="none" stroke="#000000" stroke-width="1"></rect>
+            <text x="221" y="52" style="fill:var(--text);font-size:11px">casa-24</text>
+            <text x="549" y="52" style="fill:var(--text-muted);font-size:11px">corazón-24</text>
+            <text x="221" y="392" style="fill:var(--text-muted);font-size:11px">insignia-24</text>
+            <text x="549" y="392" style="fill:var(--text-muted);font-size:11px">fusión-24</text>
+
+            <path d="M281 300 L281 192 L365 108 L449 192 C449 192 413 264 449 300" fill="none" stroke="#1F2124" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"></path>
+            <line x1="281" y1="300" x2="449" y2="300" style="stroke:var(--smart-guide)" stroke-width="1"></line>
+            <path d="M277 296 L285 304 M285 296 L277 304" style="stroke:var(--smart-guide)" stroke-width="1"></path>
+            <rect x="289" y="306" width="38" height="16" rx="2" style="fill:var(--smart-guide)"></rect>
+            <text x="308" y="318" text-anchor="middle" fill="#FFFFFF" style="font-size:10px;font-weight:600">ancla</text>
+            <path d="M281 300 L281 192 L365 108 L449 192 C449 192 413 264 449 300" fill="none" style="stroke:var(--accent)" stroke-width="1"></path>
+            <line x1="413" y1="264" x2="485" y2="336" style="stroke:var(--accent)" stroke-width="1"></line>
+            <circle cx="413" cy="264" r="2.5" style="fill:var(--accent)"></circle>
+            <circle cx="485" cy="336" r="2.5" style="fill:var(--accent)"></circle>
+            <rect x="278" y="297" width="6" height="6" fill="#FFFFFF" style="stroke:var(--accent)" stroke-width="1"></rect>
+            <rect x="278" y="189" width="6" height="6" fill="#FFFFFF" style="stroke:var(--accent)" stroke-width="1"></rect>
+            <rect x="362" y="105" width="6" height="6" fill="#FFFFFF" style="stroke:var(--accent)" stroke-width="1"></rect>
+            <rect x="446" y="189" width="6" height="6" fill="#FFFFFF" style="stroke:var(--accent)" stroke-width="1"></rect>
+            <rect x="446" y="297" width="6" height="6" style="fill:var(--accent);stroke:var(--accent)" stroke-width="1"></rect>
+
+            <circle cx="693" cy="204" r="144" fill="#FFD8A8"></circle>
+            <path transform="translate(597 108) scale(8)" d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" fill="#F0524F"></path>
+            <rect x="549.5" y="60.5" width="287" height="287" fill="none" style="stroke:var(--accent)" stroke-width="1"></rect>
+            <g fill="#FFFFFF" style="stroke:var(--accent)" stroke-width="1">
+              <rect x="546" y="57" width="7" height="7"></rect><rect x="689.5" y="57" width="7" height="7"></rect><rect x="833" y="57" width="7" height="7"></rect>
+              <rect x="546" y="200.5" width="7" height="7"></rect><rect x="833" y="200.5" width="7" height="7"></rect>
+              <rect x="546" y="344" width="7" height="7"></rect><rect x="689.5" y="344" width="7" height="7"></rect><rect x="833" y="344" width="7" height="7"></rect>
+            </g>
+            <rect x="848" y="358" width="132" height="20" rx="3" style="fill:var(--accent)"></rect>
+            <text x="914" y="372" text-anchor="middle" fill="#FFFFFF" style="font-size:11px;font-variant-numeric:tabular-nums" xml:space="preserve">An: 24 pt  Al: 24 pt</text>
+
+            <circle cx="365" cy="544" r="132" fill="none" stroke="#1F2124" stroke-width="6"></circle>
+            <path transform="translate(317 496) scale(4)" d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" fill="#F2B33D"></path>
+            <path id="arcT" d="M269 544 A96 96 0 0 1 461 544" fill="none" style="stroke:var(--accent)" stroke-width="1"></path>
+            <text style="font-size:24px;font-weight:600;letter-spacing:2px" fill="#1F2124"><textPath href="#arcT" startOffset="50%" text-anchor="middle">VICTORIA · ÍCONOS</textPath></text>
+            
+            <g style="stroke:var(--accent)" stroke-width="1" fill="#FFFFFF">
+              <line x1="287.9" y1="516" x2="261.6" y2="506.4"></line><rect x="258.6" y="503.4" width="6" height="6"></rect>
+              <line x1="365" y1="462" x2="365" y2="434"></line>
+              <line x1="442.1" y1="516" x2="468.4" y2="506.4"></line><rect x="465.4" y="503.4" width="6" height="6"></rect>
+            </g>
+
+            <circle cx="645" cy="544" r="72" fill="#BFD6FF" stroke="#1F2124" stroke-width="2"></circle>
+            <circle cx="741" cy="544" r="72" fill="#E3D4FF" fill-opacity=".85" stroke="#1F2124" stroke-width="2"></circle>
+            <circle cx="741" cy="544" r="72" clip-path="url(#c1clip)" fill="url(#sbdots)"></circle>
+            <circle cx="645" cy="544" r="72" fill="none" style="stroke:var(--accent)" stroke-width="1"></circle>
+            <circle cx="741" cy="544" r="72" fill="none" style="stroke:var(--accent)" stroke-width="1"></circle>
+          </svg>
+          <div style="position:absolute;left:483px;top:334px;color:#1F2124;filter:drop-shadow(0 0 1px #FFFFFF) drop-shadow(0 0 1px #FFFFFF)"><v-icon i="tool-pen" s="20"></v-icon></div>
+          <div style="position:absolute;left:692px;top:540px;color:#1F2124;filter:drop-shadow(0 0 1px #FFFFFF) drop-shadow(0 0 1px #FFFFFF)"><v-icon i="tool-shape-builder" s="20"></v-icon></div>
+        </div>
+      </div>
+    </div>
+    <dc-import name="Panels" layout="properties,layers,spaces>layers+;fill,swatches,gradient>fill;stroke,appearance>stroke+;character,paragraph>character;align,spacing,transform,pathfinder>align" layers="icons" layer-summary="Espacio Íconos · 3 capas" hint-size="316px,100%"></dc-import>
+  </div>
+  <dc-import name="StatusBar" zoom="1200%" board="casa-24" tool="Pluma" tool-icon="tool-pen" x="22 pt" y="23 pt" space="Íconos" space-color="#4C8DFF" boards="4 mesas" hint-size="1440px,24px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;dark&quot;,&quot;light&quot;],&quot;default&quot;:&quot;dark&quot;,&quot;tsType&quot;:&quot;'dark'|'light'&quot;},&quot;os&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;win&quot;,&quot;linux&quot;,&quot;system&quot;],&quot;default&quot;:&quot;win&quot;,&quot;tsType&quot;:&quot;'win'|'linux'|'system'&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.theme ?? 'dark', os: this.props.os ?? 'win' };
+  }
+}
+</script>
+</body>
+</html>

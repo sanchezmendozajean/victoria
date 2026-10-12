@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600&family=Literata:wght@400&family=IBM+Plex+Mono&family=Archivo+Black&family=Caveat&family=DM+Serif+Display&family=Playfair+Display&family=Source+Serif+4&family=Syne:wght@600&display=swap">
+<link rel="stylesheet" href="../tokens.css">
+<script src="../icons.js"></script>
+</helmet>
+<div data-theme="{{ theme }}" data-screen-label="05 Texto" style="width:1440px;height:900px;display:flex;flex-direction:column;background:var(--bg-app);color:var(--text);font-family:var(--font-ui);overflow:hidden;position:relative">
+  <dc-import name="TitleBar" os="win" workspace="Texto" hint-size="1440px,32px"></dc-import>
+  <dc-import name="ControlBar" mode="text" hint-size="1440px,36px"></dc-import>
+  <div style="flex:1;display:flex;min-height:0">
+    <dc-import name="Toolbar" active="type" style="position:relative;z-index:11;overflow:visible" hint-size="48px,100%"></dc-import>
+    <div style="flex:1;display:flex;flex-direction:column;min-width:0">
+      <dc-import name="DocBar" doc="logo" active="2" style="position:relative;z-index:10;overflow:visible" hint-size="100%,58px"></dc-import>
+      <div data-vc="canvas" style="position:relative;flex:1;background:var(--canvas);overflow:hidden">
+        <dc-import name="Rulers" ox="337" oy="174" ppu="6" every="8" style="position:absolute;inset:0" hint-size="100%,100%"></dc-import>
+        <div style="position:absolute;left:18px;top:18px;right:0;bottom:0;overflow:hidden">
+          <svg width="1058" height="732" viewBox="0 0 1058 732" style="position:absolute;left:0;top:0;font-family:Inter,sans-serif">
+            <g style="filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.4))">
+              <rect x="337" y="174" width="384" height="384" fill="#FFFFFF"></rect>
+              <rect x="777" y="174" width="240" height="160" fill="#FFFFFF"></rect>
+            </g>
+            <rect x="337.5" y="174.5" width="383" height="383" fill="none" stroke="#000000"></rect>
+            <text x="337" y="166" style="fill:var(--text);font-size:11px">sello</text>
+            <text x="777" y="166" style="fill:var(--text-muted);font-size:11px">notas</text>
+            <text x="797" y="214" fill="#55595F" style="font-family:Caveat,cursive;font-size:22px">probar con tracking 120</text>
+            <text x="797" y="244" fill="#55595F" style="font-family:Caveat,cursive;font-size:22px">¿versalitas abajo?</text>
+            <circle cx="529" cy="366" r="176" fill="none" stroke="#1F2124" stroke-width="8"></circle>
+            <circle cx="529" cy="366" r="96" fill="#1F2124"></circle>
+            <path d="M489 326 L529 406 L569 326" fill="none" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"></path>
+            <rect x="521" y="398" width="16" height="16" fill="#4C8DFF"></rect>
+            <text fill="#1F2124" style="font-family:'Space Grotesk',sans-serif;font-size:13px;letter-spacing:3px"><textPath href="#arcB" startOffset="50%" text-anchor="middle">HECHO A MANO · DESDE 2026</textPath></text>
+            <path id="arcB" d="M399 366 A130 130 0 0 0 659 366" fill="none"></path>
+            <path id="arcT" d="M389 366 A140 140 0 0 1 669 366" fill="none" style="stroke:var(--accent)" stroke-width="1"></path>
+            <text fill="#1F2124" style="font-family:'Space Grotesk',sans-serif;font-weight:500;font-size:30px;letter-spacing:3.6px"><textPath href="#arcT" startOffset="50%" text-anchor="middle">TALLER · VICTORIA</textPath></text>
+            <g style="stroke:var(--accent)" stroke-width="1" fill="#FFFFFF">
+              <line x1="409.2" y1="333.9" x2="378.3" y2="325.6"></line><rect x="375.3" y="322.6" width="6" height="6"></rect>
+              <line x1="529" y1="242" x2="529" y2="210"></line>
+              <line x1="648.8" y1="333.9" x2="679.7" y2="325.6"></line><rect x="676.7" y="322.6" width="6" height="6"></rect>
+            </g>
+            <rect x="372.5" y="190.5" width="313" height="182" fill="none" style="stroke:var(--accent)" stroke-width="1"></rect>
+            <g fill="#FFFFFF" style="stroke:var(--accent)" stroke-width="1">
+              <rect x="369" y="187" width="7" height="7"></rect><rect x="525.5" y="187" width="7" height="7"></rect><rect x="682" y="187" width="7" height="7"></rect>
+              <rect x="369" y="278" width="7" height="7"></rect><rect x="682" y="278" width="7" height="7"></rect>
+              <rect x="369" y="369" width="7" height="7"></rect><rect x="525.5" y="369" width="7" height="7"></rect><rect x="682" y="369" width="7" height="7"></rect>
+            </g>
+          </svg>
+          <div style="position:absolute;left:536px;top:196px;color:#1F2124;filter:drop-shadow(0 0 1px #FFFFFF) drop-shadow(0 0 1px #FFFFFF)"><v-icon i="tool-type-on-path" s="20"></v-icon></div>
+        </div>
+      </div>
+    </div>
+    <dc-import name="Panels" layout="properties,layers,spaces>properties;fill,swatches,gradient>fill;stroke,appearance>stroke;character>character+;paragraph>paragraph+;align,spacing,transform,pathfinder>align" sel="text" hint-size="316px,100%"></dc-import>
+  </div>
+  <dc-import name="StatusBar" zoom="600%" board="sello" tool="Texto en trazado" tool-icon="tool-type-on-path" x="33 pt" y="4 pt" space="Bocetos" space-color="#F2B33D" boards="2 mesas" hint-size="1440px,24px"></dc-import>
+
+  <div data-vc="font-menu" style="position:absolute;left:146px;top:64px;width:340px;padding:6px;background:var(--bg-panel);border:1px solid var(--border-strong);border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.35);z-index:40;font-size:12px">
+    <div style="display:flex;align-items:center;gap:6px;height:24px;padding:0 6px;background:var(--bg-input);border:1px solid var(--accent);border-radius:3px;margin-bottom:6px"><v-icon i="search" s="14" style="color:var(--text-muted)"></v-icon><span style="flex:1;color:var(--text-disabled)">Buscar fuente…</span><div style="display:flex;border:1px solid var(--border);border-radius:3px;overflow:hidden;height:18px"><span title="Todas" style="width:22px;display:flex;align-items:center;justify-content:center;background:var(--bg-active);color:var(--icon-active)"><v-icon i="font" s="12"></v-icon></span><span title="Solo favoritas" style="width:22px;display:flex;align-items:center;justify-content:center;color:var(--icon);border-left:1px solid var(--border)"><v-icon i="star" s="12"></v-icon></span></div></div>
+    <sc-for list="{{ fontSections }}" as="sec" hint-placeholder-count="3">
+      <div style="display:flex;align-items:center;gap:6px;height:22px;padding:0 6px;color:var(--text-muted);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap"><v-icon i="{{ sec.icon }}" s="12"></v-icon>{{ sec.title }}</div>
+      <sc-for list="{{ sec.fonts }}" as="f">
+        <div style="display:flex;align-items:center;gap:8px;height:30px;padding:0 6px;border-radius:3px;background:{{ f.bg }};color:{{ f.color }}">
+          <span style="width:16px;display:flex;justify-content:center;color:{{ f.starColor }}"><v-icon i="{{ f.star }}" s="14"></v-icon></span>
+          <span style="flex:1;font-family:{{ f.css }};font-size:16px;white-space:nowrap;overflow:hidden">{{ f.name }}</span>
+          <span style="color:{{ f.metaColor }};font-size:11px">{{ f.styles }}</span>
+          <sc-if value="{{ f.sel }}"><v-icon i="check" s="14"></v-icon></sc-if>
+        </div>
+      </sc-for>
+    </sc-for>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;dark&quot;,&quot;light&quot;],&quot;default&quot;:&quot;dark&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+const SECTIONS = [
+  ['Recientes', 'recent', [['Space Grotesk', "'Space Grotesk'", '5 estilos', 1, 1], ['Inter', 'Inter', '18 estilos', 1]]],
+  ['Favoritas', 'star-filled', [['Literata', 'Literata', '12 estilos', 1], ['IBM Plex Mono', "'IBM Plex Mono'", '14 estilos', 1]]],
+  ['Todas · 412', 'font', [['Archivo Black', "'Archivo Black'", '1 estilo'], ['Caveat', 'Caveat', '4 estilos'], ['DM Serif Display', "'DM Serif Display'", '2 estilos'], ['Playfair Display', "'Playfair Display'", '12 estilos'], ['Source Serif 4', "'Source Serif 4'", '16 estilos'], ['Syne', 'Syne', '5 estilos']]],
+];
+class Component extends DCLogic {
+  renderVals() {
+    const fontSections = SECTIONS.map(([title, icon, fonts]) => ({ title, icon, fonts: fonts.map(([name, css, styles, fav, sel]) => ({
+      name, css: css + ', serif', styles, sel: !!sel, star: fav ? 'star-filled' : 'star',
+      bg: sel ? 'var(--accent)' : 'transparent', color: sel ? '#FFFFFF' : 'var(--text)',
+      starColor: sel ? '#FFFFFF' : fav ? 'var(--warning)' : 'var(--text-disabled)', metaColor: sel ? '#FFFFFF' : 'var(--text-muted)',
+    })) }));
+    return { theme: this.props.theme ?? 'dark', fontSections };
+  }
+}
+</script>
+</body>
+</html>

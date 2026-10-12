@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="../tokens.css">
+<script src="../icons.js"></script>
+</helmet>
+<div data-theme="dark" data-screen-label="10 Calco de imagen" style="width:1440px;height:900px;display:flex;flex-direction:column;background:var(--bg-app);color:var(--text);font-family:var(--font-ui);overflow:hidden;position:relative">
+  <dc-import name="TitleBar" os="win" hint-size="1440px,32px"></dc-import>
+  <dc-import name="ControlBar" mode="image" hint-size="1440px,36px"></dc-import>
+  <div style="flex:1;display:flex;min-height:0">
+    <dc-import name="Toolbar" active="select" style="position:relative;z-index:11;overflow:visible" hint-size="48px,100%"></dc-import>
+    <div style="flex:1;display:flex;flex-direction:column;min-width:0">
+      <dc-import name="DocBar" doc="logo" active="2" style="position:relative;z-index:10;overflow:visible" hint-size="100%,58px"></dc-import>
+      <div data-vc="canvas" style="position:relative;flex:1;background:var(--canvas);overflow:hidden">
+        <dc-import name="Rulers" ox="209" oy="150" ppu="2.835" every="20" style="position:absolute;inset:0" hint-size="100%,100%"></dc-import>
+        <div style="position:absolute;left:18px;top:18px;right:0;bottom:0;overflow:hidden">
+          <svg width="1058" height="732" viewBox="0 0 1058 732" style="position:absolute;left:0;top:0;font-family:Inter,sans-serif">
+            <defs>
+              <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7FB4E8"></stop><stop offset="1" stop-color="#CFE4F5"></stop></linearGradient>
+              <filter id="rast" x="0" y="0" width="100%" height="100%"><feGaussianBlur stdDeviation="1.6"></feGaussianBlur></filter>
+              <filter id="grain" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="4"></feTurbulence><feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.35 0"></feColorMatrix></filter>
+              <clipPath id="frameL"><rect x="229" y="190" width="280" height="300"></rect></clipPath>
+            </defs>
+            <rect x="209" y="150" width="640" height="380" fill="#FFFFFF" style="filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.4))"></rect>
+            <rect x="209.5" y="150.5" width="639" height="379" fill="none" stroke="#000000"></rect>
+            <text x="209" y="142" style="fill:var(--text);font-size:11px">calco-paisaje</text>
+            <g clip-path="url(#frameL)">
+              <g transform="translate(229 190)" filter="url(#rast)">
+                <rect width="280" height="300" fill="url(#sky)"></rect>
+                <circle cx="200" cy="80" r="34" fill="#F7C948"></circle>
+                <circle cx="200" cy="80" r="46" fill="#F7C948" opacity=".25"></circle>
+                <path d="M0 190 C60 140 120 150 170 175 C210 195 240 160 280 150 V300 H0Z" fill="#6E9E6A"></path>
+                <path d="M0 240 C70 200 150 215 280 230 V300 H0Z" fill="#3F7D4E"></path>
+                <rect x="60" y="196" width="8" height="34" fill="#5A3B2B"></rect>
+                <circle cx="64" cy="186" r="24" fill="#2E5E3B"></circle>
+                <path d="M150 300 C160 270 190 250 230 240" fill="none" stroke="#D9C7A0" stroke-width="14"></path>
+              </g>
+              <rect x="229" y="190" width="280" height="300" filter="url(#grain)"></rect>
+            </g>
+            <g transform="translate(549 190)" stroke="#1F2124" stroke-opacity=".6" stroke-width=".75" stroke-linejoin="round">
+              <rect width="280" height="300" fill="#8FBEEA"></rect>
+              <path d="M0 0 H280 V70 C200 60 120 70 0 90Z" fill="#7FB4E8"></path>
+              <path d="M0 120 C90 100 190 104 280 118 V150 C240 160 210 195 170 175 C120 150 60 140 0 190Z" fill="#B9D7F1"></path>
+              <circle cx="200" cy="80" r="44" fill="#F3D77A"></circle>
+              <circle cx="200" cy="80" r="33" fill="#F7C948"></circle>
+              <path d="M0 190 C60 140 120 150 170 175 C210 195 240 160 280 150 V300 H0Z" fill="#6E9E6A"></path>
+              <path d="M110 160 C140 160 160 170 170 175 C140 178 120 176 100 168Z" fill="#88B183"></path>
+              <path d="M0 240 C70 200 150 215 280 230 V300 H0Z" fill="#3F7D4E"></path>
+              <path d="M60 196 h8 v34 h-8z" fill="#5A3B2B"></path>
+              <path d="M40 186 C40 170 52 162 64 162 C78 162 88 172 88 186 C88 200 76 210 64 210 C50 210 40 200 40 186Z" fill="#2E5E3B"></path>
+              <path d="M143 300 C152 268 184 246 229 233 L231 247 C195 256 166 276 157 300Z" fill="#D9C7A0"></path>
+            </g>
+            <rect x="549.5" y="190.5" width="279" height="299" fill="none" style="stroke:var(--accent)" stroke-width="1"></rect>
+            <g fill="#FFFFFF" style="stroke:var(--accent)" stroke-width="1">
+              <rect x="546" y="187" width="7" height="7"></rect><rect x="685.5" y="187" width="7" height="7"></rect><rect x="825" y="187" width="7" height="7"></rect>
+              <rect x="546" y="336.5" width="7" height="7"></rect><rect x="825" y="336.5" width="7" height="7"></rect>
+              <rect x="546" y="486" width="7" height="7"></rect><rect x="685.5" y="486" width="7" height="7"></rect><rect x="825" y="486" width="7" height="7"></rect>
+            </g>
+            <text x="229" y="508" fill="#5E636A" style="font-size:10px;font-family:ui-monospace,monospace">paisaje.jpg · imagen (ráster)</text>
+            <text x="549" y="508" fill="#5E636A" style="font-size:10px;font-family:ui-monospace,monospace">calco · resultado con contornos</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+    <dc-import name="Panels" layout="properties,layers,spaces>properties+;trace>trace+;fill,swatches,gradient>fill;stroke,appearance>stroke;align,spacing,transform,pathfinder>align" sel="image" hint-size="316px,100%"></dc-import>
+  </div>
+  <dc-import name="StatusBar" zoom="100%" board="calco-paisaje" tool="Selección" tool-icon="tool-select" x="142 mm" y="58 mm" space="Bocetos" space-color="#F2B33D" boards="2 mesas" hint-size="1440px,24px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900}}"></script>
+</body>
+</html>

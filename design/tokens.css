@@ -1,0 +1,77 @@
+/* Victoria · tokens de interfaz (specs/10-interfaz-visual.md) */
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: local("Inter"), local("Inter Variable"), url("fonts/InterVariable.woff2") format("woff2");
+}
+
+:root,
+:root[data-theme="dark"],
+[data-theme="dark"] {
+  --bg-app:        #1E1F22;
+  --bg-panel:      #2B2D31;
+  --bg-panel-alt:  #33363B;
+  --bg-input:      #1A1B1E;
+  --bg-hover:      #3A3D43;
+  --bg-active:     #45494F;
+  --canvas:        #535559;
+  --artboard:      #FFFFFF;
+  --border:        #3E4147;
+  --border-strong: #55595F;
+  --text:          #E6E7E9;
+  --text-muted:    #A3A6AB;
+  --text-disabled: #6B6F75;
+  --icon:          #C9CBCE;
+  --icon-active:   #FFFFFF;
+  --accent:        #4C8DFF;
+  --accent-soft:   #4C8DFF33;
+  --smart-guide:   #FF3DB4;
+  --danger:        #F0524F;
+  --warning:       #F2B33D;
+  --success:       #3FB97A;
+  --space-colors:  #4C8DFF #3FB97A #F2B33D #F0524F #A77BFF #2EC4C9 #FF8A3D #9AA0A6;
+}
+
+:root[data-theme="light"],
+[data-theme="light"] {
+  --bg-app: #E4E5E7; --bg-panel: #F3F4F5; --bg-panel-alt: #E9EAEC;
+  --bg-input: #FFFFFF; --bg-hover: #E1E3E6; --bg-active: #D3D6DA;
+  --canvas: #C9CBCF; --artboard: #FFFFFF; --border: #D0D3D7; --border-strong: #B4B8BD;
+  --text: #1F2124; --text-muted: #5E636A; --text-disabled: #A1A5AB;
+  --icon: #3B3F45; --icon-active: #000000;
+  --accent: #2F6FE8; --accent-soft: #2F6FE826; --smart-guide: #E0189A;
+}
+
+/* Derivados de la spec (medidas, tipografía, colores de Espacio indexados) */
+:root {
+  --space-1: #4C8DFF; --space-2: #3FB97A; --space-3: #F2B33D; --space-4: #F0524F;
+  --space-5: #A77BFF; --space-6: #2EC4C9; --space-7: #FF8A3D; --space-8: #9AA0A6;
+  --font-ui: "Inter", system-ui, sans-serif;
+  --fs-micro: 10px; --fs-label: 11px; --fs-menu: 12px; --fs-dialog: 13px;
+  --radius-control: 3px; --radius-float: 6px;
+  --h-control: 22px; --h-row: 28px; --h-menu-row: 26px;
+  --icon-panel: 16px; --icon-tool: 20px; --icon-stroke: 1.5px;
+  --shadow-float: 0 8px 24px rgba(0,0,0,.35);
+  --shadow-artboard: 0 1px 3px rgba(0,0,0,.4);
+  --h-titlebar: 32px; --h-control-bar: 36px; --h-doc-tabs: 30px; --h-spaces-bar: 28px;
+  --h-status: 24px; --h-panel-tabs: 24px; --h-ruler: 18px; --h-space-pill: 22px;
+  --w-toolbar: 48px; --w-toolbar-2col: 72px; --w-panels: 280px; --w-panel-strip: 36px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  background: var(--bg-app);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { color: var(--icon-active); text-decoration: underline; }
+
+/* <v-icon i="id" s="16"> — trazo constante de 1.5 px a cualquier tamaño */
+v-icon { display: inline-flex; flex: none; line-height: 0; }
+v-icon svg * { vector-effect: non-scaling-stroke; }

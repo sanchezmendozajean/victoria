@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="../tokens.css">
+<script src="../icons.js"></script>
+</helmet>
+<div data-vc="toolbar" style="width:48px;height:100%;display:flex;flex-direction:column;align-items:center;padding:6px 0;background:var(--bg-panel);border-right:1px solid var(--border);font-family:var(--font-ui);position:relative;z-index:5">
+  <div title="Alternar dos columnas" style="width:36px;height:12px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);margin-bottom:4px"><v-icon i="collapse-panel" s="12"></v-icon></div>
+  <sc-for list="{{ groups }}" as="g" hint-placeholder-count="7">
+    <div style="display:flex;flex-direction:column;gap:1px;padding:4px 0;border-bottom:1px solid var(--border);width:36px">
+      <sc-for list="{{ g.tools }}" as="t" hint-placeholder-count="3">
+        <div style="position:relative">
+          <sc-if value="{{ t.on }}">
+            <div title="{{ t.tip }}" style="position:relative;width:36px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:3px;background:var(--bg-active);color:var(--icon-active);box-shadow:inset 2px 0 0 var(--accent)">
+              <v-icon i="{{ t.icon }}" s="20"></v-icon>
+              <sc-if value="{{ t.group }}"><span style="position:absolute;right:3px;bottom:3px;width:0;height:0;border-left:4px solid transparent;border-bottom:4px solid currentColor"></span></sc-if>
+            </div>
+          </sc-if>
+          <sc-if value="{{ t.off }}" hint-placeholder-val="{{ true }}">
+            <div title="{{ t.tip }}" style="position:relative;width:36px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:3px;color:var(--icon)" style-hover="background:var(--bg-hover);color:var(--icon-active)">
+              <v-icon i="{{ t.icon }}" s="20"></v-icon>
+              <sc-if value="{{ t.group }}"><span style="position:absolute;right:3px;bottom:3px;width:0;height:0;border-left:4px solid transparent;border-bottom:4px solid currentColor"></span></sc-if>
+            </div>
+          </sc-if>
+          <sc-if value="{{ t.fly }}">
+            <div data-vc="tool-flyout" style="position:absolute;left:42px;top:-4px;display:flex;gap:2px;padding:4px;background:var(--bg-panel);border:1px solid var(--border-strong);border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.35);white-space:nowrap;z-index:20">
+              <sc-for list="{{ t.items }}" as="f">
+                <div style="display:flex;align-items:center;gap:6px;height:28px;padding:0 8px;border-radius:3px;font-size:12px;color:var(--text);background:{{ f.bg }}">
+                  <v-icon i="{{ f.icon }}" s="16" style="color:var(--icon)"></v-icon><span>{{ f.name }}</span><span style="color:var(--text-muted);font-size:11px">{{ f.key }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+        </div>
+      </sc-for>
+    </div>
+  </sc-for>
+  <div style="position:relative;width:36px;height:36px;margin-top:8px" title="Relleno y trazo">
+    <div title="Relleno (X)" style="position:absolute;left:2px;top:2px;width:22px;height:22px;border-radius:2px;background:{{ fill }};box-shadow:0 0 0 1px var(--border-strong);z-index:2"></div>
+    <div title="Trazo (X)" style="position:absolute;left:12px;top:12px;width:22px;height:22px;border-radius:2px;background:linear-gradient(to top right,transparent calc(50% - 1px),#F0524F calc(50% - 1px),#F0524F calc(50% + 1px),transparent calc(50% + 1px)),#FFFFFF;box-shadow:0 0 0 1px var(--border-strong)"></div>
+    <div title="Intercambiar relleno y trazo (Mayús+X)" style="position:absolute;right:-4px;top:-4px;color:var(--icon)"><v-icon i="swap-fill-stroke" s="12"></v-icon></div>
+    <div title="Relleno y trazo por defecto (D)" style="position:absolute;left:-4px;bottom:-4px;color:var(--icon)"><v-icon i="default-colors" s="12"></v-icon></div>
+  </div>
+  <div style="display:flex;gap:0;margin-top:8px">
+    <div title="Color (,)" style="width:14px;height:16px;display:flex;align-items:center;justify-content:center;color:var(--icon-active)"><v-icon i="paint-color" s="12"></v-icon></div>
+    <div title="Degradado (.)" style="width:14px;height:16px;display:flex;align-items:center;justify-content:center;color:var(--icon)"><v-icon i="paint-gradient" s="12"></v-icon></div>
+    <div title="Ninguno (/)" style="width:14px;height:16px;display:flex;align-items:center;justify-content:center;color:var(--icon)"><v-icon i="paint-none" s="12"></v-icon></div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:1px;padding-top:6px;margin-top:6px;border-top:1px solid var(--border);width:36px">
+    <div title="Modo de dibujo: Normal (Mayús+D)" style="width:36px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:3px;color:var(--icon)" style-hover="background:var(--bg-hover)"><v-icon i="draw-normal" s="20"></v-icon></div>
+    <div title="Modo de pantalla (F)" style="width:36px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:3px;color:var(--icon)" style-hover="background:var(--bg-hover)"><v-icon i="screen-mode" s="20"></v-icon></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:260,&quot;height&quot;:808},&quot;active&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;select&quot;,&quot;direct&quot;,&quot;lasso&quot;,&quot;pen&quot;,&quot;curvature&quot;,&quot;pencil&quot;,&quot;type&quot;,&quot;line&quot;,&quot;rect&quot;,&quot;rotate&quot;,&quot;scale&quot;,&quot;free&quot;,&quot;shape&quot;,&quot;scissors&quot;,&quot;gradient&quot;,&quot;eyedropper&quot;,&quot;artboard&quot;,&quot;hand&quot;,&quot;zoom&quot;],&quot;default&quot;:&quot;select&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;flyout&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;fill&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#1F2124&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+const TOOLS = [
+  [['select','tool-select','Selección','V'],['direct','tool-direct-select','Selección directa','A',[['tool-direct-select','Selección directa','A'],['tool-group-select','Selección de grupos','']]],['lasso','tool-lasso','Lazo','Q']],
+  [['pen','tool-pen','Pluma','P',[['tool-pen','Pluma','P'],['tool-anchor-add','Añadir ancla','+'],['tool-anchor-delete','Eliminar ancla','−'],['tool-anchor-convert','Convertir ancla','Mayús+C']]],['curvature','tool-curvature','Curvatura','Mayús+~'],['pencil','tool-pencil','Lápiz','N',[['tool-pencil','Lápiz','N'],['tool-smooth','Suavizar',''],['tool-blob','Pincel de manchas','Mayús+B'],['tool-eraser','Borrador','Mayús+E']]]],
+  [['type','tool-type','Texto','T',[['tool-type','Texto','T'],['tool-area-type','Texto de área',''],['tool-type-on-path','Texto en trazado','']]],['line','tool-line','Línea','\\'],['rect','tool-rect','Rectángulo','M',[['tool-rect','Rectángulo','M'],['tool-rounded-rect','Rectángulo redondeado',''],['tool-ellipse','Elipse','L'],['tool-polygon','Polígono',''],['tool-star','Estrella','']]]],
+  [['rotate','tool-rotate','Rotar','R',[['tool-rotate','Rotar','R'],['tool-reflect','Reflejar','O']]],['scale','tool-scale','Escala','S'],['free','tool-free-transform','Transformación libre','E'],['shape','tool-shape-builder','Creador de formas','Mayús+M']],
+  [['scissors','tool-scissors','Tijeras','C',[['tool-scissors','Tijeras','C'],['tool-knife','Cuchilla','']]],['gradient','tool-gradient','Degradado','G'],['eyedropper','tool-eyedropper','Cuentagotas','I']],
+  [['artboard','tool-artboard','Mesa de trabajo','Mayús+O']],
+  [['hand','tool-hand','Mano','H'],['zoom','tool-zoom','Zoom','Z']],
+];
+class Component extends DCLogic {
+  renderVals() {
+    const active = this.props.active ?? 'select';
+    const fly = this.props.flyout ?? '';
+    const groups = TOOLS.map(g => ({ tools: g.map(([id, icon, name, key, items]) => ({
+      icon, on: id === active, off: id !== active, group: !!items, fly: id === fly,
+      tip: `${name}  (${key})`,
+      items: (items || []).map(([i, n, k], idx) => ({ icon: i, name: n, key: k, bg: idx === 0 ? 'var(--bg-active)' : 'transparent' })),
+    })) }));
+    return { groups, fill: this.props.fill ?? '#1F2124' };
+  }
+}
+</script>
+</body>
+</html>

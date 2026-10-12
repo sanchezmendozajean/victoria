@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="../tokens.css">
+<script src="../icons.js"></script>
+</helmet>
+<div data-theme="dark" data-screen-label="14 Menú Modificador" style="position:relative;width:1440px;height:900px;overflow:hidden;font-family:var(--font-ui);color:var(--text)">
+  <div style="position:relative;z-index:0;isolation:isolate;width:1440px;height:900px"><dc-import name="04-seleccion-apariencia" menu="Modificador" hint-size="1440px,900px"></dc-import></div>
+  <div style="position:absolute;left:66px;top:496px;width:1058px;height:380px;background:rgba(30,31,34,.55)"></div>
+  <span style="position:absolute;left:84px;top:502px;display:flex;align-items:center;gap:6px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text);white-space:nowrap"><v-icon i="info" s="12"></v-icon>Resto de submenús, vista expandida para referencia</span>
+  <sc-for list="{{ menus }}" as="m" hint-placeholder-count="7">
+    <div style="position:absolute;left:{{ m.x }}px;top:{{ m.y }}px;width:{{ m.w }}px;z-index:60">
+      <sc-if value="{{ m.caption }}"><div style="display:flex;align-items:center;gap:6px;height:18px;margin-bottom:4px;font-size:10px;color:var(--text);white-space:nowrap"><v-icon i="{{ m.icon }}" s="12"></v-icon>{{ m.caption }}</div></sc-if>
+      <div data-vc="menu" style="padding:4px;background:var(--bg-panel);border:1px solid var(--border-strong);border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.35);font-size:12px">
+        <sc-for list="{{ m.items }}" as="it">
+          <sc-if value="{{ it.sep }}"><div style="height:1px;background:var(--border);margin:4px 0"></div></sc-if>
+          <sc-if value="{{ it.row }}">
+            <div style="display:flex;align-items:center;gap:8px;height:26px;padding:0 8px;border-radius:3px;background:{{ it.bg }};color:{{ it.color }}">
+              <span style="display:flex;color:{{ it.iconColor }}"><v-icon i="{{ it.icon }}" s="16"></v-icon></span>
+              <span style="flex:1;white-space:nowrap">{{ it.label }}</span>
+              <sc-if value="{{ it.v2 }}"><span style="font-size:9px;padding:0 4px;border-radius:3px;border:1px solid var(--border-strong);color:var(--text-disabled)">v2</span></sc-if>
+              <sc-if value="{{ it.kind }}"><span title="{{ it.kindTip }}" style="display:flex;color:{{ it.kindColor }}"><v-icon i="{{ it.kind }}" s="12"></v-icon></span></sc-if>
+              <span style="color:{{ it.keyColor }};font-size:11px;white-space:nowrap">{{ it.key }}</span>
+              <sc-if value="{{ it.sub }}"><v-icon i="chevron-right" s="12"></v-icon></sc-if>
+            </div>
+          </sc-if>
+        </sc-for>
+      </div>
+    </div>
+  </sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900}}">
+const S = 'mod-structural', A = 'mod-appearance';
+const MAIN = [
+  ['mod-apply', 'Aplicar «Zigzag»', 'Mayús+Ctrl+E'], ['zigzag', 'Zigzag…', 'Alt+Mayús+Ctrl+E'], '-',
+  ['offset-path', 'Trazado', '', { sub: 1 }], ['pf-unite', 'Buscatrazos vivo', '', { sub: 1 }], ['pucker-bloat', 'Distorsionar y transformar', '', { sub: 1, hi: 1 }],
+  ['warp-arc', 'Deformar', '', { sub: 1 }], ['convert-rect', 'Convertir en forma', '', { sub: 1, v2: 1 }], ['drop-shadow', 'Estilizar', '', { sub: 1 }], '-',
+  ['save', 'Guardar como preajuste…', ''], ['swatches', 'Preajustes del documento', '', { sub: 1 }], '-',
+  ['mod-apply', 'Aplicar modificadores (Objeto ›)', 'Alt+Ctrl+E'],
+];
+const SUBS = {
+  distort: [['round-corners', 'Redondear esquinas…', S], ['zigzag', 'Zigzag…', S, 0, 1], ['pucker-bloat', 'Fruncir y engordar…', S], ['roughen', 'Hacer áspero…', S], ['mod-transform', 'Transformar…', S], '-', ['twist', 'Retorcer…', S, 1], ['free-distort', 'Distorsión libre…', S, 1], ['tool-pencil', 'Pintar con trazos…', S, 1]],
+  path: [['offset-path', 'Desplazar trazado…', S], ['outline-stroke', 'Contornear trazo', S], ['outline-mode', 'Contornear objeto', S, 1]],
+  pf: [['pf-unite', 'Unir', S], ['pf-minus-front', 'Menos frente', S], ['pf-intersect', 'Intersecar', S], ['pf-exclude', 'Excluir', S], '-', ['pf-divide', 'Dividir', S, 1], ['pf-trim', 'Recortar', S, 1], ['pf-merge', 'Combinar', S, 1], ['pf-crop', 'Cortar', S, 1], ['pf-outline', 'Contorno', S, 1], ['pf-minus-back', 'Menos detrás', S, 1]],
+  warp: [['warp-arc', 'Arco…', S], ['warp-flag', 'Bandera…', S], ['warp-wave', 'Onda…', S], ['warp-inflate', 'Inflar…', S], '-', ['warp-arc-lower', 'Arco inferior…', S, 1], ['warp-arc-upper', 'Arco superior…', S, 1], ['warp-arch', 'Arcada…', S, 1], ['warp-bulge', 'Abultar…', S, 1], ['warp-shell-lower', 'Concha inferior…', S, 1], ['warp-shell-upper', 'Concha superior…', S, 1], ['warp-fish', 'Pez…', S, 1], ['warp-rise', 'Ascenso…', S, 1], ['warp-fisheye', 'Ojo de pez…', S, 1], ['warp-squeeze', 'Apretar…', S, 1], ['warp-twist', 'Torcer…', S, 1]],
+  convert: [['convert-rect', 'Rectángulo…', S, 1], ['convert-rounded', 'Rectángulo redondeado…', S, 1], ['convert-ellipse', 'Elipse…', S, 1]],
+  stylize: [['drop-shadow', 'Sombra paralela…', A], ['outer-glow', 'Resplandor exterior…', A], ['inner-glow', 'Resplandor interior…', A, 1], ['feather', 'Desvanecer…', A, 1], '-', ['arrow-end', 'Añadir puntas de flecha (usar panel Trazo)', A, 1]],
+};
+const row = (o) => {
+  if (o === '-') return { sep: true, row: false };
+  if (o.length && typeof o[2] === 'string' && (o[2] === S || o[2] === A)) {
+    const [icon, label, kind, v2, hi] = o;
+    return { row: true, sep: false, icon, label, kind, kindTip: kind === S ? 'Estructural' : 'De apariencia', kindColor: hi ? '#FFFFFF' : kind === S ? 'var(--accent)' : 'var(--warning)', v2: !!v2, key: '', sub: false,
+      bg: hi ? 'var(--accent)' : 'transparent', color: hi ? '#FFFFFF' : v2 ? 'var(--text-disabled)' : 'var(--text)', iconColor: hi ? '#FFFFFF' : v2 ? 'var(--text-disabled)' : 'var(--icon)', keyColor: 'var(--text-muted)' };
+  }
+  const [icon, label, key, f = {}] = o;
+  return { row: true, sep: false, icon, label, key, sub: !!f.sub, v2: !!f.v2, kind: '',
+    bg: f.hi ? 'var(--accent)' : 'transparent', color: f.hi ? '#FFFFFF' : 'var(--text)', iconColor: f.hi ? '#FFFFFF' : 'var(--icon)', keyColor: f.hi ? '#FFFFFF' : 'var(--text-muted)' };
+};
+class Component extends DCLogic {
+  renderVals() {
+    const menus = [
+      { x: 347, y: 31, w: 300, items: MAIN.map(row) },
+      { x: 643, y: 166, w: 240, items: SUBS.distort.map(row) },
+      { x: 84, y: 526, w: 230, caption: 'Modificador › Trazado', icon: 'offset-path', items: SUBS.path.map(row) },
+      { x: 84, y: 656, w: 230, caption: 'Modificador › Convertir en forma', icon: 'convert-rect', items: SUBS.convert.map(row) },
+      { x: 334, y: 526, w: 210, caption: 'Modificador › Buscatrazos vivo', icon: 'pf-unite', items: SUBS.pf.map(row) },
+      { x: 893, y: 40, w: 210, caption: 'Modificador › Deformar', icon: 'warp-arc', items: SUBS.warp.map(row) },
+      { x: 564, y: 526, w: 310, caption: 'Modificador › Estilizar', icon: 'drop-shadow', items: SUBS.stylize.map(row) },
+    ];
+    return { menus };
+  }
+}
+</script>
+</body>
+</html>

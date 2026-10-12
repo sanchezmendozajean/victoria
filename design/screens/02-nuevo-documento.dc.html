@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="../tokens.css">
+<script src="../icons.js"></script>
+</helmet>
+<div data-theme="dark" data-screen-label="02 Nuevo documento" style="position:relative;width:1440px;height:900px;overflow:hidden;font-family:var(--font-ui);color:var(--text)">
+  <div style="position:relative;z-index:0;isolation:isolate;width:1440px;height:900px"><dc-import name="01-inicio" hint-size="1440px,900px"></dc-import></div>
+  <div style="position:absolute;inset:32px 0 0 0;background:rgba(0,0,0,.45)"></div>
+  <div data-vc="dialog" style="position:absolute;left:280px;top:150px;width:880px;height:600px;display:flex;flex-direction:column;background:var(--bg-panel);border:1px solid var(--border-strong);border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.35);overflow:hidden">
+    <div style="display:flex;align-items:center;gap:8px;height:40px;padding:0 8px 0 14px;border-bottom:1px solid var(--border)"><v-icon i="new" s="16" style="color:var(--icon)"></v-icon><span style="font-size:13px;font-weight:600">Nuevo documento</span><span style="flex:1"></span><span title="Cerrar" style="width:24px;height:24px;display:flex;align-items:center;justify-content:center;color:var(--icon)"><v-icon i="close" s="14"></v-icon></span></div>
+    <div style="flex:1;display:flex;min-height:0">
+      <div style="flex:1;display:flex;flex-direction:column;min-width:0">
+        <div style="display:flex;gap:0;height:36px;padding:0 14px;border-bottom:1px solid var(--border)">
+          <sc-for list="{{ cats }}" as="c" hint-placeholder-count="4">
+            <div style="display:flex;align-items:center;gap:6px;padding:0 12px;font-size:12px;color:{{ c.color }};box-shadow:{{ c.line }}"><v-icon i="{{ c.icon }}" s="16"></v-icon>{{ c.name }}</div>
+          </sc-for>
+        </div>
+        <div style="flex:1;padding:16px 14px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:118px;gap:10px;overflow:hidden">
+          <sc-for list="{{ presets }}" as="p" hint-placeholder-count="8">
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border-radius:6px;background:{{ p.bg }};border:1px solid {{ p.border }}">
+              <div style="width:{{ p.w }}px;height:{{ p.h }}px;background:#FFFFFF;box-shadow:0 1px 3px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;color:#9AA0A6"><v-icon i="icon-preset" s="12"></v-icon></div>
+              <div style="display:flex;align-items:center;gap:6px;font-size:12px"><v-icon i="icon-preset" s="14" style="color:var(--icon)"></v-icon>{{ p.name }}</div>
+              <span style="font-size:11px;color:var(--text-muted)">{{ p.size }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="width:300px;flex:none;display:flex;flex-direction:column;gap:12px;padding:16px;background:var(--bg-panel-alt);border-left:1px solid var(--border);font-size:11px">
+        <span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted)">Detalles del ajuste</span>
+        <div style="display:flex;align-items:center;gap:6px;height:22px;padding:0 6px;background:var(--bg-input);border:1px solid var(--accent);box-shadow:0 0 0 1px var(--accent);border-radius:3px;font-size:12px"><v-icon i="file" s="14" style="color:var(--text-muted)"></v-icon>iconos-tienda</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div style="display:flex;flex-direction:column;gap:4px"><span style="color:var(--text-muted)">Ancho</span><div style="display:flex;align-items:center;gap:4px;height:22px;padding:0 6px;background:var(--bg-input);border:1px solid var(--border);border-radius:3px;font-variant-numeric:tabular-nums"><span style="color:var(--text-muted)">An</span><span style="flex:1;text-align:right">24</span><span style="font-size:10px;color:var(--text-muted)">px</span></div></div>
+          <div style="display:flex;flex-direction:column;gap:4px"><span style="color:var(--text-muted)">Alto</span><div style="display:flex;align-items:center;gap:4px;height:22px;padding:0 6px;background:var(--bg-input);border:1px solid var(--border);border-radius:3px;font-variant-numeric:tabular-nums"><span style="color:var(--text-muted)">Al</span><span style="flex:1;text-align:right">24</span><span style="font-size:10px;color:var(--text-muted)">px</span></div></div>
+          <div style="display:flex;flex-direction:column;gap:4px"><span style="color:var(--text-muted)">Unidades</span><div style="display:flex;align-items:center;gap:6px;height:22px;padding:0 4px 0 6px;background:var(--bg-input);border:1px solid var(--border);border-radius:3px"><v-icon i="rulers" s="14" style="color:var(--text-muted)"></v-icon><span style="flex:1">Píxeles</span><v-icon i="chevron-down" s="10" style="color:var(--text-muted)"></v-icon></div></div>
+          <div style="display:flex;flex-direction:column;gap:4px"><span style="color:var(--text-muted)">Orientación</span><div style="display:flex;border:1px solid var(--border);border-radius:3px;overflow:hidden;height:22px;width:max-content"><span title="Vertical" style="width:30px;display:flex;align-items:center;justify-content:center;background:var(--bg-active);color:var(--icon-active)"><v-icon i="artboard-portrait" s="14"></v-icon></span><span title="Horizontal" style="width:30px;display:flex;align-items:center;justify-content:center;color:var(--icon);border-left:1px solid var(--border)"><v-icon i="artboard-landscape" s="14"></v-icon></span></div></div>
+          <div style="display:flex;flex-direction:column;gap:4px"><span style="color:var(--text-muted)">Mesas de trabajo</span><div style="display:flex;align-items:center;gap:4px;height:22px;padding:0 6px;background:var(--bg-input);border:1px solid var(--border);border-radius:3px;font-variant-numeric:tabular-nums"><v-icon i="artboard-rearrange" s="14" style="color:var(--text-muted)"></v-icon><span style="flex:1;text-align:right">8</span></div></div>
+          <div style="display:flex;flex-direction:column;gap:4px"><span style="color:var(--text-muted)">Modo de color</span><div style="display:flex;align-items:center;gap:6px;height:22px;padding:0 4px 0 6px;background:var(--bg-input);border:1px solid var(--border);border-radius:3px"><v-icon i="color-model" s="14" style="color:var(--text-muted)"></v-icon><span style="flex:1">RGB</span><v-icon i="chevron-down" s="10" style="color:var(--text-muted)"></v-icon></div></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px"><span style="display:flex;align-items:center;gap:6px;color:var(--text-muted)"><v-icon i="bleed" s="14"></v-icon>Sangrado</span>
+          <div style="display:grid;grid-template-columns:1fr 1fr 18px 1fr 1fr;gap:4px;align-items:center">
+            <div style="height:22px;display:flex;align-items:center;gap:2px;padding:0 4px;background:var(--bg-input);border:1px solid var(--border);border-radius:3px;font-variant-numeric:tabular-nums"><v-icon i="align-top" s="12" style="color:var(--text-muted)"></v-icon><span style="flex:1;text-align:right">0</span></div>
+            <div style="height:22px;display:flex;align-items:center;gap:2px;padding:0 4px;background:var(--bg-input);border:1px solid var(--border);border-radius:3px;font-variant-numeric:tabular-nums"><v-icon i="align-bottom" s="12" style="color:var(--text-muted)"></v-icon><span style="flex:1;text-align:right">0</span></div>
+            <span title="Mismo valor" style="color:var(--accent);display:flex;justify-content:center"><v-icon i="link" s="14"></v-icon></span>
+            <div style="height:22px;display:flex;align-items:center;gap:2px;padding:0 4px;background:var(--bg-input);border:1px solid var(--border);border-radius:3px;font-variant-numeric:tabular-nums"><v-icon i="align-left" s="12" style="color:var(--text-muted)"></v-icon><span style="flex:1;text-align:right">0</span></div>
+            <div style="height:22px;display:flex;align-items:center;gap:2px;padding:0 4px;background:var(--bg-input);border:1px solid var(--border);border-radius:3px;font-variant-numeric:tabular-nums"><v-icon i="align-right" s="12" style="color:var(--text-muted)"></v-icon><span style="flex:1;text-align:right">0</span></div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;padding-top:10px;border-top:1px solid var(--border)"><span style="display:flex;align-items:center;gap:6px;color:var(--text-muted)"><v-icon i="spaces" s="14"></v-icon>Nombre del primer Espacio</span>
+          <div style="display:flex;align-items:center;gap:6px;height:22px;padding:0 6px;background:var(--bg-input);border:1px solid var(--border);border-radius:3px;font-size:12px"><span style="width:8px;height:8px;border-radius:50%;background:#4C8DFF"></span>Íconos</div>
+          <span style="color:var(--text-muted);line-height:1.45">Podrás añadir más Espacios después (Ctrl+Alt+N). Cada uno tiene sus propias capas y mesas.</span>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;height:48px;padding:0 14px;border-top:1px solid var(--border)">
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted)"><v-icon i="save" s="14"></v-icon>Guardar ajuste…</div>
+      <span style="flex:1"></span>
+      <div style="display:flex;align-items:center;gap:6px;height:26px;padding:0 14px;border-radius:3px;background:var(--bg-panel-alt);border:1px solid var(--border);font-size:12px"><v-icon i="close" s="14" style="color:var(--icon)"></v-icon>Cancelar</div>
+      <div style="display:flex;align-items:center;gap:6px;height:26px;padding:0 14px;border-radius:3px;background:var(--accent);color:#FFFFFF;font-size:12px"><v-icon i="check" s="14"></v-icon>Crear</div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900}}">
+class Component extends DCLogic {
+  renderVals() {
+    const cats = [['Imprimir', 'print'], ['Íconos', 'shapes', 1], ['Web', 'web'], ['Redes', 'social']].map(([name, icon, on]) => ({ name, icon, color: on ? 'var(--text)' : 'var(--text-muted)', line: on ? 'inset 0 -2px 0 var(--accent)' : 'none' }));
+    const presets = [['Ícono 16', 16], ['Ícono 24', 24, 1], ['Ícono 32', 32], ['Ícono 48', 48], ['Ícono 64', 64], ['Ícono 128', 128], ['Ícono 256', 256], ['Ícono 512', 512]].map(([name, n, on], i) => {
+      const s = 14 + i * 6;
+      return { name, size: `${n} × ${n} px`, w: s, h: s, bg: on ? 'var(--accent-soft)' : 'var(--bg-panel-alt)', border: on ? 'var(--accent)' : 'var(--border)' };
+    });
+    return { cats, presets };
+  }
+}
+</script>
+</body>
+</html>

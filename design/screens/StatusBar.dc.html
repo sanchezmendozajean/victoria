@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="../tokens.css">
+<script src="../icons.js"></script>
+</helmet>
+<div data-vc="status-bar" style="display:flex;align-items:center;gap:0;height:24px;background:var(--bg-panel);border-top:1px solid var(--border);font-family:var(--font-ui);font-size:11px;color:var(--text-muted);font-variant-numeric:tabular-nums;white-space:nowrap">
+  <div title="Zoom" style="display:flex;align-items:center;gap:2px;height:24px;padding:0 6px 0 8px;border-right:1px solid var(--border)">
+    <v-icon i="zoom-in" s="14" style="color:var(--icon)"></v-icon>
+    <div style="display:flex;align-items:center;width:52px;height:18px;padding:0 4px;margin-left:4px;background:var(--bg-input);border:1px solid var(--border);border-radius:3px;color:var(--text);justify-content:flex-end">{{ zoom }}</div>
+    <v-icon i="chevron-down" s="10" style="color:var(--text-muted)"></v-icon>
+  </div>
+  <div title="Navegador de mesas de trabajo" style="display:flex;align-items:center;gap:2px;height:24px;padding:0 8px;border-right:1px solid var(--border)">
+    <span style="width:18px;height:18px;display:flex;align-items:center;justify-content:center;color:var(--icon)"><v-icon i="chevron-left" s="12"></v-icon></span>
+    <div style="display:flex;align-items:center;gap:6px;height:18px;padding:0 4px 0 6px;min-width:120px;background:var(--bg-input);border:1px solid var(--border);border-radius:3px;color:var(--text)"><v-icon i="tool-artboard" s="12" style="color:var(--text-muted)"></v-icon><span style="flex:1">{{ board }}</span><v-icon i="chevron-down" s="10" style="color:var(--text-muted)"></v-icon></div>
+    <span style="width:18px;height:18px;display:flex;align-items:center;justify-content:center;color:var(--icon)"><v-icon i="chevron-right" s="12"></v-icon></span>
+  </div>
+  <div style="display:flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-right:1px solid var(--border);color:var(--text)"><v-icon i="{{ toolIcon }}" s="14" style="color:var(--icon)"></v-icon>{{ tool }}</div>
+  <div title="Posición del cursor" style="display:flex;align-items:center;gap:10px;height:24px;padding:0 10px;border-right:1px solid var(--border)"><v-icon i="locate-object" s="14" style="color:var(--icon)"></v-icon><span>X <span style="color:var(--text)">{{ x }}</span></span><span>Y <span style="color:var(--text)">{{ y }}</span></span></div>
+  <div title="Espacio activo" style="display:flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-right:1px solid var(--border)"><v-icon i="spaces" s="14" style="color:var(--icon)"></v-icon><span>Espacio:</span><span style="width:8px;height:8px;border-radius:50%;background:{{ spaceColor }}"></span><span style="color:var(--text)">{{ space }}</span><span>· {{ boards }}</span></div>
+  <div style="flex:1"></div>
+  <div title="Autoguardado cada 60 s" style="display:flex;align-items:center;gap:6px;height:24px;padding:0 10px"><v-icon i="cloud-check" s="14" style="color:var(--success)"></v-icon>{{ saved }}</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:24},&quot;zoom&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;100%&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;board&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Mesa 1&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;tool&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Selección&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;toolIcon&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;tool-select&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;x&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;120 pt&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;y&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;48 pt&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;space&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Íconos&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;spaceColor&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#4C8DFF&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;boards&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;4 mesas&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;saved&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Guardado hace 1 min&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const p = this.props;
+    return {
+      zoom: p.zoom ?? '100%', board: p.board ?? 'Mesa 1', tool: p.tool ?? 'Selección', toolIcon: p.toolIcon ?? 'tool-select',
+      x: p.x ?? '120 pt', y: p.y ?? '48 pt', space: p.space ?? 'Íconos', spaceColor: p.spaceColor ?? '#4C8DFF',
+      boards: p.boards ?? '4 mesas', saved: p.saved ?? 'Guardado hace 1 min',
+    };
+  }
+}
+</script>
+</body>
+</html>

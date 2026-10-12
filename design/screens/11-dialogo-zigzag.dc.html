@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="../tokens.css">
+<script src="../icons.js"></script>
+</helmet>
+<div data-theme="dark" data-screen-label="11 Diálogo Zigzag" style="position:relative;width:1440px;height:900px;overflow:hidden;font-family:var(--font-ui);color:var(--text)">
+  <div style="position:relative;z-index:0;isolation:isolate;width:1440px;height:900px"><dc-import name="04-seleccion-apariencia" zig="{{ true }}" fx-active="{{ true }}" hint-size="1440px,900px"></dc-import></div>
+  <div data-vc="dialog" style="position:absolute;left:800px;top:236px;width:344px;display:flex;flex-direction:column;background:var(--bg-panel);border:1px solid var(--border-strong);border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.35);font-size:11px;z-index:50">
+    <div style="display:flex;align-items:center;gap:8px;height:36px;padding:0 8px 0 12px;border-bottom:1px solid var(--border);cursor:move"><v-icon i="zigzag" s="16" style="color:var(--icon)"></v-icon><span style="font-size:13px;font-weight:600">Zigzag</span><span style="display:flex;align-items:center;gap:4px;height:18px;padding:0 6px;border-radius:9px;background:var(--accent-soft);color:var(--accent);font-size:10px"><v-icon i="mod-structural" s="10"></v-icon>Estructural</span><span style="flex:1"></span><span title="Cerrar" style="width:22px;height:22px;display:flex;align-items:center;justify-content:center;color:var(--icon)"><v-icon i="close" s="14"></v-icon></span></div>
+    <div style="display:flex;flex-direction:column;gap:12px;padding:12px">
+      <span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted)">Opciones</span>
+      <div style="display:grid;grid-template-columns:96px 1fr 72px;gap:8px;align-items:center">
+        <span style="display:flex;align-items:center;gap:6px;color:var(--text-muted);cursor:ew-resize"><v-icon i="stroke-weight" s="14"></v-icon>Tamaño</span>
+        <div style="position:relative;height:4px;border-radius:2px;background:var(--bg-input);box-shadow:inset 0 0 0 1px var(--border)"><span style="position:absolute;left:0;top:0;bottom:0;width:18%;border-radius:2px;background:var(--accent)"></span><span style="position:absolute;left:18%;top:-3px;width:10px;height:10px;margin-left:-5px;border-radius:50%;background:#FFFFFF;box-shadow:0 0 0 1px rgba(0,0,0,.5)"></span></div>
+        <div style="display:flex;align-items:center;gap:4px;height:22px;padding:0 4px 0 6px;background:var(--bg-input);border:1px solid var(--accent);box-shadow:0 0 0 1px var(--accent);border-radius:3px;font-variant-numeric:tabular-nums"><span style="flex:1;text-align:right">1,5</span><span style="font-size:10px;color:var(--text-muted)">pt</span><span style="display:flex;flex-direction:column;color:var(--text-muted)"><v-icon i="chevron-up" s="8"></v-icon><v-icon i="chevron-down" s="8"></v-icon></span></div>
+        <span></span>
+        <div style="display:flex;border:1px solid var(--border);border-radius:3px;overflow:hidden;height:22px;grid-column:span 2;width:max-content"><span style="display:flex;align-items:center;gap:5px;padding:0 10px;color:var(--icon)"><v-icon i="scale-fit" s="14"></v-icon>Relativo</span><span style="display:flex;align-items:center;gap:5px;padding:0 10px;background:var(--bg-active);color:var(--icon-active);border-left:1px solid var(--border)"><v-icon i="rulers" s="14"></v-icon>Absoluto</span></div>
+        <span style="display:flex;align-items:center;gap:6px;color:var(--text-muted);cursor:ew-resize"><v-icon i="zigzag" s="14"></v-icon>Crestas</span>
+        <div style="position:relative;height:4px;border-radius:2px;background:var(--bg-input);box-shadow:inset 0 0 0 1px var(--border)"><span style="position:absolute;left:0;top:0;bottom:0;width:4%;border-radius:2px;background:var(--accent)"></span><span style="position:absolute;left:4%;top:-3px;width:10px;height:10px;margin-left:-5px;border-radius:50%;background:#FFFFFF;box-shadow:0 0 0 1px rgba(0,0,0,.5)"></span></div>
+        <div style="display:flex;align-items:center;gap:4px;height:22px;padding:0 6px;background:var(--bg-input);border:1px solid var(--border);border-radius:3px;font-variant-numeric:tabular-nums"><span style="flex:1;text-align:right">4</span><span style="font-size:10px;color:var(--text-muted)">/seg</span></div>
+      </div>
+      <span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);padding-top:8px;border-top:1px solid var(--border)">Puntos</span>
+      <div style="display:flex;border:1px solid var(--border);border-radius:3px;overflow:hidden;height:24px;width:max-content"><span style="display:flex;align-items:center;gap:6px;padding:0 12px;color:var(--icon)"><v-icon i="tool-curvature" s="16"></v-icon>Suave</span><span style="display:flex;align-items:center;gap:6px;padding:0 12px;background:var(--bg-active);color:var(--icon-active);border-left:1px solid var(--border)"><v-icon i="tool-anchor-convert" s="16"></v-icon>Esquina</span></div>
+      <div style="display:flex;align-items:center;gap:6px;color:var(--text-muted)"><v-icon i="info" s="14"></v-icon>Se aplica antes que «Sombra paralela».</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;height:44px;padding:0 12px;border-top:1px solid var(--border)">
+      <span style="width:12px;height:12px;border-radius:2px;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#FFFFFF"><v-icon i="check" s="10"></v-icon></span><span style="font-size:12px">Previsualizar</span>
+      <span style="flex:1"></span>
+      <div style="display:flex;align-items:center;gap:6px;height:24px;padding:0 12px;border-radius:3px;background:var(--bg-panel-alt);border:1px solid var(--border);font-size:12px"><v-icon i="close" s="14" style="color:var(--icon)"></v-icon>Cancelar</div>
+      <div style="display:flex;align-items:center;gap:6px;height:24px;padding:0 12px;border-radius:3px;background:var(--accent);color:#FFFFFF;font-size:12px"><v-icon i="check" s="14"></v-icon>Aceptar</div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900}}"></script>
+</body>
+</html>

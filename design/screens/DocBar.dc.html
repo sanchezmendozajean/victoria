@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="../tokens.css">
+<script src="../icons.js"></script>
+</helmet>
+<div data-vc="doc-bar" style="display:flex;flex-direction:column;font-family:var(--font-ui);position:relative;z-index:6">
+  <div data-vc="doc-tabs" style="display:flex;align-items:flex-end;height:30px;background:var(--bg-app);padding:0 4px;gap:1px;border-bottom:1px solid var(--border)">
+    <sc-for list="{{ docs }}" as="d" hint-placeholder-count="2">
+      <sc-if value="{{ d.on }}">
+        <div style="display:flex;align-items:center;gap:6px;height:30px;padding:0 6px 0 10px;background:var(--canvas);color:var(--text);font-size:12px;border-radius:4px 4px 0 0;margin-bottom:-1px;max-width:220px">
+          <v-icon i="file" s="14" style="color:var(--icon)"></v-icon><span>{{ d.name }}</span>
+          <sc-if value="{{ d.dirty }}"><span title="Cambios sin guardar" style="width:6px;height:6px;border-radius:50%;background:var(--text);margin-left:2px"></span></sc-if>
+          <span title="Cerrar (Ctrl+W)" style="width:18px;height:18px;display:flex;align-items:center;justify-content:center;border-radius:3px;color:var(--icon)" style-hover="background:var(--bg-hover)"><v-icon i="close" s="12"></v-icon></span>
+        </div>
+      </sc-if>
+      <sc-if value="{{ d.off }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;align-items:center;gap:6px;height:26px;padding:0 12px 0 10px;color:var(--text-muted);font-size:12px;border-radius:4px 4px 0 0;margin-bottom:2px" style-hover="background:var(--bg-hover);color:var(--text)">
+          <v-icon i="file" s="14"></v-icon><span>{{ d.name }}</span>
+          <sc-if value="{{ d.dirty }}"><span style="width:6px;height:6px;border-radius:50%;background:var(--text-muted)"></span></sc-if>
+        </div>
+      </sc-if>
+    </sc-for>
+    <div title="Nuevo documento (Ctrl+N)" style="width:24px;height:24px;margin:0 0 3px 4px;display:flex;align-items:center;justify-content:center;border-radius:3px;color:var(--icon)" style-hover="background:var(--bg-hover)"><v-icon i="plus" s="14"></v-icon></div>
+  </div>
+
+  <div data-vc="spaces-bar" style="position:relative;display:flex;align-items:center;gap:2px;height:28px;padding:0 6px 0 8px;background:var(--canvas);border-bottom:1px solid var(--border);white-space:nowrap">
+    <div title="Espacios de este documento" style="display:flex;align-items:center;color:var(--text);opacity:.7;margin-right:4px"><v-icon i="spaces" s="14"></v-icon></div>
+    <sc-for list="{{ spaces }}" as="s" hint-placeholder-count="3">
+      <div style="position:relative;display:flex;align-items:center">
+        <sc-if value="{{ s.insert }}">
+          <div data-vc="space-insert-indicator" style="position:absolute;left:-3px;top:0;bottom:0;width:2px;background:var(--accent);border-radius:1px"><span style="position:absolute;left:-2px;top:-3px;width:6px;height:6px;border-radius:50%;background:var(--accent)"></span><span style="position:absolute;left:-2px;bottom:-3px;width:6px;height:6px;border-radius:50%;background:var(--accent)"></span></div>
+        </sc-if>
+        <sc-if value="{{ s.on }}">
+          <div data-vc="space-tab" title="{{ s.tip }}" style="position:relative;display:flex;align-items:center;gap:6px;height:22px;padding:0 10px;border-radius:11px;background:var(--bg-panel-alt);color:var(--text);font-size:12px;font-weight:500">
+            <span style="width:8px;height:8px;border-radius:50%;background:{{ s.color }}"></span><span>{{ s.name }}</span>
+            <sc-if value="{{ s.excluded }}"><v-icon i="space-exclude-export" s="12" style="color:var(--text-muted)"></v-icon></sc-if>
+            <span style="position:absolute;left:10px;right:10px;bottom:0;height:2px;border-radius:1px;background:{{ s.color }}"></span>
+          </div>
+        </sc-if>
+        <sc-if value="{{ s.hover }}">
+          <div data-vc="space-tab" title="{{ s.tip }}" style="display:flex;align-items:center;gap:6px;height:22px;padding:0 4px 0 10px;border-radius:11px;background:var(--bg-hover);color:var(--text);font-size:12px">
+            <span style="width:8px;height:8px;border-radius:50%;background:{{ s.color }}"></span><span>{{ s.name }}</span>
+            <sc-if value="{{ s.excluded }}"><v-icon i="space-exclude-export" s="12" style="color:var(--text-muted)"></v-icon></sc-if>
+            <span title="Opciones del Espacio" style="width:18px;height:18px;display:flex;align-items:center;justify-content:center;border-radius:9px;background:{{ s.moreBg }};color:var(--icon-active)"><v-icon i="more" s="14"></v-icon></span>
+          </div>
+        </sc-if>
+        <sc-if value="{{ s.ghost }}">
+          <div style="display:flex;align-items:center;gap:6px;height:22px;padding:0 10px;border-radius:11px;border:1px dashed var(--border-strong);color:transparent;font-size:12px">
+            <span style="width:8px;height:8px;border-radius:50%"></span><span>{{ s.name }}</span>
+          </div>
+        </sc-if>
+        <sc-if value="{{ s.plain }}" hint-placeholder-val="{{ true }}">
+          <div data-vc="space-tab" title="{{ s.tip }}" style="display:flex;align-items:center;gap:6px;height:22px;padding:0 10px;border-radius:11px;color:var(--text);font-size:12px" style-hover="background:var(--bg-hover)">
+            <span style="width:8px;height:8px;border-radius:50%;background:{{ s.color }}"></span><span style="opacity:.85">{{ s.name }}</span>
+            <sc-if value="{{ s.excluded }}"><v-icon i="space-exclude-export" s="12" style="color:var(--text);opacity:.6"></v-icon></sc-if>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ s.menu }}">
+          <div data-vc="menu" style="position:absolute;left:0;top:26px;width:236px;padding:4px;background:var(--bg-panel);border:1px solid var(--border-strong);border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.35);font-size:12px;color:var(--text);z-index:30">
+            <div style="display:flex;align-items:center;gap:8px;height:26px;padding:0 8px;border-radius:3px" style-hover="background:var(--bg-hover)"><v-icon i="space-rename" s="16" style="color:var(--icon)"></v-icon><span style="flex:1">Renombrar…</span><span style="color:var(--text-muted);font-size:11px">Doble clic</span></div>
+            <div style="position:relative;display:flex;align-items:center;gap:8px;height:26px;padding:0 8px;border-radius:3px;background:var(--accent);color:#FFFFFF"><v-icon i="space-color" s="16"></v-icon><span style="flex:1">Color de etiqueta</span><v-icon i="chevron-right" s="12"></v-icon>
+              <div data-vc="menu-color-submenu" style="position:absolute;left:calc(100% + 8px);top:-5px;padding:8px;background:var(--bg-panel);border:1px solid var(--border-strong);border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.35);color:var(--text)">
+                <div style="display:grid;grid-template-columns:repeat(4,20px);gap:6px">
+                  <sc-for list="{{ swatchColors }}" as="c">
+                    <span title="{{ c.name }}" style="width:20px;height:20px;border-radius:50%;background:{{ c.hex }};display:flex;align-items:center;justify-content:center;box-shadow:{{ c.ring }};color:#FFFFFF"><sc-if value="{{ c.sel }}"><v-icon i="check" s="12"></v-icon></sc-if></span>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;height:26px;padding:0 8px;border-radius:3px" style-hover="background:var(--bg-hover)"><v-icon i="space-duplicate" s="16" style="color:var(--icon)"></v-icon><span style="flex:1">Duplicar Espacio</span></div>
+            <div style="display:flex;align-items:center;gap:8px;height:26px;padding:0 8px;border-radius:3px" style-hover="background:var(--bg-hover)"><v-icon i="space-exclude-export" s="16" style="color:var(--icon)"></v-icon><span style="flex:1">Excluir de exportación</span><v-icon i="check" s="14" style="color:var(--accent)"></v-icon></div>
+            <div style="display:flex;align-items:center;gap:8px;height:26px;padding:0 8px;border-radius:3px" style-hover="background:var(--bg-hover)"><v-icon i="space-move-to" s="16" style="color:var(--icon)"></v-icon><span style="flex:1">Mover selección aquí</span></div>
+            <div style="display:flex;align-items:center;gap:8px;height:26px;padding:0 8px;border-radius:3px" style-hover="background:var(--bg-hover)"><v-icon i="space-properties" s="16" style="color:var(--icon)"></v-icon><span style="flex:1">Propiedades…</span></div>
+            <div style="height:1px;background:var(--border);margin:4px 0"></div>
+            <div style="display:flex;align-items:center;gap:8px;height:26px;padding:0 8px;border-radius:3px;color:var(--danger)" style-hover="background:var(--bg-hover)"><v-icon i="space-delete" s="16"></v-icon><span style="flex:1">Eliminar Espacio…</span></div>
+          </div>
+        </sc-if>
+      </div>
+    </sc-for>
+    <div style="position:relative">
+      <div title="Nuevo Espacio (Ctrl+Alt+N)" style="width:22px;height:22px;margin-left:2px;display:flex;align-items:center;justify-content:center;border-radius:11px;color:var(--text)" style-hover="background:var(--bg-hover)"><v-icon i="space-add" s="16"></v-icon></div>
+      <sc-if value="{{ showTip }}">
+        <div data-vc="tooltip" style="position:absolute;left:0;top:28px;display:flex;align-items:center;gap:6px;height:22px;padding:0 8px;white-space:nowrap;background:var(--bg-app);border:1px solid var(--border-strong);border-radius:3px;font-size:11px;color:var(--text);box-shadow:0 8px 24px rgba(0,0,0,.35);z-index:30">Nuevo Espacio<span style="padding:0 4px;border-radius:3px;background:var(--bg-panel-alt);color:var(--text-muted);font-size:10px">Ctrl+Alt+N</span></div>
+      </sc-if>
+    </div>
+    <sc-if value="{{ isDrag }}">
+      <div data-vc="space-tab-dragging" style="position:absolute;left:118px;top:1px;display:flex;align-items:center;gap:6px;height:22px;padding:0 10px;border-radius:11px;background:var(--bg-panel-alt);color:var(--text);font-size:12px;box-shadow:0 8px 24px rgba(0,0,0,.35);transform:rotate(-2deg);cursor:grabbing;z-index:20;outline:1px solid var(--accent)">
+        <v-icon i="grip" s="12" style="color:var(--text-muted)"></v-icon><span style="width:8px;height:8px;border-radius:50%;background:#F2B33D"></span><span>Bocetos</span>
+      </div>
+    </sc-if>
+    <div style="flex:1"></div>
+    <div title="Espacio anterior / siguiente (Ctrl+Alt+RePág / AvPág)" style="display:flex;color:var(--text);opacity:.8">
+      <div style="width:22px;height:22px;display:flex;align-items:center;justify-content:center;border-radius:3px" style-hover="background:var(--bg-hover)"><v-icon i="chevron-left" s="14"></v-icon></div>
+      <div style="width:22px;height:22px;display:flex;align-items:center;justify-content:center;border-radius:3px" style-hover="background:var(--bg-hover)"><v-icon i="chevron-right" s="14"></v-icon></div>
+    </div>
+    <div title="Panel Espacios" style="display:flex;align-items:center;gap:6px;height:22px;padding:0 8px;border-radius:3px;color:var(--text);font-size:11px;background:{{ panelBtnBg }}" style-hover="background:var(--bg-hover)"><v-icon i="spaces" s="16"></v-icon><span>{{ countLabel }}</span></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1076,&quot;height&quot;:280},&quot;doc&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;logo&quot;,&quot;tarjetas&quot;],&quot;default&quot;:&quot;logo&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;active&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:0,&quot;tsType&quot;:&quot;number&quot;},&quot;state&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;normal&quot;,&quot;hover&quot;,&quot;menu&quot;,&quot;drag&quot;],&quot;default&quot;:&quot;normal&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;target&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:2,&quot;tsType&quot;:&quot;number&quot;},&quot;tip&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;panelOpen&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+const DOCS = {
+  logo: { docs: [['logo.vict', true], ['tarjetas.vict', false]], spaces: [['Íconos', '#4C8DFF', 4], ['Hoja A4', '#3FB97A', 1], ['Bocetos', '#F2B33D', 2, true]] },
+  tarjetas: { docs: [['logo.vict', true], ['tarjetas.vict', false]], spaces: [['Diseño', '#A77BFF', 4], ['Variantes', '#2EC4C9', 2]] },
+};
+const COLORS = [['Azul','#4C8DFF'],['Verde','#3FB97A'],['Ámbar','#F2B33D'],['Rojo','#F0524F'],['Violeta','#A77BFF'],['Turquesa','#2EC4C9'],['Naranja','#FF8A3D'],['Gris','#9AA0A6']];
+class Component extends DCLogic {
+  renderVals() {
+    const key = this.props.doc ?? 'logo';
+    const d = DOCS[key] || DOCS.logo;
+    const active = Number(this.props.active ?? 0);
+    const state = this.props.state ?? 'normal';
+    const target = Number(this.props.target ?? 2);
+    const docIdx = key === 'tarjetas' ? 1 : 0;
+    const docs = d.docs.map(([name, dirty], i) => ({ name, dirty, on: i === docIdx, off: i !== docIdx }));
+    const spaces = d.spaces.map(([name, color, n, excluded], i) => {
+      const isT = i === target;
+      const ghost = state === 'drag' && isT;
+      const hover = (state === 'hover' || state === 'menu') && isT && i !== active;
+      const on = i === active && !ghost;
+      return {
+        name, color, excluded: !!excluded, tip: `${name} · ${n} ${n === 1 ? 'mesa' : 'mesas'}${excluded ? ' · excluido de exportación' : ''}`,
+        on, hover, ghost, plain: !on && !hover && !ghost,
+        moreBg: state === 'menu' ? 'var(--bg-active)' : 'transparent',
+        menu: state === 'menu' && isT,
+        insert: state === 'drag' && i === 1,
+      };
+    });
+    const cur = d.spaces[target] ? d.spaces[target][1] : '';
+    const swatchColors = COLORS.map(([name, hex]) => ({ name, hex, sel: hex === cur, ring: hex === cur ? '0 0 0 2px var(--bg-panel), 0 0 0 3px ' + hex : 'none' }));
+    return { docs, spaces, swatchColors, isDrag: state === 'drag', showTip: !!this.props.tip, countLabel: `${d.spaces.length} Espacios`, panelBtnBg: this.props.panelOpen ? 'var(--bg-panel-alt)' : 'transparent' };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600&display=swap">
+<link rel="stylesheet" href="../tokens.css">
+<script src="../icons.js"></script>
+</helmet>
+<div data-theme="dark" data-screen-label="08 Mesas de trabajo" style="width:1440px;height:900px;display:flex;flex-direction:column;background:var(--bg-app);color:var(--text);font-family:var(--font-ui);overflow:hidden;position:relative">
+  <dc-import name="TitleBar" os="win" workspace="Impresión" hint-size="1440px,32px"></dc-import>
+  <dc-import name="ControlBar" mode="artboard" hint-size="1440px,36px"></dc-import>
+  <div style="flex:1;display:flex;min-height:0">
+    <dc-import name="Toolbar" active="artboard" style="position:relative;z-index:11;overflow:visible" hint-size="48px,100%"></dc-import>
+    <div style="flex:1;display:flex;flex-direction:column;min-width:0">
+      <dc-import name="DocBar" doc="tarjetas" active="0" style="position:relative;z-index:10;overflow:visible" hint-size="100%,58px"></dc-import>
+      <div data-vc="canvas" style="position:relative;flex:1;background:var(--canvas);overflow:hidden">
+        <dc-import name="Rulers" ox="180" oy="80" ppu="2.835" every="20" style="position:absolute;inset:0" hint-size="100%,100%"></dc-import>
+        <div style="position:absolute;left:18px;top:18px;right:0;bottom:0;overflow:hidden;font-family:'Space Grotesk',sans-serif">
+          <div style="position:absolute;left:171.5px;top:71.5px;width:272px;height:159px;border:1px solid #F0524F"></div>
+          <div style="position:absolute;left:466.5px;top:71.5px;width:272px;height:159px;border:1px solid #F0524F"></div>
+          <div style="position:absolute;left:761.5px;top:71.5px;width:159px;height:215px;border:1px solid #F0524F"></div>
+          <div style="position:absolute;left:171.5px;top:311.5px;width:641px;height:329px;border:1px solid #F0524F"></div>
+
+          <div style="position:absolute;left:180px;top:80px;width:255px;height:142px;background:#FFFFFF;box-shadow:0 1px 3px rgba(0,0,0,.4);outline:1px solid #000000;display:flex;align-items:center;gap:14px;padding:0 22px;color:#1F2124">
+            <div style="width:52px;height:52px;border-radius:10px;background:#A77BFF;display:flex;align-items:center;justify-content:center;color:#FFFFFF"><v-icon i="tool-pen" s="30"></v-icon></div>
+            <div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:20px;font-weight:600">Taller Victoria</span><span style="font-size:10px;color:#5E636A;letter-spacing:.1em">ILUSTRACIÓN · ÍCONOS</span></div>
+          </div>
+          <div style="position:absolute;left:475px;top:80px;width:255px;height:142px;background:#FFFFFF;box-shadow:0 1px 3px rgba(0,0,0,.4);outline:1px solid #9AA0A6;padding:22px;display:flex;flex-direction:column;justify-content:flex-end;gap:3px;color:#1F2124;font-size:10px">
+            <span style="font-size:13px;font-weight:600">Ana Lucía Ortega</span><span>ana@tallervictoria.mx</span><span>+52 55 1234 5678</span>
+          </div>
+          <div style="position:absolute;left:770px;top:80px;width:142px;height:198px;background:#FFFFFF;box-shadow:0 1px 3px rgba(0,0,0,.4);outline:1px solid #9AA0A6;display:flex;align-items:center;justify-content:center">
+            <div style="width:96px;height:96px;border-radius:50%;border:3px solid #2EC4C9;display:flex;align-items:center;justify-content:center;color:#2EC4C9"><v-icon i="star-filled" s="40"></v-icon></div>
+          </div>
+          <div style="position:absolute;left:180px;top:320px;width:624px;height:312px;background:#FFFFFF;box-shadow:0 1px 3px rgba(0,0,0,.4);outline:1px solid #9AA0A6;color:#1F2124">
+            <div style="position:absolute;left:28px;top:26px;display:flex;align-items:center;gap:10px"><div style="width:30px;height:30px;border-radius:6px;background:#A77BFF"></div><span style="font-size:13px;font-weight:600">Taller Victoria</span></div>
+            <div style="position:absolute;left:330px;top:170px;display:flex;flex-direction:column;gap:12px;width:240px"><span style="height:1px;background:#B4B8BD"></span><span style="height:1px;background:#B4B8BD"></span><span style="height:1px;background:#B4B8BD"></span></div>
+            <div style="position:absolute;right:28px;top:26px;width:44px;height:52px;border:1px dashed #B4B8BD"></div>
+          </div>
+
+          <div style="position:absolute;left:180px;top:60px;display:flex;align-items:center;gap:6px;height:16px;padding:0 6px;background:var(--accent);color:#FFFFFF;font-family:var(--font-ui);font-size:11px;border-radius:2px">01 – Tarjeta frente<v-icon i="artboard-options" s="12"></v-icon></div>
+          <span style="position:absolute;left:475px;top:62px;font-family:var(--font-ui);font-size:11px;color:var(--text-muted)">02 – Tarjeta dorso</span>
+          <span style="position:absolute;left:770px;top:62px;font-family:var(--font-ui);font-size:11px;color:var(--text-muted)">04 – Etiqueta</span>
+          <span style="position:absolute;left:180px;top:302px;font-family:var(--font-ui);font-size:11px;color:var(--text-muted)">03 – Sobre</span>
+
+          <div style="position:absolute;left:180px;top:80px;width:255px;height:142px;border:1px dashed var(--accent);pointer-events:none"></div>
+          <span style="position:absolute;left:176.5px;top:76.5px;width:7px;height:7px;background:#FFFFFF;border:1px solid var(--accent)"></span>
+          <span style="position:absolute;left:304px;top:76.5px;width:7px;height:7px;background:#FFFFFF;border:1px solid var(--accent)"></span>
+          <span style="position:absolute;left:431.5px;top:76.5px;width:7px;height:7px;background:#FFFFFF;border:1px solid var(--accent)"></span>
+          <span style="position:absolute;left:176.5px;top:147.5px;width:7px;height:7px;background:#FFFFFF;border:1px solid var(--accent)"></span>
+          <span style="position:absolute;left:431.5px;top:147.5px;width:7px;height:7px;background:#FFFFFF;border:1px solid var(--accent)"></span>
+          <span style="position:absolute;left:176.5px;top:218.5px;width:7px;height:7px;background:#FFFFFF;border:1px solid var(--accent)"></span>
+          <span style="position:absolute;left:304px;top:218.5px;width:7px;height:7px;background:#FFFFFF;border:1px solid var(--accent)"></span>
+          <span style="position:absolute;left:431.5px;top:218.5px;width:7px;height:7px;background:#FFFFFF;border:1px solid var(--accent)"></span>
+          <span style="position:absolute;left:300px;top:144px;width:15px;height:1px;background:var(--accent)"></span><span style="position:absolute;left:307px;top:137px;width:1px;height:15px;background:var(--accent)"></span>
+
+          <div style="position:absolute;left:860px;top:440px;width:150px;height:96px;border:1px dashed var(--accent);background:var(--accent-soft)"></div>
+          <div style="position:absolute;left:866px;top:542px;display:flex;align-items:center;height:20px;padding:0 8px;border-radius:3px;background:var(--accent);color:#FFFFFF;font-family:var(--font-ui);font-size:11px;white-space:pre;font-variant-numeric:tabular-nums">An: 53 mm  Al: 34 mm</div>
+          <div style="position:absolute;left:1004px;top:530px;color:#FFFFFF;filter:drop-shadow(0 0 1px #000)"><v-icon i="plus" s="16"></v-icon></div>
+        </div>
+      </div>
+    </div>
+    <dc-import name="Panels" layout="properties,layers,spaces>properties+;artboards>artboards+;fill,swatches,gradient>fill;stroke,appearance>stroke;align,spacing,transform,pathfinder>align" sel="artboard" hint-size="316px,100%"></dc-import>
+  </div>
+  <dc-import name="StatusBar" zoom="100%" board="Tarjeta frente" tool="Mesa de trabajo" tool-icon="tool-artboard" x="241 mm" y="128 mm" space="Diseño" space-color="#A77BFF" boards="4 mesas" saved="Guardado hace 12 s" hint-size="1440px,24px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900}}"></script>
+</body>
+</html>

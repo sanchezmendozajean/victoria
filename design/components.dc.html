@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="tokens.css">
+<script src="icons.js"></script>
+</helmet>
+<div data-theme="{{ theme }}" data-screen-label="16 Componentes" style="min-height:100vh;background:var(--bg-app);color:var(--text);font-family:var(--font-ui);font-size:11px;padding:32px clamp(16px,4vw,48px) 64px">
+  <div style="max-width:1320px;margin:0 auto;display:flex;flex-direction:column;gap:20px">
+    <header style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <svg width="24" height="24" viewBox="0 0 16 16" fill="none" style="color:var(--accent)"><path d="M2.5 2.5 8 12.5 13.5 2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path><path d="M8 12.5h5.5" stroke="currentColor" stroke-width=".8"></path><circle cx="13.75" cy="12.5" r="1.3" fill="currentColor"></circle><rect x="6.3" y="10.8" width="3.4" height="3.4" fill="currentColor"></rect></svg>
+      <div style="display:flex;flex-direction:column"><span style="font-size:18px;font-weight:600">Victoria · Hoja de componentes</span><span style="color:var(--text-muted);font-size:12px">Todos los componentes y estados de specs/10. Nombre de componente en monoespaciada (= atributo data-vc).</span></div>
+      <span style="flex:1"></span>
+      <a href="index.dc.html" style="display:flex;align-items:center;gap:6px;font-size:12px"><v-icon i="chevron-left" s="14"></v-icon>Índice</a>
+    </header>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(400px,1fr));gap:16px">
+
+      <section style="display:flex;flex-direction:column;gap:12px;padding:16px;background:var(--bg-panel);border:1px solid var(--border);border-radius:6px">
+        <div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:13px;font-weight:600">Botón ícono</span><code style="color:var(--text-muted);font-size:10px">icon-button · 24×24 · ícono 16</code></div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px"><span data-vc="icon-button" style="width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:3px;color:var(--icon)"><v-icon i="tool-pen" s="16"></v-icon></span><span style="color:var(--text-muted);font-size:10px">normal</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px"><span style="width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:3px;background:var(--bg-hover);color:var(--icon-active)"><v-icon i="tool-pen" s="16"></v-icon></span><span style="color:var(--text-muted);font-size:10px">hover</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px"><span style="width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:3px;background:var(--bg-active);color:var(--icon-active);box-shadow:inset 0 1px 2px rgba(0,0,0,.35)"><v-icon i="tool-pen" s="16"></v-icon></span><span style="color:var(--text-muted);font-size:10px">presionado</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px"><span style="width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:3px;background:var(--bg-active);color:var(--accent)"><v-icon i="smart-guides" s="16"></v-icon></span><span style="color:var(--text-muted);font-size:10px">activo</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px"><span style="width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:3px;color:var(--text-disabled)"><v-icon i="pf-expand" s="16"></v-icon></span><span style="color:var(--text-muted);font-size:10px">deshabilitado</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px"><span style="width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:3px;color:var(--icon);box-shadow:0 0 0 2px var(--accent)"><v-icon i="tool-pen" s="16"></v-icon></span><span style="color:var(--text-muted);font-size:10px">foco</span></div>
+        </div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;padding-top:10px;border-top:1px solid var(--border)">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px"><span data-vc="tool-button" style="position:relative;width:36px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:3px;color:var(--icon)"><v-icon i="tool-rect" s="20"></v-icon><span style="position:absolute;right:3px;bottom:3px;width:0;height:0;border-left:4px solid transparent;border-bottom:4px solid currentColor"></span></span><span style="color:var(--text-muted);font-size:10px">herramienta · grupo</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px"><span style="width:36px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:3px;background:var(--bg-active);color:var(--icon-active);box-shadow:inset 2px 0 0 var(--accent)"><v-icon i="tool-pen" s="20"></v-icon></span><span style="color:var(--text-muted);font-size:10px">herramienta activa</span></div>
+          <div style="display:flex;flex-direction:column;gap:6px"><div data-vc="tool-flyout" style="display:flex;gap:2px;padding:4px;background:var(--bg-panel);border:1px solid var(--border-strong);border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.35);font-size:12px;white-space:nowrap">
+            <span style="display:flex;align-items:center;gap:6px;height:28px;padding:0 8px;border-radius:3px;background:var(--bg-active)"><v-icon i="tool-rect" s="16" style="color:var(--icon)"></v-icon>Rectángulo<span style="color:var(--text-muted);font-size:11px">M</span></span>
+            <span style="display:flex;align-items:center;gap:6px;height:28px;padding:0 8px;border-radius:3px"><v-icon i="tool-ellipse" s="16" style="color:var(--icon)"></v-icon>Elipse<span style="color:var(--text-muted);font-size:11px">L</span></span>
+            <span style="display:flex;align-items:center;gap:6px;height:28px;padding:0 8px;border-radius:3px"><v-icon i="tool-star" s="16" style="color:var(--icon)"></v-icon>Estrella</span>
+          </div><span style="color:var(--text-muted);font-size:10px">desplegable de grupo (horizontal)</span></div>
+        </div>
+      </section>
+
+      <section style="display:flex;flex-direction:column;gap:12px;padding:16px;background:var(--bg-panel);border:1px solid var(--border);border-radius:6px">
+        <div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:13px;font-weight:600">Grupo segmentado</span><code style="color:var(--text-muted);font-size:10px">segmented</code></div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">
+          <div style="display:flex;flex-direction:column;gap:6px"><div data-vc="segmented" style="display:flex;border:1px solid var(--border);border-radius:3px;overflow:hidden;height:22px;width:max-content"><span style="width:28px;display:flex;align-items:center;justify-content:center;color:var(--icon)"><v-icon i="cap-butt" s="16"></v-icon></span><span style="width:28px;display:flex;align-items:center;justify-content:center;background:var(--bg-active);color:var(--icon-active);border-left:1px solid var(--border)"><v-icon i="cap-round" s="16"></v-icon></span><span style="width:28px;display:flex;align-items:center;justify-content:center;color:var(--icon);border-left:1px solid var(--border)"><v-icon i="cap-square" s="16"></v-icon></span></div><span style="color:var(--text-muted);font-size:10px">solo íconos</span></div>
+          <div style="display:flex;flex-direction:column;gap:6px"><div style="display:flex;border:1px solid var(--border);border-radius:3px;overflow:hidden;height:22px;width:max-content"><span style="display:flex;align-items:center;gap:5px;padding:0 10px;color:var(--icon)"><v-icon i="tool-curvature" s="14"></v-icon>Suave</span><span style="display:flex;align-items:center;gap:5px;padding:0 10px;background:var(--bg-active);color:var(--icon-active);border-left:1px solid var(--border)"><v-icon i="tool-anchor-convert" s="14"></v-icon>Esquina</span></div><span style="color:var(--text-muted);font-size:10px">ícono + etiqueta</span></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;padding-top:10px;border-top:1px solid var(--border)">
+          <span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text);display:flex;align-items:center;gap:4px"><v-icon i="chevron-down" s="12" style="color:var(--text-muted)"></v-icon>Título de sección</span>
+          <span style="color:var(--text-muted);font-size:10px">section-title · 10 px semibold, mayúsculas, chevron para plegar</span>
+        </div>
+      </section>
+
+      <section style="display:flex;flex-direction:column;gap:12px;padding:16px;background:var(--bg-panel);border:1px solid var(--border);border-radius:6px">
+        <div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:13px;font-weight:600">Campo numérico</span><code style="color:var(--text-muted);font-size:10px">number-field · 22 px</code></div>
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 16px">
+          <div style="display:flex;flex-direction:column;gap:6px"><div data-vc="number-field" style="display:flex;align-items:center;gap:4px;height:22px;padding:0 6px;background:var(--bg-input);border:1px solid var(--border);border-radius:3px;font-variant-numeric:tabular-nums"><v-icon i="tracking" s="14" style="color:var(--text-muted)"></v-icon><span style="flex:1;text-align:right">120</span><span style="font-size:10px;color:var(--text-muted)">pt</span></div><span style="color:var(--text-muted);font-size:10px">normal</span></div>
+          <div style="display:flex;flex-direction:column;gap:6px"><div style="display:flex;align-items:center;gap:4px;height:22px;padding:0 2px 0 6px;background:var(--bg-input);border:1px solid var(--border-strong);border-radius:3px;font-variant-numeric:tabular-nums"><v-icon i="tracking" s="14" style="color:var(--text-muted)"></v-icon><span style="flex:1;text-align:right">120</span><span style="font-size:10px;color:var(--text-muted)">pt</span><span style="display:flex;flex-direction:column;color:var(--icon)"><v-icon i="chevron-up" s="9"></v-icon><v-icon i="chevron-down" s="9"></v-icon></span><span style="width:1px;height:14px;background:var(--border)"></span><v-icon i="chevron-down" s="10" style="color:var(--text-muted)"></v-icon></div><span style="color:var(--text-muted);font-size:10px">hover · ▴▾ y ▾ de valores</span></div>
+          <div style="display:flex;flex-direction:column;gap:6px"><div style="display:flex;align-items:center;gap:4px;height:22px;padding:0 6px;background:var(--bg-input);border:1px solid var(--border);border-radius:3px;font-variant-numeric:tabular-nums;cursor:ew-resize"><span style="display:flex;align-items:center;padding:0 2px;border-radius:2px;background:var(--accent);color:#FFFFFF"><v-icon i="tracking" s="14"></v-icon></span><span style="flex:1;text-align:right">146</span><span style="font-size:10px;color:var(--text-muted)">pt</span><span style="color:var(--accent);font-size:12px">↔</span></div><span style="color:var(--text-muted);font-size:10px">arrastrando el ícono (scrubby)</span></div>
+          <div style="display:flex;flex-direction:column;gap:6px"><div style="display:flex;align-items:center;gap:4px;height:22px;padding:0 6px;background:var(--bg-input);border:1px solid var(--accent);box-shadow:0 0 0 1px var(--accent);border-radius:3px;font-variant-numeric:tabular-nums"><span style="color:var(--text-muted)">X</span><span style="flex:1;text-align:right"><span style="background:var(--accent-soft)">120</span><span style="display:inline-block;width:1px;height:12px;background:var(--text);vertical-align:middle"></span></span><span style="font-size:10px;color:var(--text-muted)">pt</span></div><span style="color:var(--text-muted);font-size:10px">foco / edición</span></div>
+          <div style="display:flex;flex-direction:column;gap:6px"><div style="display:flex;align-items:center;gap:4px;height:22px;padding:0 6px;background:var(--bg-input);border:1px solid var(--border);border-radius:3px;color:var(--text-disabled)"><span>Y</span><span style="flex:1;text-align:right">—</span><span style="font-size:10px">pt</span></div><span style="color:var(--text-muted);font-size:10px">deshabilitado / mixto</span></div>
+          <div style="display:flex;flex-direction:column;gap:6px;position:relative"><div style="display:flex;align-items:center;gap:4px;height:22px;padding:0 4px 0 6px;background:var(--bg-input);border:1px solid var(--accent);border-radius:3px;font-variant-numeric:tabular-nums"><v-icon i="stroke-weight" s="14" style="color:var(--text-muted)"></v-icon><span style="flex:1;text-align:right">1,5</span><span style="font-size:10px;color:var(--text-muted)">pt</span><v-icon i="chevron-up" s="10" style="color:var(--text-muted)"></v-icon></div>
+            <div style="padding:4px;background:var(--bg-panel);border:1px solid var(--border-strong);border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.35);font-size:12px">
+              <sc-for list="{{ weights }}" as="w"><div style="display:flex;align-items:center;gap:8px;height:26px;padding:0 8px;border-radius:3px;background:{{ w.bg }};color:{{ w.color }}"><span style="width:16px;display:flex;align-items:center"><span style="width:16px;height:{{ w.px }}px;background:currentColor;border-radius:1px"></span></span><span style="flex:1;font-variant-numeric:tabular-nums">{{ w.v }} pt</span></div></sc-for>
+            </div><span style="color:var(--text-muted);font-size:10px">▾ valores comunes (con ícono de muestra)</span></div>
+        </div>
+      </section>
+
+      <section style="display:flex;flex-direction:column;gap:12px;padding:16px;background:var(--bg-panel);border:1px solid var(--border);border-radius:6px">
+        <div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:13px;font-weight:600">Campo con candado · Punto de referencia</span><code style="color:var(--text-muted);font-size:10px">linked-fields · ref-point</code></div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;align-items:center;gap:2px;width:220px"><div style="flex:1;display:flex;align-items:center;gap:4px;height:22px;padding:0 6px;background:var(--bg-input);border:1px solid var(--border);border-radius:3px;font-variant-numeric:tabular-nums"><span style="color:var(--text-muted)">An</span><span style="flex:1;text-align:right">64</span><span style="font-size:10px;color:var(--text-muted)">pt</span></div><span title="Proporciones enlazadas" style="width:22px;display:flex;justify-content:center;color:var(--accent)"><v-icon i="link" s="14"></v-icon></span><div style="flex:1;display:flex;align-items:center;gap:4px;height:22px;padding:0 6px;background:var(--bg-input);border:1px solid var(--border);border-radius:3px;font-variant-numeric:tabular-nums"><span style="color:var(--text-muted)">Al</span><span style="flex:1;text-align:right">64</span><span style="font-size:10px;color:var(--text-muted)">pt</span></div></div>
+          <div style="display:flex;align-items:center;gap:2px;width:220px"><div style="flex:1;display:flex;align-items:center;gap:4px;height:22px;padding:0 6px;background:var(--bg-input);border:1px solid var(--border);border-radius:3px;font-variant-numeric:tabular-nums"><span style="color:var(--text-muted)">An</span><span style="flex:1;text-align:right">90</span><span style="font-size:10px;color:var(--text-muted)">mm</span></div><span title="Sin enlazar" style="width:22px;display:flex;justify-content:center;color:var(--text-muted)"><v-icon i="unlink" s="14"></v-icon></span><div style="flex:1;display:flex;align-items:center;gap:4px;height:22px;padding:0 6px;background:var(--bg-input);border:1px solid var(--border);border-radius:3px;font-variant-numeric:tabular-nums"><span style="color:var(--text-muted)">Al</span><span style="flex:1;text-align:right">50</span><span style="font-size:10px;color:var(--text-muted)">mm</span></div></div>
+        </div>
+        <div style="display:flex;gap:20px;padding-top:10px;border-top:1px solid var(--border)">
+          <sc-for list="{{ refPoints }}" as="r">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:6px"><div data-vc="ref-point" style="display:grid;grid-template-columns:repeat(3,5px);gap:2px"><sc-for list="{{ r.cells }}" as="c"><span style="width:5px;height:5px;box-sizing:border-box;border:1px solid {{ c.b }};background:{{ c.bg }}"></span></sc-for></div><span style="color:var(--text-muted);font-size:10px">{{ r.label }}</span></div>
+          </sc-for>
+        </div>
+      </section>
+
+      <section style="display:flex;flex-direction:column;gap:12px;padding:16px;background:var(--bg-panel);border:1px solid var(--border);border-radius:6px">
+        <div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:13px;font-weight:600">Muestra de color · Relleno/trazo</span><code style="color:var(--text-muted);font-size:10px">swatch · fill-stroke</code></div>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px"><span data-vc="swatch" style="width:16px;height:16px;border-radius:2px;background:#4C8DFF;box-shadow:inset 0 0 0 1px rgba(0,0,0,.25)"></span><span style="color:var(--text-muted);font-size:10px">16</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px"><span style="width:22px;height:22px;border-radius:2px;background:#4C8DFF;box-shadow:inset 0 0 0 1px rgba(0,0,0,.25)"></span><span style="color:var(--text-muted);font-size:10px">22</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px"><span style="width:22px;height:22px;border-radius:2px;background:linear-gradient(rgba(76,141,255,.5),rgba(76,141,255,.5)),repeating-conic-gradient(#C9CBCE 0 25%,#FFFFFF 0 50%) 0 0/8px 8px"></span><span style="color:var(--text-muted);font-size:10px">50 %</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px"><span style="width:22px;height:22px;border-radius:2px;background:linear-gradient(to top right,transparent calc(50% - 1px),#F0524F calc(50% - 1px),#F0524F calc(50% + 1px),transparent calc(50% + 1px)),#FFFFFF"></span><span style="color:var(--text-muted);font-size:10px">Ninguno</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px"><span style="position:relative;width:22px;height:22px;border-radius:2px;background:#3FB97A"><span style="position:absolute;right:0;bottom:0;width:0;height:0;border-left:7px solid transparent;border-bottom:7px solid #FFFFFF"></span></span><span style="color:var(--text-muted);font-size:10px">global</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px"><span style="width:22px;height:22px;border-radius:2px;background:linear-gradient(90deg,#4C8DFF,#A77BFF);box-shadow:0 0 0 2px var(--bg-panel),0 0 0 3px var(--accent)"></span><span style="color:var(--text-muted);font-size:10px">degradado · sel.</span></div>
+        </div>
+        <div style="display:flex;gap:24px;padding-top:10px;border-top:1px solid var(--border)">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px"><div data-vc="fill-stroke" style="position:relative;width:36px;height:36px"><span style="position:absolute;left:0;top:0;width:22px;height:22px;border-radius:2px;background:#F2B33D;box-shadow:0 0 0 1px var(--border-strong);z-index:2"></span><span style="position:absolute;left:12px;top:12px;width:22px;height:22px;border-radius:2px;border:5px solid #1F2124;box-shadow:0 0 0 1px var(--border-strong)"></span></div><span style="color:var(--text-muted);font-size:10px">relleno activo</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px"><div style="position:relative;width:36px;height:36px"><span style="position:absolute;left:0;top:0;width:22px;height:22px;border-radius:2px;background:#F2B33D;box-shadow:0 0 0 1px var(--border-strong)"></span><span style="position:absolute;left:12px;top:12px;width:22px;height:22px;border-radius:2px;border:5px solid #1F2124;box-shadow:0 0 0 1px var(--border-strong);z-index:2"></span></div><span style="color:var(--text-muted);font-size:10px">trazo activo</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px"><div style="position:relative;width:36px;height:36px"><span style="position:absolute;left:0;top:0;width:22px;height:22px;border-radius:2px;background:#FFFFFF;box-shadow:0 0 0 1px var(--border-strong);z-index:2"></span><span style="position:absolute;left:12px;top:12px;width:22px;height:22px;border-radius:2px;background:linear-gradient(to top right,transparent calc(50% - 1px),#F0524F calc(50% - 1px),#F0524F calc(50% + 1px),transparent calc(50% + 1px)),#FFFFFF;box-shadow:0 0 0 1px var(--border-strong)"></span><span style="position:absolute;right:-6px;top:-6px;color:var(--icon)"><v-icon i="swap-fill-stroke" s="12"></v-icon></span><span style="position:absolute;left:-6px;bottom:-6px;color:var(--icon)"><v-icon i="default-colors" s="12"></v-icon></span></div><span style="color:var(--text-muted);font-size:10px">trazo: ninguno</span></div>
+        </div>
+      </section>
+
+      <section style="display:flex;flex-direction:column;gap:12px;padding:16px;background:var(--bg-panel);border:1px solid var(--border);border-radius:6px">
+        <div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:13px;font-weight:600">Deslizador</span><code style="color:var(--text-muted);font-size:10px">slider · pista 4 · pulgar 10</code></div>
+        <sc-for list="{{ sliders }}" as="s">
+          <div style="display:grid;grid-template-columns:70px 1fr 48px;gap:10px;align-items:center">
+            <span style="color:var(--text-muted)">{{ s.label }}</span>
+            <div data-vc="slider" style="position:relative;height:4px;border-radius:2px;background:{{ s.track }};box-shadow:inset 0 0 0 1px rgba(0,0,0,.2)"><span style="position:absolute;left:{{ s.pos }}%;top:-3px;width:10px;height:10px;margin-left:-5px;border-radius:50%;background:#FFFFFF;box-shadow:{{ s.thumb }}"></span></div>
+            <div style="height:22px;display:flex;align-items:center;justify-content:flex-end;padding:0 6px;background:var(--bg-input);border:1px solid var(--border);border-radius:3px;font-variant-numeric:tabular-nums">{{ s.v }}</div>
+          </div>
+        </sc-for>
+      </section>
+
+      <section style="display:flex;flex-direction:column;gap:12px;padding:16px;background:var(--bg-panel);border:1px solid var(--border);border-radius:6px">
+        <div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:13px;font-weight:600">Desplegable</span><code style="color:var(--text-muted);font-size:10px">dropdown · ícono de la opción a la izquierda</code></div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">
+          <div style="display:flex;flex-direction:column;gap:6px;width:170px"><div data-vc="dropdown" style="display:flex;align-items:center;gap:6px;height:22px;padding:0 4px 0 6px;background:var(--bg-input);border:1px solid var(--border);border-radius:3px"><v-icon i="align-to-artboard" s="14" style="color:var(--icon)"></v-icon><span style="flex:1">Mesa de trabajo</span><v-icon i="chevron-down" s="10" style="color:var(--text-muted)"></v-icon></div><span style="color:var(--text-muted);font-size:10px">cerrado</span></div>
+          <div style="display:flex;flex-direction:column;gap:4px;width:190px"><div style="display:flex;align-items:center;gap:6px;height:22px;padding:0 4px 0 6px;background:var(--bg-input);border:1px solid var(--accent);border-radius:3px"><v-icon i="align-to-key" s="14" style="color:var(--icon)"></v-icon><span style="flex:1">Objeto clave</span><v-icon i="chevron-up" s="10" style="color:var(--text-muted)"></v-icon></div>
+            <div style="padding:4px;background:var(--bg-panel);border:1px solid var(--border-strong);border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.35);font-size:12px">
+              <div style="display:flex;align-items:center;gap:8px;height:26px;padding:0 8px;border-radius:3px"><v-icon i="align-to-selection" s="16" style="color:var(--icon)"></v-icon><span style="flex:1">Selección</span></div>
+              <div style="display:flex;align-items:center;gap:8px;height:26px;padding:0 8px;border-radius:3px;background:var(--accent);color:#FFFFFF"><v-icon i="align-to-key" s="16"></v-icon><span style="flex:1">Objeto clave</span><v-icon i="check" s="14"></v-icon></div>
+              <div style="display:flex;align-items:center;gap:8px;height:26px;padding:0 8px;border-radius:3px"><v-icon i="align-to-artboard" s="16" style="color:var(--icon)"></v-icon><span style="flex:1">Mesa de trabajo</span></div>
+            </div><span style="color:var(--text-muted);font-size:10px">abierto</span></div>
+        </div>
+      </section>
+
+      <section style="display:flex;flex-direction:column;gap:12px;padding:16px;background:var(--bg-panel);border:1px solid var(--border);border-radius:6px">
+        <div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:13px;font-weight:600">Fila de capa</span><code style="color:var(--text-muted);font-size:10px">layer-row · 28 px</code></div>
+        <div style="display:flex;flex-direction:column;border:1px solid var(--border);border-radius:3px;overflow:hidden;font-size:12px">
+          <sc-for list="{{ layerDemo }}" as="r">
+            <div data-vc="layer-row" style="display:flex;align-items:center;height:28px;background:{{ r.bg }};border-bottom:1px solid var(--border)">
+              <span style="width:24px;display:flex;justify-content:center;color:var(--icon)"><v-icon i="{{ r.eye }}" s="14"></v-icon></span>
+              <span style="width:18px;height:28px;display:flex;align-items:center;justify-content:center;color:var(--icon);border-right:1px solid var(--border)"><sc-if value="{{ r.lock }}"><v-icon i="lock" s="12"></v-icon></sc-if></span>
+              <span style="width:3px;height:28px;background:{{ r.color }}"></span><span style="width:{{ r.indent }}px"></span>
+              <span style="width:16px;display:flex;justify-content:center;color:var(--text-muted)"><v-icon i="{{ r.chev }}" s="12"></v-icon></span>
+              <span style="width:20px;height:20px;margin:0 6px 0 2px;background:#FFFFFF;border:1px solid var(--border-strong);display:flex;align-items:center;justify-content:center;color:#1F2124"><v-icon i="{{ r.thumb }}" s="14"></v-icon></span>
+              <span style="flex:1;color:{{ r.text }}">{{ r.name }}</span>
+              <span style="width:16px;height:16px;display:flex;align-items:center;justify-content:center"><span style="width:10px;height:10px;border-radius:50%;border:1px solid var(--text-muted);box-shadow:{{ r.ring }}"></span></span>
+              <span style="width:22px;display:flex;justify-content:center"><span style="width:8px;height:8px;background:{{ r.sel }}"></span></span>
+            </div>
+          </sc-for>
+        </div>
+        <span style="color:var(--text-muted);font-size:10px">ojo · candado · barra 3 px · ▸ · miniatura 20 · nombre · ○ destino (doble anillo = tiene apariencia) · ■ selección</span>
+      </section>
+
+      <section style="display:flex;flex-direction:column;gap:12px;padding:16px;background:var(--bg-panel);border:1px solid var(--border);border-radius:6px">
+        <div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:13px;font-weight:600">Fila de apariencia</span><code style="color:var(--text-muted);font-size:10px">appearance-row</code></div>
+        <div style="display:flex;flex-direction:column;border:1px solid var(--border);border-radius:3px;overflow:hidden">
+          <sc-for list="{{ appDemo }}" as="a">
+            <div data-vc="appearance-row" style="display:flex;align-items:center;gap:6px;height:28px;padding:0 8px 0 4px;border-bottom:1px solid var(--border);background:{{ a.bg }};box-shadow:{{ a.ring }}">
+              <span style="width:20px;display:flex;justify-content:center;color:var(--icon)"><v-icon i="{{ a.eye }}" s="14"></v-icon></span>
+              <span style="width:16px;display:flex;justify-content:center;color:{{ a.tc }}"><v-icon i="{{ a.type }}" s="14"></v-icon></span>
+              <span style="flex:1;font-size:12px">{{ a.name }}</span>
+              <sc-if value="{{ a.sw }}"><span style="width:16px;height:16px;border-radius:2px;background:{{ a.sw }}"></span></sc-if>
+              <span style="color:var(--text-muted);min-width:34px;text-align:right">{{ a.v }}</span>
+              <v-icon i="chevron-right" s="12" style="color:var(--text-muted)"></v-icon>
+            </div>
+          </sc-for>
+        </div>
+        <span style="color:var(--text-muted);font-size:10px">◇ estructural (azul) · halo de apariencia (ámbar) · fila seleccionada con barra de acento</span>
+      </section>
+
+      <section style="display:flex;flex-direction:column;gap:12px;padding:16px;background:var(--bg-panel);border:1px solid var(--border);border-radius:6px;grid-column:1 / -1">
+        <div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:13px;font-weight:600">Pestaña de Espacio · Barra de Espacios</span><code style="color:var(--text-muted);font-size:10px">space-tab · spaces-bar · píldora 22 px</code></div>
+        <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-end;padding:12px;border-radius:3px;background:var(--canvas)">
+          <div style="display:flex;flex-direction:column;align-items:flex-start;gap:6px"><div style="display:flex;align-items:center;gap:6px;height:22px;padding:0 10px;border-radius:11px;color:var(--text);font-size:12px"><span style="width:8px;height:8px;border-radius:50%;background:#3FB97A"></span>Hoja A4</div><span style="font-size:10px;color:var(--text)">normal</span></div>
+          <div style="display:flex;flex-direction:column;align-items:flex-start;gap:6px"><div style="display:flex;align-items:center;gap:6px;height:22px;padding:0 4px 0 10px;border-radius:11px;background:var(--bg-hover);color:var(--text);font-size:12px"><span style="width:8px;height:8px;border-radius:50%;background:#3FB97A"></span>Hoja A4<span style="width:18px;height:18px;display:flex;align-items:center;justify-content:center;color:var(--icon-active)"><v-icon i="more" s="14"></v-icon></span></div><span style="font-size:10px;color:var(--text)">hover (⋯)</span></div>
+          <div style="display:flex;flex-direction:column;align-items:flex-start;gap:6px"><div style="position:relative;display:flex;align-items:center;gap:6px;height:22px;padding:0 10px;border-radius:11px;background:var(--bg-panel-alt);color:var(--text);font-size:12px;font-weight:500"><span style="width:8px;height:8px;border-radius:50%;background:#4C8DFF"></span>Íconos<span style="position:absolute;left:10px;right:10px;bottom:0;height:2px;border-radius:1px;background:#4C8DFF"></span></div><span style="font-size:10px;color:var(--text)">activa</span></div>
+          <div style="display:flex;flex-direction:column;align-items:flex-start;gap:6px"><div style="display:flex;align-items:center;gap:6px;height:22px;padding:0 10px;border-radius:11px;color:var(--text);font-size:12px"><span style="width:8px;height:8px;border-radius:50%;background:#F2B33D"></span>Bocetos<v-icon i="space-exclude-export" s="12" style="opacity:.6"></v-icon></div><span style="font-size:10px;color:var(--text)">excluido de exportación</span></div>
+          <div style="display:flex;flex-direction:column;align-items:flex-start;gap:6px"><div style="display:flex;align-items:center;gap:6px;height:22px;padding:0 4px 0 10px;border-radius:11px;background:var(--bg-panel-alt);box-shadow:0 0 0 1px var(--accent);font-size:12px"><span style="width:8px;height:8px;border-radius:50%;background:#A77BFF"></span><span style="display:flex;align-items:center;height:16px;padding:0 4px;background:var(--bg-input);border-radius:2px"><span style="background:var(--accent-soft)">Variantes</span><span style="width:1px;height:12px;background:var(--text)"></span></span></div><span style="font-size:10px;color:var(--text)">renombrar (doble clic)</span></div>
+          <div style="display:flex;flex-direction:column;align-items:flex-start;gap:6px">
+            <div style="position:relative;display:flex;align-items:center;gap:2px;height:28px">
+              <div style="display:flex;align-items:center;gap:6px;height:22px;padding:0 10px;border-radius:11px;background:var(--bg-panel-alt);font-size:12px;position:relative"><span style="width:8px;height:8px;border-radius:50%;background:#4C8DFF"></span>Íconos<span style="position:absolute;left:10px;right:10px;bottom:0;height:2px;background:#4C8DFF"></span></div>
+              <div style="width:2px;height:22px;margin:0 3px;background:var(--accent);border-radius:1px;position:relative"><span style="position:absolute;left:-2px;top:-3px;width:6px;height:6px;border-radius:50%;background:var(--accent)"></span><span style="position:absolute;left:-2px;bottom:-3px;width:6px;height:6px;border-radius:50%;background:var(--accent)"></span></div>
+              <div style="display:flex;align-items:center;gap:6px;height:22px;padding:0 10px;border-radius:11px;color:var(--text);font-size:12px"><span style="width:8px;height:8px;border-radius:50%;background:#3FB97A"></span>Hoja A4</div>
+              <div style="display:flex;align-items:center;gap:6px;height:22px;padding:0 10px;border-radius:11px;border:1px dashed var(--border-strong);color:transparent;font-size:12px"><span style="width:8px;height:8px"></span>Bocetos</div>
+              <div style="position:absolute;left:52px;top:-18px;display:flex;align-items:center;gap:6px;height:22px;padding:0 10px;border-radius:11px;background:var(--bg-panel-alt);outline:1px solid var(--accent);box-shadow:0 8px 24px rgba(0,0,0,.35);transform:rotate(-2deg);font-size:12px;color:var(--text)"><v-icon i="grip" s="12" style="color:var(--text-muted)"></v-icon><span style="width:8px;height:8px;border-radius:50%;background:#F2B33D"></span>Bocetos</div>
+            </div><span style="font-size:10px;color:var(--text)">arrastrando para reordenar · indicador de inserción</span></div>
+        </div>
+      </section>
+
+      <section style="display:flex;flex-direction:column;gap:12px;padding:16px;background:var(--bg-panel);border:1px solid var(--border);border-radius:6px">
+        <div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:13px;font-weight:600">Menú</span><code style="color:var(--text-muted);font-size:10px">menu · 12 px · fila 26 · ícono 16 obligatorio</code></div>
+        <div data-vc="menu" style="width:280px;padding:4px;background:var(--bg-panel);border:1px solid var(--border-strong);border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.35);font-size:12px">
+          <div style="display:flex;align-items:center;gap:8px;height:26px;padding:0 8px;border-radius:3px"><v-icon i="undo" s="16" style="color:var(--icon)"></v-icon><span style="flex:1">Deshacer Zigzag</span><span style="font-size:11px;color:var(--text-muted)">Ctrl+Z</span></div>
+          <div style="display:flex;align-items:center;gap:8px;height:26px;padding:0 8px;border-radius:3px;background:var(--accent);color:#FFFFFF"><v-icon i="paste-in-place" s="16"></v-icon><span style="flex:1">Pegar en el mismo lugar</span><span style="font-size:11px">Ctrl+Mayús+V</span></div>
+          <div style="display:flex;align-items:center;gap:8px;height:26px;padding:0 8px;border-radius:3px;color:var(--text-disabled)"><v-icon i="redo" s="16"></v-icon><span style="flex:1">Rehacer</span><span style="font-size:11px">Ctrl+Mayús+Z</span></div>
+          <div style="height:1px;background:var(--border);margin:4px 0"></div>
+          <div style="display:flex;align-items:center;gap:8px;height:26px;padding:0 8px;border-radius:3px"><v-icon i="space-move-to" s="16" style="color:var(--icon)"></v-icon><span style="flex:1">Mover a Espacio</span><v-icon i="chevron-right" s="12" style="color:var(--text-muted)"></v-icon></div>
+          <div style="display:flex;align-items:center;gap:8px;height:26px;padding:0 8px;border-radius:3px"><v-icon i="smart-guides" s="16" style="color:var(--icon)"></v-icon><span style="flex:1">Guías inteligentes</span><v-icon i="check" s="14" style="color:var(--accent)"></v-icon><span style="font-size:11px;color:var(--text-muted)">Ctrl+U</span></div>
+          <div style="height:1px;background:var(--border);margin:4px 0"></div>
+          <div style="display:flex;align-items:center;gap:8px;height:26px;padding:0 8px;border-radius:3px;color:var(--danger)"><v-icon i="delete" s="16"></v-icon><span style="flex:1">Eliminar</span><span style="font-size:11px;color:var(--text-muted)">Supr</span></div>
+        </div>
+      </section>
+
+      <section style="display:flex;flex-direction:column;gap:12px;padding:16px;background:var(--bg-panel);border:1px solid var(--border);border-radius:6px">
+        <div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:13px;font-weight:600">Tooltip · Toast</span><code style="color:var(--text-muted);font-size:10px">tooltip (demora 500 ms) · toast</code></div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <div data-vc="tooltip" style="display:flex;align-items:center;gap:6px;height:22px;padding:0 8px;background:var(--bg-app);border:1px solid var(--border-strong);border-radius:3px;font-size:11px;box-shadow:0 8px 24px rgba(0,0,0,.35)">Pluma<span style="padding:0 4px;border-radius:3px;background:var(--bg-panel-alt);color:var(--text-muted);font-size:10px">P</span></div>
+          <div style="display:flex;align-items:center;gap:6px;height:22px;padding:0 8px;background:var(--bg-app);border:1px solid var(--border-strong);border-radius:3px;font-size:11px;box-shadow:0 8px 24px rgba(0,0,0,.35)">Espacio siguiente<span style="padding:0 4px;border-radius:3px;background:var(--bg-panel-alt);color:var(--text-muted);font-size:10px">Ctrl+Alt+AvPág</span></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;padding-top:10px;border-top:1px solid var(--border)">
+          <div data-vc="toast" style="display:flex;align-items:center;gap:10px;height:36px;padding:0 6px 0 12px;border-radius:6px;background:var(--bg-panel-alt);border:1px solid var(--border-strong);box-shadow:0 8px 24px rgba(0,0,0,.35);font-size:12px"><v-icon i="cloud-check" s="16" style="color:var(--success)"></v-icon><span style="flex:1">Exportadas 5 mesas · 20 archivos</span><span style="display:flex;align-items:center;gap:6px;height:24px;padding:0 8px;color:var(--accent)"><v-icon i="open" s="14"></v-icon>Abrir carpeta</span></div>
+          <div style="display:flex;align-items:center;gap:10px;height:36px;padding:0 6px 0 12px;border-radius:6px;background:var(--bg-panel-alt);border:1px solid var(--border-strong);box-shadow:0 8px 24px rgba(0,0,0,.35);font-size:12px"><v-icon i="alert" s="16" style="color:var(--warning)"></v-icon><span style="flex:1">2 fuentes no disponibles en Linux</span><span style="display:flex;align-items:center;gap:6px;height:24px;padding:0 8px;color:var(--accent)"><v-icon i="search" s="14"></v-icon>Sustituir</span></div>
+          <div style="display:flex;align-items:center;gap:10px;height:36px;padding:0 6px 0 12px;border-radius:6px;background:var(--bg-panel-alt);border:1px solid var(--border-strong);box-shadow:0 8px 24px rgba(0,0,0,.35);font-size:12px"><v-icon i="alert" s="16" style="color:var(--danger)"></v-icon><span style="flex:1">No se pudo guardar logo.vict</span><span style="display:flex;align-items:center;gap:6px;height:24px;padding:0 8px;color:var(--accent)"><v-icon i="save-as" s="14"></v-icon>Guardar como…</span></div>
+        </div>
+      </section>
+
+      <section style="display:flex;flex-direction:column;gap:12px;padding:16px;background:var(--bg-panel);border:1px solid var(--border);border-radius:6px">
+        <div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:13px;font-weight:600">Diálogo</span><code style="color:var(--text-muted);font-size:10px">dialog · título 13 · radio 6</code></div>
+        <div data-vc="dialog" style="display:flex;flex-direction:column;background:var(--bg-panel);border:1px solid var(--border-strong);border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.35)">
+          <div style="display:flex;align-items:center;gap:8px;height:36px;padding:0 8px 0 12px;border-bottom:1px solid var(--border)"><v-icon i="offset-path" s="16" style="color:var(--icon)"></v-icon><span style="font-size:13px;font-weight:600">Desplazar trazado</span><span style="flex:1"></span><v-icon i="close" s="14" style="color:var(--icon)"></v-icon></div>
+          <div style="display:grid;grid-template-columns:90px 1fr;gap:8px;align-items:center;padding:12px">
+            <span style="color:var(--text-muted)">Desplazamiento</span><div style="display:flex;align-items:center;gap:4px;height:22px;padding:0 6px;background:var(--bg-input);border:1px solid var(--border);border-radius:3px;width:100px"><v-icon i="offset-path" s="12" style="color:var(--text-muted)"></v-icon><span style="flex:1;text-align:right">4</span><span style="font-size:10px;color:var(--text-muted)">pt</span></div>
+            <span style="color:var(--text-muted)">Unión</span><div style="display:flex;align-items:center;gap:6px;height:22px;padding:0 4px 0 6px;background:var(--bg-input);border:1px solid var(--border);border-radius:3px;width:140px"><v-icon i="join-round" s="14" style="color:var(--icon)"></v-icon><span style="flex:1">Redondeada</span><v-icon i="chevron-down" s="10" style="color:var(--text-muted)"></v-icon></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;height:44px;padding:0 12px;border-top:1px solid var(--border)"><span style="width:12px;height:12px;border-radius:2px;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#FFFFFF"><v-icon i="check" s="10"></v-icon></span><span style="font-size:12px">Previsualizar</span><span style="flex:1"></span><span style="display:flex;align-items:center;gap:6px;height:24px;padding:0 12px;border-radius:3px;background:var(--bg-panel-alt);border:1px solid var(--border);font-size:12px"><v-icon i="close" s="14"></v-icon>Cancelar</span><span style="display:flex;align-items:center;gap:6px;height:24px;padding:0 12px;border-radius:3px;background:var(--accent);color:#FFFFFF;font-size:12px"><v-icon i="check" s="14"></v-icon>Aceptar</span></div>
+        </div>
+      </section>
+
+      <section style="display:flex;flex-direction:column;gap:12px;padding:16px;background:var(--bg-panel);border:1px solid var(--border);border-radius:6px">
+        <div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:13px;font-weight:600">Pestañas de panel y documento</span><code style="color:var(--text-muted);font-size:10px">panel-tabs · doc-tab</code></div>
+        <div data-vc="panel-tabs" style="display:flex;align-items:stretch;height:24px;background:var(--bg-panel-alt);border:1px solid var(--border);border-radius:3px;overflow:hidden">
+          <div style="display:flex;align-items:center;gap:4px;padding:0 7px;background:var(--bg-panel);border-right:1px solid var(--border)"><v-icon i="stroke-weight" s="14"></v-icon>Trazo</div>
+          <div style="display:flex;align-items:center;gap:4px;padding:0 7px;color:var(--text-muted);border-right:1px solid var(--border)"><v-icon i="appearance" s="14"></v-icon>Apariencia</div>
+          <div title="Muestras" style="display:flex;align-items:center;padding:0 6px;color:var(--text-muted);border-right:1px solid var(--border)"><v-icon i="swatches" s="14"></v-icon></div>
+          <span style="flex:1"></span><span style="width:22px;display:flex;align-items:center;justify-content:center;color:var(--icon)"><v-icon i="panel-menu" s="14"></v-icon></span><span style="width:22px;display:flex;align-items:center;justify-content:center;color:var(--icon)"><v-icon i="chevron-up" s="14"></v-icon></span>
+        </div>
+        <span style="color:var(--text-muted);font-size:10px">Las pestañas inactivas pasan a solo ícono cuando no caben en 280 px.</span>
+        <div style="display:flex;align-items:flex-end;gap:1px;height:30px;padding:0 4px;background:var(--bg-app);border-radius:3px;font-size:12px">
+          <div data-vc="doc-tab" style="display:flex;align-items:center;gap:6px;height:30px;padding:0 6px 0 10px;background:var(--canvas);border-radius:4px 4px 0 0"><v-icon i="file" s="14"></v-icon>logo.vict<span style="width:6px;height:6px;border-radius:50%;background:var(--text)"></span><v-icon i="close" s="12"></v-icon></div>
+          <div style="display:flex;align-items:center;gap:6px;height:26px;padding:0 12px 0 10px;color:var(--text-muted);margin-bottom:2px"><v-icon i="file" s="14"></v-icon>tarjetas.vict</div>
+          <div style="display:flex;align-items:center;gap:6px;height:26px;padding:0 6px 0 10px;background:var(--bg-hover);border-radius:4px 4px 0 0;margin-bottom:2px"><v-icon i="file" s="14"></v-icon>fotos.vict<v-icon i="close" s="12"></v-icon></div>
+        </div>
+        <span style="color:var(--text-muted);font-size:10px">activa (color del lienzo, ● sin guardar) · inactiva · hover (×)</span>
+      </section>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;dark&quot;,&quot;light&quot;],&quot;default&quot;:&quot;dark&quot;,&quot;tsType&quot;:&quot;'dark'|'light'&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const weights = [[0.25, 1], [0.5, 1], [1, 1.5], [1.5, 2, 1], [2, 2.5], [4, 4]].map(([v, px, on]) => ({ v: String(v).replace('.', ','), px, bg: on ? 'var(--accent)' : 'transparent', color: on ? '#FFFFFF' : 'var(--text)' }));
+    const refPoints = [[4, 'centro'], [0, 'sup. izq.'], [8, 'inf. der.']].map(([sel, label]) => ({ label, cells: Array.from({ length: 9 }, (_, i) => ({ b: i === sel ? 'var(--accent)' : 'var(--text-muted)', bg: i === sel ? 'var(--accent)' : 'transparent' })) }));
+    const sliders = [
+      ['Neutro', 'linear-gradient(90deg,var(--accent) 60%,var(--bg-input) 60%)', 60, '60'],
+      ['R', 'linear-gradient(90deg,#000,#f00)', 30, '76'],
+      ['Tono', 'linear-gradient(90deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)', 61, '219°'],
+      ['Opacidad', 'linear-gradient(90deg,transparent,#4C8DFF),repeating-conic-gradient(#C9CBCE 0 25%,#FFFFFF 0 50%) 0 0/8px 8px', 85, '85 %'],
+    ].map(([label, track, pos, v], i) => ({ label, track, pos, v, thumb: i === 0 ? '0 0 0 1px rgba(0,0,0,.5)' : '0 0 0 1px rgba(0,0,0,.5), 0 0 0 3px rgba(255,255,255,.0)' }));
+    const layerDemo = [
+      ['Íconos', 0, 'chevron-down', 'layers', '#4C8DFF', 0, 0, 'double', ''],
+      ['<Trazado> casa', 14, '', 'tool-pen', '#4C8DFF', 1, 0, 'single', '#4C8DFF'],
+      ['Fondo', 0, 'chevron-right', 'layers', '#F0524F', 0, 1, 'single', ''],
+      ['Guías (oculta)', 0, 'chevron-right', 'guides', '#3FB97A', 0, 0, 'single', '', 1],
+    ].map(([name, indent, chev, thumb, color, sel, lock, ring, s, hidden]) => ({ name, indent, chev: chev || 'more', thumb, color, lock: !!lock, eye: hidden ? 'visibility-off' : 'visibility', bg: sel ? 'var(--accent-soft)' : 'transparent', text: lock || hidden ? 'var(--text-muted)' : 'var(--text)', ring: ring === 'double' ? '0 0 0 2px var(--bg-panel), 0 0 0 3px var(--text-muted)' : 'none', sel: s || 'transparent' }));
+    const appDemo = [
+      ['Trazo', 'stroke', 'var(--icon)', '#1F2124', '1 pt'], ['Relleno', 'fill', 'var(--icon)', '#F2B33D', ''],
+      ['Redondear esquinas', 'mod-structural', 'var(--accent)', '', '6 pt', 1], ['Sombra paralela', 'mod-appearance', 'var(--warning)', '', ''],
+    ].map(([name, type, tc, sw, v, on]) => ({ name, type, tc, sw, v, eye: 'visibility', bg: on ? 'var(--accent-soft)' : 'transparent', ring: on ? 'inset 2px 0 0 var(--accent)' : 'none' }));
+    return { theme: this.props.theme ?? 'dark', weights, refPoints, sliders, layerDemo, appDemo };
+  }
+}
+</script>
+</body>
+</html>

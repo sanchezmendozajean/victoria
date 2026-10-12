@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="../tokens.css">
+<script src="../icons.js"></script>
+</helmet>
+<div data-theme="dark" data-screen-label="06 Creador de formas" style="width:1440px;height:900px;display:flex;flex-direction:column;background:var(--bg-app);color:var(--text);font-family:var(--font-ui);overflow:hidden;position:relative">
+  <dc-import name="TitleBar" os="win" workspace="Íconos" hint-size="1440px,32px"></dc-import>
+  <dc-import name="ControlBar" mode="object" label="3 objetos" type-icon="tool-shape-builder" fill="#BFD6FF" x="16" y="10" w="46,7" h="44,2" hint-size="1440px,36px"></dc-import>
+  <div style="flex:1;display:flex;min-height:0">
+    <dc-import name="Toolbar" active="shape" fill="#BFD6FF" style="position:relative;z-index:11;overflow:visible" hint-size="48px,100%"></dc-import>
+    <div style="flex:1;display:flex;flex-direction:column;min-width:0">
+      <dc-import name="DocBar" doc="logo" active="0" style="position:relative;z-index:10;overflow:visible" hint-size="100%,58px"></dc-import>
+      <div data-vc="canvas" style="position:relative;flex:1;background:var(--canvas);overflow:hidden">
+        <dc-import name="Rulers" ox="337" oy="174" ppu="6" every="8" style="position:absolute;inset:0" hint-size="100%,100%"></dc-import>
+        <div style="position:absolute;left:18px;top:18px;right:0;bottom:0;overflow:hidden">
+          <svg width="1058" height="732" viewBox="0 0 1058 732" style="position:absolute;left:0;top:0;font-family:Inter,sans-serif">
+            <defs>
+              <pattern id="sbd" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="#D5D7DA"></rect><circle cx="3" cy="3" r="1.3" fill="#7D838A"></circle></pattern>
+              <clipPath id="clipA"><circle cx="489" cy="330" r="95"></circle></clipPath>
+              <mask id="noC"><rect width="1058" height="732" fill="#FFFFFF"></rect><circle cx="529" cy="399" r="95" fill="#000000"></circle></mask>
+              <mask id="noB"><rect width="1058" height="732" fill="#FFFFFF"></rect><circle cx="569" cy="330" r="95" fill="#000000"></circle></mask>
+            </defs>
+            <rect x="337" y="174" width="384" height="384" fill="#FFFFFF" style="filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.4))"></rect>
+            <rect x="337.5" y="174.5" width="383" height="383" fill="none" stroke="#000000"></rect>
+            <text x="337" y="166" style="fill:var(--text);font-size:11px">logo-64</text>
+            <circle cx="489" cy="330" r="95" fill="#BFD6FF" fill-opacity=".9" stroke="#1F2124" stroke-width="1.5"></circle>
+            <circle cx="569" cy="330" r="95" fill="#B8E6CC" fill-opacity=".8" stroke="#1F2124" stroke-width="1.5"></circle>
+            <circle cx="529" cy="399" r="95" fill="#FFD8A8" fill-opacity=".8" stroke="#1F2124" stroke-width="1.5"></circle>
+            <g clip-path="url(#clipA)"><circle cx="569" cy="330" r="95" fill="url(#sbd)" mask="url(#noC)"></circle><circle cx="529" cy="399" r="95" fill="url(#sbd)" mask="url(#noB)"></circle></g>
+            <circle cx="489" cy="330" r="95" fill="none" style="stroke:var(--accent)" stroke-width="1"></circle>
+            <circle cx="569" cy="330" r="95" fill="none" style="stroke:var(--accent)" stroke-width="1"></circle>
+            <circle cx="529" cy="399" r="95" fill="none" style="stroke:var(--accent)" stroke-width="1"></circle>
+            <polyline points="530,276 520,300 486,362 470,392" fill="none" stroke="#55595F" stroke-width="1.5" stroke-linecap="round"></polyline>
+            <circle cx="530" cy="276" r="3" fill="#55595F"></circle>
+            <rect x="393.5" y="234.5" width="271" height="259" fill="none" style="stroke:var(--accent)" stroke-width="1"></rect>
+            <g fill="#FFFFFF" style="stroke:var(--accent)" stroke-width="1">
+              <rect x="390" y="231" width="7" height="7"></rect><rect x="525.5" y="231" width="7" height="7"></rect><rect x="661" y="231" width="7" height="7"></rect>
+              <rect x="390" y="360.5" width="7" height="7"></rect><rect x="661" y="360.5" width="7" height="7"></rect>
+              <rect x="390" y="490" width="7" height="7"></rect><rect x="525.5" y="490" width="7" height="7"></rect><rect x="661" y="490" width="7" height="7"></rect>
+            </g>
+          </svg>
+          <div style="position:absolute;left:468px;top:390px;color:#1F2124;filter:drop-shadow(0 0 1px #FFFFFF) drop-shadow(0 0 1px #FFFFFF)"><v-icon i="tool-shape-builder" s="20"></v-icon></div>
+          <div data-vc="canvas-hint" style="position:absolute;left:50%;bottom:16px;transform:translateX(-50%);display:flex;align-items:center;gap:14px;height:28px;padding:0 12px;border-radius:6px;background:var(--bg-panel);border:1px solid var(--border-strong);box-shadow:0 8px 24px rgba(0,0,0,.35);font-size:11px;color:var(--text);white-space:nowrap">
+            <span style="display:flex;align-items:center;gap:6px"><v-icon i="tool-shape-builder" s="14" style="color:var(--icon)"></v-icon>Arrastrar: unir regiones</span>
+            <span style="display:flex;align-items:center;gap:6px;color:var(--text-muted)"><span style="padding:0 4px;border-radius:3px;background:var(--bg-panel-alt)">Alt</span>eliminar región o borde</span>
+            <span style="display:flex;align-items:center;gap:6px;color:var(--text-muted)"><span style="padding:0 4px;border-radius:3px;background:var(--bg-panel-alt)">Mayús</span>marco rectangular</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <dc-import name="Panels" layout="properties,layers,spaces>layers+;fill,swatches,gradient>fill+;stroke,appearance>stroke;character,paragraph>character;align,spacing,transform,pathfinder>pathfinder+" layers="shapes" layer-summary="1 capa · 3 seleccionados" hint-size="316px,100%"></dc-import>
+  </div>
+  <dc-import name="StatusBar" zoom="600%" board="logo-64" tool="Creador de formas" tool-icon="tool-shape-builder" x="22 pt" y="36 pt" space="Íconos" space-color="#4C8DFF" boards="5 mesas" hint-size="1440px,24px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900}}"></script>
+</body>
+</html>

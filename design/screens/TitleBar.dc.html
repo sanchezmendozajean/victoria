@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="../tokens.css">
+<script src="../icons.js"></script>
+</helmet>
+<div data-vc="titlebar" style="display:flex;flex-direction:column;background:var(--bg-app);color:var(--text);font-family:var(--font-ui);user-select:none">
+  <sc-if value="{{ isSystem }}" hint-placeholder-val="{{ false }}">
+    <div data-vc="titlebar-system" style="display:flex;align-items:center;height:36px;padding:0 10px 0 12px;background:#242424;border-bottom:1px solid #111;color:#DEDDDA;font-size:12px;position:relative">
+      <span style="font-size:10px;color:#9A9996;font-family:ui-monospace,monospace">barra del sistema (GNOME/KDE)</span>
+      <span style="position:absolute;left:0;right:0;text-align:center;font-weight:600;pointer-events:none">logo.vict — Victoria</span>
+      <div style="margin-left:auto;display:flex;gap:8px">
+        <div style="width:22px;height:22px;border-radius:50%;background:#3A3A3A;display:flex;align-items:center;justify-content:center"><v-icon i="minimize" s="12"></v-icon></div>
+        <div style="width:22px;height:22px;border-radius:50%;background:#3A3A3A;display:flex;align-items:center;justify-content:center"><v-icon i="maximize" s="10"></v-icon></div>
+        <div style="width:22px;height:22px;border-radius:50%;background:#3A3A3A;display:flex;align-items:center;justify-content:center"><v-icon i="close-window" s="12"></v-icon></div>
+      </div>
+    </div>
+  </sc-if>
+  <div style="display:flex;align-items:center;height:32px;border-bottom:1px solid var(--border);-webkit-app-region:drag">
+    <div style="width:48px;display:flex;align-items:center;justify-content:center;flex:none">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="color:var(--accent)"><path d="M2.5 2.5 8 12.5 13.5 2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M8 12.5h5.5" stroke="currentColor" stroke-width="1"></path><circle cx="13.75" cy="12.5" r="1.4" fill="currentColor"></circle><rect x="6.25" y="10.75" width="3.5" height="3.5" fill="currentColor"></rect></svg>
+    </div>
+    <nav style="display:flex;align-items:center;gap:0;font-size:12px;-webkit-app-region:no-drag">
+      <sc-for list="{{ menus }}" as="m" hint-placeholder-count="9">
+        <sc-if value="{{ m.on }}">
+          <span style="height:24px;display:flex;align-items:center;padding:0 8px;border-radius:3px;background:var(--bg-active);color:var(--icon-active)">{{ m.label }}</span>
+        </sc-if>
+        <sc-if value="{{ m.off }}" hint-placeholder-val="{{ true }}">
+          <span style="height:24px;display:flex;align-items:center;padding:0 8px;border-radius:3px;color:var(--text)" style-hover="background:var(--bg-hover)">{{ m.label }}</span>
+        </sc-if>
+      </sc-for>
+    </nav>
+    <div style="flex:1"></div>
+    <div style="display:flex;align-items:center;gap:6px;height:22px;padding:0 6px 0 8px;margin-right:8px;border:1px solid var(--border);border-radius:3px;background:var(--bg-panel);font-size:11px;color:var(--text);-webkit-app-region:no-drag" title="Espacio de trabajo">
+      <v-icon i="workspace" s="14" style="color:var(--icon)"></v-icon>
+      <span>{{ workspace }}</span>
+      <v-icon i="chevron-down" s="12" style="color:var(--text-muted)"></v-icon>
+    </div>
+    <sc-if value="{{ isWin }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;height:32px;-webkit-app-region:no-drag">
+        <div title="Minimizar" style="width:46px;height:32px;display:flex;align-items:center;justify-content:center;color:var(--icon)" style-hover="background:var(--bg-hover)"><v-icon i="minimize" s="14"></v-icon></div>
+        <div title="Maximizar" style="width:46px;height:32px;display:flex;align-items:center;justify-content:center;color:var(--icon)" style-hover="background:var(--bg-hover)"><v-icon i="maximize" s="12"></v-icon></div>
+        <div title="Cerrar" style="width:46px;height:32px;display:flex;align-items:center;justify-content:center;color:var(--icon)" style-hover="background:var(--danger);color:#FFFFFF"><v-icon i="close-window" s="14"></v-icon></div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ isLinux }}">
+      <div style="display:flex;align-items:center;gap:8px;padding:0 10px 0 4px;-webkit-app-region:no-drag">
+        <div title="Minimizar" style="width:20px;height:20px;border-radius:50%;background:var(--bg-hover);display:flex;align-items:center;justify-content:center;color:var(--icon)" style-hover="background:var(--bg-active)"><v-icon i="minimize" s="12"></v-icon></div>
+        <div title="Maximizar" style="width:20px;height:20px;border-radius:50%;background:var(--bg-hover);display:flex;align-items:center;justify-content:center;color:var(--icon)" style-hover="background:var(--bg-active)"><v-icon i="maximize" s="10"></v-icon></div>
+        <div title="Cerrar" style="width:20px;height:20px;border-radius:50%;background:var(--bg-hover);display:flex;align-items:center;justify-content:center;color:var(--icon)" style-hover="background:var(--danger);color:#FFFFFF"><v-icon i="close-window" s="12"></v-icon></div>
+      </div>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:40},&quot;os&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;win&quot;,&quot;linux&quot;,&quot;system&quot;],&quot;default&quot;:&quot;win&quot;,&quot;tsType&quot;:&quot;'win'|'linux'|'system'&quot;},&quot;menu&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;workspace&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Esenciales&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const os = this.props.os ?? 'win';
+    const hi = this.props.menu ?? '';
+    const menus = ['Archivo','Edición','Objeto','Texto','Selección','Modificador','Ver','Ventana','Ayuda'].map(l => ({ label: l, on: l === hi, off: l !== hi }));
+    return { menus, isWin: os === 'win', isLinux: os === 'linux', isSystem: os === 'system', workspace: this.props.workspace ?? 'Esenciales' };
+  }
+}
+</script>
+</body>
+</html>

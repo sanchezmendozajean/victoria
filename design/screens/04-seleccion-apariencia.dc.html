@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="../tokens.css">
+<script src="../icons.js"></script>
+</helmet>
+<div data-theme="{{ theme }}" data-screen-label="04 Selección + Apariencia" style="width:1440px;height:900px;display:flex;flex-direction:column;background:var(--bg-app);color:var(--text);font-family:var(--font-ui);overflow:hidden;position:relative">
+  <dc-import name="TitleBar" os="win" menu="{{ menu }}" hint-size="1440px,32px"></dc-import>
+  <dc-import name="ControlBar" mode="object" label="Trazado" type-icon="tool-star" fill="#F2B33D" x="8,2" y="7" w="47,6" h="45,2" hint-size="1440px,36px"></dc-import>
+  <div style="flex:1;display:flex;min-height:0">
+    <dc-import name="Toolbar" active="select" fill="#F2B33D" style="position:relative;z-index:11;overflow:visible" hint-size="48px,100%"></dc-import>
+    <div style="flex:1;display:flex;flex-direction:column;min-width:0">
+      <dc-import name="DocBar" doc="logo" active="0" style="position:relative;z-index:10;overflow:visible" hint-size="100%,58px"></dc-import>
+      <div data-vc="canvas" style="position:relative;flex:1;background:var(--canvas);overflow:hidden">
+        <dc-import name="Rulers" ox="337" oy="174" ppu="6" every="8" style="position:absolute;inset:0" hint-size="100%,100%"></dc-import>
+        <div style="position:absolute;left:18px;top:18px;right:0;bottom:0;overflow:hidden">
+          <svg width="1058" height="732" viewBox="0 0 1058 732" style="position:absolute;left:0;top:0;font-family:Inter,sans-serif">
+            <g style="filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.4))">
+              <rect x="137" y="174" width="144" height="144" fill="#FFFFFF"></rect>
+              <rect x="137" y="374" width="144" height="144" fill="#FFFFFF"></rect>
+              <rect x="337" y="174" width="384" height="384" fill="#FFFFFF"></rect>
+              <rect x="777" y="174" width="144" height="144" fill="#FFFFFF"></rect>
+            </g>
+            <rect x="337.5" y="174.5" width="383" height="383" fill="none" stroke="#000000"></rect>
+            <text x="137" y="166" style="fill:var(--text-muted);font-size:11px">casa-24</text>
+            <text x="137" y="366" style="fill:var(--text-muted);font-size:11px">corazón-24</text>
+            <text x="337" y="166" style="fill:var(--text);font-size:11px">estrella-64</text>
+            <text x="777" y="166" style="fill:var(--text-muted);font-size:11px">insignia-24</text>
+            <path transform="translate(137 174) scale(6)" d="M5 20V11L12 4L19 11V20" fill="none" stroke="#1F2124" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"></path>
+            <circle cx="209" cy="446" r="72" fill="#FFD8A8"></circle>
+            <path transform="translate(161 398) scale(4)" d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" fill="#F0524F"></path>
+            <circle cx="849" cy="246" r="62" fill="none" stroke="#1F2124" stroke-width="3"></circle>
+
+            <sc-if value="{{ notZig }}" hint-placeholder-val="{{ true }}">
+              <g style="filter:drop-shadow(6px 9px 7px rgba(0,0,0,.35))">
+                <polygon points="529,216 567.2,313.4 671.7,319.6 590.8,386.1 617.2,487.4 529,431 440.8,487.4 467.2,386.1 386.3,319.6 490.8,313.4" fill="#F2B33D" stroke="#F2B33D" stroke-width="30" stroke-linejoin="round"></polygon>
+              </g>
+            </sc-if>
+            <sc-if value="{{ zig }}">
+              <g style="filter:drop-shadow(6px 9px 7px rgba(0,0,0,.35))">
+                <polygon points="{{ zigPts }}" fill="#F2B33D" stroke="#F2B33D" stroke-width="2" stroke-linejoin="round"></polygon>
+              </g>
+            </sc-if>
+            <polygon points="529,216 567.2,313.4 671.7,319.6 590.8,386.1 617.2,487.4 529,431 440.8,487.4 467.2,386.1 386.3,319.6 490.8,313.4" fill="none" style="stroke:var(--accent)" stroke-width="1"></polygon>
+            <rect x="386.5" y="216.5" width="285" height="271" fill="none" style="stroke:var(--accent)" stroke-width="1"></rect>
+            <g fill="#FFFFFF" style="stroke:var(--accent)" stroke-width="1">
+              <rect x="383" y="213" width="7" height="7"></rect><rect x="525.5" y="213" width="7" height="7"></rect><rect x="668" y="213" width="7" height="7"></rect>
+              <rect x="383" y="348.5" width="7" height="7"></rect><rect x="668" y="348.5" width="7" height="7"></rect>
+              <rect x="383" y="484" width="7" height="7"></rect><rect x="525.5" y="484" width="7" height="7"></rect><rect x="668" y="484" width="7" height="7"></rect>
+            </g>
+            <path d="M525 352h8M529 348v8" style="stroke:var(--accent)" stroke-width="1"></path>
+          </svg>
+          <div style="position:absolute;left:600px;top:420px;color:#1F2124;filter:drop-shadow(0 0 1px #FFFFFF) drop-shadow(0 0 1px #FFFFFF)"><v-icon i="tool-select" s="20"></v-icon></div>
+        </div>
+      </div>
+    </div>
+    <dc-import name="Panels" layout="properties,layers,spaces>properties+;fill,swatches,gradient>fill;stroke,appearance>appearance+;character,paragraph>character;align,spacing,transform,pathfinder>align" sel="object" sel-icon="star-filled" sel-label="Trazado · Estrella" fill="#F2B33D" fx-label="2" tx="8,2" ty="7" tw="47,6" th="45,2" layers="star" fx-active="{{ fxActive }}" hint-size="316px,100%"></dc-import>
+  </div>
+  <dc-import name="StatusBar" zoom="600%" board="estrella-64" tool="Selección" tool-icon="tool-select" x="44 pt" y="41 pt" space="Íconos" space-color="#4C8DFF" boards="4 mesas" hint-size="1440px,24px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;dark&quot;,&quot;light&quot;],&quot;default&quot;:&quot;dark&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;zig&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;menu&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;fxActive&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+const STAR = [[529,216],[567.2,313.4],[671.7,319.6],[590.8,386.1],[617.2,487.4],[529,431],[440.8,487.4],[467.2,386.1],[386.3,319.6],[490.8,313.4]];
+function zigzag(pts, ridges, size) {
+  const out = [];
+  for (let i = 0; i < pts.length; i++) {
+    const [x1, y1] = pts[i], [x2, y2] = pts[(i + 1) % pts.length];
+    const dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy), nx = -dy / len, ny = dx / len;
+    const n = ridges * 2;
+    for (let k = 0; k < n; k++) {
+      const t = k / n, s = k === 0 ? 0 : (k % 2 ? size : -size);
+      out.push(`${(x1 + dx * t + nx * s).toFixed(1)},${(y1 + dy * t + ny * s).toFixed(1)}`);
+    }
+  }
+  return out.join(' ');
+}
+class Component extends DCLogic {
+  renderVals() {
+    const zig = !!this.props.zig;
+    return { theme: this.props.theme ?? 'dark', menu: this.props.menu ?? '', zig, notZig: !zig, zigPts: zig ? zigzag(STAR, 4, 9) : '', fxActive: !!this.props.fxActive };
+  }
+}
+</script>
+</body>
+</html>
