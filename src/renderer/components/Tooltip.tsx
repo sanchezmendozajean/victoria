@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import './Tooltip.css';
 
 const DELAY_MS = 500;
@@ -15,6 +15,8 @@ interface Shown {
   key: string | null;
   x: number;
   y: number;
+  /** Top edge of the element, used when the tooltip has to open upwards. */
+  top: number;
 }
 
 /** One host for the whole app; listens for `data-tip` on hovered elements (500 ms delay, specs/10). */
@@ -44,6 +46,7 @@ export function TooltipHost() {
           key: target.dataset.tipKey ?? null,
           x: rect.left + rect.width / 2,
           y: rect.bottom + 6,
+          top: rect.top,
         });
       }, DELAY_MS);
     };
@@ -61,9 +64,30 @@ export function TooltipHost() {
     };
   }, []);
 
+  const ref = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
+
+  // Centre under the element, then keep the tooltip inside the window (flip above if it would overflow).
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!shown || !el) {
+      setPos(null);
+      return;
+    }
+    const { width, height } = el.getBoundingClientRect();
+    const left = Math.min(Math.max(shown.x - width / 2, 4), window.innerWidth - width - 4);
+    const top = shown.y + height > window.innerHeight - 4 ? shown.top - height - 6 : shown.y;
+    setPos({ left, top });
+  }, [shown]);
+
   if (!shown) return null;
   return (
-    <div className="vc-tooltip" role="tooltip" style={{ left: shown.x, top: shown.y }}>
+    <div
+      ref={ref}
+      className="vc-tooltip"
+      role="tooltip"
+      style={{ left: pos?.left ?? 0, top: pos?.top ?? 0, visibility: pos ? 'visible' : 'hidden' }}
+    >
       {shown.name}
       {shown.key && <span className="vc-tooltip__key">{shown.key}</span>}
     </div>

@@ -119,6 +119,8 @@ test('the toolbar toggles between one and two columns', async () => {
   const { page } = ctx;
   await page.locator('.vc-toolbar__collapse').click();
   expect(await width(page, 'toolbar')).toBe(72);
+  const xs = await page.locator('.vc-toolbar__section').first().locator('.vc-toolbar__tool').evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().left)));
+  expect(new Set(xs).size).toBe(2); // buttons flow into two columns
   await page.locator('.vc-toolbar__collapse').click();
   expect(await width(page, 'toolbar')).toBe(48);
 });
@@ -235,6 +237,8 @@ test('tooltips show name and shortcut after 500 ms', async () => {
   await expect(page.getByRole('tooltip')).toHaveCount(0);
   await expect(page.getByRole('tooltip')).toContainText('Pluma');
   await expect(page.getByRole('tooltip')).toContainText('P');
+  const box = await page.getByRole('tooltip').boundingBox();
+  expect(box?.x ?? -1).toBeGreaterThanOrEqual(0); // never clipped by the window edge
 });
 
 test('the dark theme is restored for the final reference screenshot', async () => {

@@ -1,7 +1,6 @@
 .vc-tooltip {
   position: fixed;
   z-index: 1000;
-  transform: translateX(-50%);
   display: flex;
   align-items: center;
   gap: 6px;

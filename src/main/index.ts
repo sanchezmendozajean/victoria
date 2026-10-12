@@ -6,6 +6,8 @@ import { installApplicationMenu } from './menu';
 import { getPlatform } from './platform';
 
 app.setName('Victoria');
+// Tests run beside a real session: a separate userData also gives them their own single-instance lock.
+if (!app.isPackaged && process.env.VICTORIA_USER_DATA) app.setPath('userData', process.env.VICTORIA_USER_DATA);
 const platform = getPlatform();
 
 // Wayland when available, X11 otherwise (specs/01 · Multiplataforma).

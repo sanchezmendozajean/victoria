@@ -44,7 +44,10 @@
 .vc-toolbar--two .vc-toolbar__section {
   flex-direction: row;
   flex-wrap: wrap;
-  width: 64px;
+  width: 71px;
+}
+.vc-toolbar--two .vc-toolbar__tool {
+  width: 35px;
 }
 .vc-toolbar__section--end {
   margin-top: 6px;
