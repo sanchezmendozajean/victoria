@@ -1,0 +1,220 @@
+import type { Draft } from 'immer';
+import { multiply } from '../model/matrix';
+import { childrenOf, locateNode, walkNodes } from '../model/queries';
+import type { Appearance, BaseNode, Document, GroupNode, Matrix, Node, Space } from '../model/types';
+import type { Command } from './command';
+
+type DraftSpace = Draft<Space>;
+type DraftNode = Draft<Node>;
+
+const findSpace = (d: Draft<Document>, id: string): DraftSpace | undefined => d.spaces.find((s) => s.id === id);
+
+/** Ids that are not inside another listed node, so a group and its children are never moved twice. */
+function topmostIds(space: DraftSpace, ids: readonly string[]): string[] {
+  const wanted = new Set(ids);
+  const inner = new Set<string>();
+  for (const id of ids) {
+    const found = locateNode(space, id);
+    const children = found ? childrenOf(found.node) : null;
+    if (children) for (const n of walkNodes(children)) inner.add(n.id);
+  }
+  return [...wanted].filter((id) => !inner.has(id));
+}
+
+/** Detaches nodes (topmost only) and returns them in their original z-order. */
+function detach(space: DraftSpace, ids: readonly string[]): DraftNode[] {
+  const located = topmostIds(space, ids)
+    .map((id) => locateNode(space, id))
+    .filter((l): l is NonNullable<typeof l> => l !== null);
+  const taken = new Set(located.map((l) => l.node.id));
+  // z-order = document order; walk to collect, then remove from their arrays.
+  const ordered: DraftNode[] = [];
+  for (const layer of space.layers) {
+    for (const node of walkNodes(layer.children)) if (taken.has(node.id)) ordered.push(node as DraftNode);
+  }
+  for (const l of located) {
+    const at = l.siblings.findIndex((n) => n.id === l.node.id);
+    if (at !== -1) l.siblings.splice(at, 1);
+  }
+  return ordered;
+}
+
+export const addNode = (spaceId: string, layerId: string, node: Node, index?: number): Command => ({
+  label: 'node.add',
+  spaceId,
+  apply: (d) => {
+    const layer = findSpace(d, spaceId)?.layers.find((l) => l.id === layerId);
+    if (layer) layer.children.splice(index ?? layer.children.length, 0, node);
+  },
+});
+
+export const removeNodes = (spaceId: string, ids: readonly string[]): Command => ({
+  label: 'node.remove',
+  spaceId,
+  apply: (d) => {
+    const space = findSpace(d, spaceId);
+    if (space) detach(space, ids);
+  },
+});
+
+/** Applies `matrix` in Space coordinates on top of each node's current transform (move, rotate, scale…). */
+export const transformNodes = (spaceId: string, ids: readonly string[], matrix: Matrix, mergeKey?: string): Command => ({
+  label: 'node.transform',
+  spaceId,
+  ...(mergeKey ? { mergeKey: `node.transform:${mergeKey}` } : {}),
+  apply: (d) => {
+    const space = findSpace(d, spaceId);
+    if (!space) return;
+    for (const id of topmostIds(space, ids)) {
+      const found = locateNode(space, id);
+      if (found) found.node.transform = multiply(matrix, found.node.transform);
+    }
+  },
+});
+
+export type NodeProps = Partial<Pick<BaseNode, 'name' | 'visible' | 'locked' | 'opacity' | 'blendMode'>>;
+
+export const setNodeProps = (spaceId: string, ids: readonly string[], props: NodeProps, mergeKey?: string): Command => ({
+  label: 'node.props',
+  spaceId,
+  ...(mergeKey ? { mergeKey: `node.props:${mergeKey}` } : {}),
+  apply: (d) => {
+    const space = findSpace(d, spaceId);
+    if (!space) return;
+    for (const id of ids) {
+      const found = locateNode(space, id);
+      if (found) Object.assign(found.node, props);
+    }
+  },
+});
+
+/** Type-specific edits (anchors, shape params, text…). The patch is shallow-merged into the node. */
+export const patchNode = <T extends Node>(spaceId: string, id: string, patch: Partial<T>, mergeKey?: string): Command => ({
+  label: 'node.patch',
+  spaceId,
+  ...(mergeKey ? { mergeKey: `node.patch:${id}:${mergeKey}` } : {}),
+  apply: (d) => {
+    const space = findSpace(d, spaceId);
+    const found = space ? locateNode(space, id) : null;
+    if (found) Object.assign(found.node as object, patch);
+  },
+});
+
+export const setNodeAppearance = (spaceId: string, id: string, appearance: Appearance): Command => ({
+  label: 'node.appearance',
+  spaceId,
+  apply: (d) => {
+    const space = findSpace(d, spaceId);
+    const found = space ? locateNode(space, id) : null;
+    if (found) found.node.appearance = appearance;
+  },
+});
+
+export type ArrangeDirection = 'front' | 'back' | 'forward' | 'backward';
+
+/** Object › Organizar. Index 0 is the bottom of the stack. */
+export const arrangeNodes = (spaceId: string, ids: readonly string[], direction: ArrangeDirection): Command => ({
+  label: `node.arrange.${direction}`,
+  spaceId,
+  apply: (d) => {
+    const space = findSpace(d, spaceId);
+    if (!space) return;
+    const wanted = new Set(ids);
+    // Each container (a layer, a group) is arranged on its own.
+    const containers = new Map<DraftNode[], Set<string>>();
+    for (const id of wanted) {
+      const found = locateNode(space, id);
+      if (!found) continue;
+      const set = containers.get(found.siblings as DraftNode[]) ?? new Set<string>();
+      set.add(id);
+      containers.set(found.siblings as DraftNode[], set);
+    }
+    for (const [siblings, picked] of containers) {
+      if (direction === 'front' || direction === 'back') {
+        const chosen = siblings.filter((n) => picked.has(n.id));
+        const rest = siblings.filter((n) => !picked.has(n.id));
+        siblings.splice(0, siblings.length, ...(direction === 'front' ? [...rest, ...chosen] : [...chosen, ...rest]));
+      } else if (direction === 'forward') {
+        for (let i = siblings.length - 2; i >= 0; i--) {
+          const a = siblings[i] as DraftNode;
+          const b = siblings[i + 1] as DraftNode;
+          if (picked.has(a.id) && !picked.has(b.id)) {
+            siblings[i] = b;
+            siblings[i + 1] = a;
+          }
+        }
+      } else {
+        for (let i = 1; i < siblings.length; i++) {
+          const a = siblings[i - 1] as DraftNode;
+          const b = siblings[i] as DraftNode;
+          if (picked.has(b.id) && !picked.has(a.id)) {
+            siblings[i - 1] = b;
+            siblings[i] = a;
+          }
+        }
+      }
+    }
+  },
+});
+
+/** Ctrl+G. The nodes must share one container; `group` comes from `createGroup` with no children. */
+export const groupNodes = (spaceId: string, ids: readonly string[], group: GroupNode): Command => ({
+  label: 'node.group',
+  spaceId,
+  apply: (d) => {
+    const space = findSpace(d, spaceId);
+    if (!space) return;
+    const tops = topmostIds(space, ids)
+      .map((id) => locateNode(space, id))
+      .filter((l): l is NonNullable<typeof l> => l !== null);
+    const first = tops[0];
+    if (!first || tops.some((l) => l.siblings !== first.siblings)) return;
+    const siblings = first.siblings as DraftNode[];
+    const picked = new Set(tops.map((l) => l.node.id));
+    const insertAt = Math.max(...tops.map((l) => siblings.indexOf(l.node as DraftNode)));
+    const members = siblings.filter((n) => picked.has(n.id));
+    const remainingBefore = siblings.slice(0, insertAt).filter((n) => !picked.has(n.id)).length;
+    const rest = siblings.filter((n) => !picked.has(n.id));
+    rest.splice(remainingBefore, 0, { ...group, children: members } as DraftNode);
+    siblings.splice(0, siblings.length, ...rest);
+  },
+});
+
+/** Mayús+Ctrl+G: children take the group's place and keep their look in the Space. */
+export const ungroupNode = (spaceId: string, groupId: string): Command => ({
+  label: 'node.ungroup',
+  spaceId,
+  apply: (d) => {
+    const space = findSpace(d, spaceId);
+    const found = space ? locateNode(space, groupId) : null;
+    if (!found || found.node.type !== 'group') return;
+    const group = found.node;
+    const freed = group.children.map((child) => ({ ...child, transform: multiply(group.transform, child.transform) }));
+    found.siblings.splice(found.index, 1, ...(freed as DraftNode[]));
+  },
+});
+
+/** Moves objects to another layer of the same Space (on top by default). */
+export const moveNodesToLayer = (spaceId: string, ids: readonly string[], layerId: string, index?: number): Command => ({
+  label: 'node.moveToLayer',
+  spaceId,
+  apply: (d) => {
+    const space = findSpace(d, spaceId);
+    const layer = space?.layers.find((l) => l.id === layerId);
+    if (!space || !layer) return;
+    const moved = detach(space, ids);
+    layer.children.splice(index ?? layer.children.length, 0, ...moved);
+  },
+});
+
+/** "Mover a Espacio…": coordinates are kept (specs/04 · regla 6). The command belongs to the source Space. */
+export const moveNodesToSpace = (fromSpaceId: string, ids: readonly string[], toSpaceId: string, toLayerId: string): Command => ({
+  label: 'node.moveToSpace',
+  spaceId: fromSpaceId,
+  apply: (d) => {
+    const from = findSpace(d, fromSpaceId);
+    const target = findSpace(d, toSpaceId)?.layers.find((l) => l.id === toLayerId);
+    if (!from || !target || fromSpaceId === toSpaceId) return;
+    target.children.push(...detach(from, ids));
+  },
+});
