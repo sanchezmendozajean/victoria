@@ -103,6 +103,23 @@ interface UiState {
   setStripOpen(panel: PanelId | null): void;
 }
 
+/** Interface preference (not document data): the toolbar's column count survives restarts. */
+const TOOLBAR_COLUMNS_KEY = 'victoria.toolbarTwoColumns';
+const loadToolbarColumns = (): boolean => {
+  try {
+    return localStorage.getItem(TOOLBAR_COLUMNS_KEY) === '1';
+  } catch {
+    return false;
+  }
+};
+const saveToolbarColumns = (two: boolean): void => {
+  try {
+    localStorage.setItem(TOOLBAR_COLUMNS_KEY, two ? '1' : '0');
+  } catch {
+    // Storage unavailable: the preference lasts for the session only.
+  }
+};
+
 export const useUi = create<UiState>()((set, get) => ({
   platform: { os: 'win32', chrome: 'native-overlay' },
   maximized: false,
@@ -111,7 +128,7 @@ export const useUi = create<UiState>()((set, get) => ({
 
   activeTool: 'tool-pen',
   slotTool: {},
-  toolbarTwoColumns: false,
+  toolbarTwoColumns: loadToolbarColumns(),
 
   panels: defaultLayout(),
   stripOpen: null,
@@ -151,7 +168,11 @@ export const useUi = create<UiState>()((set, get) => ({
       slotTool: slot.tools.length > 1 ? { ...s.slotTool, [slot.id]: tool } : s.slotTool,
     }));
   },
-  toggleToolbarColumns: () => set((s) => ({ toolbarTwoColumns: !s.toolbarTwoColumns })),
+  toggleToolbarColumns: () => {
+    const next = !get().toolbarTwoColumns;
+    saveToolbarColumns(next);
+    set({ toolbarTwoColumns: next });
+  },
 
   openPanel: (panel) => {
     const { panels } = get();
