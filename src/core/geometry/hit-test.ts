@@ -20,6 +20,8 @@ export interface Hit {
   /** Containing groups, outermost first. */
   ancestors: Node[];
   layer: Layer;
+  /** Local → Space matrix of the hit object. */
+  world: Matrix;
 }
 
 /** Local-space point, and the scale to convert Space lengths into local ones. */
@@ -46,7 +48,7 @@ function testItem(item: IndexItem, p: Vec2, tolerance: number): Hit | null {
   if (!local || local.scale === 0) return null;
   const tolLocal = tolerance / local.scale;
   const flat = flattenGeometry(geometry, Math.max(tolLocal / 4, 1e-4));
-  const base = { id: item.id, node: item.node, ancestors: item.ancestors, layer: item.layer };
+  const base = { id: item.id, node: item.node, ancestors: item.ancestors, layer: item.layer, world: item.world };
 
   const inside = hasFill(item.node.appearance) && pointInFill(flat, local.point, geometry.fillRule);
   const strokes = strokesOf(item.node.appearance);

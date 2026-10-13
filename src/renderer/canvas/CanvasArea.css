@@ -7,9 +7,50 @@
 }
 .vc-canvas__surface {
   position: absolute;
-  left: var(--h-ruler);
-  top: var(--h-ruler);
+  left: var(--ruler);
+  top: var(--ruler);
   right: 0;
   bottom: 0;
   overflow: hidden;
+  background: var(--canvas);
+}
+.vc-canvas__layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+}
+.vc-canvas__overlay {
+  touch-action: none;
+}
+.vc-canvas__ruler {
+  position: absolute;
+  z-index: 4;
+  display: block;
+  touch-action: none;
+}
+.vc-canvas__ruler[hidden],
+.vc-canvas__corner[hidden] {
+  display: none;
+}
+.vc-canvas__ruler--h {
+  left: var(--h-ruler);
+  top: 0;
+  cursor: row-resize;
+}
+.vc-canvas__ruler--v {
+  left: 0;
+  top: var(--h-ruler);
+  cursor: col-resize;
+}
+.vc-canvas__corner {
+  position: absolute;
+  z-index: 4;
+  left: 0;
+  top: 0;
+  width: var(--h-ruler);
+  height: var(--h-ruler);
+  background: var(--bg-panel);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
 }

@@ -16,6 +16,31 @@ import { ALL_SLOTS, slotOf, type ToolId } from './tools';
 
 export type WorkspaceId = 'essentials' | 'icons' | 'print' | 'text';
 
+/** View menu toggles (specs/09 · Vista). Per window for now; Illustrator keeps them per document. */
+export interface ViewOptions {
+  outline: boolean;
+  rulers: boolean;
+  guides: boolean;
+  lockGuides: boolean;
+  grid: boolean;
+  snapGrid: boolean;
+  smartGuides: boolean;
+  hideArtboards: boolean;
+  hideEdges: boolean;
+}
+
+export const DEFAULT_VIEW_OPTIONS: ViewOptions = {
+  outline: false,
+  rulers: true,
+  guides: true,
+  lockGuides: false,
+  grid: false,
+  snapGrid: false,
+  smartGuides: true,
+  hideArtboards: false,
+  hideEdges: false,
+};
+
 interface UiState {
   platform: PlatformInfo;
   maximized: boolean;
@@ -30,6 +55,19 @@ interface UiState {
   panels: PanelLayout;
   /** Strip panel whose floating window is open. */
   stripOpen: PanelId | null;
+
+  viewOptions: ViewOptions;
+  /** Active artboard of each Space (ephemeral UI state, not part of the document). */
+  activeArtboard: Record<string, string>;
+  /** Zoom of the visible Space, 1 = 100 %. */
+  zoom: number;
+  /** Cursor over the canvas, in Space points. */
+  cursor: { x: number; y: number } | null;
+
+  toggleViewOption(key: keyof ViewOptions): void;
+  setActiveArtboard(spaceId: string, artboardId: string): void;
+  setZoom(zoom: number): void;
+  setCursor(cursor: { x: number; y: number } | null): void;
 
   setPlatform(platform: PlatformInfo): void;
   setMaximized(maximized: boolean): void;
@@ -59,6 +97,16 @@ export const useUi = create<UiState>()((set, get) => ({
 
   panels: defaultLayout(),
   stripOpen: null,
+
+  viewOptions: DEFAULT_VIEW_OPTIONS,
+  activeArtboard: {},
+  zoom: 1,
+  cursor: null,
+
+  toggleViewOption: (key) => set((s) => ({ viewOptions: { ...s.viewOptions, [key]: !s.viewOptions[key] } })),
+  setActiveArtboard: (spaceId, artboardId) => set((s) => ({ activeArtboard: { ...s.activeArtboard, [spaceId]: artboardId } })),
+  setZoom: (zoom) => set({ zoom }),
+  setCursor: (cursor) => set({ cursor }),
 
   setPlatform: (platform) => set({ platform }),
   setMaximized: (maximized) => set({ maximized }),

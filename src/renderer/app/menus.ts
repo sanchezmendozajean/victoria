@@ -6,7 +6,7 @@ import { PANEL_ORDER, PANELS, type PanelId } from '../panels/registry';
 import { commandLabel } from '../i18n';
 import { hasHandler, runAction } from './actions';
 import { formatAccelerator, SHORTCUTS, type OsFamily, type ShortcutAction } from './shortcuts';
-import type { WorkspaceId } from './store';
+import type { ViewOptions, WorkspaceId } from './store';
 
 export interface MenuContext {
   os: OsFamily;
@@ -19,6 +19,7 @@ export interface MenuContext {
   /** History state of the active document, for Edit › Undo/Redo. */
   undoLabel: string | null;
   redoLabel: string | null;
+  viewOptions: ViewOptions;
 }
 
 export type MenuId = 'file' | 'edit' | 'object' | 'type' | 'select' | 'modifier' | 'view' | 'window' | 'help';
@@ -224,8 +225,9 @@ export function buildMenus(ctx: MenuContext): MenuDef[] {
     sub('presets', 'menu.modifier.presets', 'swatches', [item('presets-none', 'menu.modifier.presetsEmpty', 'file')]),
   ];
 
+  const v = ctx.viewOptions;
   const view: MenuEntry[] = [
-    item('outline', 'menu.view.outline', 'outline-mode', 'view.outline'),
+    item('outline', v.outline ? 'menu.view.outlineBack' : 'menu.view.outline', 'outline-mode', 'view.outline'),
     item('pixel-preview', 'menu.view.pixelPreview', 'pixel-preview', 'view.pixelPreview'),
     sep('s1'),
     item('zoom-in', 'menu.view.zoomIn', 'zoom-in', 'view.zoomIn'),
@@ -234,15 +236,15 @@ export function buildMenus(ctx: MenuContext): MenuDef[] {
     item('fit-all', 'menu.view.fitAll', 'fit-all', 'view.fitAll'),
     item('actual-size', 'menu.view.actualSize', 'actual-size', 'view.actualSize'),
     sep('s2'),
-    item('rulers', 'menu.view.rulers', 'rulers', 'view.rulers', { checked: true }),
-    item('guides', 'menu.view.guides', 'guides', 'view.guides'),
-    item('lock-guides', 'menu.view.lockGuides', 'lock', 'view.lockGuides'),
-    item('smart-guides', 'menu.view.smartGuides', 'smart-guides', 'view.smartGuides', { checked: true }),
-    item('grid', 'menu.view.grid', 'grid', 'view.grid'),
-    item('snap-grid', 'menu.view.snapGrid', 'snap-grid', 'view.snapGrid'),
+    item('rulers', 'menu.view.rulers', 'rulers', 'view.rulers', { checked: v.rulers }),
+    item('guides', 'menu.view.guides', 'guides', 'view.guides', { checked: v.guides }),
+    item('lock-guides', 'menu.view.lockGuides', 'lock', 'view.lockGuides', { checked: v.lockGuides }),
+    item('smart-guides', 'menu.view.smartGuides', 'smart-guides', 'view.smartGuides', { checked: v.smartGuides }),
+    item('grid', 'menu.view.grid', 'grid', 'view.grid', { checked: v.grid }),
+    item('snap-grid', 'menu.view.snapGrid', 'snap-grid', 'view.snapGrid', { checked: v.snapGrid }),
     sep('s3'),
-    item('hide-edges', 'menu.view.hideEdges', 'visibility-off', 'view.hideEdges'),
-    item('hide-artboards', 'menu.view.hideArtboards', 'tool-artboard', 'view.hideArtboards'),
+    item('hide-edges', 'menu.view.hideEdges', 'visibility-off', 'view.hideEdges', { checked: v.hideEdges }),
+    item('hide-artboards', 'menu.view.hideArtboards', 'tool-artboard', 'view.hideArtboards', { checked: v.hideArtboards }),
   ];
 
   const window_: MenuEntry[] = [

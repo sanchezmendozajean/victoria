@@ -3,6 +3,7 @@ import type { MenuEntry } from '../components/Menu';
 import { t } from '../i18n';
 import { ICONS } from '../icons/catalog.generated';
 import { buildMenus, WORKSPACES } from './menus';
+import { DEFAULT_VIEW_OPTIONS } from './store';
 import { ALL_SLOTS, TOOL_SECTIONS, toolAccelerator } from './tools';
 
 const walk = (entries: MenuEntry[]): MenuEntry[] =>
@@ -18,6 +19,7 @@ const menus = buildMenus({
   resetPanels: () => undefined,
   undoLabel: null,
   redoLabel: null,
+  viewOptions: DEFAULT_VIEW_OPTIONS,
 });
 
 describe('menus', () => {

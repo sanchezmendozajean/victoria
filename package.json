@@ -18,7 +18,8 @@
     "test": "vitest run",
     "test:e2e": "pnpm build:app && playwright test",
     "icons:gen": "node scripts/gen-icons.mjs",
-    "icon:app": "node scripts/make-app-icon.mjs"
+    "icon:app": "node scripts/make-app-icon.mjs",
+    "samples:gen": "node scripts/gen-samples.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -32,6 +33,7 @@
     "cross-env": "^10.1.0",
     "electron": "^44.7.0",
     "electron-builder": "^26.15.3",
+    "esbuild": "^0.28.2",
     "eslint": "^10.12.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "fflate": "^0.8.3",

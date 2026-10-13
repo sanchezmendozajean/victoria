@@ -55,7 +55,7 @@ describe('live shapes', () => {
   });
 
   it('a pie slice goes through the centre and covers only its sector', () => {
-    const pie = createEllipse(ids, 100, 100);
+    const pie = createEllipse(ids, 100, 100) as ShapeNode & { shape: 'ellipse' };
     pie.params.startAngle = 0;
     pie.params.endAngle = 90; // the lower-right quarter (Y points down)
     const g = nodeGeometry(pie)!;

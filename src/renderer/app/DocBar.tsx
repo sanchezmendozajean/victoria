@@ -218,7 +218,7 @@ export function DocBar() {
         </div>
         <button type="button" className="vc-spacesbar__panel" {...tip(t('spaces.panel'))} onClick={() => openPanel('spaces')}>
           <Icon id="spaces" size={16} />
-          <span>{t('spaces.count', { count: doc.spaces.length })}</span>
+          <span>{t(doc.spaces.length === 1 ? 'spaces.countOne' : 'spaces.count', { count: doc.spaces.length })}</span>
         </button>
       </div>
 

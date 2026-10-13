@@ -63,4 +63,5 @@ Por definir.
 - Requiere Node 24 y pnpm 12 (`packageManager` en `package.json`).
 - `pnpm test:e2e` construye la app y lanza Electron; si tu terminal define `ELECTRON_RUN_AS_NODE`, quítala.
 - Detrás de un proxy que intercepta TLS: `NODE_OPTIONS=--use-system-ca` para instalar Electron y empaquetar.
+- `pnpm samples:gen` crea `samples/demo.vict` y `samples/stress-10k.vict` (10 000 objetos) para probar el lienzo con **Archivo › Abrir**.
 - Variables de desarrollo: `VICTORIA_CHROME=custom|system|native-overlay`, `VICTORIA_DEVTOOLS=1`.

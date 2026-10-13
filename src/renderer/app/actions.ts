@@ -1,6 +1,10 @@
+import { canvasApi } from '../canvas/api';
 import { manager } from '../documents';
 import { createNewSpace } from '../documents/spaceActions';
 import type { ShortcutAction } from './shortcuts';
+import { useUi, type ViewOptions } from './store';
+
+const toggle = (key: keyof ViewOptions) => () => useUi.getState().toggleViewOption(key);
 
 function stepSpace(delta: number): void {
   const session = manager.active?.session;
@@ -24,6 +28,20 @@ const HANDLERS: Partial<Record<ShortcutAction, () => void | Promise<unknown>>> =
     const session = manager.active?.session;
     if (session) createNewSpace(session);
   },
+  'view.zoomIn': () => canvasApi.current?.zoomIn(),
+  'view.zoomOut': () => canvasApi.current?.zoomOut(),
+  'view.fitArtboard': () => canvasApi.current?.fitArtboard(),
+  'view.fitAll': () => canvasApi.current?.fitAll(),
+  'view.actualSize': () => canvasApi.current?.actualSize(),
+  'view.outline': toggle('outline'),
+  'view.rulers': toggle('rulers'),
+  'view.guides': toggle('guides'),
+  'view.lockGuides': toggle('lockGuides'),
+  'view.grid': toggle('grid'),
+  'view.snapGrid': toggle('snapGrid'),
+  'view.smartGuides': toggle('smartGuides'),
+  'view.hideArtboards': toggle('hideArtboards'),
+  'view.hideEdges': toggle('hideEdges'),
   'space.previous': () => stepSpace(-1),
   'space.next': () => stepSpace(1),
 };

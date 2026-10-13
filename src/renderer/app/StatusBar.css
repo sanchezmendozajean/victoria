@@ -39,6 +39,8 @@
 }
 .vc-statusbar__input,
 .vc-statusbar__select {
+  font: inherit;
+  cursor: default;
   display: flex;
   align-items: center;
   height: 18px;
@@ -49,9 +51,18 @@
   color: var(--text);
 }
 .vc-statusbar__input {
-  width: 52px;
+  width: 62px;
   justify-content: flex-end;
   margin-left: 2px;
+}
+.vc-statusbar__input--edit {
+  font: inherit;
+  text-align: right;
+  outline: none;
+  user-select: text;
+}
+.vc-statusbar__input--edit:focus {
+  border-color: var(--accent);
 }
 .vc-statusbar__select {
   gap: 6px;

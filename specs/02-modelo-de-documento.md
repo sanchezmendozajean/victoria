@@ -127,6 +127,16 @@ Por defecto un objeto nuevo tiene `[fill, stroke]` (como Illustrator: relleno bl
 
 Definidos en `src/core/model/types.ts` y aprobados en la revisión de la Fase 2: `Swatch { id, name, color, global, group? }`, `Gradient { id, name, type, stops[] }` con `GradientStop { offset, color, opacity, midpoint? }` (punto medio 0..1, por defecto 0,5), `Guide { id, orientation, position, locked }`, `ModifierInstance { id, modifierId, enabled, params }`, `TextStyle { fontFamily, fontStyle, size }` (crece en la Fase 7 con campos opcionales) y `LineParams { length }`. Los campos nuevos se añaden como opcionales para no cambiar la versión del formato.
 
+## Convenciones geométricas
+
+Definidas en la Fase 3 (`src/core/geometry`, `src/core/viewport`):
+
+- **Vista de un Espacio**: `pantalla = documento × zoom + desplazamiento`, en píxeles CSS. Con zoom 1 (100 %), 1 pt = 1 px. Rango de zoom 3 %–64 000 % (`0,03`–`640`). Un Espacio con la vista por defecto (zoom 1, desplazamiento 0) se abre ajustado a su mesa activa.
+- **Formas vivas**, en su espacio local: rectángulo y elipse parten de (0, 0) con tamaño `w × h`; polígono y estrella están centrados en el origen con el primer vértice arriba (−90°); en la estrella `r1` es el radio exterior y `r2` el interior; la línea va de (0, 0) a (`length`, 0). Ángulos de la elipse en grados desde +X, en sentido horario en pantalla (Y hacia abajo); un sector circular pasa por el centro. Los radios de esquina se limitan a la mitad del lado corto.
+- **Colores** (`src/core/model/color.ts`): `rgb` 0–255; `cmyk` 0–100 cada canal; `hsb` tono 0–360, saturación y brillo 0–100; `gray` 0–100 como «% de negro» (0 = blanco). `alpha` 0–1.
+- **Degradados**: el eje del degradado es el segmento unitario (0, 0)→(1, 0) (en el radial, el círculo unitario en el origen) y `Paint.transform` lo lleva al espacio local del objeto.
+- **Un objeto se selecciona** donde está pintado: dentro de su relleno (los huecos de un trazado compuesto no cuentan) y sobre su contorno si tiene trazo; un objeto sin relleno no se selecciona por dentro. Los objetos ocultos o bloqueados (o en capas ocultas o bloqueadas) no se seleccionan. La tolerancia de selección es de 4 px de pantalla.
+
 ## Color
 
 `Color = { model: 'rgb'|'cmyk'|'hsb'|'gray'; values: number[]; alpha?: number }`. Internamente se convierte a sRGB para pintar. Las muestras globales actualizan a todos los objetos que las usan.

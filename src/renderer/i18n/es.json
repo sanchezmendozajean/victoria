@@ -352,5 +352,10 @@
   "command.resource.gradient.add": "Nuevo degradado",
   "command.resource.image.add": "Colocar imagen",
   "command.resource.font.add": "Incrustar fuente",
-  "command.resource.modifierPreset.add": "Guardar preajuste"
+  "command.resource.modifierPreset.add": "Guardar preajuste",
+  "canvas.label": "Lienzo",
+  "canvas.guideHint": "Arrastra para crear una guía",
+  "status.zoomMenu": "Valores de zoom",
+  "menu.view.outlineBack": "Previsualizar",
+  "spaces.countOne": "{count} Espacio"
 }
