@@ -30,6 +30,7 @@ export function TitleBar() {
   const openPanel = useUi((s) => s.openPanel);
   const resetPanels = useUi((s) => s.resetPanels);
   const viewOptions = useUi((s) => s.viewOptions);
+  const openTransformDialog = useUi((s) => s.openTransformDialog);
 
   const documents = useDocuments();
   const session = documents.active?.session;
@@ -39,8 +40,8 @@ export function TitleBar() {
   const barRef = useRef<HTMLDivElement>(null);
 
   const menus = useMemo(
-    () => buildMenus({ os: platform.os, theme, workspace, setTheme, setWorkspace, openPanel, resetPanels, undoLabel, redoLabel, viewOptions }),
-    [platform.os, theme, workspace, setTheme, setWorkspace, openPanel, resetPanels, undoLabel, redoLabel, viewOptions],
+    () => buildMenus({ os: platform.os, theme, workspace, setTheme, setWorkspace, openPanel, resetPanels, undoLabel, redoLabel, viewOptions, openTransformDialog: (kind) => openTransformDialog(kind, null) }),
+    [platform.os, theme, workspace, setTheme, setWorkspace, openPanel, resetPanels, undoLabel, redoLabel, viewOptions, openTransformDialog],
   );
 
   const workspaceEntries: MenuEntry[] = WORKSPACES.map((id) => ({

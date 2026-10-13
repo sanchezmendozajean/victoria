@@ -1,7 +1,9 @@
 import {
   addGuide,
   fitRect,
+  frameOf,
   hitTest,
+  multiply,
   isUntouchedView,
   moveGuide,
   panBy,
@@ -15,7 +17,11 @@ import {
   type DocumentSession,
   type Guide,
   type Hit,
+  type Matrix,
+  type Node,
   type Rect,
+  type SnapLine,
+  type SnapSources,
   type Space,
   type Units,
   type Vec2,
@@ -24,7 +30,8 @@ import {
 import type { ToolId } from '../app/tools';
 import { createTool } from '../tools';
 import { createHandTool } from '../tools/handTool';
-import type { CanvasPointerEvent, Tool, ToolHost } from '../tools/types';
+import type { CanvasPointerEvent, DialogSpec, Tool, ToolHost, TransformKind } from '../tools/types';
+import { t } from '../i18n';
 import { renderContent } from './contentRenderer';
 import { renderOverlay, type HoverTarget } from './overlayRenderer';
 import { renderRuler, RULER_SIZE } from './rulerRenderer';
@@ -45,6 +52,9 @@ export interface CanvasOptions {
   lockGuides: boolean;
   grid: boolean;
   hideArtboards: boolean;
+  snapGrid: boolean;
+  smartGuides: boolean;
+  hideEdges: boolean;
 }
 
 export interface CanvasInput {
@@ -55,6 +65,8 @@ export interface CanvasInput {
   units: Units;
   /** Changes when the theme does, to re-read the colour tokens. */
   themeName: string;
+  /** Group being edited in isolation mode. */
+  isolation: string | null;
 }
 
 export interface CanvasCallbacks {
@@ -62,6 +74,11 @@ export interface CanvasCallbacks {
   onView(view: Viewport): void;
   /** Cursor position in Space points, or null when it leaves the canvas. */
   onCursor(doc: Vec2 | null): void;
+  /** Modal question (live shape conversion…). */
+  confirm(spec: DialogSpec): Promise<string>;
+  onIsolation(id: string | null): void;
+  onTransformDialog(kind: TransformKind, origin: Vec2 | null): void;
+  onRememberTransform(transform: { matrix: Matrix; copy: boolean } | null): void;
 }
 
 const GUIDE_PICK_PX = 3;
@@ -71,6 +88,8 @@ const FAST_PATH_MS = 8;
 const REFINE_DELAY_MS = 110;
 const COMMIT_VIEW_MS = 300;
 const WHEEL_ZOOM_SENSITIVITY = 0.0022;
+const CLICK_MS = 400;
+const MAX_SELECTION_OUTLINES = 400;
 
 type GuideDrag = { id: string | null; orientation: Guide['orientation']; position: number; fromRuler: boolean };
 
@@ -94,6 +113,10 @@ export class CanvasController implements ToolHost, CanvasApi {
   private inside = false;
 
   private hover: HoverTarget | null = null;
+  private snapLinesValue: SnapLine[] | null = null;
+  private measureValue: { text: string; at: Vec2 } | null = null;
+  private gestureCounter = 0;
+  private lastDown = { time: 0, x: 0, y: 0, count: 0 };
   private hoveredGuideId: string | null = null;
   private guideDrag: GuideDrag | null = null;
 
@@ -143,7 +166,11 @@ export class CanvasController implements ToolHost, CanvasApi {
       previous.options.guides === input.options.guides &&
       previous.options.lockGuides === input.options.lockGuides &&
       previous.options.grid === input.options.grid &&
-      previous.options.hideArtboards === input.options.hideArtboards;
+      previous.options.hideArtboards === input.options.hideArtboards &&
+      previous.options.snapGrid === input.options.snapGrid &&
+      previous.options.smartGuides === input.options.smartGuides &&
+      previous.options.hideEdges === input.options.hideEdges &&
+      previous.isolation === input.isolation;
     const unchanged =
       !!previous &&
       sameOptions &&
@@ -194,17 +221,17 @@ export class CanvasController implements ToolHost, CanvasApi {
     this.zoomTo(1);
   }
   fitArtboard(): void {
-    const space = this.space();
+    const space = this.currentSpace();
     if (!space) return;
     const board = space.artboards.find((a) => a.id === this.input?.activeArtboardId) ?? space.artboards[0];
     if (board) this.fitTo(artboardRect(board));
   }
   fitArtboardById(id: string): void {
-    const board = this.space()?.artboards.find((a) => a.id === id);
+    const board = this.currentSpace()?.artboards.find((a) => a.id === id);
     if (board) this.fitTo(artboardRect(board));
   }
   fitAll(): void {
-    const space = this.space();
+    const space = this.currentSpace();
     if (!space) return;
     let all: Rect | null = null;
     for (const board of space.artboards) all = unionRect(all, artboardRect(board));
@@ -246,14 +273,80 @@ export class CanvasController implements ToolHost, CanvasApi {
   }
 
   hitAt(doc: Vec2): Hit | null {
-    const space = this.space();
-    if (!space) return null;
-    return hitTest(space, doc, { tolerance: HOVER_PICK_PX / this.viewValue.zoom })[0] ?? null;
+    return this.hitTest(doc)[0] ?? null;
+  }
+
+  get session(): DocumentSession | null {
+    return this.input?.session ?? null;
+  }
+  get space(): Space | null {
+    return this.currentSpace();
+  }
+  get isolation(): string | null {
+    return this.input?.isolation ?? null;
+  }
+  get options(): { smartGuides: boolean; snapGrid: boolean; guides: boolean; hideEdges: boolean } {
+    const o = this.input?.options;
+    return { smartGuides: o?.smartGuides ?? true, snapGrid: o?.snapGrid ?? false, guides: o?.guides ?? true, hideEdges: o?.hideEdges ?? false };
+  }
+  get units(): Units {
+    return this.input?.units ?? 'mm';
+  }
+  get pickTolerance(): number {
+    return HOVER_PICK_PX / this.viewValue.zoom;
+  }
+
+  hitTest(doc: Vec2): Hit[] {
+    const space = this.currentSpace();
+    if (!space) return [];
+    return hitTest(space, doc, { tolerance: this.pickTolerance, isolation: this.isolation });
+  }
+
+  snapSources(exclude: ReadonlySet<string>): SnapSources {
+    const space = this.currentSpace();
+    const o = this.options;
+    if (!space) return {};
+    return {
+      guides: o.guides ? space.guides : null,
+      grid: o.snapGrid ? { size: space.grid.size, subdivisions: space.grid.subdivisions } : null,
+      artboards: o.smartGuides ? space.artboards : null,
+      objects: o.smartGuides ? { space, exclude } : null,
+    };
+  }
+
+  setSnapLines(lines: SnapLine[] | null): void {
+    this.snapLinesValue = lines;
+    this.invalidate('overlay');
+  }
+
+  setMeasure(text: string | null, at: Vec2 = { x: 0, y: 0 }): void {
+    this.measureValue = text === null ? null : { text, at };
+    this.invalidate('overlay');
+  }
+
+  gestureKey(): string {
+    return `g${++this.gestureCounter}`;
+  }
+
+  confirm(spec: DialogSpec): Promise<string> {
+    return this.callbacks.confirm(spec);
+  }
+
+  setIsolation(id: string | null): void {
+    this.callbacks.onIsolation(id);
+  }
+
+  openTransformDialog(kind: TransformKind, origin: Vec2 | null): void {
+    this.callbacks.onTransformDialog(kind, origin);
+  }
+
+  rememberTransform(transform: { matrix: Matrix; copy: boolean } | null): void {
+    this.callbacks.onRememberTransform(transform);
   }
 
   // ── Internals: state ──
 
-  private space(): Space | null {
+  private currentSpace(): Space | null {
     const session = this.input?.session;
     if (!session) return null;
     return session.document.spaces.find((s) => s.id === session.document.activeSpaceId) ?? null;
@@ -275,7 +368,7 @@ export class CanvasController implements ToolHost, CanvasApi {
 
   /** Loads the view of the Space that came to the front, fitting it the first time it is shown. */
   private syncSpace(): void {
-    const space = this.space();
+    const space = this.currentSpace();
     const id = space?.id ?? null;
     if (id === this.currentSpaceId) return;
     this.commitViewNow();
@@ -328,7 +421,7 @@ export class CanvasController implements ToolHost, CanvasApi {
   private updateCursor(): void {
     let cursor = this.currentTool().cursor(this.altHeld);
     if (this.hoveredGuideId || this.guideDrag) {
-      const orientation = this.guideDrag?.orientation ?? this.space()?.guides.find((g) => g.id === this.hoveredGuideId)?.orientation;
+      const orientation = this.guideDrag?.orientation ?? this.currentSpace()?.guides.find((g) => g.id === this.hoveredGuideId)?.orientation;
       cursor = orientation === 'vertical' ? 'col-resize' : 'row-resize';
     }
     this.el.overlay.style.cursor = cursor;
@@ -370,7 +463,7 @@ export class CanvasController implements ToolHost, CanvasApi {
 
   private paint(): void {
     this.frame = 0;
-    const space = this.space();
+    const space = this.currentSpace();
     if (this.dirty.content) {
       this.dirty.content = false;
       this.paintContent(space);
@@ -421,6 +514,7 @@ export class CanvasController implements ToolHost, CanvasApi {
       showGrid: input.options.grid,
       activeArtboardId: input.activeArtboardId,
       theme: this.theme,
+      isolatedId: input.isolation,
     });
     this.renderMs = this.renderMs === 0 ? performance.now() - start : this.renderMs * 0.6 + (performance.now() - start) * 0.4;
     // Diagnostics (read by the performance test): cost of the last full repaint and of the smoothed average.
@@ -460,9 +554,35 @@ export class CanvasController implements ToolHost, CanvasApi {
       showGuides: input?.options.guides ?? true,
       hoveredGuideId: this.hoveredGuideId,
       hover: this.hover,
+      selection: this.selectionTargets(space),
+      snapLines: this.snapLinesValue,
+      snapLabels: { align: t('snap.align'), center: t('snap.center'), anchor: t('snap.anchor') },
+      measure: this.measureValue,
       draggingGuide: this.guideDrag && (this.guideDrag.id === null || this.guideDrag.fromRuler) ? this.guideDrag : null,
       drawTool: this.currentTool().drawOverlay ? (c) => this.currentTool().drawOverlay?.(c, this, this.theme) : null,
     });
+  }
+
+  /** Selected objects as outlines in their layer colour (groups contribute their leaves; very large selections skip it). */
+  private selectionTargets(space: Space | null): HoverTarget[] {
+    const session = this.input?.session;
+    if (!space || !session || this.input?.options.hideEdges) return [];
+    const selection = session.selection;
+    if (selection.spaceId !== space.id) return [];
+    const out: HoverTarget[] = [];
+    const visit = (node: Node, world: Matrix, color: string): void => {
+      if (out.length > MAX_SELECTION_OUTLINES) return;
+      if (node.type === 'group' || node.type === 'clipGroup') {
+        for (const child of node.children) visit(child, multiply(world, child.transform), color);
+      } else {
+        out.push({ node, world, color });
+      }
+    };
+    for (const id of selection.ids) {
+      const frame = frameOf(space, id);
+      if (frame) visit(frame.node, frame.world, frame.layer.color);
+    }
+    return out.length > MAX_SELECTION_OUTLINES ? [] : out;
   }
 
   private paintRulers(space: Space | null): void {
@@ -514,7 +634,7 @@ export class CanvasController implements ToolHost, CanvasApi {
   private toEvent(e: PointerEvent): CanvasPointerEvent {
     const rect = this.el.overlay.getBoundingClientRect();
     const screen = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-    return { screen, doc: screenToDoc(this.viewValue, screen), button: e.button, shiftKey: e.shiftKey, altKey: e.altKey, ctrlKey: e.ctrlKey, metaKey: e.metaKey };
+    return { screen, doc: screenToDoc(this.viewValue, screen), button: e.button, shiftKey: e.shiftKey, altKey: e.altKey, ctrlKey: e.ctrlKey, metaKey: e.metaKey, clickCount: this.lastDown.count || 1 };
   }
 
   private guidePosition(orientation: Guide['orientation'], e: PointerEvent): number {
@@ -524,7 +644,7 @@ export class CanvasController implements ToolHost, CanvasApi {
   }
 
   private nearestGuide(screen: Vec2): Guide | null {
-    const space = this.space();
+    const space = this.currentSpace();
     const opts = this.input?.options;
     if (!space || !opts?.guides || opts.lockGuides) return null;
     let best: Guide | null = null;
@@ -543,6 +663,9 @@ export class CanvasController implements ToolHost, CanvasApi {
 
   private onPointerDown(e: PointerEvent): void {
     this.el.overlay.setPointerCapture(e.pointerId);
+    const now = performance.now();
+    const near = Math.hypot(e.clientX - this.lastDown.x, e.clientY - this.lastDown.y) < 5;
+    this.lastDown = { time: now, x: e.clientX, y: e.clientY, count: near && now - this.lastDown.time < CLICK_MS ? this.lastDown.count + 1 : 1 };
     const event = this.toEvent(e);
 
     const viewTool = e.button === 1 || this.spaceHeld || this.tool.id === 'tool-hand' || this.tool.id === 'tool-zoom';
@@ -652,6 +775,11 @@ export class CanvasController implements ToolHost, CanvasApi {
     if (e.key === 'Escape') {
       this.currentTool().onKey?.('Escape', this);
       if (this.guideDrag) this.cancelGestures();
+      return;
+    }
+    if (!this.activeGestureTool && this.currentTool().onKeyDown?.({ key: e.key, shiftKey: e.shiftKey, altKey: e.altKey, ctrlKey: e.ctrlKey, metaKey: e.metaKey }, this)) {
+      e.preventDefault();
+      e.stopPropagation();
     }
   }
 
@@ -670,7 +798,7 @@ export class CanvasController implements ToolHost, CanvasApi {
   private dragGuideTo(screen: Vec2): void {
     const drag = this.guideDrag;
     const session = this.input?.session;
-    const space = this.space();
+    const space = this.currentSpace();
     if (!drag || !drag.id || !session || !space) return;
     const doc = screenToDoc(this.viewValue, screen);
     drag.position = drag.orientation === 'vertical' ? doc.x : doc.y;
@@ -681,7 +809,7 @@ export class CanvasController implements ToolHost, CanvasApi {
   private finishGuideDrag(screen: Vec2): void {
     const drag = this.guideDrag;
     const session = this.input?.session;
-    const space = this.space();
+    const space = this.currentSpace();
     this.guideDrag = null;
     if (drag?.id && session && space) {
       // Dropping a guide back on its ruler deletes it.
@@ -711,7 +839,7 @@ export class CanvasController implements ToolHost, CanvasApi {
       const rect = this.el.surface.getBoundingClientRect();
       const droppedOnCanvas = e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom;
       const session = this.input?.session;
-      const space = this.space();
+      const space = this.currentSpace();
       if (drag && droppedOnCanvas && e.type === 'pointerup' && session && space) {
         const guide: Guide = { id: session.ids(), orientation: drag.orientation, position: drag.position, locked: false };
         session.run(addGuide(space.id, guide));

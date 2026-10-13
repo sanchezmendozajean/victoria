@@ -7,6 +7,7 @@ import {
   readVict,
   writeVict,
   type IdGenerator,
+  type Selection,
 } from '../../core';
 import type { AutosaveEntry, DialogLabels, OpenedFile, SaveRequest, SaveResult } from '../../shared/ipc';
 
@@ -67,6 +68,11 @@ export interface Recoverable {
   modified: number;
 }
 
+const lastSelections = new WeakMap<DocumentSession, Selection>();
+
+/** The last non-empty selection of a document (Selección › Volver a seleccionar). */
+export const lastSelectionOf = (session: DocumentSession): Selection | undefined => lastSelections.get(session);
+
 const fileName = (file: string) => file.split(/[\\/]/).pop() ?? file;
 
 export function displayName(doc: OpenDocument): string {
@@ -122,7 +128,10 @@ export class DocumentManager {
       policy: new AutosavePolicy(session.revision, this.clock()),
       hasAutosave,
     };
-    session.subscribe(() => this.changed());
+    session.subscribe(() => {
+      if (session.selection.ids.length > 0) lastSelections.set(session, session.selection);
+      this.changed();
+    });
     this.docs_ = [...this.docs_, doc];
     this.activeId_ = doc.id;
     this.changed();

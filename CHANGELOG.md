@@ -1,5 +1,28 @@
 # Changelog
 
+## Fase 4 — Selección y transformación (en revisión)
+
+### Añadido
+- **Core**: evaluador aritmético sin `eval` (`+ - * / ^`, paréntesis, coma o punto decimal, unidades como `2 cm + 5 mm`), marcos y límites en coordenadas del mundo, consultas de marco y de lazo, matemática de manijas y segmentos (`moveHandle`, `reshapeSpan`), motor de imán (guías, cuadrícula, mesas, objetos y puntos de ancla con prioridad guía < ancla < borde/centro < mesa < cuadrícula) y modelo de selección de puntos de ancla. Comandos nuevos: `setPathAnchors`, `convertShapeToPath`, `duplicateNodes`, `setAllNodesProps`, `ungroupNodes`; `session.rollback()`.
+- **Selección (V)**: clic, Mayús, marco (toca o contiene), mover con Mayús a 45°, Alt+arrastre duplica, flechas (Mayús = 10 pt), caja con escala y rotación, aislamiento de grupo con doble clic y barra de aislamiento, bloqueados y ocultos respetados.
+- **Selección directa (A)** y **Lazo (Q)**: puntos de ancla, manijas con las reglas de Illustrator (suave conserva colinealidad y longitud, Alt rompe a esquina, Mayús a 45°), remodelar segmentos arrastrándolos, marco de anclas, y aviso de «convertir forma viva a trazado» como un solo paso de deshacer.
+- **Rotar (R), Escala (S), Reflejar (O)** con origen por clic, Alt+clic abre el diálogo, Alt+arrastre copia, Mayús restringe; **Ctrl+D** repite la transformación; menú Objeto › Transformar (Mover, Rotar, Escala, Reflejar) con diálogo y vista previa.
+- **Guías inteligentes e imán** con etiquetas (alinear, centro, ancla) y medidas.
+- **Barra de control**: X/Y/An/Al reales con punto de referencia y proporciones enlazadas, ángulo, y campos de punto de ancla. Campos numéricos (`NumberInput`) con rueda, flechas y expresiones.
+- Menú Objeto y Selección: agrupar, desagrupar, bloquear, ocultar, mostrar todo, desbloquear todo, organizar, seleccionar todo / nada / de nuevo / en la mesa.
+- Pruebas: 326 unitarias y 59 e2e en total (la fase añade 134 unitarias y 7 e2e).
+
+### Decisiones tomadas (la spec no las cubría)
+- El cuadro de selección usa los límites geométricos (sin trazo); Alt+clic con herramientas de transformación fija el origen y abre el diálogo.
+- El lazo selecciona puntos de ancla, no objetos completos.
+- Un campo numérico no confirma dos veces al pulsar Intro (corregido durante la fase: el desenfoque repetía la orden).
+
+### Pendiente
+- Portapapeles (copiar/pegar) no implementado.
+- Eliminar, convertir, cortar, unir y promediar anclas, y los widgets de esquina viva, pasan a la Fase 5; «Previsualizar píxeles» sigue sin implementar; la herramienta Transformación libre (E) queda inactiva.
+- Opacidad de grupo aproximada (ver Fase 3).
+- Lo no verificado de la Fase 1 (instalador de Windows, Linux) sigue sin verificar; el rendimiento solo se midió en Windows.
+
 ## Fase 3 — Lienzo (en revisión)
 
 ### Añadido

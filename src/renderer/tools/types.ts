@@ -1,4 +1,4 @@
-import type { Hit, Vec2, Viewport } from '../../core';
+import type { DocumentSession, Hit, Matrix, Space, SnapLine, SnapSources, Units, Vec2, Viewport } from '../../core';
 import type { ToolId } from '../app/tools';
 import type { CanvasTheme } from '../canvas/theme';
 
@@ -13,6 +13,25 @@ export interface CanvasPointerEvent {
   altKey: boolean;
   ctrlKey: boolean;
   metaKey: boolean;
+  /** 1 for a click, 2 for a double click… */
+  clickCount: number;
+}
+
+export interface ToolKeyEvent {
+  key: string;
+  shiftKey: boolean;
+  altKey: boolean;
+  ctrlKey: boolean;
+  metaKey: boolean;
+}
+
+export type TransformKind = 'rotate' | 'scale' | 'reflect' | 'move';
+
+export interface DialogSpec {
+  title: string;
+  message?: string;
+  detail?: string;
+  buttons: Array<{ id: string; label: string; variant?: 'primary' | 'danger' }>;
 }
 
 /** What a tool may ask of the canvas (CLAUDE.md rule 5: tools are state machines over this interface). */
@@ -25,6 +44,31 @@ export interface ToolHost {
   setHover(hit: Hit | null): void;
   /** Topmost pickable object at a document point, using a screen-sized tolerance. */
   hitAt(doc: Vec2): Hit | null;
+
+  readonly session: DocumentSession | null;
+  /** The Space in front, null without a document. */
+  readonly space: Space | null;
+  /** Group being edited in isolation mode. */
+  readonly isolation: string | null;
+  readonly options: { smartGuides: boolean; snapGrid: boolean; guides: boolean; hideEdges: boolean };
+  readonly units: Units;
+  /** 4 screen px in Space units. */
+  readonly pickTolerance: number;
+  /** All objects under the point, topmost first (respects isolation and locks). */
+  hitTest(doc: Vec2): Hit[];
+  /** What a drag may snap to right now (guides, grid, artboards, other objects), per the View menu. */
+  snapSources(exclude: ReadonlySet<string>): SnapSources;
+  /** Smart-guide lines to draw (null clears them). */
+  setSnapLines(lines: SnapLine[] | null): void;
+  /** Blue measurement label next to the cursor (screen position), null clears it. */
+  setMeasure(text: string | null, at?: Vec2): void;
+  /** A key that is unique per gesture, so each drag is one undo step. */
+  gestureKey(): string;
+  confirm(spec: DialogSpec): Promise<string>;
+  setIsolation(id: string | null): void;
+  openTransformDialog(kind: TransformKind, origin: Vec2 | null): void;
+  /** For Transform Again (Ctrl+D). */
+  rememberTransform(transform: { matrix: Matrix; copy: boolean } | null): void;
 }
 
 export interface Tool {
@@ -36,6 +80,8 @@ export interface Tool {
   onPointerUp(event: CanvasPointerEvent, host: ToolHost): void;
   /** Escape and the like. */
   onKey?(key: string, host: ToolHost): void;
+  /** Keys with modifiers (arrows). Return true when handled. */
+  onKeyDown?(event: ToolKeyEvent, host: ToolHost): boolean;
   /** The pointer left the canvas. */
   onLeave?(host: ToolHost): void;
   /** Aborts a gesture in progress (window lost focus, tool switched). */

@@ -1,5 +1,6 @@
 import {
   boundsInParent,
+  frameOf,
   colorToCss,
   intersects,
   invert,
@@ -37,6 +38,8 @@ export interface RenderOptions {
   showGrid: boolean;
   activeArtboardId: string | null;
   theme: CanvasTheme;
+  /** Group being edited in isolation: everything else is dimmed. */
+  isolatedId: string | null;
 }
 
 const BLEND: Record<BlendMode, GlobalCompositeOperation> = {
@@ -138,7 +141,11 @@ function strokeShape(ctx: CanvasRenderingContext2D, path: Path2D, stroke: Stroke
   ctx.restore();
 }
 
+const DIMMED = 0.3;
+
 interface Env {
+  /** Ids of the isolated group and its ancestors (drawn at full strength, their other children dimmed). */
+  isolation: { id: string; chain: Set<string> } | null;
   ctx: CanvasRenderingContext2D;
   resources: Resources;
   outline: boolean;
@@ -195,7 +202,7 @@ function drawPlaceholderImage(env: Env, width: number, height: number): void {
   ctx.stroke();
 }
 
-function drawNode(env: Env, node: Node, cull: Rect, layer: Layer, alpha: number): void {
+function drawNode(env: Env, node: Node, cull: Rect, layer: Layer, alpha: number, inIsolation: boolean): void {
   const { ctx } = env;
   ctx.save();
   ctx.transform(...node.transform);
@@ -207,7 +214,7 @@ function drawNode(env: Env, node: Node, cull: Rect, layer: Layer, alpha: number)
 
   switch (node.type) {
     case 'group':
-      drawChildren(env, node.children, localCull, layer, a);
+      drawChildren(env, node.children, localCull, layer, a, inIsolation);
       break;
     case 'clipGroup': {
       const [mask, ...rest] = node.children;
@@ -217,7 +224,7 @@ function drawNode(env: Env, node: Node, cull: Rect, layer: Layer, alpha: number)
         ctx.transform(...mask.transform);
         ctx.clip(maskPath, nodeGeometry(mask)?.fillRule ?? 'nonzero');
         ctx.setTransform(saved);
-        drawChildren(env, rest, localCull, layer, a);
+        drawChildren(env, rest, localCull, layer, a, inIsolation);
       }
       break;
     }
@@ -232,16 +239,18 @@ function drawNode(env: Env, node: Node, cull: Rect, layer: Layer, alpha: number)
   ctx.restore();
 }
 
-function drawChildren(env: Env, children: readonly LayerChild[], cull: Rect, layer: Layer, alpha: number): void {
+function drawChildren(env: Env, children: readonly LayerChild[], cull: Rect, layer: Layer, alpha: number, inIsolation: boolean): void {
   for (const child of children) {
     if (isLayer(child)) {
-      if (child.visible) drawChildren(env, child.children, cull, child, alpha);
+      if (child.visible) drawChildren(env, child.children, cull, child, alpha, inIsolation);
       continue;
     }
     if (!child.visible) continue;
     const bounds = boundsInParent(child);
     if (!bounds || !intersects(bounds, cull)) continue;
-    drawNode(env, child, cull, layer, alpha);
+    const iso = env.isolation;
+    const dim = iso !== null && !inIsolation && !iso.chain.has(child.id);
+    drawNode(env, child, cull, layer, dim ? alpha * DIMMED : alpha, inIsolation || child.id === iso?.id);
   }
 }
 
@@ -360,9 +369,11 @@ export function renderContent(ctx: CanvasRenderingContext2D, o: RenderOptions): 
   // Artwork in document space, culled against the visible rectangle.
   ctx.save();
   ctx.transform(view.zoom * 1, 0, 0, view.zoom * 1, view.panX, view.panY);
-  const env: Env = { ctx, resources: o.resources, outline: o.outline, dpr };
+  const frame = o.isolatedId ? frameOf(o.space, o.isolatedId) : null;
+  const isolation = frame ? { id: o.isolatedId as string, chain: new Set([...frame.ancestors.map((n) => n.id), o.isolatedId as string]) } : null;
+  const env: Env = { ctx, resources: o.resources, outline: o.outline, dpr, isolation };
   for (const layer of o.space.layers) {
-    if (layer.visible) drawChildren(env, layer.children, visibleRect(view, o.width, o.height), layer, 1);
+    if (layer.visible) drawChildren(env, layer.children, visibleRect(view, o.width, o.height), layer, 1, false);
   }
   ctx.restore();
 }

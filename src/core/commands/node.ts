@@ -240,9 +240,10 @@ export const setPathAnchors = (spaceId: string, pathId: string, anchors: Anchor[
 });
 
 /** Editing the nodes of a live shape turns it into a plain path (specs/02 · Shape). */
-export const convertShapeToPath = (spaceId: string, id: string): Command => ({
+export const convertShapeToPath = (spaceId: string, id: string, mergeKey?: string): Command => ({
   label: 'shape.toPath',
   spaceId,
+  ...(mergeKey ? { mergeKey: `path.edit:${mergeKey}` } : {}),
   apply: (d) => {
     const space = findSpace(d, spaceId);
     const found = space ? locateNode(space, id) : null;
@@ -261,9 +262,10 @@ export const convertShapeToPath = (spaceId: string, id: string): Command => ({
  * Alt+drag: inserts each clone right above its original (same container) with `matrix` already applied.
  * `clones[i]` is the copy of `ids[i]` (made with `cloneNodes`, so it has fresh ids).
  */
-export const duplicateNodes = (spaceId: string, ids: readonly string[], clones: readonly Node[], matrix: Matrix | null = null): Command => ({
+export const duplicateNodes = (spaceId: string, ids: readonly string[], clones: readonly Node[], matrix: Matrix | null = null, mergeKey?: string): Command => ({
   label: 'node.duplicate',
   spaceId,
+  ...(mergeKey ? { mergeKey: `node.transform:${mergeKey}` } : {}),
   apply: (d) => {
     const space = findSpace(d, spaceId);
     if (!space) return;
@@ -274,5 +276,25 @@ export const duplicateNodes = (spaceId: string, ids: readonly string[], clones: 
       const placed = matrix ? { ...clone, transform: multiply(matrix, clone.transform) } : clone;
       found.siblings.splice(found.index + 1, 0, placed as DraftChild);
     });
+  },
+});
+
+/** Objeto › Desbloquear todo / Mostrar todo: sets properties on every object of the Space (groups included). */
+export const setAllNodesProps = (spaceId: string, props: NodeProps): Command => ({
+  label: 'node.propsAll',
+  spaceId,
+  apply: (d) => {
+    const space = findSpace(d, spaceId);
+    if (!space) return;
+    for (const node of walkNodes(space.layers as LayerChild[])) Object.assign(node, props);
+  },
+});
+
+/** Mayús+Ctrl+G on several groups at once, as a single history step. */
+export const ungroupNodes = (spaceId: string, groupIds: readonly string[]): Command => ({
+  label: 'node.ungroup',
+  spaceId,
+  apply: (d) => {
+    for (const id of groupIds) ungroupNode(spaceId, id).apply(d);
   },
 });

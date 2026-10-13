@@ -1,0 +1,35 @@
+.vc-transform {
+  width: 340px;
+}
+.vc-form__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+  font-size: var(--fs-label);
+  color: var(--text);
+}
+.vc-form__indent {
+  margin-left: 22px;
+}
+.vc-form__radio,
+.vc-form__check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  font-size: var(--fs-label);
+}
+.vc-form__hint {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--text-muted);
+  font-size: var(--fs-micro);
+}
+.vc-transform__footer {
+  align-items: center;
+}
+.vc-transform__spacer {
+  flex: 1;
+}

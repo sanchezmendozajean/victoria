@@ -3,9 +3,11 @@ import { DialogHost } from '../components/DialogHost';
 import { TooltipHost } from '../components/Tooltip';
 import { ControlBar } from './ControlBar';
 import { DocBar } from './DocBar';
+import { IsolationBar } from './IsolationBar';
 import { PanelDock } from './PanelDock';
 import { StatusBar } from './StatusBar';
 import { TitleBar } from './TitleBar';
+import { TransformDialog } from './TransformDialog';
 import { Toolbar } from './Toolbar';
 import { useAppEffects } from './useAppEffects';
 import { useDocumentLifecycle } from './useDocumentLifecycle';
@@ -23,6 +25,7 @@ export function App() {
         <Toolbar />
         <div className="vc-app__work">
           <DocBar />
+          <IsolationBar />
           <CanvasArea />
         </div>
         <PanelDock />
@@ -30,6 +33,7 @@ export function App() {
       <StatusBar />
       <TooltipHost />
       <DialogHost />
+      <TransformDialog />
     </div>
   );
 }

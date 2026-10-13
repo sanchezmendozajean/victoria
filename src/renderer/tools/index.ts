@@ -1,31 +1,11 @@
 import type { ToolId } from '../app/tools';
+import { createDirectSelectionTool } from './directSelectionTool';
 import { createHandTool } from './handTool';
+import { createLassoTool } from './lassoTool';
+import { createSelectionTool } from './selectionTool';
+import { createTransformTool } from './transformTools';
 import type { Tool } from './types';
 import { createZoomTool } from './zoomTool';
-
-const SELECTION_TOOLS: readonly ToolId[] = ['tool-select', 'tool-direct-select', 'tool-group-select', 'tool-lasso'];
-
-/**
- * Selection tools only highlight what is under the cursor for now (specs/03 · Selección › Hover);
- * picking, moving and the bounding box arrive in Phase 4.
- */
-function createHoverTool(id: ToolId): Tool {
-  return {
-    id,
-    cursor: () => 'default',
-    onPointerDown() {},
-    onPointerMove(event, host) {
-      host.setHover(host.hitAt(event.doc));
-    },
-    onPointerUp() {},
-    onLeave(host) {
-      host.setHover(null);
-    },
-    cancel(host) {
-      host.setHover(null);
-    },
-  };
-}
 
 /** Tools whose behaviour is built in later phases: they only set the cursor. */
 function createIdleTool(id: ToolId): Tool {
@@ -34,8 +14,25 @@ function createIdleTool(id: ToolId): Tool {
 }
 
 export function createTool(id: ToolId): Tool {
-  if (id === 'tool-hand') return createHandTool();
-  if (id === 'tool-zoom') return createZoomTool();
-  if (SELECTION_TOOLS.includes(id)) return createHoverTool(id);
-  return createIdleTool(id);
+  switch (id) {
+    case 'tool-hand':
+      return createHandTool();
+    case 'tool-zoom':
+      return createZoomTool();
+    case 'tool-select':
+      return createSelectionTool();
+    case 'tool-direct-select':
+    case 'tool-group-select':
+      return createDirectSelectionTool(id);
+    case 'tool-lasso':
+      return createLassoTool();
+    case 'tool-rotate':
+      return createTransformTool('rotate');
+    case 'tool-scale':
+      return createTransformTool('scale');
+    case 'tool-reflect':
+      return createTransformTool('reflect');
+    default:
+      return createIdleTool(id);
+  }
 }

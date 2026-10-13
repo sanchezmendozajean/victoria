@@ -1,5 +1,7 @@
 import { create } from 'zustand';
+import type { Matrix, Vec2 } from '../../core';
 import type { PlatformInfo, Theme } from '../../shared/ipc';
+import type { TransformKind } from '../tools/types';
 import {
   activatePanel,
   defaultLayout,
@@ -64,6 +66,22 @@ interface UiState {
   /** Cursor over the canvas, in Space points. */
   cursor: { x: number; y: number } | null;
 
+  /** Group being edited in isolation, per Space. */
+  isolation: Record<string, string | null>;
+  /** Last transform, for Transform Again (Ctrl+D). */
+  lastTransform: { matrix: Matrix; copy: boolean } | null;
+  /** Reference point of the control bar X/Y/W/H fields: 0 / 0.5 / 1 on each axis. */
+  referencePoint: Vec2;
+  linkProportions: boolean;
+  transformDialog: { kind: TransformKind; origin: Vec2 | null } | null;
+
+  setIsolation(spaceId: string, groupId: string | null): void;
+  setLastTransform(transform: { matrix: Matrix; copy: boolean } | null): void;
+  setReferencePoint(point: Vec2): void;
+  toggleLinkProportions(): void;
+  openTransformDialog(kind: TransformKind, origin: Vec2 | null): void;
+  closeTransformDialog(): void;
+
   toggleViewOption(key: keyof ViewOptions): void;
   setActiveArtboard(spaceId: string, artboardId: string): void;
   setZoom(zoom: number): void;
@@ -102,6 +120,19 @@ export const useUi = create<UiState>()((set, get) => ({
   activeArtboard: {},
   zoom: 1,
   cursor: null,
+
+  isolation: {},
+  lastTransform: null,
+  referencePoint: { x: 0.5, y: 0.5 },
+  linkProportions: false,
+  transformDialog: null,
+
+  setIsolation: (spaceId, groupId) => set((s) => ({ isolation: { ...s.isolation, [spaceId]: groupId } })),
+  setLastTransform: (lastTransform) => set({ lastTransform }),
+  setReferencePoint: (referencePoint) => set({ referencePoint }),
+  toggleLinkProportions: () => set((s) => ({ linkProportions: !s.linkProportions })),
+  openTransformDialog: (kind, origin) => set({ transformDialog: { kind, origin } }),
+  closeTransformDialog: () => set({ transformDialog: null }),
 
   toggleViewOption: (key) => set((s) => ({ viewOptions: { ...s.viewOptions, [key]: !s.viewOptions[key] } })),
   setActiveArtboard: (spaceId, artboardId) => set((s) => ({ activeArtboard: { ...s.activeArtboard, [spaceId]: artboardId } })),

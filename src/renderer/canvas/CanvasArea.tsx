@@ -1,4 +1,7 @@
 import { useEffect, useRef } from 'react';
+import { frameOf, getActiveSpace } from '../../core';
+import { askUser } from '../app/dialogs';
+import { manager } from '../documents';
 import { RULER_SIZE } from './rulerRenderer';
 import { t } from '../i18n';
 import { useDocuments } from '../documents';
@@ -31,6 +34,9 @@ export function CanvasArea() {
   const space = session?.document.spaces.find((s) => s.id === session.document.activeSpaceId);
   const activeArtboardId = space ? (activeArtboard[space.id] ?? space.artboards[0]?.id ?? null) : null;
   const units = session?.document.meta.units ?? 'mm';
+  const isolationId = useUi((s) => (space ? (s.isolation[space.id] ?? null) : null));
+  // An isolated group that no longer exists (undo, delete) simply ends the mode.
+  const isolation = space && isolationId && frameOf(space, isolationId) ? isolationId : null;
 
   useEffect(() => {
     const surface = surfaceRef.current;
@@ -66,6 +72,13 @@ export function CanvasArea() {
           pendingCursor = doc;
           schedule();
         },
+        confirm: (spec) => askUser(spec),
+        onIsolation: (id) => {
+          const active = manager.active?.session;
+          if (active) useUi.getState().setIsolation(getActiveSpace(active.document).id, id);
+        },
+        onTransformDialog: (kind, origin) => useUi.getState().openTransformDialog(kind, origin),
+        onRememberTransform: (transform) => useUi.getState().setLastTransform(transform),
       },
     );
     controllerRef.current = controller;
@@ -88,10 +101,14 @@ export function CanvasArea() {
         lockGuides: viewOptions.lockGuides,
         grid: viewOptions.grid,
         hideArtboards: viewOptions.hideArtboards,
+        snapGrid: viewOptions.snapGrid,
+        smartGuides: viewOptions.smartGuides,
+        hideEdges: viewOptions.hideEdges,
       },
       activeArtboardId,
       units,
       themeName: theme,
+      isolation,
     });
   });
 

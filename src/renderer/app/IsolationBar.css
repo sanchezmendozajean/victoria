@@ -1,0 +1,41 @@
+.vc-isolation {
+  display: flex;
+  align-items: center;
+  flex: none;
+  gap: 8px;
+  height: 24px;
+  padding: 0 8px;
+  background: var(--bg-panel-alt);
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  font-size: var(--fs-label);
+}
+.vc-isolation__back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--icon);
+}
+.vc-isolation__back:hover {
+  background: var(--bg-hover);
+}
+.vc-isolation__trail {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-muted);
+}
+.vc-isolation__trail span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.vc-isolation__trail .is-current {
+  color: var(--text);
+}

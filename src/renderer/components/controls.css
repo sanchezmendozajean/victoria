@@ -87,3 +87,25 @@
 .vc-barbutton:hover {
   background: var(--bg-hover);
 }
+
+.vc-field--input {
+  cursor: text;
+}
+.vc-field--input:focus-within {
+  border-color: var(--accent);
+}
+.vc-field--input.is-disabled {
+  opacity: 0.5;
+}
+.vc-field__input {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: right;
+  user-select: text;
+}

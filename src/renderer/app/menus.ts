@@ -20,6 +20,7 @@ export interface MenuContext {
   undoLabel: string | null;
   redoLabel: string | null;
   viewOptions: ViewOptions;
+  openTransformDialog(kind: 'rotate' | 'scale' | 'reflect' | 'move'): void;
 }
 
 export type MenuId = 'file' | 'edit' | 'object' | 'type' | 'select' | 'modifier' | 'view' | 'window' | 'help';
@@ -111,6 +112,11 @@ export function buildMenus(ctx: MenuContext): MenuDef[] {
 
   const object: MenuEntry[] = [
     item('transform-again', 'menu.object.transformAgain', 'transform', 'object.transformAgain'),
+    sub('transform', 'menu.object.transform', 'transform', [
+      item('rotate', 'menu.object.rotate', 'tool-rotate', undefined, { onSelect: () => ctx.openTransformDialog('rotate') }),
+      item('reflect', 'menu.object.reflect', 'tool-reflect', undefined, { onSelect: () => ctx.openTransformDialog('reflect') }),
+      item('scale', 'menu.object.scale', 'tool-scale', undefined, { onSelect: () => ctx.openTransformDialog('scale') }),
+    ]),
     item('move', 'menu.object.move', 'transform', 'object.move'),
     sep('s1'),
     item('group', 'menu.object.group', 'group', 'object.group'),

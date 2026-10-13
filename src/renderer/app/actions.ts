@@ -1,6 +1,21 @@
 import { canvasApi } from '../canvas/api';
 import { manager } from '../documents';
 import { createNewSpace } from '../documents/spaceActions';
+import {
+  arrangeSelection,
+  deleteSelection,
+  groupSelection,
+  hideSelection,
+  lockSelection,
+  reselect,
+  selectAll,
+  selectAllInArtboard,
+  selectNone,
+  showAll,
+  transformAgain,
+  unlockAll,
+  ungroupSelection,
+} from './selectionActions';
 import type { ShortcutAction } from './shortcuts';
 import { useUi, type ViewOptions } from './store';
 
@@ -42,6 +57,23 @@ const HANDLERS: Partial<Record<ShortcutAction, () => void | Promise<unknown>>> =
   'view.smartGuides': toggle('smartGuides'),
   'view.hideArtboards': toggle('hideArtboards'),
   'view.hideEdges': toggle('hideEdges'),
+  'edit.delete': deleteSelection,
+  'object.group': groupSelection,
+  'object.ungroup': ungroupSelection,
+  'object.lock': lockSelection,
+  'object.unlockAll': unlockAll,
+  'object.hide': hideSelection,
+  'object.showAll': showAll,
+  'object.bringToFront': () => arrangeSelection('front'),
+  'object.bringForward': () => arrangeSelection('forward'),
+  'object.sendBackward': () => arrangeSelection('backward'),
+  'object.sendToBack': () => arrangeSelection('back'),
+  'object.transformAgain': transformAgain,
+  'object.move': () => useUi.getState().openTransformDialog('move', null),
+  'select.all': selectAll,
+  'select.allInArtboard': selectAllInArtboard,
+  'select.none': selectNone,
+  'select.reselect': reselect,
   'space.previous': () => stepSpace(-1),
   'space.next': () => stepSpace(1),
 };

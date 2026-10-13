@@ -20,6 +20,7 @@ const menus = buildMenus({
   undoLabel: null,
   redoLabel: null,
   viewOptions: DEFAULT_VIEW_OPTIONS,
+  openTransformDialog: () => undefined,
 });
 
 describe('menus', () => {

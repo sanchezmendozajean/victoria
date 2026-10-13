@@ -3,6 +3,7 @@ import { isLayer } from '../model/queries';
 import type { Anchor, Layer, LayerChild, Matrix, Node, PathNode, Space, Vec2 } from '../model/types';
 import { applyToPoint } from '../model/matrix';
 import { boundsInParent, geometricBoundsInParent } from './geometry';
+import { shapeSubPaths } from './shapes';
 import { transformRect, unionRect, type Rect } from './rect';
 
 const IDENTITY: Matrix = [1, 0, 0, 1, 0, 0];
@@ -45,9 +46,28 @@ export function frameOf(space: Space, id: string): NodeFrame | null {
   return null;
 }
 
+const virtualPaths = new WeakMap<Node, PathNode | null>();
+
+/** The contour of a live shape as a path (same id, so selected anchors keep pointing at it after conversion). */
+function virtualPath(shape: Node): PathNode | null {
+  if (shape.type !== 'shape') return null;
+  if (virtualPaths.has(shape)) return virtualPaths.get(shape) ?? null;
+  const [contour] = shapeSubPaths(shape);
+  const { shape: _kind, params: _params, type: _type, ...base } = shape;
+  void _kind;
+  void _params;
+  void _type;
+  const path = contour ? ({ ...base, type: 'path', closed: contour.closed, anchors: contour.anchors } as PathNode) : null;
+  virtualPaths.set(shape, path);
+  return path;
+}
+
 /** A path anywhere in the Space: standalone, or a sub-path of a compound path (whose transform it shares). */
 export interface PathFrame {
+  /** For a live shape this is a virtual path with the same id (its contour), editable only after conversion. */
   path: PathNode;
+  /** True for live shapes (rectangle, ellipse…): editing their nodes converts them to a path first. */
+  live: boolean;
   /** The object the path belongs to (the path itself, or its compound parent). */
   owner: Node;
   world: Matrix;
@@ -56,7 +76,11 @@ export interface PathFrame {
 
 export function pathFrameOf(space: Space, id: string): PathFrame | null {
   const direct = frameOf(space, id);
-  if (direct?.node.type === 'path') return { path: direct.node, owner: direct.node, world: direct.world, layer: direct.layer };
+  if (direct?.node.type === 'path') return { path: direct.node, live: false, owner: direct.node, world: direct.world, layer: direct.layer };
+  if (direct?.node.type === 'shape') {
+    const path = virtualPath(direct.node);
+    return path ? { path, live: true, owner: direct.node, world: direct.world, layer: direct.layer } : null;
+  }
   for (const layer of space.layers) {
     const found = searchCompound(layer.children, id, IDENTITY, layer);
     if (found) return found;
@@ -74,7 +98,7 @@ function searchCompound(children: readonly LayerChild[], id: string, parentWorld
     const world = multiply(parentWorld, child.transform);
     if (child.type === 'compound') {
       const path = child.children.find((p) => p.id === id);
-      if (path) return { path, owner: child, world, layer };
+      if (path) return { path, live: false, owner: child, world, layer };
     } else if (child.type === 'group' || child.type === 'clipGroup') {
       const found = searchCompound(child.children, id, world, layer);
       if (found) return found;
@@ -95,8 +119,11 @@ export function pathsOfNodes(space: Space, ids: readonly string[]): PathFrame[] 
 }
 
 function collectPaths(node: Node, world: Matrix, layer: Layer, out: PathFrame[]): void {
-  if (node.type === 'path') out.push({ path: node, owner: node, world, layer });
-  else if (node.type === 'compound') for (const path of node.children) out.push({ path, owner: node, world, layer });
+  if (node.type === 'path') out.push({ path: node, live: false, owner: node, world, layer });
+  else if (node.type === 'shape') {
+    const path = virtualPath(node);
+    if (path) out.push({ path, live: true, owner: node, world, layer });
+  } else if (node.type === 'compound') for (const path of node.children) out.push({ path, live: false, owner: node, world, layer });
   else if (node.type === 'group' || node.type === 'clipGroup') {
     for (const child of node.children) collectPaths(child, multiply(world, child.transform), layer, out);
   }
