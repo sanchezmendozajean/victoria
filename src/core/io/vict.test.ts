@@ -1,7 +1,7 @@
 import { strToU8, zipSync } from 'fflate';
 import { describe, expect, it } from 'vitest';
 import { DocumentSession } from '../commands/session';
-import { addImageResource, addNode } from '../commands';
+import { addGradient, addImageResource, addNode } from '../commands';
 import { createRect } from '../model/factory';
 import { createRng, randomCommand, sampleDocument, sequentialIds } from '../testing/random-ops';
 import { migrateDocument, UnsupportedVersionError, type Migration } from './migrations';
@@ -42,6 +42,16 @@ describe('.vict round trip', () => {
     expect(read.images.def456).toEqual(jpg);
     expect(read.fonts.f1).toEqual(font);
     expect(read.thumbnail).toEqual(thumb);
+  });
+
+  it('keeps gradient stops with and without a midpoint', () => {
+    const ids = sequentialIds('g');
+    const session = new DocumentSession(sampleDocument(ids), { ids });
+    const red = { model: 'rgb' as const, values: [255, 0, 0] };
+    const blue = { model: 'rgb' as const, values: [0, 0, 255] };
+    session.run(addGradient({ id: 'g1', name: 'Rojo a azul', type: 'linear', stops: [{ offset: 0, color: red, opacity: 1, midpoint: 0.3 }, { offset: 1, color: blue, opacity: 1 }] }));
+    const read = readVict(writeVict({ document: session.document, app: 'x' }));
+    expect(read.document.resources.gradients[0]?.stops.map((s) => s.midpoint)).toEqual([0.3, undefined]);
   });
 
   it('survives a second round trip unchanged', () => {

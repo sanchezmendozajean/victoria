@@ -300,6 +300,8 @@ export interface GradientStop {
   offset: number;
   color: Color;
   opacity: number;
+  /** Where the blend between this stop and the next is halfway, 0..1 (default 0.5). Optional: no format bump. */
+  midpoint?: number;
 }
 export interface Gradient {
   id: string;

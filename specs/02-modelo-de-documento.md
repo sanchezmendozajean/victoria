@@ -123,6 +123,10 @@ interface StrokeStyle {
 
 Por defecto un objeto nuevo tiene `[fill, stroke]` (como Illustrator: relleno blanco, trazo negro 1 pt, o los últimos usados).
 
+## Recursos (forma de los datos)
+
+Definidos en `src/core/model/types.ts` y aprobados en la revisión de la Fase 2: `Swatch { id, name, color, global, group? }`, `Gradient { id, name, type, stops[] }` con `GradientStop { offset, color, opacity, midpoint? }` (punto medio 0..1, por defecto 0,5), `Guide { id, orientation, position, locked }`, `ModifierInstance { id, modifierId, enabled, params }`, `TextStyle { fontFamily, fontStyle, size }` (crece en la Fase 7 con campos opcionales) y `LineParams { length }`. Los campos nuevos se añaden como opcionales para no cambiar la versión del formato.
+
 ## Color
 
 `Color = { model: 'rgb'|'cmyk'|'hsb'|'gray'; values: number[]; alpha?: number }`. Internamente se convierte a sRGB para pintar. Las muestras globales actualizan a todos los objetos que las usan.

@@ -16,7 +16,7 @@
 
 ### Decisiones tomadas (la spec no las cubría)
 - Los comandos no tienen `do/undo` literales: son una receta de Immer y la sesión guarda `patches`/`inversePatches` (como recomienda la spec 02). Su `label` es una clave (`space.add`) que la UI traduce.
-- Tipos que la spec no detalla, definidos aquí y ampliables: `Gradient`, `Swatch`, `ModifierInstance`, `Guide`, `TextStyle` (familia, estilo, tamaño), `LineParams` (longitud), `FontResource`/`ImageResource`.
+- Tipos aprobados por el usuario tal como están, con `GradientStop.midpoint` opcional añadido (punto medio de la spec 06) y `TextStyle` mínimo que crecerá en la Fase 7 con campos opcionales. Definidos aquí: `Gradient`, `Swatch`, `ModifierInstance`, `Guide`, `TextStyle` (familia, estilo, tamaño), `LineParams` (longitud), `FontResource`/`ImageResource`.
 - Un documento nuevo es A4 en mm, con Espacio, mesa y capa de nombres en español; el diálogo de Nuevo documento llega en la Fase 12.
 - Una mesa y una capa por Espacio como mínimo (como Illustrator); eliminar la última no hace nada.
 - Al rehacer también se trae al frente el Espacio de la acción.
