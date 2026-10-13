@@ -1,6 +1,5 @@
-import { locateNode } from '../model/queries';
-import { getSpace } from '../model/queries';
-import type { Document, Node, Space } from '../model/types';
+import { getSpace, isLayer, locateNode } from '../model/queries';
+import type { Document, LayerChild, Node, Space } from '../model/types';
 
 /** The selection is per document and not part of the history, but each history entry restores it. */
 export interface Selection {
@@ -29,14 +28,19 @@ export function toggleInSelection(selection: Selection, id: string): Selection {
   return selection.ids.includes(id) ? removeFromSelection(selection, [id]) : addToSelection(selection, [id]);
 }
 
-const isSelectable = (node: Node, layerLocked: boolean, layerVisible: boolean) =>
-  !layerLocked && layerVisible && node.visible && !node.locked;
+const isSelectable = (node: Node) => node.visible && !node.locked;
 
-/** Top-level objects of visible, unlocked layers (Ctrl+A). */
+function collectSelectable(children: readonly LayerChild[]): string[] {
+  return children.flatMap((child) => {
+    if (!isLayer(child)) return isSelectable(child) ? [child.id] : [];
+    // Hidden or locked layers hide their whole subtree, sublayers included.
+    return child.visible && !child.locked ? collectSelectable(child.children) : [];
+  });
+}
+
+/** Top-level objects of visible, unlocked layers and sublayers (Ctrl+A). */
 export function selectableIds(space: Space): string[] {
-  return space.layers.flatMap((layer) =>
-    layer.children.filter((n) => isSelectable(n, layer.locked, layer.visible)).map((n) => n.id),
-  );
+  return collectSelectable(space.layers);
 }
 
 export function selectAllInSpace(doc: Document, spaceId: string): Selection {

@@ -9,6 +9,7 @@ import {
   arrangeNodes,
   groupNodes,
   moveGuide,
+  moveLayer,
   moveNodesToLayer,
   moveNodesToSpace,
   removeArtboard,
@@ -37,7 +38,7 @@ import { createArtboard, createDocument, createEllipse, createGroup, createLayer
 import { sequentialIds, type IdGenerator } from '../model/ids';
 import { translation, scaling, rotation } from '../model/matrix';
 import { SPACE_COLORS } from '../model/presets';
-import { walkNodes } from '../model/queries';
+import { walkLayers, walkNodes } from '../model/queries';
 import type { Document, Node, Space } from '../model/types';
 
 /** Mulberry32: tiny seeded PRNG. */
@@ -87,8 +88,11 @@ function randomNode(rng: Rng, ids: IdGenerator): Node {
 }
 
 function allNodes(space: Space): Node[] {
-  return space.layers.flatMap((l) => [...walkNodes(l.children)]);
+  return [...walkNodes(space.layers)];
 }
+
+/** Layers and sublayers. */
+const allLayers = (space: Space) => [...walkLayers(space.layers)];
 
 function pickSome<T>(rng: Rng, items: readonly T[], max = 3): T[] {
   const count = Math.min(items.length, 1 + rng.int(max));
@@ -116,10 +120,12 @@ export function randomCommand(rng: Rng, doc: Document, ids: IdGenerator, withMer
     [3, () => updateArtboard(space.id, rng.pick(space.artboards).id, { x: rng.num(), y: rng.num() }, mergeKey)],
     [1, () => reorderArtboard(space.id, rng.pick(space.artboards).id, rng.int(space.artboards.length))],
     [2, () => addLayer(space.id, createLayer(ids, 'Layer'), rng.int(space.layers.length + 1))],
-    [1, () => removeLayer(space.id, rng.pick(space.layers).id)],
-    [2, () => updateLayer(space.id, rng.pick(space.layers).id, { visible: rng.chance(0.5), locked: rng.chance(0.3), name: `Layer ${rng.int(50)}` })],
-    [1, () => reorderLayer(space.id, rng.pick(space.layers).id, rng.int(space.layers.length))],
-    [8, () => addNode(space.id, rng.pick(space.layers).id, randomNode(rng, ids))],
+    [1, () => removeLayer(space.id, rng.pick(allLayers(space)).id)],
+    [2, () => updateLayer(space.id, rng.pick(allLayers(space)).id, { visible: rng.chance(0.5), locked: rng.chance(0.3), name: `Layer ${rng.int(50)}` })],
+    [3, () => addLayer(space.id, createLayer(ids, 'Sub'), rng.int(4), rng.pick(allLayers(space)).id)],
+    [2, () => moveLayer(space.id, rng.pick(allLayers(space)).id, rng.chance(0.3) ? null : rng.pick(allLayers(space)).id, rng.chance(0.5) ? undefined : rng.int(4))],
+    [1, () => reorderLayer(space.id, rng.pick(allLayers(space)).id, rng.int(6))],
+    [8, () => addNode(space.id, rng.pick(allLayers(space)).id, randomNode(rng, ids))],
     [2, () => (nodes.length ? removeNodes(space.id, pickSome(rng, nodes).map((n) => n.id)) : renameDocument('x'))],
     [6, () => (nodes.length ? transformNodes(space.id, pickSome(rng, nodes).map((n) => n.id), translation(rng.num(40), rng.num(40)), mergeKey) : renameDocument('y'))],
     [1, () => (nodes.length ? transformNodes(space.id, pickSome(rng, nodes).map((n) => n.id), rotation(rng.num(3)), undefined) : renameDocument('r'))],
@@ -131,10 +137,10 @@ export function randomCommand(rng: Rng, doc: Document, ids: IdGenerator, withMer
       const groups = nodes.filter((n) => n.type === 'group');
       return groups.length ? ungroupNode(space.id, rng.pick(groups).id) : renameDocument('u');
     }],
-    [2, () => (nodes.length ? moveNodesToLayer(space.id, pickSome(rng, nodes).map((n) => n.id), rng.pick(space.layers).id) : renameDocument('m'))],
+    [2, () => (nodes.length ? moveNodesToLayer(space.id, pickSome(rng, nodes).map((n) => n.id), rng.pick(allLayers(space)).id) : renameDocument('m'))],
     [2, () => {
       const other = rng.pick(doc.spaces);
-      return nodes.length ? moveNodesToSpace(space.id, pickSome(rng, nodes).map((n) => n.id), other.id, rng.pick(other.layers).id) : renameDocument('t');
+      return nodes.length ? moveNodesToSpace(space.id, pickSome(rng, nodes).map((n) => n.id), other.id, rng.pick(allLayers(other)).id) : renameDocument('t');
     }],
     [1, () => addGuide(space.id, { id: ids(), orientation: rng.chance(0.5) ? 'horizontal' : 'vertical', position: rng.num(), locked: false })],
     [1, () => (space.guides.length ? moveGuide(space.id, rng.pick(space.guides).id, rng.num()) : renameDocument('q'))],

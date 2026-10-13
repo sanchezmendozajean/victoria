@@ -14,9 +14,13 @@ Document
 │     ├─ grid: { size, subdivisions, visible }
 │     ├─ artboards: Artboard[]
 │     └─ layers: Layer[]
-│        └─ Layer { id, name, color, visible, locked, children: Node[] }
+│        └─ Layer { type: 'layer', id, name, color, visible, locked, children: (Node | Layer)[] }
 └─ activeSpaceId
 ```
+
+### Capas y subcapas
+
+Decisión del usuario (revisión de la Fase 2): una capa puede contener **objetos y otras capas (subcapas) en una misma lista ordenada en z**, como en Illustrator; un objeto puede quedar encima de una subcapa y otro debajo. `Layer.type = 'layer'` distingue una capa de un nodo. Los grupos (`group`, `clipGroup`) contienen solo objetos. Un Espacio conserva al menos una capa de primer nivel. Introducido en la versión 2 del formato (migración 1 → 2 en `core/io/migrations`).
 
 ## Nodos (objetos)
 

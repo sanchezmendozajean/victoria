@@ -16,7 +16,7 @@ describe('new document', () => {
     expect(doc.spaces[0]?.artboards).toHaveLength(1);
     expect(doc.spaces[0]?.layers).toHaveLength(1);
     expect(doc.activeSpaceId).toBe(doc.spaces[0]?.id);
-    expect(doc.meta.version).toBe(1);
+    expect(doc.meta.version).toBe(2);
   });
 
   it('defaults to an A4 artboard in points and accepts other presets', () => {

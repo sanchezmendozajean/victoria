@@ -6,8 +6,25 @@ export type RawDocument = Record<string, unknown>;
 /** Upgrades a document from version N to N+1. The table is keyed by N. */
 export type Migration = (doc: RawDocument) => RawDocument;
 
-/** Version 1 is the first format: nothing to migrate yet. Add `1: (doc) => …` when version 2 is born. */
-export const MIGRATIONS: Record<number, Migration> = {};
+const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
+
+/**
+ * 1 → 2: layers became tree nodes (`Layer.type = 'layer'`) so a layer can hold sublayers next to its objects.
+ * Idempotent: layers that already carry the type are left alone.
+ */
+const v1ToV2: Migration = (doc) => {
+  const spaces = Array.isArray(doc.spaces) ? doc.spaces : [];
+  return {
+    ...doc,
+    spaces: spaces.map((space) =>
+      isRecord(space) && Array.isArray(space.layers)
+        ? { ...space, layers: space.layers.map((l) => (isRecord(l) && l.type === undefined ? { ...l, type: 'layer' } : l)) }
+        : space,
+    ),
+  };
+};
+
+export const MIGRATIONS: Record<number, Migration> = { 1: v1ToV2 };
 
 export class UnsupportedVersionError extends Error {
   constructor(

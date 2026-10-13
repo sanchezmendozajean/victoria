@@ -41,6 +41,19 @@ function checkMatrix(v: unknown, path: string): void {
   m.forEach((n, i) => num(n, `${path}[${i}]`));
 }
 
+function checkLayer(raw: unknown, path: string): void {
+  const layer = rec(raw, path);
+  if (layer.type !== 'layer') fail(`${path}.type`, 'layer');
+  str(layer.id, `${path}.id`);
+  bool(layer.visible, `${path}.visible`);
+  bool(layer.locked, `${path}.locked`);
+  // Objects and sublayers share one z-ordered list.
+  arr(layer.children, `${path}.children`).forEach((c, k) => {
+    if (isRec(c) && c.type === 'layer') checkLayer(c, `${path}.children[${k}]`);
+    else checkNode(c, `${path}.children[${k}]`);
+  });
+}
+
 function checkNode(raw: unknown, path: string): void {
   const node = rec(raw, path);
   str(node.id, `${path}.id`);
@@ -113,13 +126,7 @@ export function assertDocument(raw: unknown): asserts raw is Document {
       str(artboard.id, `${path}.artboards[${j}].id`);
       for (const k of ['x', 'y', 'w', 'h']) num(artboard[k], `${path}.artboards[${j}].${k}`);
     });
-    arr(space.layers, `${path}.layers`).forEach((l, j) => {
-      const layer = rec(l, `${path}.layers[${j}]`);
-      str(layer.id, `${path}.layers[${j}].id`);
-      bool(layer.visible, `${path}.layers[${j}].visible`);
-      bool(layer.locked, `${path}.layers[${j}].locked`);
-      arr(layer.children, `${path}.layers[${j}].children`).forEach((n, k) => checkNode(n, `${path}.layers[${j}].children[${k}]`));
-    });
+    arr(space.layers, `${path}.layers`).forEach((l, j) => checkLayer(l, `${path}.layers[${j}]`));
   });
 
   const active = str(doc.activeSpaceId, 'activeSpaceId');

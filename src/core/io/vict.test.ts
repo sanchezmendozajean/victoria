@@ -22,7 +22,7 @@ describe('.vict round trip', () => {
       const document = busyDocument(seed);
       const read = readVict(writeVict({ document, app: '0.2.0' }));
       expect(read.document).toEqual(document);
-      expect(read.manifest).toEqual({ format: 'victoria', version: 1, app: '0.2.0' });
+      expect(read.manifest).toEqual({ format: 'victoria', version: 2, app: '0.2.0' });
     }
   });
 

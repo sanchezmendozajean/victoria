@@ -240,7 +240,7 @@ describe('node commands', () => {
     session.run(ungroupNode(spaceId, group.id));
     layer = getActiveSpace(session.document).layers[0];
     expect(layer?.children.map((n) => n.id)).toEqual([b.id, a.id, c.id]);
-    expect(layer?.children[1]?.transform).toEqual(translation(100, 100));
+    expect((layer?.children[1] as { transform: unknown } | undefined)?.transform).toEqual(translation(100, 100));
   });
 
   it('refuses to group nodes that live in different containers', () => {

@@ -190,15 +190,23 @@ export type Node = PathNode | CompoundNode | ShapeNode | GroupNode | ClipGroupNo
 
 // ── Space, artboard, layer ──────────────────────────────────────────────────────
 
+/**
+ * A layer holds objects and other layers (sublayers), mixed in one z-ordered list as in Illustrator
+ * (specs/02). Groups hold objects only.
+ */
 export interface Layer {
+  type: 'layer';
   id: string;
   name: string;
   /** Layer colour shown in the Layers panel (any CSS colour string, usually #RRGGBB). */
   color: string;
   visible: boolean;
   locked: boolean;
-  children: Node[];
+  /** Index 0 is the bottom of the stack. */
+  children: LayerChild[];
 }
+
+export type LayerChild = Node | Layer;
 
 export interface Bleed {
   top: number;

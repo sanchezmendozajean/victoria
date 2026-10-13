@@ -1,11 +1,18 @@
 import type { Draft } from 'immer';
 import { multiply } from '../model/matrix';
-import { childrenOf, locateNode, walkNodes } from '../model/queries';
-import type { Appearance, BaseNode, Document, GroupNode, Matrix, Node, Space } from '../model/types';
+import { childrenOf, locateLayer, locateNode, walkNodes } from '../model/queries';
+import type { Appearance, BaseNode, Document, GroupNode, LayerChild, Matrix, Node, Space } from '../model/types';
 import type { Command } from './command';
 
 type DraftSpace = Draft<Space>;
 type DraftNode = Draft<Node>;
+type DraftChild = Draft<LayerChild>;
+
+/** A layer or sublayer of the Space, wherever it sits in the tree. */
+const findLayer = (d: Draft<Document>, spaceId: string, layerId: string) => {
+  const space = findSpace(d, spaceId);
+  return space ? locateLayer(space, layerId)?.layer : undefined;
+};
 
 const findSpace = (d: Draft<Document>, id: string): DraftSpace | undefined => d.spaces.find((s) => s.id === id);
 
@@ -29,9 +36,7 @@ function detach(space: DraftSpace, ids: readonly string[]): DraftNode[] {
   const taken = new Set(located.map((l) => l.node.id));
   // z-order = document order; walk to collect, then remove from their arrays.
   const ordered: DraftNode[] = [];
-  for (const layer of space.layers) {
-    for (const node of walkNodes(layer.children)) if (taken.has(node.id)) ordered.push(node as DraftNode);
-  }
+  for (const node of walkNodes(space.layers as LayerChild[])) if (taken.has(node.id)) ordered.push(node as DraftNode);
   for (const l of located) {
     const at = l.siblings.findIndex((n) => n.id === l.node.id);
     if (at !== -1) l.siblings.splice(at, 1);
@@ -43,7 +48,7 @@ export const addNode = (spaceId: string, layerId: string, node: Node, index?: nu
   label: 'node.add',
   spaceId,
   apply: (d) => {
-    const layer = findSpace(d, spaceId)?.layers.find((l) => l.id === layerId);
+    const layer = findLayer(d, spaceId, layerId);
     if (layer) layer.children.splice(index ?? layer.children.length, 0, node);
   },
 });
@@ -121,13 +126,13 @@ export const arrangeNodes = (spaceId: string, ids: readonly string[], direction:
     if (!space) return;
     const wanted = new Set(ids);
     // Each container (a layer, a group) is arranged on its own.
-    const containers = new Map<DraftNode[], Set<string>>();
+    const containers = new Map<DraftChild[], Set<string>>();
     for (const id of wanted) {
       const found = locateNode(space, id);
       if (!found) continue;
-      const set = containers.get(found.siblings as DraftNode[]) ?? new Set<string>();
+      const set = containers.get(found.siblings as DraftChild[]) ?? new Set<string>();
       set.add(id);
-      containers.set(found.siblings as DraftNode[], set);
+      containers.set(found.siblings as DraftChild[], set);
     }
     for (const [siblings, picked] of containers) {
       if (direction === 'front' || direction === 'back') {
@@ -136,8 +141,8 @@ export const arrangeNodes = (spaceId: string, ids: readonly string[], direction:
         siblings.splice(0, siblings.length, ...(direction === 'front' ? [...rest, ...chosen] : [...chosen, ...rest]));
       } else if (direction === 'forward') {
         for (let i = siblings.length - 2; i >= 0; i--) {
-          const a = siblings[i] as DraftNode;
-          const b = siblings[i + 1] as DraftNode;
+          const a = siblings[i] as DraftChild;
+          const b = siblings[i + 1] as DraftChild;
           if (picked.has(a.id) && !picked.has(b.id)) {
             siblings[i] = b;
             siblings[i + 1] = a;
@@ -145,8 +150,8 @@ export const arrangeNodes = (spaceId: string, ids: readonly string[], direction:
         }
       } else {
         for (let i = 1; i < siblings.length; i++) {
-          const a = siblings[i - 1] as DraftNode;
-          const b = siblings[i] as DraftNode;
+          const a = siblings[i - 1] as DraftChild;
+          const b = siblings[i] as DraftChild;
           if (picked.has(b.id) && !picked.has(a.id)) {
             siblings[i - 1] = b;
             siblings[i] = a;
@@ -169,13 +174,13 @@ export const groupNodes = (spaceId: string, ids: readonly string[], group: Group
       .filter((l): l is NonNullable<typeof l> => l !== null);
     const first = tops[0];
     if (!first || tops.some((l) => l.siblings !== first.siblings)) return;
-    const siblings = first.siblings as DraftNode[];
+    const siblings = first.siblings as DraftChild[];
     const picked = new Set(tops.map((l) => l.node.id));
-    const insertAt = Math.max(...tops.map((l) => siblings.indexOf(l.node as DraftNode)));
-    const members = siblings.filter((n) => picked.has(n.id));
+    const insertAt = Math.max(...tops.map((l) => siblings.indexOf(l.node as DraftChild)));
+    const members = siblings.filter((n) => picked.has(n.id)) as DraftNode[];
     const remainingBefore = siblings.slice(0, insertAt).filter((n) => !picked.has(n.id)).length;
     const rest = siblings.filter((n) => !picked.has(n.id));
-    rest.splice(remainingBefore, 0, { ...group, children: members } as DraftNode);
+    rest.splice(remainingBefore, 0, { ...group, children: members } as DraftChild);
     siblings.splice(0, siblings.length, ...rest);
   },
 });
@@ -200,7 +205,7 @@ export const moveNodesToLayer = (spaceId: string, ids: readonly string[], layerI
   spaceId,
   apply: (d) => {
     const space = findSpace(d, spaceId);
-    const layer = space?.layers.find((l) => l.id === layerId);
+    const layer = space ? locateLayer(space, layerId)?.layer : undefined;
     if (!space || !layer) return;
     const moved = detach(space, ids);
     layer.children.splice(index ?? layer.children.length, 0, ...moved);
@@ -213,7 +218,7 @@ export const moveNodesToSpace = (fromSpaceId: string, ids: readonly string[], to
   spaceId: fromSpaceId,
   apply: (d) => {
     const from = findSpace(d, fromSpaceId);
-    const target = findSpace(d, toSpaceId)?.layers.find((l) => l.id === toLayerId);
+    const target = findLayer(d, toSpaceId, toLayerId);
     if (!from || !target || fromSpaceId === toSpaceId) return;
     target.children.push(...detach(from, ids));
   },

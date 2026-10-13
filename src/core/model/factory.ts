@@ -16,7 +16,7 @@ import type {
   Anchor,
 } from './types';
 
-export const CURRENT_FORMAT_VERSION = 1;
+export const CURRENT_FORMAT_VERSION = 2;
 
 export const WHITE: Color = { model: 'rgb', values: [255, 255, 255] };
 export const BLACK: Color = { model: 'rgb', values: [0, 0, 0] };
@@ -78,7 +78,7 @@ export function createEllipse(ids: IdGenerator, w: number, h: number): ShapeNode
 }
 
 export function createLayer(ids: IdGenerator, name: string, color = '#4C8DFF'): Layer {
-  return { id: ids(), name, color, visible: true, locked: false, children: [] };
+  return { type: 'layer', id: ids(), name, color, visible: true, locked: false, children: [] };
 }
 
 export interface ArtboardInit {

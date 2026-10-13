@@ -1,7 +1,7 @@
 import { deepClone } from '../model/deepClone';
 import type { Draft } from 'immer';
 import { childrenOf } from '../model/queries';
-import type { Appearance, Document, FontResource, Gradient, ImageResource, ModifierPreset, Node, Swatch } from '../model/types';
+import type { Appearance, Document, FontResource, Gradient, ImageResource, LayerChild, ModifierPreset, Node, Swatch } from '../model/types';
 import type { Command } from './command';
 
 export const addSwatch = (swatch: Swatch): Command => ({
@@ -37,6 +37,13 @@ function detachSwatchInNodes(nodes: Draft<Node>[], swatch: Swatch): void {
   }
 }
 
+function detachSwatchInChildren(children: Draft<LayerChild>[], swatch: Swatch): void {
+  for (const child of children) {
+    if (child.type === 'layer') detachSwatchInChildren(child.children, swatch);
+    else detachSwatchInNodes([child as Draft<Node>], swatch);
+  }
+}
+
 /** Objects that used the swatch keep its colour as a plain solid paint. */
 export const removeSwatch = (swatchId: string): Command => ({
   label: 'resource.swatch.remove',
@@ -44,7 +51,7 @@ export const removeSwatch = (swatchId: string): Command => ({
     const swatch = d.resources.swatches.find((s) => s.id === swatchId);
     if (!swatch) return;
     const snapshot = deepClone(swatch) as Swatch;
-    for (const space of d.spaces) for (const layer of space.layers) detachSwatchInNodes(layer.children, snapshot);
+    for (const space of d.spaces) detachSwatchInChildren(space.layers as Draft<LayerChild>[], snapshot);
     d.resources.swatches = d.resources.swatches.filter((s) => s.id !== swatchId);
   },
 });
