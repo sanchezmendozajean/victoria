@@ -53,7 +53,8 @@ export function MenuPopup({ entries, anchor, onClose, minWidth = 220 }: PopupPro
   // Pointer-down outside every menu, Escape from anywhere, or losing the window closes the whole tree.
   useEffect(() => {
     const onDown = (event: PointerEvent) => {
-      if (!(event.target as Element | null)?.closest('.vc-menu')) onClose();
+      // A click on the element that opened the menu is handled by its own toggle (otherwise it would reopen).
+      if (!(event.target as Element | null)?.closest('.vc-menu, [data-menu-trigger]')) onClose();
     };
     const onKey = (event: globalThis.KeyboardEvent) => {
       if (event.key === 'Escape') onClose();

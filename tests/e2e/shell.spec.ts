@@ -153,6 +153,17 @@ test('menus open, switch on hover, show icons and shortcuts, and close with Esca
   await expect(page.getByRole('menu')).toHaveCount(0);
 });
 
+test('clicking the menu label again closes the menu instead of reopening it', async () => {
+  const { page } = ctx;
+  await page.getByTestId('menu-file').click();
+  await expect(page.getByRole('menu')).toHaveCount(1);
+  await page.getByTestId('menu-file').click();
+  await expect(page.getByRole('menu')).toHaveCount(0);
+  await page.getByTestId('workspace-selector').click();
+  await page.getByTestId('workspace-selector').click();
+  await expect(page.getByRole('menu')).toHaveCount(0);
+});
+
 test('submenus open to the side', async () => {
   const { page } = ctx;
   await page.getByTestId('menu-modifier').click();

@@ -80,6 +80,7 @@ export function TitleBar() {
             type="button"
             className={cx('vc-titlebar__menu', open?.id === menu.id && 'is-open')}
             aria-haspopup="menu"
+            data-menu-trigger
             aria-expanded={open?.id === menu.id}
             data-testid={`menu-${menu.id}`}
             onClick={(event) => toggle(menu.id, event.currentTarget, 'below')}
@@ -95,6 +96,7 @@ export function TitleBar() {
         type="button"
         className={cx('vc-titlebar__workspace', open?.id === 'workspace' && 'is-open')}
         data-testid="workspace-selector"
+        data-menu-trigger
         aria-haspopup="menu"
         {...tip(t('titlebar.workspace'))}
         onClick={(event) => toggle('workspace', event.currentTarget, 'below')}

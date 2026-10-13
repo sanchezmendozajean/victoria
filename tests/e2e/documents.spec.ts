@@ -122,6 +122,14 @@ test.describe('documents, Spaces and history (Phase 2)', () => {
     await expect(docTabs(page).first()).toContainText('Sin título-2.vict');
   });
 
+  test('every document tab shows its close button, active or not', async () => {
+    const { page } = ctx;
+    await page.getByTestId('doc-new').click();
+    for (const close of await page.getByTestId('doc-close').all()) await expect(close).toBeVisible();
+    await expect(page.getByTestId('doc-close')).toHaveCount(2);
+    await docTabs(page).nth(1).getByTestId('doc-close').click();
+  });
+
   test('closing the last document opens a fresh one', async () => {
     const { page } = ctx;
     await docTabs(page).first().getByTestId('doc-close').click();

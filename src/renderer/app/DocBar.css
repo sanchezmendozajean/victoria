@@ -23,7 +23,7 @@
   height: 26px;
   max-width: 220px;
   margin-bottom: 2px;
-  padding: 0 12px 0 10px;
+  padding: 0 6px 0 10px;
   border-radius: 4px 4px 0 0;
   color: var(--text-muted);
   font-size: var(--fs-menu);
@@ -232,10 +232,4 @@
   font: inherit;
   outline: none;
   user-select: text;
-}
-.vc-doctab:not(.is-active) .vc-doctab__close {
-  display: none;
-}
-.vc-doctab:not(.is-active):hover .vc-doctab__close {
-  display: flex;
 }
