@@ -31,7 +31,7 @@ Panel y botón en Propiedades cuando hay una imagen seleccionada.
 
 ## Exportar
 
-**Archivo › Exportar › Exportar para pantallas** (Alt+Ctrl+E): lista de mesas (de todos los Espacios, con filtro por Espacio) con casillas; formatos múltiples a la vez (PNG 1x/2x/3x, SVG, PDF, JPG), sufijos, carpeta destino, "Abrir carpeta al terminar".
+**Archivo › Exportar › Exportar para pantallas** (sin atajo): lista de mesas (de todos los Espacios, con filtro por Espacio) con casillas; formatos múltiples a la vez (PNG 1x/2x/3x, SVG, PDF, JPG), sufijos, carpeta destino, "Abrir carpeta al terminar".
 **Exportar como…**: un archivo SVG/PNG/JPG/PDF con opciones.
 **Guardar copia como PDF**: todas las mesas como páginas.
 

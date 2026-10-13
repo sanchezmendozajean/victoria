@@ -77,7 +77,7 @@ export function buildMenus(ctx: MenuContext): MenuDef[] {
     sep('s2'),
     item('place', 'menu.file.place', 'place', 'file.place'),
     item('export', 'menu.file.export', 'export'),
-    item('export-screens', 'menu.file.exportScreens', 'export-screens', 'file.exportScreens'),
+    item('export-screens', 'menu.file.exportScreens', 'export-screens'),
     sep('s3'),
     item('document-setup', 'menu.file.documentSetup', 'document-setup', 'file.documentSetup'),
     item('print', 'menu.file.print', 'print', 'file.print'),
@@ -137,9 +137,7 @@ export function buildMenus(ctx: MenuContext): MenuDef[] {
       item('clip-release', 'menu.object.clipRelease', 'clip-mask', 'object.clipRelease'),
     ]),
     sep('s4'),
-    // Alt+Ctrl+E is "Exportar para pantallas" in specs/09 but "Aplicar modificadores" in mockup 14:
-    // no shortcut shown until the conflict is resolved.
-    item('apply-modifiers', 'menu.object.applyModifiers', 'mod-apply'),
+    item('apply-modifiers', 'menu.object.applyModifiers', 'mod-apply', 'object.applyModifiers'),
   ];
 
   const type: MenuEntry[] = [

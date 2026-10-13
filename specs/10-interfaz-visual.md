@@ -169,7 +169,7 @@ Zoom (campo editable + ▾) · navegador de mesas (◂ nombre ▾ ▸) · herram
 
 ### Comportamiento de los campos numéricos
 
-Decisión del usuario (Fase 1, revisión), tiene prioridad sobre la maqueta y sobre las menciones a «scrubby» de las specs 05 y 06:
+Decisión del usuario (Fase 1, revisión), tiene prioridad sobre la maqueta; las specs 05 y 06 ya fueron actualizadas:
 
 - **Rueda del ratón** sobre un campo enfocado o bajo el cursor incrementa/decrementa el valor (Mayús = ×10, Alt = ×0,1). No se usa arrastre horizontal ni cursor ↔.
 - **Expresiones aritméticas**: al pulsar Intro (o salir del campo) se evalúa la expresión como en Illustrator: `15 + 5` → `20`; admite `+ − × / * ( )`, decimales con coma o punto y unidades (`2 cm + 5 mm`, convertidas a la unidad del campo). Una expresión inválida restaura el valor anterior. El evaluador es TypeScript puro en `core` (sin `eval`) y se prueba con Vitest.

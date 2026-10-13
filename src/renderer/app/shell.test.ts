@@ -60,10 +60,13 @@ describe('menus', () => {
     expect(saveAs && saveAs.type !== 'separator' && saveAs.shortcut).toBe('Mayús+Ctrl+S');
   });
 
-  it('leaves Aplicar modificadores without shortcut while specs/09 and mockup 14 disagree', () => {
-    const object = menus.find((m) => m.id === 'object')?.entries ?? [];
-    const apply = object.find((e) => e.id === 'apply-modifiers');
-    expect(apply && apply.type !== 'separator' && apply.shortcut).toBeUndefined();
+  it('resolves the Alt+Ctrl+E conflict: Aplicar modificadores has it, Exportar para pantallas has none', () => {
+    const shortcutOf = (menuId: string, id: string) => {
+      const entry = menus.find((m) => m.id === menuId)?.entries.find((e) => e.id === id);
+      return entry && entry.type !== 'separator' ? entry.shortcut : 'missing';
+    };
+    expect(shortcutOf('object', 'apply-modifiers')).toBe('Alt+Ctrl+E');
+    expect(shortcutOf('file', 'export-screens')).toBeUndefined();
   });
 });
 

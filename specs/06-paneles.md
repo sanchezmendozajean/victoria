@@ -38,7 +38,7 @@ Como el panel Propiedades de Illustrator CC: cambia según la selección.
 
 ## Texto: Carácter (★)
 
-Fuente (buscador con vista previa en su propia tipografía, favoritos ★, recientes arriba), estilo, tamaño, interlineado (Auto), kerning (Auto/Óptico/Métrico/0/valor), tracking, escala vertical, escala horizontal, desplazamiento de línea base, rotación de caracteres, mayúsculas, versalitas, superíndice, subíndice, subrayado, tachado, idioma, antialiasing. Cada campo con ícono a la izquierda (igual que Illustrator) y edición por arrastre del ícono (scrubby).
+Fuente (buscador con vista previa en su propia tipografía, favoritos ★, recientes arriba), estilo, tamaño, interlineado (Auto), kerning (Auto/Óptico/Métrico/0/valor), tracking, escala vertical, escala horizontal, desplazamiento de línea base, rotación de caracteres, mayúsculas, versalitas, superíndice, subíndice, subrayado, tachado, idioma, antialiasing. Cada campo con ícono a la izquierda (igual que Illustrator) y edición con la rueda del ratón y expresiones aritméticas (ver specs/10 · Comportamiento de los campos numéricos).
 
 ## Texto: Párrafo (★)
 

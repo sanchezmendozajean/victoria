@@ -85,5 +85,5 @@ Los de apariencia se renderizan con `ctx.filter`/`shadowBlur` en Canvas y como `
 
 - Menú **Modificador** en la barra de menú, con submenús por categoría (cada entrada con ícono) y arriba: "Aplicar último modificador" (Mayús+Ctrl+E) y "Último modificador…" (Alt+Mayús+Ctrl+E).
 - Botón **fx** en panel Apariencia y en panel Propiedades.
-- Diálogo generado por `schema`: campos numéricos con arrastre (scrubby), deslizadores, casilla **Previsualizar** (activa por defecto), botones Cancelar/Aceptar.
+- Diálogo generado por `schema`: campos numéricos con rueda del ratón y expresiones aritméticas (ver specs/10 · Comportamiento de los campos numéricos), deslizadores, casilla **Previsualizar** (activa por defecto), botones Cancelar/Aceptar.
 - **Objeto › Aplicar modificadores** (equivale a Expandir apariencia).

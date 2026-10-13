@@ -51,4 +51,4 @@
 - Menús dibujados en HTML (necesitan íconos); sin menú nativo en Windows/Linux.
 - Datos de documento/Espacios y valores de la barra de control son de ejemplo (`app/placeholder.ts`), se reemplazan en la Fase 2.
 - `VICTORIA_CHROME` (solo desarrollo) fuerza una variante de marco; `VICTORIA_SYSTEM_TITLEBAR=1` activa la barra del sistema en Linux hasta que existan Preferencias.
-- Conflicto de spec: `Alt+Ctrl+E` (Exportar para pantallas en spec 09, Aplicar modificadores en maqueta 14); «Aplicar modificadores» queda sin atajo.
+- Conflicto de spec resuelto en la revisión: `Alt+Ctrl+E` es de «Aplicar modificadores» (maqueta 14); «Exportar para pantallas» queda sin atajo (specs 08 y 09 actualizadas). Las specs 05 y 06 ya no mencionan el arrastre scrubby en campos numéricos.
