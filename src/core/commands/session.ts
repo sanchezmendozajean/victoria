@@ -172,6 +172,13 @@ export class DocumentSession {
     return true;
   }
 
+  /** Undoes the last step and forgets it (no redo): a cancelled dialog preview or drag. */
+  rollback(): boolean {
+    if (!this.undo()) return false;
+    this.redoStack.pop();
+    return true;
+  }
+
   redo(): boolean {
     const entry = this.redoStack.pop();
     if (!entry) return false;

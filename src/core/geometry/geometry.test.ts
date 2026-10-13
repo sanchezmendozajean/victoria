@@ -233,8 +233,8 @@ describe('hit testing', () => {
     const hits = hitTest(space, pt(50, 50), { tolerance: 1 });
     expect(hits.map((h) => h.id)).toEqual([inner.id, above.id, below.id]);
     expect(hits[0]?.ancestors.map((n) => n.id)).toEqual([group.id]);
-    expect(selectionTarget(hits[0]!).id).toBe(group.id);
-    expect(selectionTarget(hits[1]!).id).toBe(above.id);
+    expect(selectionTarget(hits[0]!)?.id).toBe(group.id);
+    expect(selectionTarget(hits[1]!)?.id).toBe(above.id);
   });
 
   it('skips hidden objects, hidden layers and (by default) locked ones', () => {

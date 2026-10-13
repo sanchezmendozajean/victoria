@@ -67,27 +67,34 @@ function strokeInflation(appearance: Appearance): number {
 }
 
 const boundsCache = new WeakMap<Node, Rect | null>();
+const geometricCache = new WeakMap<Node, Rect | null>();
 
-/**
- * Bounds of an object in the coordinate system of its parent (its own transform applied), including
- * strokes and, for groups, everything inside. Cached per immutable node.
- */
-export function boundsInParent(node: Node): Rect | null {
-  if (boundsCache.has(node)) return boundsCache.get(node) as Rect | null;
+function computeBounds(node: Node, withStroke: boolean): Rect | null {
+  const cache = withStroke ? boundsCache : geometricCache;
+  if (cache.has(node)) return cache.get(node) as Rect | null;
   let local: Rect | null = null;
   if (node.type === 'group' || node.type === 'clipGroup') {
     // A clip group shows only what the mask (first child) covers.
     const members = node.type === 'clipGroup' ? node.children.slice(0, 1) : node.children;
-    for (const child of members) local = unionRect(local, boundsInParent(child));
+    for (const child of members) local = unionRect(local, computeBounds(child, withStroke));
   } else {
     const geometry = nodeGeometry(node);
     local = geometry ? geometryBounds(geometry) : null;
-    if (local) local = inflateRect(local, strokeInflation(node.appearance));
+    if (local && withStroke) local = inflateRect(local, strokeInflation(node.appearance));
   }
   const result = local ? transformRect(node.transform, local) : null;
-  boundsCache.set(node, result);
+  cache.set(node, result);
   return result;
 }
+
+/**
+ * Bounds of an object in the coordinate system of its parent (its own transform applied), including
+ * strokes and, for groups, everything inside ("visible bounds"). Cached per immutable node.
+ */
+export const boundsInParent = (node: Node): Rect | null => computeBounds(node, true);
+
+/** Same without strokes: what Illustrator's bounding box shows by default ("geometric bounds"). */
+export const geometricBoundsInParent = (node: Node): Rect | null => computeBounds(node, false);
 
 /** Union of everything a layer (and its sublayers) holds, in Space coordinates. */
 export function layerBounds(layer: Layer): Rect | null {

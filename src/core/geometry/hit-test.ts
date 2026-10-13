@@ -10,6 +10,8 @@ export interface HitOptions {
   tolerance: number;
   /** Also report locked objects (default false: locked objects cannot be picked). */
   includeLocked?: boolean;
+  /** Group being edited in isolation: only objects inside it can be hit. */
+  isolation?: string | null;
 }
 
 export interface Hit {
@@ -70,17 +72,23 @@ function testItem(item: IndexItem, p: Vec2, tolerance: number): Hit | null {
  * paths excluded), any object with a stroke is hit on its outline; unpainted areas are empty space.
  */
 export function hitTest(space: Space, point: Vec2, options: HitOptions): Hit[] {
-  const { tolerance, includeLocked = false } = options;
+  const { tolerance, includeLocked = false, isolation = null } = options;
   const hits: Hit[] = [];
   for (const item of indexFor(space).atPoint(point, tolerance)) {
     if (item.locked && !includeLocked) continue;
+    if (isolation && !item.ancestors.some((a) => a.id === isolation)) continue;
     const hit = testItem(item, point, tolerance);
     if (hit && insideMask(item, point, tolerance)) hits.push(hit);
   }
   return hits;
 }
 
-/** What a click selects: the outermost group of the hit object, or the object itself. */
-export function selectionTarget(hit: Hit): Node {
-  return hit.ancestors[0] ?? hit.node;
+/**
+ * What a click selects: the outermost group of the hit object, or the object itself. While a group is
+ * isolated, the unit is the child of that group that holds the hit (null when the hit is outside it).
+ */
+export function selectionTarget(hit: Hit, isolation: string | null = null): Node | null {
+  if (!isolation) return hit.ancestors[0] ?? hit.node;
+  const depth = hit.ancestors.findIndex((a) => a.id === isolation);
+  return depth === -1 ? null : (hit.ancestors[depth + 1] ?? hit.node);
 }

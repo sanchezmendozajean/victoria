@@ -1,7 +1,10 @@
 import type { Draft } from 'immer';
 import { multiply } from '../model/matrix';
 import { childrenOf, locateLayer, locateNode, walkNodes } from '../model/queries';
-import type { Appearance, BaseNode, Document, GroupNode, LayerChild, Matrix, Node, Space } from '../model/types';
+import { pathFrameOf } from '../geometry/world';
+import { shapeSubPaths } from '../geometry/shapes';
+import { deepClone } from '../model/deepClone';
+import type { Anchor, Appearance, BaseNode, Document, GroupNode, LayerChild, Matrix, Node, PathNode, ShapeNode, Space } from '../model/types';
 import type { Command } from './command';
 
 type DraftSpace = Draft<Space>;
@@ -221,5 +224,55 @@ export const moveNodesToSpace = (fromSpaceId: string, ids: readonly string[], to
     const target = findLayer(d, toSpaceId, toLayerId);
     if (!from || !target || fromSpaceId === toSpaceId) return;
     target.children.push(...detach(from, ids));
+  },
+});
+
+/** Replaces the anchors of a path (or of a compound sub-path): the single command behind every node edit. */
+export const setPathAnchors = (spaceId: string, pathId: string, anchors: Anchor[], mergeKey?: string): Command => ({
+  label: 'path.edit',
+  spaceId,
+  ...(mergeKey ? { mergeKey: `path.edit:${mergeKey}` } : {}),
+  apply: (d) => {
+    const space = findSpace(d, spaceId);
+    const frame = space ? pathFrameOf(space, pathId) : null;
+    if (frame) frame.path.anchors = anchors;
+  },
+});
+
+/** Editing the nodes of a live shape turns it into a plain path (specs/02 · Shape). */
+export const convertShapeToPath = (spaceId: string, id: string): Command => ({
+  label: 'shape.toPath',
+  spaceId,
+  apply: (d) => {
+    const space = findSpace(d, spaceId);
+    const found = space ? locateNode(space, id) : null;
+    if (!found || found.node.type !== 'shape') return;
+    const { shape: _shape, params: _params, type: _type, ...base } = deepClone(found.node as Node) as Node & { shape: string; params: unknown };
+    void _shape;
+    void _params;
+    void _type;
+    const [contour] = shapeSubPaths(found.node as ShapeNode);
+    if (!contour) return;
+    found.siblings[found.index] = { ...base, type: 'path', closed: contour.closed, anchors: contour.anchors } as PathNode as DraftChild;
+  },
+});
+
+/**
+ * Alt+drag: inserts each clone right above its original (same container) with `matrix` already applied.
+ * `clones[i]` is the copy of `ids[i]` (made with `cloneNodes`, so it has fresh ids).
+ */
+export const duplicateNodes = (spaceId: string, ids: readonly string[], clones: readonly Node[], matrix: Matrix | null = null): Command => ({
+  label: 'node.duplicate',
+  spaceId,
+  apply: (d) => {
+    const space = findSpace(d, spaceId);
+    if (!space) return;
+    ids.forEach((id, i) => {
+      const clone = clones[i];
+      const found = locateNode(space, id);
+      if (!clone || !found) return;
+      const placed = matrix ? { ...clone, transform: multiply(matrix, clone.transform) } : clone;
+      found.siblings.splice(found.index + 1, 0, placed as DraftChild);
+    });
   },
 });

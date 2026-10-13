@@ -2,12 +2,14 @@ import RBush from 'rbush';
 import { multiply } from '../model/matrix';
 import { isLayer } from '../model/queries';
 import type { Layer, LayerChild, Matrix, Node, Space, Vec2 } from '../model/types';
-import { boundsInParent } from './geometry';
+import { boundsInParent, geometricBoundsInParent } from './geometry';
 import { transformRect, type Rect } from './rect';
 
 /** A visible leaf object with everything hit testing needs; one per leaf, in the R-tree. */
 export interface IndexItem extends Rect {
   id: string;
+  /** Bounds in Space coordinates without strokes (what alignment and snapping use). */
+  geometric: Rect;
   /** Position in the paint order of the whole Space (higher = on top). */
   order: number;
   node: Node;
@@ -61,7 +63,9 @@ export class SpaceIndex {
         const bounds = boundsInParent(child);
         if (!bounds) continue;
         const box = transformRect(parentWorld, bounds);
-        this.items.push({ ...box, id: child.id, order: order++, node: child, world, ancestors, layer, locked: nodeLocked, clips });
+        const own = geometricBoundsInParent(child);
+        const geometric = own ? transformRect(parentWorld, own) : box;
+        this.items.push({ ...box, geometric, id: child.id, order: order++, node: child, world, ancestors, layer, locked: nodeLocked, clips });
       }
     };
     for (const layer of space.layers) {
