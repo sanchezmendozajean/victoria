@@ -3,23 +3,23 @@
 ## Fase 3 — Lienzo (en revisión)
 
 ### Añadido
-- **Geometría en el core** (): formas vivas convertidas a contornos Bézier (rectángulo con esquinas redondas, chaflán o invertidas, elipse y sector, polígono, estrella, línea), extremos exactos de cada curva, aplanado con tolerancia, límites con trazo y con transformaciones, y caché por objeto inmutable.
-- **Índice espacial** () por Espacio, reconstruido solo cuando el Espacio cambia, y **hit-testing**: relleno y contorno, huecos de trazados compuestos (par-impar y no cero), alineación del trazo (centro, dentro, fuera), tolerancia de 4 px, rotación y escala, grupos (devuelve la cadena de grupos y el objetivo de selección), máscaras de recorte, subcapas, y objetos ocultos o bloqueados excluidos. 10 000 objetos: construcción del índice < 500 ms y hit-test medio < 2 ms (prueba automatizada).
-- **Viewport** (): zoom en el cursor, desplazamiento, escalera de zoom de Illustrator, ajustar a un rectángulo, marco de zoom; 3 %–64 000 %.
+- **Geometría en el core** (`src/core/geometry`): formas vivas convertidas a contornos Bézier (rectángulo con esquinas redondas, chaflán o invertidas, elipse y sector, polígono, estrella, línea), extremos exactos de cada curva, aplanado con tolerancia, límites con trazo y con transformaciones, y caché por objeto inmutable.
+- **Índice espacial** (`rbush`) por Espacio, reconstruido solo cuando el Espacio cambia, y **hit-testing**: relleno y contorno, huecos de trazados compuestos (par-impar y no cero), alineación del trazo (centro, dentro, fuera), tolerancia de 4 px, rotación y escala, grupos (devuelve la cadena de grupos y el objetivo de selección), máscaras de recorte, subcapas, y objetos ocultos o bloqueados excluidos. 10 000 objetos: construcción del índice < 500 ms y hit-test medio < 2 ms (prueba automatizada).
+- **Viewport** (`src/core/viewport`): zoom en el cursor, desplazamiento, escalera de zoom de Illustrator, ajustar a un rectángulo, marco de zoom; 3 %–64 000 %.
 - **Renderer Canvas 2D**: mesas con sombra, borde activo, sangrado, marcas de centro y seguridad de vídeo, nombre de mesa; rejilla con subdivisiones; relleno y trazo con extremos, uniones, discontinuas y alineación; degradados y muestras; opacidad y modos de fusión; grupos y máscaras de recorte; **modo Contorno** (Ctrl+Y) con el color de capa; HiDPI. Dos capas: contenido (se repinta si cambia algo) y superposición (guías, resaltado, vistas previas de herramientas).
-- **Rendimiento**: recorte por visibilidad y  en caché por objeto. Medido con 10 000 objetos visibles: repintado completo ≈ 36 ms; durante pan y zoom el lienzo reutiliza el último mapa de bits y repinta con precisión 110 ms después, con **16,7 ms por fotograma de media (p95 17,3 ms)** en pan y en zoom (prueba e2e automatizada).
+- **Rendimiento**: recorte por visibilidad y `Path2D` en caché por objeto. Medido con 10 000 objetos visibles: repintado completo ≈ 36 ms; durante pan y zoom el lienzo reutiliza el último mapa de bits y repinta con precisión 110 ms después, con **16,7 ms por fotograma de media (p95 17,3 ms)** en pan y en zoom (prueba e2e automatizada).
 - **Interacción**: rueda = desplazamiento vertical, Mayús+rueda = horizontal, Ctrl+rueda (o pellizco) = zoom en el cursor, Espacio = mano temporal, botón central = mano; herramientas **Mano** (H) y **Zoom** (Z: clic acerca, Alt+clic aleja, arrastre = marco); máquinas de estado con pruebas. Las herramientas de selección resaltan el objeto bajo el cursor con el color de su capa (la selección llega en la Fase 4).
 - **Reglas** dibujadas en Canvas con origen en la mesa activa, en las unidades del documento (pt, px, mm, cm, in) y marcas 1·2·5; **guías**: se crean arrastrando desde una regla, se mueven, se borran al devolverlas a la regla, se pueden ocultar (Ctrl+;) y bloquear (Alt+Ctrl+;), y todo es deshacible. Cada Espacio guarda y restaura su propia vista y se abre ajustado la primera vez.
 - **Menú Ver y atajos** funcionales: Contorno, acercar/alejar, ajustar mesa/todo, 100 %, reglas, guías, bloquear guías, cuadrícula, ocultar mesas. (Ajustar a cuadrícula, guías inteligentes y ocultar bordes guardan su estado pero actúan en la Fase 4; Previsualizar píxeles no está implementado.)
 - **Barra de estado**: zoom editable y con la escalera de valores, navegador de mesas con lista, coordenadas del cursor en las unidades del documento.
-- Documentos de ejemplo  (4 mesas inspiradas en la maqueta) y ;  los regenera con el core.
-- Pruebas: 192 unitarias y 52 e2e en total (la fase añade 55 unitarias y 18 e2e).
+- Documentos de ejemplo `samples/demo.vict` (4 mesas inspiradas en la maqueta) y `samples/stress-10k.vict`; `pnpm samples:gen` los regenera con el core.
+- Pruebas: 192 unitarias y 52 e2e en total (la fase añade unas 56 unitarias y 18 e2e).
 
 ### Decisiones tomadas (la spec no las cubría)
-- No se añadió : el aplanado, los límites exactos y las distancias son unas decenas de líneas propias y pruebas. Se reconsidera para proyecciones en la Fase 5.
+- No se añadió `bezier-js`: el aplanado, los límites exactos y las distancias son unas decenas de líneas propias con pruebas. Se reconsidera para proyecciones en la Fase 5.
 - Opacidad de grupo aproximada: se multiplica por hijo (los hijos que se solapan no se componen como una unidad). Se corrige con una capa fuera de pantalla cuando haga falta.
-- Posición, escala y degradados radiales con escalado no uniforme se aproximan (círculo en lugar de elipse).
-- Convenciones geométricas, de color y de selección documentadas en la spec 02. El rango de colores  es «% de negro».
+- Los degradados radiales con escalado no uniforme se aproximan (círculo en lugar de elipse).
+- Convenciones geométricas, de color y de selección documentadas en la spec 02. El rango de colores `gray` es «% de negro».
 - Color de la rejilla: gris medio translúcido para verse sobre la mesa blanca y sobre el lienzo en ambos temas.
 
 ### Pendiente
