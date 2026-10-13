@@ -16,6 +16,8 @@ const menus = buildMenus({
   setWorkspace: () => undefined,
   openPanel: () => undefined,
   resetPanels: () => undefined,
+  undoLabel: null,
+  redoLabel: null,
 });
 
 describe('menus', () => {

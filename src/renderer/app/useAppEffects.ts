@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { runAction } from './actions';
 import { PANEL_BY_ACTION } from './menus';
 import { findShortcutAction } from './shortcuts';
 import { useUi } from './store';
@@ -55,7 +56,9 @@ export function useAppEffects() {
       if (panel) {
         openPanel(panel);
         event.preventDefault();
+        return;
       }
+      if (runAction(action)) event.preventDefault();
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);

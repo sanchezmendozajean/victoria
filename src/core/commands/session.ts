@@ -99,6 +99,12 @@ export class DocumentSession {
     this.trim();
   }
 
+  /** A recovered or imported document has content that exists nowhere on disk yet. */
+  markUnsaved(): void {
+    this.savedSerial = -1;
+    this.emit({ kind: 'saved', document: this.doc, patches: [] });
+  }
+
   markSaved(): void {
     this.savedSerial = this.topSerial();
     this.emit({ kind: 'saved', document: this.doc, patches: [] });

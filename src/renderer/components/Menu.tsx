@@ -16,6 +16,8 @@ export interface MenuItem {
   danger?: boolean;
   /** Shows a check at the right (toggle / current choice). */
   checked?: boolean;
+  /** Greyed out and not selectable (e.g. Undo with nothing to undo). */
+  disabled?: boolean;
   /** Not available yet; shown as a small tag such as "v2". */
   badge?: string;
   /** Modifier kind chip (structural / appearance). */
@@ -117,7 +119,7 @@ function MenuList({ entries, anchor, onClose, minWidth, depth, onBack }: ListPro
   }, [entries]);
 
   const select = (entry: MenuItem) => {
-    if (entry.submenu) return;
+    if (entry.submenu || entry.disabled) return;
     entry.onSelect?.();
     onClose();
   };
@@ -188,6 +190,7 @@ function MenuList({ entries, anchor, onClose, minWidth, depth, onBack }: ListPro
               className={cx(
                 'vc-menu__item',
                 entry.danger && 'vc-menu__item--danger',
+                entry.disabled && 'vc-menu__item--disabled',
                 (active === index || open === index) && 'is-active',
               )}
               onPointerEnter={(event) => {

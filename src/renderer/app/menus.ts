@@ -3,6 +3,8 @@ import type { MenuEntry, MenuItem } from '../components/Menu';
 import type { IconId } from '../components/Icon';
 import { t, type TranslationKey } from '../i18n';
 import { PANEL_ORDER, PANELS, type PanelId } from '../panels/registry';
+import { commandLabel } from '../i18n';
+import { hasHandler, runAction } from './actions';
 import { formatAccelerator, SHORTCUTS, type OsFamily, type ShortcutAction } from './shortcuts';
 import type { WorkspaceId } from './store';
 
@@ -14,6 +16,9 @@ export interface MenuContext {
   setWorkspace(workspace: WorkspaceId): void;
   openPanel(panel: PanelId): void;
   resetPanels(): void;
+  /** History state of the active document, for Edit › Undo/Redo. */
+  undoLabel: string | null;
+  redoLabel: string | null;
 }
 
 export type MenuId = 'file' | 'edit' | 'object' | 'type' | 'select' | 'modifier' | 'view' | 'window' | 'help';
@@ -53,6 +58,7 @@ export function buildMenus(ctx: MenuContext): MenuDef[] {
     label: t(label),
     icon,
     shortcut: action ? keys(action) : undefined,
+    ...(action && hasHandler(action) ? { onSelect: () => runAction(action) } : {}),
     ...extra,
   });
   const sep = (id: string): MenuEntry => ({ type: 'separator', id });
@@ -80,8 +86,14 @@ export function buildMenus(ctx: MenuContext): MenuDef[] {
   ];
 
   const edit: MenuEntry[] = [
-    item('undo', 'menu.edit.undo', 'undo', 'edit.undo'),
-    item('redo', 'menu.edit.redo', 'redo', 'edit.redo'),
+    item('undo', 'menu.edit.undo', 'undo', 'edit.undo', {
+      disabled: ctx.undoLabel === null,
+      ...(ctx.undoLabel ? { label: t('edit.undoLabeled', { label: commandLabel(ctx.undoLabel) }) } : {}),
+    }),
+    item('redo', 'menu.edit.redo', 'redo', 'edit.redo', {
+      disabled: ctx.redoLabel === null,
+      ...(ctx.redoLabel ? { label: t('edit.redoLabeled', { label: commandLabel(ctx.redoLabel) }) } : {}),
+    }),
     sep('s1'),
     item('cut', 'menu.edit.cut', 'cut', 'edit.cut'),
     item('copy', 'menu.edit.copy', 'copy', 'edit.copy'),

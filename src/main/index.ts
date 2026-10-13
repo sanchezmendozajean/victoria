@@ -1,6 +1,7 @@
 import { app, BrowserWindow, screen, session } from 'electron';
 import path from 'node:path';
 import type { OverlayColors, PlatformInfo, WindowChrome } from '../shared/ipc';
+import { IPC } from '../shared/ipc';
 import { broadcastWindowState, registerIpc } from './ipc';
 import { installApplicationMenu } from './menu';
 import { getPlatform } from './platform';
@@ -49,6 +50,20 @@ function createWindow(): BrowserWindow {
   });
 
   win.once('ready-to-show', () => win.show());
+
+  // Closing waits for the renderer to flush its autosaves ("nunca perder trabajo"), with a safety timeout.
+  let closeApproved = false;
+  const approveClose = () => {
+    closeApproved = true;
+    if (!win.isDestroyed()) win.close();
+  };
+  win.on('close', (event) => {
+    if (closeApproved || win.webContents.isLoading() || win.webContents.isCrashed()) return;
+    event.preventDefault();
+    win.webContents.send(IPC.beforeClose);
+    setTimeout(approveClose, 4000);
+  });
+  win.webContents.ipc.once(IPC.closeReady, approveClose);
   const notify = () => broadcastWindowState(win);
   win.on('maximize', notify);
   win.on('unmaximize', notify);

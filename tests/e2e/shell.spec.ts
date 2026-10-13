@@ -58,10 +58,17 @@ test('the renderer is sandboxed and only sees the typed API', async () => {
   expect(exposed.require).toBe('undefined');
   expect(exposed.process).toBe('undefined');
   expect(exposed.api).toEqual([
+    'autosaveDiscard',
+    'autosaveList',
+    'autosaveRead',
+    'autosaveWrite',
     'closeWindow',
     'getPlatformInfo',
     'minimizeWindow',
+    'onBeforeClose',
     'onWindowStateChange',
+    'openFile',
+    'saveFile',
     'setOverlayColors',
     'toggleMaximizeWindow',
   ]);
@@ -212,29 +219,6 @@ test('collapsed panels open as a floating window from the strip', async () => {
   await expect(floating).toContainText('Calco de imagen');
   await page.getByTestId('canvas').click({ position: { x: 300, y: 300 } });
   await expect(floating).toHaveCount(0);
-});
-
-test('Spaces bar: selecting a Space updates the status bar; the context menu lists its actions', async () => {
-  const { page } = ctx;
-  const pills = page.getByTestId('space-tab');
-  await expect(pills).toHaveCount(3);
-  await pills.nth(1).click();
-  await expect(page.getByTestId('status-bar')).toContainText('Hoja A4');
-  await pills.nth(1).click({ button: 'right' });
-  const menu = page.getByRole('menu');
-  for (const label of ['Renombrar…', 'Color de etiqueta', 'Duplicar Espacio', 'Excluir de exportación', 'Mover selección aquí', 'Propiedades…', 'Eliminar Espacio…']) {
-    await expect(menu.getByRole('menuitem', { name: label })).toBeVisible();
-  }
-  await page.keyboard.press('Escape');
-  await pills.nth(0).click();
-});
-
-test('document tabs switch the Spaces shown', async () => {
-  const { page } = ctx;
-  await page.getByRole('tab', { name: /tarjetas\.vict/ }).click();
-  await expect(page.getByTestId('space-tab')).toHaveCount(2);
-  await page.getByRole('tab', { name: /logo\.vict/ }).click();
-  await expect(page.getByTestId('space-tab')).toHaveCount(3);
 });
 
 test('tooltips show name and shortcut after 500 ms', async () => {

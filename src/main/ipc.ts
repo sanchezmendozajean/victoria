@@ -1,5 +1,6 @@
 import { ipcMain, type BrowserWindow, type IpcMainEvent, type IpcMainInvokeEvent } from 'electron';
-import { IPC, type OverlayColors, type PlatformInfo, type WindowState } from '../shared/ipc';
+import { IPC, type OverlayColors, type PlatformInfo, type SaveRequest, type WindowState } from '../shared/ipc';
+import * as files from './files';
 import type { Platform } from './platform';
 
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -32,6 +33,23 @@ export function registerIpc(ctx: IpcContext): void {
     else win.maximize();
   });
   ipcMain.on(IPC.closeWindow, (event) => fromAppWindow(event)?.close());
+
+  ipcMain.handle(IPC.openFile, async (event, labels: unknown) => {
+    const win = fromAppWindow(event);
+    return win ? files.openFile(win, labels) : null;
+  });
+  ipcMain.handle(IPC.saveFile, async (event, request: SaveRequest) => {
+    const win = fromAppWindow(event);
+    return win ? files.saveFile(win, request) : null;
+  });
+  ipcMain.handle(IPC.autosaveWrite, async (event, docId: unknown, bytes: unknown) => {
+    if (fromAppWindow(event)) await files.autosaveWrite(docId, bytes);
+  });
+  ipcMain.handle(IPC.autosaveDiscard, async (event, docId: unknown) => {
+    if (fromAppWindow(event)) await files.autosaveDiscard(docId);
+  });
+  ipcMain.handle(IPC.autosaveList, (event) => (fromAppWindow(event) ? files.autosaveList() : []));
+  ipcMain.handle(IPC.autosaveRead, (event, docId: unknown) => (fromAppWindow(event) ? files.autosaveRead(docId) : null));
   ipcMain.on(IPC.setOverlayColors, (event, colors: unknown) => {
     const win = fromAppWindow(event);
     if (win && ctx.info.chrome === 'native-overlay' && isOverlayColors(colors)) ctx.platform.applyOverlayColors(win, colors);

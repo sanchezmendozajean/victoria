@@ -12,7 +12,6 @@ import {
   type PanelLayout,
 } from '../panels/layout';
 import type { PanelId } from '../panels/registry';
-import { PLACEHOLDER_DOCUMENTS } from './placeholder';
 import { ALL_SLOTS, slotOf, type ToolId } from './tools';
 
 export type WorkspaceId = 'essentials' | 'icons' | 'print' | 'text';
@@ -32,9 +31,6 @@ interface UiState {
   /** Strip panel whose floating window is open. */
   stripOpen: PanelId | null;
 
-  activeDocument: number;
-  activeSpace: number;
-
   setPlatform(platform: PlatformInfo): void;
   setMaximized(maximized: boolean): void;
   setTheme(theme: Theme): void;
@@ -49,8 +45,6 @@ interface UiState {
   collapsePanel(panel: PanelId): void;
   resetPanels(): void;
   setStripOpen(panel: PanelId | null): void;
-  setActiveDocument(index: number): void;
-  setActiveSpace(index: number): void;
 }
 
 export const useUi = create<UiState>()((set, get) => ({
@@ -65,9 +59,6 @@ export const useUi = create<UiState>()((set, get) => ({
 
   panels: defaultLayout(),
   stripOpen: null,
-
-  activeDocument: 0,
-  activeSpace: 0,
 
   setPlatform: (platform) => set({ platform }),
   setMaximized: (maximized) => set({ maximized }),
@@ -97,10 +88,6 @@ export const useUi = create<UiState>()((set, get) => ({
   collapsePanel: (panel) => set((s) => ({ panels: movePanelToStrip(s.panels, panel), stripOpen: null })),
   resetPanels: () => set({ panels: defaultLayout(), stripOpen: null }),
   setStripOpen: (stripOpen) => set({ stripOpen }),
-
-  setActiveDocument: (index) =>
-    set({ activeDocument: Math.max(0, Math.min(index, PLACEHOLDER_DOCUMENTS.length - 1)), activeSpace: 0 }),
-  setActiveSpace: (index) => set({ activeSpace: index }),
 }));
 
 /** Tool shown in a slot: the last one used, or its default. */

@@ -27,6 +27,37 @@ export interface OverlayColors {
   symbol: string;
 }
 
+/** Texts of native dialogs: the renderer owns all UI strings (es.json), main has no i18n. */
+export interface DialogLabels {
+  title: string;
+  /** File type name shown in the filter, e.g. "Documento de Victoria". */
+  filterName: string;
+}
+
+export interface OpenedFile {
+  /** Absolute path chosen by the user. Only paths returned by a dialog can be saved to later. */
+  path: string;
+  bytes: Uint8Array;
+}
+
+export interface SaveRequest {
+  /** Path from a previous open/save; null (or an unknown path) asks the user with a Save As dialog. */
+  path: string | null;
+  suggestedName: string;
+  bytes: Uint8Array;
+  labels: DialogLabels;
+}
+
+export interface SaveResult {
+  path: string;
+}
+
+export interface AutosaveEntry {
+  docId: string;
+  /** Last write, ms since epoch. */
+  modified: number;
+}
+
 export const IPC = {
   getPlatformInfo: 'platform:get-info',
   minimizeWindow: 'window:minimize',
@@ -34,6 +65,14 @@ export const IPC = {
   closeWindow: 'window:close',
   windowState: 'window:state',
   setOverlayColors: 'window:set-overlay-colors',
+  openFile: 'file:open',
+  saveFile: 'file:save',
+  autosaveWrite: 'autosave:write',
+  autosaveDiscard: 'autosave:discard',
+  autosaveList: 'autosave:list',
+  autosaveRead: 'autosave:read',
+  beforeClose: 'app:before-close',
+  closeReady: 'app:close-ready',
 } as const;
 
 /** API exposed to the renderer as `window.victoria`. */
@@ -45,4 +84,20 @@ export interface VictoriaApi {
   /** Returns an unsubscribe function. */
   onWindowStateChange(listener: (state: WindowState) => void): () => void;
   setOverlayColors(colors: OverlayColors): void;
+
+  /** Open dialog + read. null if the user cancels. */
+  openFile(labels: DialogLabels): Promise<OpenedFile | null>;
+  /** Writes atomically (temp file + rename). null if the user cancels the Save As dialog. */
+  saveFile(request: SaveRequest): Promise<SaveResult | null>;
+
+  autosaveWrite(docId: string, bytes: Uint8Array): Promise<void>;
+  autosaveDiscard(docId: string): Promise<void>;
+  autosaveList(): Promise<AutosaveEntry[]>;
+  autosaveRead(docId: string): Promise<Uint8Array | null>;
+
+  /**
+   * Called when the user closes the window. The handler must finish its autosaves; the window closes
+   * when it resolves (or after a few seconds). Returns an unsubscribe function.
+   */
+  onBeforeClose(handler: () => Promise<void> | void): () => void;
 }

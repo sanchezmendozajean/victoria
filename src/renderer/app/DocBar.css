@@ -220,3 +220,22 @@
 .vc-spacesbar__panel:hover {
   background: var(--bg-hover);
 }
+
+.vc-spacetab__input {
+  min-width: 40px;
+  height: 18px;
+  padding: 0 4px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-control);
+  background: var(--bg-input);
+  color: var(--text);
+  font: inherit;
+  outline: none;
+  user-select: text;
+}
+.vc-doctab:not(.is-active) .vc-doctab__close {
+  display: none;
+}
+.vc-doctab:not(.is-active):hover .vc-doctab__close {
+  display: flex;
+}

@@ -4,6 +4,7 @@ import { Icon } from '../components/Icon';
 import { MenuPopup, type Anchor, type MenuEntry } from '../components/Menu';
 import { cx } from '../components/cx';
 import { tip } from '../components/Tooltip';
+import { useDocuments } from '../documents';
 import { t } from '../i18n';
 import { buildMenus, WORKSPACES, type MenuId } from './menus';
 import { useUi } from './store';
@@ -29,12 +30,16 @@ export function TitleBar() {
   const openPanel = useUi((s) => s.openPanel);
   const resetPanels = useUi((s) => s.resetPanels);
 
+  const documents = useDocuments();
+  const session = documents.active?.session;
+  const undoLabel = session?.undoLabel ?? null;
+  const redoLabel = session?.redoLabel ?? null;
   const [open, setOpen] = useState<OpenMenu | null>(null);
   const barRef = useRef<HTMLDivElement>(null);
 
   const menus = useMemo(
-    () => buildMenus({ os: platform.os, theme, workspace, setTheme, setWorkspace, openPanel, resetPanels }),
-    [platform.os, theme, workspace, setTheme, setWorkspace, openPanel, resetPanels],
+    () => buildMenus({ os: platform.os, theme, workspace, setTheme, setWorkspace, openPanel, resetPanels, undoLabel, redoLabel }),
+    [platform.os, theme, workspace, setTheme, setWorkspace, openPanel, resetPanels, undoLabel, redoLabel],
   );
 
   const workspaceEntries: MenuEntry[] = WORKSPACES.map((id) => ({

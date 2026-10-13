@@ -1,0 +1,72 @@
+.vc-dialog__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+}
+.vc-dialog {
+  width: 420px;
+  max-width: calc(100vw - 32px);
+  padding: 16px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-float);
+  box-shadow: var(--shadow-float);
+  color: var(--text);
+  font-size: var(--fs-menu);
+}
+.vc-dialog__title {
+  margin: 0 0 8px;
+  font-size: var(--fs-dialog);
+  font-weight: 600;
+}
+.vc-dialog__message,
+.vc-dialog__detail {
+  margin: 0 0 8px;
+}
+.vc-dialog__detail {
+  color: var(--text-muted);
+}
+.vc-dialog__items {
+  margin: 0 0 12px;
+  padding: 6px 8px 6px 24px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  font-size: var(--fs-label);
+}
+.vc-dialog__buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+.vc-dialog__button {
+  height: 24px;
+  padding: 0 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+  background: var(--bg-panel-alt);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-label);
+}
+.vc-dialog__button:hover {
+  background: var(--bg-hover);
+}
+.vc-dialog__button--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.vc-dialog__button--primary:hover {
+  background: var(--accent);
+  filter: brightness(1.1);
+}
+.vc-dialog__button--danger {
+  border-color: var(--danger);
+  color: var(--danger);
+}

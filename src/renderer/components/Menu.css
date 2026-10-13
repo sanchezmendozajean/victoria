@@ -26,6 +26,11 @@
 .vc-menu__item--danger {
   color: var(--danger);
 }
+.vc-menu__item--disabled,
+.vc-menu__item--disabled .vc-menu__icon,
+.vc-menu__item--disabled .vc-menu__shortcut {
+  color: var(--text-disabled);
+}
 .vc-menu__icon {
   display: flex;
   color: var(--icon);
