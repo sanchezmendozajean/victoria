@@ -1,8 +1,14 @@
 import type { ToolId } from '../app/tools';
+import { createAnchorAddTool, createAnchorDeleteTool, createConvertTool } from './anchorTools';
+import { createCurvatureTool } from './curvatureTool';
+import { createPencilTool } from './pencilTool';
+import { createScissorsTool } from './scissorsTool';
 import { createDirectSelectionTool } from './directSelectionTool';
 import { createHandTool } from './handTool';
 import { createLassoTool } from './lassoTool';
+import { createPenTool } from './penTool';
 import { createSelectionTool } from './selectionTool';
+import { createShapeTool } from './shapeTools';
 import { createTransformTool } from './transformTools';
 import type { Tool } from './types';
 import { createZoomTool } from './zoomTool';
@@ -32,6 +38,32 @@ export function createTool(id: ToolId): Tool {
       return createTransformTool('scale');
     case 'tool-reflect':
       return createTransformTool('reflect');
+    case 'tool-pen':
+      return createPenTool();
+    case 'tool-anchor-add':
+      return createAnchorAddTool();
+    case 'tool-anchor-delete':
+      return createAnchorDeleteTool();
+    case 'tool-anchor-convert':
+      return createConvertTool();
+    case 'tool-curvature':
+      return createCurvatureTool();
+    case 'tool-pencil':
+      return createPencilTool();
+    case 'tool-scissors':
+      return createScissorsTool();
+    case 'tool-rect':
+      return createShapeTool(id, 'rect');
+    case 'tool-rounded-rect':
+      return createShapeTool(id, 'rounded-rect');
+    case 'tool-ellipse':
+      return createShapeTool(id, 'ellipse');
+    case 'tool-polygon':
+      return createShapeTool(id, 'polygon');
+    case 'tool-star':
+      return createShapeTool(id, 'star');
+    case 'tool-line':
+      return createShapeTool(id, 'line');
     default:
       return createIdleTool(id);
   }

@@ -409,5 +409,20 @@
   "control.keepProportions": "Mantener proporciones",
   "control.angle": "Ángulo",
   "control.isolate": "Aislar objeto",
-  "isolation.exit": "Salir del modo de aislamiento"
+  "isolation.exit": "Salir del modo de aislamiento",
+  "command.path.join": "Unir trazados",
+  "command.node.replace": "Cortar trazado",
+  "shape.rect": "Rectángulo",
+  "shape.rounded-rect": "Rectángulo redondeado",
+  "shape.ellipse": "Elipse",
+  "shape.polygon": "Polígono",
+  "shape.star": "Estrella",
+  "shape.line": "Segmento de línea",
+  "shape.cornerRadius": "Radio de esquina",
+  "shape.radius": "Radio",
+  "shape.radius1": "Radio 1",
+  "shape.radius2": "Radio 2",
+  "shape.sides": "Lados",
+  "shape.points": "Puntas",
+  "shape.length": "Longitud"
 }

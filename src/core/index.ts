@@ -16,6 +16,8 @@ export * from './geometry/spatial-index';
 export * from './geometry/hit-test';
 export * from './geometry/world';
 export * from './geometry/edit';
+export * from './geometry/anchors';
+export * from './geometry/fit';
 export * from './geometry/marquee';
 export * from './snap/snap';
 export * from './model/transforms';

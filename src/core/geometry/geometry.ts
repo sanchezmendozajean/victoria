@@ -1,6 +1,7 @@
 import { multiply } from '../model/matrix';
 import type { Appearance, Layer, LayerChild, Matrix, Node, StrokeStyle } from '../model/types';
 import { isLayer } from '../model/queries';
+import { applyCornerRadii } from './anchors';
 import { subPathBounds, type SubPath } from './path';
 import { inflateRect, transformRect, unionRect, type Rect } from './rect';
 import { shapeSubPaths } from './shapes';
@@ -21,10 +22,10 @@ export function nodeGeometry(node: Node): NodeGeometry | null {
   let geometry: NodeGeometry | null;
   switch (node.type) {
     case 'path':
-      geometry = { subpaths: [{ anchors: node.anchors, closed: node.closed }], fillRule: 'nonzero' };
+      geometry = { subpaths: [applyCornerRadii({ anchors: node.anchors, closed: node.closed })], fillRule: 'nonzero' };
       break;
     case 'compound':
-      geometry = { subpaths: node.children.map((c) => ({ anchors: c.anchors, closed: c.closed })), fillRule: node.fillRule };
+      geometry = { subpaths: node.children.map((c) => applyCornerRadii({ anchors: c.anchors, closed: c.closed })), fillRule: node.fillRule };
       break;
     case 'shape':
       geometry = { subpaths: shapeSubPaths(node), fillRule: 'nonzero' };

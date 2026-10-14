@@ -1,6 +1,7 @@
 import type { DocumentSession, Hit, Matrix, Space, SnapLine, SnapSources, Units, Vec2, Viewport } from '../../core';
 import type { ToolId } from '../app/tools';
 import type { CanvasTheme } from '../canvas/theme';
+import type { ShapeToolKind } from './shapeDrag';
 
 /** Pointer input already converted to canvas pixels and document points. */
 export interface CanvasPointerEvent {
@@ -67,6 +68,10 @@ export interface ToolHost {
   confirm(spec: DialogSpec): Promise<string>;
   setIsolation(id: string | null): void;
   openTransformDialog(kind: TransformKind, origin: Vec2 | null): void;
+  /** Layer that receives new objects: the layer of the selection, else the topmost unlocked one. */
+  readonly activeLayerId: string | null;
+  /** Click with a shape tool: asks for the exact size (the dialog creates the object at `at`). */
+  openShapeDialog(kind: ShapeToolKind, at: Vec2): void;
   /** For Transform Again (Ctrl+D). */
   rememberTransform(transform: { matrix: Matrix; copy: boolean } | null): void;
 }
@@ -82,6 +87,12 @@ export interface Tool {
   onKey?(key: string, host: ToolHost): void;
   /** Keys with modifiers (arrows). Return true when handled. */
   onKeyDown?(event: ToolKeyEvent, host: ToolHost): boolean;
+  /** Space held: true while a gesture wants it for itself (Pen, shapes: move what is being drawn) instead of the temporary Hand. */
+  wantsSpace?(): boolean;
+  /** Receives key presses (arrows, Space) while its own gesture is in progress, not only between gestures. */
+  readonly gestureKeys?: boolean;
+  /** A key was released (Space during a drag). */
+  onKeyUp?(key: string, host: ToolHost): void;
   /** The pointer left the canvas. */
   onLeave?(host: ToolHost): void;
   /** Aborts a gesture in progress (window lost focus, tool switched). */

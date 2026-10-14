@@ -21,6 +21,7 @@ import {
   type Viewport,
 } from '../../../core';
 import { createDocument } from '../../../core';
+import type { ShapeToolKind } from '../shapeDrag';
 import type { CanvasPointerEvent, Tool, ToolHost, TransformKind } from '../types';
 
 export interface HostInit {
@@ -75,6 +76,10 @@ export function createTestHost(init: HostInit = {}) {
     setIsolation: vi.fn((id: string | null) => {
       host.isolation = id;
     }),
+    get activeLayerId(): string | null {
+      return getActiveSpace(session.document).layers[0]?.id ?? null;
+    },
+    openShapeDialog: vi.fn<(kind: ShapeToolKind, at: Vec2) => void>(),
     openTransformDialog: vi.fn<(kind: TransformKind, origin: Vec2 | null) => void>(),
     rememberTransform: vi.fn(),
   };

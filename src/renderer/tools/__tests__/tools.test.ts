@@ -106,7 +106,8 @@ describe('tool registry', () => {
     expect(createTool('tool-rotate').id).toBe('tool-rotate');
     expect(createTool('tool-scale').id).toBe('tool-scale');
     expect(createTool('tool-reflect').id).toBe('tool-reflect');
-    expect(createTool('tool-pen').cursor(false)).toBe('crosshair');
+    expect(createTool('tool-pen').id).toBe('tool-pen');
+    expect(createTool('tool-gradient').cursor(false)).toBe('crosshair');
     expect(createTool('tool-type').cursor(false)).toBe('text');
   });
 });

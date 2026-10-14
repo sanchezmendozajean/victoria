@@ -47,9 +47,11 @@ function detach(space: DraftSpace, ids: readonly string[]): DraftNode[] {
   return ordered;
 }
 
-export const addNode = (spaceId: string, layerId: string, node: Node, index?: number): Command => ({
+/** `mergeKey` (verbatim) lets the first step of a drawing gesture merge with the edits that follow it. */
+export const addNode = (spaceId: string, layerId: string, node: Node, index?: number, mergeKey?: string): Command => ({
   label: 'node.add',
   spaceId,
+  ...(mergeKey ? { mergeKey } : {}),
   apply: (d) => {
     const layer = findLayer(d, spaceId, layerId);
     if (layer) layer.children.splice(index ?? layer.children.length, 0, node);
@@ -296,5 +298,59 @@ export const ungroupNodes = (spaceId: string, groupIds: readonly string[]): Comm
   spaceId,
   apply: (d) => {
     for (const id of groupIds) ungroupNode(spaceId, id).apply(d);
+  },
+});
+
+/** Scissors: replaces a node by other nodes in the same place of the z-order (an empty list deletes it). */
+export const replaceNode = (spaceId: string, id: string, replacements: readonly Node[]): Command => ({
+  label: 'node.replace',
+  spaceId,
+  apply: (d) => {
+    const space = findSpace(d, spaceId);
+    const found = space ? locateNode(space, id) : null;
+    if (found) found.siblings.splice(found.index, 1, ...(replacements as DraftChild[]));
+  },
+});
+
+/** Join: the path `keepId` takes the joined geometry and the other paths disappear. */
+export const joinPathNodes = (spaceId: string, keepId: string, removeIds: readonly string[], anchors: Anchor[], closed: boolean): Command => ({
+  label: 'path.join',
+  spaceId,
+  apply: (d) => {
+    const space = findSpace(d, spaceId);
+    if (!space) return;
+    const found = locateNode(space, keepId);
+    if (found && found.node.type === 'path') {
+      found.node.anchors = anchors;
+      found.node.closed = closed;
+    }
+    detach(space, removeIds);
+  },
+});
+
+/** Opens or closes a path and sets its anchors in one step (Pen closing, Ctrl+J on the two ends of one path). */
+export const setPathGeometry = (spaceId: string, pathId: string, anchors: Anchor[], closed: boolean, mergeKey?: string): Command => ({
+  label: 'path.edit',
+  spaceId,
+  ...(mergeKey ? { mergeKey: `path.edit:${mergeKey}` } : {}),
+  apply: (d) => {
+    const space = findSpace(d, spaceId);
+    const found = space ? locateNode(space, pathId) : null;
+    if (found && found.node.type === 'path') {
+      found.node.anchors = anchors;
+      found.node.closed = closed;
+    }
+  },
+});
+
+/** While a shape is being dragged out: replaces its parameters and transform; merges with `addNode(…, `draw:${key}`)`. */
+export const redrawShape = (spaceId: string, id: string, patch: Partial<ShapeNode>, key: string): Command => ({
+  label: 'node.add',
+  spaceId,
+  mergeKey: `draw:${key}`,
+  apply: (d) => {
+    const space = findSpace(d, spaceId);
+    const found = space ? locateNode(space, id) : null;
+    if (found) Object.assign(found.node as object, patch);
   },
 });

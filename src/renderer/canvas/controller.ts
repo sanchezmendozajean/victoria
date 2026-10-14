@@ -30,6 +30,7 @@ import {
 import type { ToolId } from '../app/tools';
 import { createTool } from '../tools';
 import { createHandTool } from '../tools/handTool';
+import type { ShapeToolKind } from '../tools/shapeDrag';
 import type { CanvasPointerEvent, DialogSpec, Tool, ToolHost, TransformKind } from '../tools/types';
 import { t } from '../i18n';
 import { renderContent } from './contentRenderer';
@@ -78,6 +79,7 @@ export interface CanvasCallbacks {
   confirm(spec: DialogSpec): Promise<string>;
   onIsolation(id: string | null): void;
   onTransformDialog(kind: TransformKind, origin: Vec2 | null): void;
+  onShapeDialog(kind: ShapeToolKind, at: Vec2): void;
   onRememberTransform(transform: { matrix: Matrix; copy: boolean } | null): void;
 }
 
@@ -338,6 +340,24 @@ export class CanvasController implements ToolHost, CanvasApi {
 
   openTransformDialog(kind: TransformKind, origin: Vec2 | null): void {
     this.callbacks.onTransformDialog(kind, origin);
+  }
+
+  openShapeDialog(kind: ShapeToolKind, at: Vec2): void {
+    this.callbacks.onShapeDialog(kind, at);
+  }
+
+  get activeLayerId(): string | null {
+    const space = this.currentSpace();
+    if (!space) return null;
+    const selected = this.session?.selection;
+    const first = selected && selected.spaceId === space.id ? selected.ids[0] : undefined;
+    const frame = first ? frameOf(space, first) : null;
+    if (frame && !frame.layer.locked) return frame.layer.id;
+    for (let i = space.layers.length - 1; i >= 0; i--) {
+      const layer = space.layers[i];
+      if (layer && !layer.locked && layer.visible) return layer.id;
+    }
+    return null;
   }
 
   rememberTransform(transform: { matrix: Matrix; copy: boolean } | null): void {
@@ -706,6 +726,7 @@ export class CanvasController implements ToolHost, CanvasApi {
       this.updateCursor();
     }
     this.currentTool().onPointerMove(event, this);
+    this.updateCursor();
   }
 
   private onPointerUp(e: PointerEvent): void {
@@ -762,6 +783,11 @@ export class CanvasController implements ToolHost, CanvasApi {
     if (this.isTyping(e)) return;
     if (e.key === ' ' && !e.ctrlKey && !e.metaKey && !e.altKey) {
       e.preventDefault(); // Space is "hand", not "press the focused button"
+      const gesture = this.activeGestureTool;
+      if (gesture?.wantsSpace?.()) {
+        gesture.onKeyDown?.({ key: ' ', shiftKey: e.shiftKey, altKey: e.altKey, ctrlKey: e.ctrlKey, metaKey: e.metaKey }, this);
+        return;
+      }
       if (!this.spaceHeld) {
         this.spaceHeld = true;
         this.updateCursor();
@@ -772,12 +798,14 @@ export class CanvasController implements ToolHost, CanvasApi {
       this.altHeld = true;
       this.updateCursor();
     }
+    if (e.key === 'Enter') this.currentTool().onKey?.('Enter', this);
     if (e.key === 'Escape') {
       this.currentTool().onKey?.('Escape', this);
       if (this.guideDrag) this.cancelGestures();
       return;
     }
-    if (!this.activeGestureTool && this.currentTool().onKeyDown?.({ key: e.key, shiftKey: e.shiftKey, altKey: e.altKey, ctrlKey: e.ctrlKey, metaKey: e.metaKey }, this)) {
+    const gestureKeys = this.activeGestureTool?.gestureKeys === true;
+    if ((!this.activeGestureTool || gestureKeys) && this.currentTool().onKeyDown?.({ key: e.key, shiftKey: e.shiftKey, altKey: e.altKey, ctrlKey: e.ctrlKey, metaKey: e.metaKey }, this)) {
       e.preventDefault();
       e.stopPropagation();
     }
@@ -785,6 +813,7 @@ export class CanvasController implements ToolHost, CanvasApi {
 
   private onKeyUp(e: KeyboardEvent): void {
     if (e.key === ' ') {
+      this.activeGestureTool?.onKeyUp?.(' ', this);
       this.spaceHeld = false;
       this.updateCursor();
     } else if (e.key === 'Alt') {

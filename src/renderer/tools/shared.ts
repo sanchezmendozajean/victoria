@@ -4,6 +4,7 @@ import {
   locateNode,
   multiply,
   selectionBounds,
+  snapPoint,
   snapRect,
   walkNodes,
   type Matrix,
@@ -66,3 +67,13 @@ export function snapDelta(host: ToolHost, bounds: Rect, delta: Vec2, exclude: Re
 export const DRAG_THRESHOLD = 3;
 
 export const dragged = (a: Vec2, b: Vec2): boolean => Math.hypot(a.x - b.x, a.y - b.y) >= DRAG_THRESHOLD;
+
+/** Snaps one point (a click or a drag end) to guides, grid and smart guides; shows the guides drawn. */
+export function snapTo(host: ToolHost, p: Vec2, exclude: ReadonlySet<string> = new Set()): Vec2 {
+  const sources = host.snapSources(exclude);
+  const hasSources = !!(sources.guides?.length || sources.grid || sources.artboards?.length || sources.objects || sources.anchors?.length);
+  if (!hasSources) return p;
+  const result = snapPoint(p, sources, host.pickTolerance);
+  host.setSnapLines(result.lines.length > 0 ? (result.lines as SnapLine[]) : null);
+  return { x: p.x + result.dx, y: p.y + result.dy };
+}

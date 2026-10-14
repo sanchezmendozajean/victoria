@@ -77,6 +77,22 @@ export function createEllipse(ids: IdGenerator, w: number, h: number): ShapeNode
   return { ...baseNode(ids), type: 'shape', shape: 'ellipse', params: { w, h, startAngle: 0, endAngle: 360 } };
 }
 
+export function createPolygon(ids: IdGenerator, radius: number, sides: number, cornerRadius = 0): ShapeNode {
+  return { ...baseNode(ids), type: 'shape', shape: 'polygon', params: { radius, sides, cornerRadius } };
+}
+
+export function createStar(ids: IdGenerator, r1: number, r2: number, points: number, cornerRadius = 0): ShapeNode {
+  return { ...baseNode(ids), type: 'shape', shape: 'star', params: { r1, r2, points, cornerRadius } };
+}
+
+/** A segment along +X from the local origin; place and rotate it with `transform`. */
+export function createLine(ids: IdGenerator, length: number): ShapeNode {
+  const node: ShapeNode = { ...baseNode(ids), type: 'shape', shape: 'line', params: { length } };
+  // A line has no area: it is stroked only.
+  node.appearance.items = node.appearance.items.filter((i) => i.kind === 'stroke');
+  return node;
+}
+
 export function createLayer(ids: IdGenerator, name: string, color = '#4C8DFF'): Layer {
   return { type: 'layer', id: ids(), name, color, visible: true, locked: false, children: [] };
 }

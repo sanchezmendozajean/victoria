@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { Matrix, Vec2 } from '../../core';
 import type { PlatformInfo, Theme } from '../../shared/ipc';
 import type { TransformKind } from '../tools/types';
+import type { ShapeToolKind } from '../tools/shapeDrag';
 import {
   activatePanel,
   defaultLayout,
@@ -74,6 +75,7 @@ interface UiState {
   referencePoint: Vec2;
   linkProportions: boolean;
   transformDialog: { kind: TransformKind; origin: Vec2 | null } | null;
+  shapeDialog: { kind: ShapeToolKind; at: Vec2 } | null;
 
   setIsolation(spaceId: string, groupId: string | null): void;
   setLastTransform(transform: { matrix: Matrix; copy: boolean } | null): void;
@@ -81,6 +83,8 @@ interface UiState {
   toggleLinkProportions(): void;
   openTransformDialog(kind: TransformKind, origin: Vec2 | null): void;
   closeTransformDialog(): void;
+  openShapeDialog(kind: ShapeToolKind, at: Vec2): void;
+  closeShapeDialog(): void;
 
   toggleViewOption(key: keyof ViewOptions): void;
   setActiveArtboard(spaceId: string, artboardId: string): void;
@@ -143,6 +147,7 @@ export const useUi = create<UiState>()((set, get) => ({
   referencePoint: { x: 0.5, y: 0.5 },
   linkProportions: false,
   transformDialog: null,
+  shapeDialog: null,
 
   setIsolation: (spaceId, groupId) => set((s) => ({ isolation: { ...s.isolation, [spaceId]: groupId } })),
   setLastTransform: (lastTransform) => set({ lastTransform }),
@@ -150,6 +155,8 @@ export const useUi = create<UiState>()((set, get) => ({
   toggleLinkProportions: () => set((s) => ({ linkProportions: !s.linkProportions })),
   openTransformDialog: (kind, origin) => set({ transformDialog: { kind, origin } }),
   closeTransformDialog: () => set({ transformDialog: null }),
+  openShapeDialog: (kind, at) => set({ shapeDialog: { kind, at } }),
+  closeShapeDialog: () => set({ shapeDialog: null }),
 
   toggleViewOption: (key) => set((s) => ({ viewOptions: { ...s.viewOptions, [key]: !s.viewOptions[key] } })),
   setActiveArtboard: (spaceId, artboardId) => set((s) => ({ activeArtboard: { ...s.activeArtboard, [spaceId]: artboardId } })),
