@@ -12,6 +12,8 @@ import {
   toggleInSelection,
   transformNodes,
   translation,
+  rotation,
+  multiply,
   addToSelection,
   isSelected,
   type Matrix,
@@ -30,21 +32,21 @@ import {
   rotateCornerAt,
   scaleFromHandle,
   snapAngle45,
-  toScreenRect,
   type HandleId,
 } from './boxGeometry';
 import { boxOf, currentSelection, dragged, selectedTopLevel, snapDelta, stepBetween } from './shared';
 import type { CanvasPointerEvent, Tool, ToolHost, ToolKeyEvent } from './types';
 import { ROTATE_CURSOR } from './cursors';
 import { createWidgetDrag } from './widgetDrag';
+import { boxScreenRect, cursorForTurnedHandle, fromBoxSpace, orientedBoxOf, rotatePoint, toBoxScreen, toBoxSpace, type OrientedBox } from './orientedBox';
 import type { ToolId } from '../app/tools';
 
 type State =
   | { kind: 'idle' }
   | { kind: 'press'; screen: Vec2; doc: Vec2; target: Node | null; wasSelected: boolean; shift: boolean; alt: boolean }
   | { kind: 'move'; doc: Vec2; ids: string[]; bounds: Rect; key: string; applied: Vec2; alt: boolean; duplicated: boolean }
-  | { kind: 'scale'; handle: HandleId; box: Rect; start: Vec2; ids: string[]; key: string; applied: Matrix }
-  | { kind: 'rotate'; center: Vec2; start: Vec2; ids: string[]; key: string; applied: Matrix; angle: number }
+  | { kind: 'scale'; handle: HandleId; box: OrientedBox; start: Vec2; ids: string[]; key: string; applied: Matrix }
+  | { kind: 'rotate'; center: Vec2; start: Vec2; ids: string[]; key: string; applied: Matrix; angle: number; baseTheta: number }
   | { kind: 'marquee'; screen: Vec2; doc: Vec2; current: Vec2; shift: boolean };
 
 const IDENTITY: Matrix = [1, 0, 0, 1, 0, 0];
@@ -56,10 +58,20 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
   let state: State = { kind: 'idle' };
   const widgets = createWidgetDrag(false);
   let hoverCursor = 'default';
+  /** Several objects rotated together keep their turned box until the selection changes (as in Illustrator). */
+  let sticky: { key: string; theta: number } | null = null;
+  const idsKey = (ids: readonly string[]) => [...ids].sort().join('|');
+
+  /** The oriented box of the current selection (turning live while a rotation drags several objects). */
+  const boxFor = (host: ToolHost, ids: string[]): OrientedBox | null => {
+    if (!host.space) return null;
+    let theta = sticky && sticky.key === idsKey(ids) ? sticky.theta : 0;
+    if (state.kind === 'rotate' && ids.length > 1) theta = state.baseTheta + state.angle;
+    return orientedBoxOf(host.space, ids, theta);
+  };
 
   const size = (r: Rect, units: Parameters<typeof formatLength>[1]) => `${t('measure.width')}: ${formatLength(r.maxX - r.minX, units)}  ${t('measure.height')}: ${formatLength(r.maxY - r.minY, units)}`;
 
-  const screenBox = (host: ToolHost, box: Rect): Rect => toScreenRect(box, host.view.zoom, host.view.panX, host.view.panY);
 
   function startMove(host: ToolHost, press: Extract<State, { kind: 'press' }>): void {
     const ids = selectedTopLevel(host);
@@ -101,12 +113,13 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
   }
 
   function scale(event: CanvasPointerEvent, host: ToolHost, s: Extract<State, { kind: 'scale' }>): void {
-    const { sx, sy, pivot } = scaleFromHandle(s.box, s.handle, s.start, event.doc, { proportional: event.shiftKey, fromCenter: event.altKey });
+    // Everything is computed in the box's own (turned) space, then turned back.
+    const { sx, sy, pivot } = scaleFromHandle(s.box.rect, s.handle, toBoxSpace(s.box, s.start), toBoxSpace(s.box, event.doc), { proportional: event.shiftKey, fromCenter: event.altKey });
     const clamp = (v: number) => (Math.abs(v) < 0.001 ? (v < 0 ? -0.001 : 0.001) : v);
-    const next = scaleAbout(clamp(sx), clamp(sy), pivot);
+    const next = multiply(rotation(s.box.theta), multiply(scaleAbout(clamp(sx), clamp(sy), pivot), rotation(-s.box.theta)));
     transformStep(host, s.ids, s.key, next, s.applied);
     s.applied = next;
-    host.setMeasure(size({ minX: 0, minY: 0, maxX: Math.abs((s.box.maxX - s.box.minX) * sx), maxY: Math.abs((s.box.maxY - s.box.minY) * sy) }, host.units), event.screen);
+    host.setMeasure(size({ minX: 0, minY: 0, maxX: Math.abs((s.box.rect.maxX - s.box.rect.minX) * sx), maxY: Math.abs((s.box.rect.maxY - s.box.rect.minY) * sy) }, host.units), event.screen);
   }
 
   function rotate(event: CanvasPointerEvent, host: ToolHost, s: Extract<State, { kind: 'rotate' }>): void {
@@ -147,7 +160,7 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
 
   function updateHover(event: CanvasPointerEvent, host: ToolHost): void {
     const ids = selectedTopLevel(host);
-    const box = boxOf(host, ids);
+    const box = boxFor(host, ids);
     hoverCursor = 'default';
     if (widgets.hover(event.doc, host)) {
       hoverCursor = 'pointer';
@@ -155,10 +168,11 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
       return;
     }
     if (box && !host.options.hideEdges) {
-      const sbox = screenBox(host, box);
-      const handle = handleAt(sbox, event.screen);
-      if (handle) hoverCursor = cursorForHandle(handle);
-      else if (rotateCornerAt(sbox, event.screen)) hoverCursor = ROTATE_CURSOR;
+      const sbox = boxScreenRect(box, host.view);
+      const pointer = toBoxScreen(box, event.screen);
+      const handle = handleAt(sbox, pointer);
+      if (handle) hoverCursor = cursorForTurnedHandle(handle, box.theta);
+      else if (rotateCornerAt(sbox, pointer)) hoverCursor = ROTATE_CURSOR;
     }
     host.setHover(hoverCursor === 'default' ? host.hitAt(event.doc) : null);
   }
@@ -177,16 +191,17 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
 
       // 1. Bounding box handles (scale) and the rotate zone just outside the corners.
       const ids = selectedTopLevel(host);
-      const box = boxOf(host, ids);
+      const box = boxFor(host, ids);
       if (box && !host.options.hideEdges && event.clickCount < 2) {
-        const sbox = screenBox(host, box);
-        const handle = handleAt(sbox, event.screen);
+        const sbox = boxScreenRect(box, host.view);
+        const pointer = toBoxScreen(box, event.screen);
+        const handle = handleAt(sbox, pointer);
         if (handle) {
           state = { kind: 'scale', handle, box, start: event.doc, ids, key: host.gestureKey(), applied: IDENTITY };
           return;
         }
-        if (rotateCornerAt(sbox, event.screen)) {
-          state = { kind: 'rotate', center: rectCenter(box), start: event.doc, ids, key: host.gestureKey(), applied: IDENTITY, angle: 0 };
+        if (rotateCornerAt(sbox, pointer)) {
+          state = { kind: 'rotate', center: fromBoxSpace(box, rectCenter(box.rect)), start: event.doc, ids, key: host.gestureKey(), applied: IDENTITY, angle: 0, baseTheta: box.theta };
           return;
         }
       }
@@ -270,6 +285,7 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
         host.rememberTransform({ matrix: translation(finished.applied.x, finished.applied.y), copy: finished.duplicated });
       } else if (finished.kind === 'scale' || finished.kind === 'rotate') {
         host.rememberTransform({ matrix: finished.applied, copy: false });
+        if (finished.kind === 'rotate' && finished.ids.length > 1) sticky = { key: idsKey(finished.ids), theta: finished.baseTheta + finished.angle };
       } else if (finished.kind === 'marquee') {
         if (dragged(event.screen, finished.screen)) {
           const rect: Rect = {
@@ -335,17 +351,27 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
     drawOverlay(ctx, host, theme) {
       widgets.draw(ctx, host, theme);
       const ids = selectedTopLevel(host);
-      const box = boxOf(host, ids);
+      const box = boxFor(host, ids);
       if (box && !host.options.hideEdges) {
-        const s = screenBox(host, box);
+        const s = boxScreenRect(box, host.view);
+        const corners = [
+          { x: s.minX, y: s.minY },
+          { x: s.maxX, y: s.minY },
+          { x: s.maxX, y: s.maxY },
+          { x: s.minX, y: s.maxY },
+        ].map((p) => rotatePoint(p, box.theta));
         ctx.save();
         ctx.lineWidth = 1;
         ctx.strokeStyle = theme.accent;
-        ctx.strokeRect(Math.round(s.minX) + 0.5, Math.round(s.minY) + 0.5, Math.round(s.maxX - s.minX), Math.round(s.maxY - s.minY));
+        ctx.beginPath();
+        corners.forEach((p, i) => (i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
+        ctx.closePath();
+        ctx.stroke();
         ctx.fillStyle = '#ffffff';
         for (const h of Object.values(handlePoints(s))) {
-          const x = Math.round(h.x) - 3;
-          const y = Math.round(h.y) - 3;
+          const p = rotatePoint(h, box.theta);
+          const x = Math.round(p.x) - 3;
+          const y = Math.round(p.y) - 3;
           ctx.fillRect(x + 0.5, y + 0.5, 7, 7);
           ctx.strokeRect(x + 0.5, y + 0.5, 7, 7);
         }

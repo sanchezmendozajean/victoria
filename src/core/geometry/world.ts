@@ -1,8 +1,9 @@
-import { invert, multiply } from '../model/matrix';
+import { invert, multiply, rotation } from '../model/matrix';
 import { isLayer } from '../model/queries';
 import type { Anchor, Layer, LayerChild, Matrix, Node, PathNode, Space, Vec2 } from '../model/types';
 import { applyToPoint } from '../model/matrix';
-import { boundsInParent, geometricBoundsInParent } from './geometry';
+import { boundsInParent, geometricBoundsInParent, nodeGeometry } from './geometry';
+import { subPathBounds } from './path';
 import { shapeSubPaths } from './shapes';
 import { transformRect, unionRect, type Rect } from './rect';
 
@@ -161,3 +162,38 @@ export const rectCenter = (r: Rect): Vec2 => ({ x: (r.minX + r.maxX) / 2, y: (r.
 
 /** The position of one anchor in Space coordinates. */
 export const worldAnchor = (frame: PathFrame, anchor: Anchor): Vec2 => applyToPoint(frame.world, anchor.p);
+
+/**
+ * Bounds of the objects measured along axes turned by `theta` radians: the rectangle is returned in
+ * the rotated space (a point `p` of the Space is `rotate(-theta)·p` there). With `theta` = the rotation of a
+ * single rotated object this is the box Illustrator draws around it, which turns together with the object.
+ */
+export function orientedBounds(space: Space, ids: readonly string[], theta: number): Rect | null {
+  const q = rotation(-theta);
+  let rect: Rect | null = null;
+  const visit = (node: Node, world: Matrix): void => {
+    if (node.type === 'group' || node.type === 'clipGroup') {
+      const members = node.type === 'clipGroup' ? node.children.slice(0, 1) : node.children;
+      for (const child of members) visit(child, multiply(world, child.transform));
+      return;
+    }
+    const geometry = nodeGeometry(node);
+    if (!geometry) return;
+    const m = multiply(q, world);
+    for (const sub of geometry.subpaths) {
+      const anchors = sub.anchors.map((a) => ({ ...a, p: applyToPoint(m, a.p), in: a.in && applyToPoint(m, a.in), out: a.out && applyToPoint(m, a.out) }));
+      rect = unionRect(rect, subPathBounds({ anchors, closed: sub.closed }));
+    }
+  };
+  for (const id of ids) {
+    const frame = frameOf(space, id);
+    if (frame) visit(frame.node, frame.world);
+  }
+  return rect;
+}
+
+/** Rotation of an object's X axis in the Space (radians): the angle its bounding box turns by. */
+export function worldRotationOf(space: Space, id: string): number {
+  const frame = frameOf(space, id);
+  return frame ? Math.atan2(frame.world[1], frame.world[0]) : 0;
+}

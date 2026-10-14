@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { selectionBounds, translation } from '../../../core';
 import { createSelectionTool } from '../selectionTool';
 import { click, createTestHost, drag, ev, nodeX, nodeY, selectedIds } from './fakeHost';
@@ -410,5 +410,72 @@ describe('Selection tool · hover', () => {
     expect(t.host.setHover).toHaveBeenLastCalledWith(expect.objectContaining({ id: a.id }));
     tool.onLeave?.(t.host);
     expect(t.host.setHover).toHaveBeenLastCalledWith(null);
+  });
+});
+
+describe('the bounding box turns with the object (Illustrator)', () => {
+  const setupTurned = async () => {
+    const { multiply, rotation, translation, orientedBounds, worldRotationOf, selectOnly, createRect } = await import('../../../core');
+    const t = createTestHost();
+    const tool = createSelectionTool();
+    const r = createRect(t.ids, 200, 100);
+    r.transform = multiply(translation(300, 300), rotation(Math.PI / 6));
+    t.add(r);
+    t.session.select(selectOnly(t.spaceId(), [r.id]));
+    return { t, tool, r, orientedBounds, worldRotationOf };
+  };
+
+  it('scales along the object axes: the east handle of a rotated rectangle keeps its angle and stretches it', async () => {
+    const { t, tool, r, orientedBounds, worldRotationOf } = await setupTurned();
+    const a = Math.PI / 6;
+    // Centre of the rectangle in the Space, and its east handle one half-width along the turned x axis.
+    const centre = { x: 300 + 100 * Math.cos(a) - 50 * Math.sin(a), y: 300 + 100 * Math.sin(a) + 50 * Math.cos(a) };
+    const east = { x: centre.x + 100 * Math.cos(a), y: centre.y + 100 * Math.sin(a) };
+    const to = { x: east.x + 50 * Math.cos(a), y: east.y + 50 * Math.sin(a) };
+    drag(tool, t, east, to);
+    const space = t.space();
+    const theta = worldRotationOf(space, r.id);
+    expect(theta).toBeCloseTo(a, 6);
+    const box = orientedBounds(space, [r.id], theta)!;
+    expect(box.maxX - box.minX).toBeCloseTo(250, 4);
+    expect(box.maxY - box.minY).toBeCloseTo(100, 4);
+  });
+
+  it('rotating from a corner of the turned box keeps the box aligned with the object', async () => {
+    const { t, tool, r, worldRotationOf } = await setupTurned();
+    const a = Math.PI / 6;
+    const centre = { x: 300 + 100 * Math.cos(a) - 50 * Math.sin(a), y: 300 + 100 * Math.sin(a) + 50 * Math.cos(a) };
+    // Just outside the south-east corner of the turned box.
+    const corner = { x: centre.x + 100 * Math.cos(a) - 50 * Math.sin(a), y: centre.y + 100 * Math.sin(a) + 50 * Math.cos(a) };
+    const out = { x: corner.x + 10 * Math.cos(a + Math.PI / 4), y: corner.y + 10 * Math.sin(a + Math.PI / 4) };
+    tool.onPointerDown(ev(out.x, out.y), t.host);
+    tool.onPointerMove(ev(out.x + 40, out.y - 30), t.host);
+    tool.onPointerMove(ev(out.x + 80, out.y - 60), t.host);
+    tool.onPointerUp(ev(out.x + 80, out.y - 60), t.host);
+    expect(worldRotationOf(t.space(), r.id)).not.toBeCloseTo(a, 3); // it turned
+    // And the box used for the next gesture is aligned with the new angle: its width is still 200.
+    const { orientedBoxOf } = await import('../orientedBox');
+    const box = orientedBoxOf(t.space(), [r.id])!;
+    expect(box.theta).toBeCloseTo(worldRotationOf(t.space(), r.id), 9);
+    expect(box.rect.maxX - box.rect.minX).toBeCloseTo(200, 4);
+  });
+
+  it('several objects rotated together keep a turned box', async () => {
+    const { t, tool } = await setupTurned();
+    const other = t.rect(600, 300, 100, 100);
+    const { selectOnly } = await import('../../../core');
+    t.session.select(selectOnly(t.spaceId(), [t.space().layers[0]!.children[0]!.id, other.id]));
+    const { selectionBounds } = await import('../../../core');
+    const bounds = selectionBounds(t.space(), t.session.selection.ids)!;
+    // Grab the rotate zone just outside the north-east corner of the axis-aligned box.
+    const out = { x: bounds.maxX + 8, y: bounds.minY - 8 };
+    tool.onPointerDown(ev(out.x, out.y), t.host);
+    tool.onPointerMove(ev(out.x + 30, out.y + 40), t.host);
+    tool.onPointerUp(ev(out.x + 30, out.y + 40), t.host);
+    expect(t.session.selection.ids).toHaveLength(2);
+    const draw = vi.fn();
+    const ctx = new Proxy({} as Record<string, unknown>, { get: (_t, k) => (k === 'moveTo' ? draw : () => undefined), set: () => true });
+    tool.drawOverlay?.(ctx as never, t.host, { accent: '#00f', accentSoft: '#00f3' } as never);
+    expect(draw).toHaveBeenCalled(); // the turned outline is drawn as a path
   });
 });

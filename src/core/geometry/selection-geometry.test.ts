@@ -306,3 +306,25 @@ describe('Phase 4 commands', () => {
     expect(session.rollback()).toBe(false);
   });
 });
+
+describe('orientedBounds', () => {
+  it('measures a rotated rectangle along its own axes', async () => {
+    const { createDocument, createRect, sequentialIds, rotation, translation, multiply, DocumentSession, addNode, getActiveSpace, orientedBounds, worldRotationOf } = await import('..');
+    const ids = sequentialIds('o');
+    const doc = createDocument({ name: 'T', spaceName: 'S', artboardName: 'B', layerName: 'L', ids, now: '2026-01-01T00:00:00.000Z' });
+    const session = new DocumentSession(doc, { ids, historyLimit: 10 });
+    const space0 = getActiveSpace(session.document);
+    const r = createRect(ids, 200, 100);
+    r.transform = multiply(translation(300, 300), rotation(Math.PI / 6));
+    session.run(addNode(space0.id, space0.layers[0]!.id, r));
+    const space = getActiveSpace(session.document);
+    const theta = worldRotationOf(space, r.id);
+    expect(theta).toBeCloseTo(Math.PI / 6, 9);
+    const box = orientedBounds(space, [r.id], theta)!;
+    expect(box.maxX - box.minX).toBeCloseTo(200, 6);
+    expect(box.maxY - box.minY).toBeCloseTo(100, 6);
+    // Axis-aligned it is bigger.
+    const flat = orientedBounds(space, [r.id], 0)!;
+    expect(flat.maxX - flat.minX).toBeGreaterThan(210);
+  });
+});
