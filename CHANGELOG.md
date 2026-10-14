@@ -1,5 +1,33 @@
 # Changelog
 
+## Fase 5 — Dibujo (en revisión)
+
+### Añadido
+- **Pluma (P)** con los 11 puntos de la spec 03: clic = esquina, arrastre = suave simétrico, Alt (rompe y se mantiene roto), Espacio (mueve el ancla) y Mayús (45°) durante el arrastre; clic sobre el último ancla retrae el manejador y arrastrar crea uno independiente; banda elástica; cerrar con clic o arrastre; terminar con Esc, Intro o Ctrl+clic; continuar y unir trazados abiertos; añadir/eliminar automático sobre el trazado seleccionado; Ctrl = Selección directa y Alt sobre un ancla = Convertir; seis cursores con insignia. **Cada ancla es un paso de deshacer** (Ctrl+Z quita el último punto).
+- **Añadir (+), Eliminar (−) y Convertir ancla (Mayús+C)**, **Curvatura (Mayús+~)** (spline Catmull-Rom en Béziers editables), **Lápiz (N)** (ajuste de curvas de Schneider; continúa y une trazados) y **Tijeras (C)**.
+- **Formas vivas**: rectángulo (M), rectángulo redondeado, elipse (L), polígono, estrella y línea (\) con Alt/Mayús/Espacio, ↑/↓ (lados y puntas) y Ctrl (radio interior); un clic abre el diálogo de dimensiones exactas. Un arrastre es un único paso de deshacer.
+- **Widgets**: círculos de esquina de rectángulos, polígonos y estrellas (todas las esquinas, Alt = una; Alt+clic cicla redonda/invertida/chaflán), tiradores de tarta de la elipse y **esquinas vivas de trazados** (`Anchor.cornerRadius`, aplicado a la geometría sin tocar las anclas).
+- **Acciones sobre anclas**: Suprimir elimina las anclas seleccionadas; Unir (Ctrl+J: cerrar, unir dos extremos o encadenar); Promediar (Alt+Ctrl+J, con diálogo de eje); cortar en el ancla, convertir a esquina/suave y mostrar/ocultar manejadores en la barra de control.
+- **Core** (`core/geometry/anchors.ts`, `fit.ts`): insertar, eliminar, convertir, cortar, unir, cerrar, invertir, promediar, curvatura, esquinas vivas y ajuste de curvas; comandos `editPaths`, `replaceNode(s)`, `joinPathNodes`, `setPathGeometry`, `redrawShape`; fábricas `createPolygon`, `createStar`, `createLine`.
+- La barra de herramientas **recuerda si estaba en 1 o 2 columnas** entre sesiones (preferencia de interfaz en `localStorage`, nunca datos del documento).
+- Pruebas: 447 unitarias y 67 e2e en total (la fase añade 121 unitarias y 8 e2e). La Pluma tiene pruebas de máquina de estados para cada regla; hay pruebas del corazón, la gota y el engranaje, y un e2e que dibuja el corazón con la Pluma.
+
+### Decisiones tomadas (la spec no las cubría; detalladas en la spec 03 · «Reglas añadidas en la Fase 5»)
+- Las herramientas de ancla convierten las formas vivas **sin aviso** (el aviso es de Selección directa).
+- Fidelidad del Lápiz fija en 2,5 px de pantalla y añadir/eliminar automático de la Pluma siempre activo hasta que exista Preferencias.
+- Promediar: «Horizontal» = misma Y, «Vertical» = misma X.
+- Los objetos se crean en la capa del objeto seleccionado o, si no hay selección, en la capa visible y desbloqueada más alta (no hay aún «capa activa»; llegará con el panel Capas, Fase 6).
+- Un widget de polígono o estrella gobierna todos los vértices con un solo círculo.
+
+### Pendiente
+- Dibujar dentro de un grupo aislado crea el objeto en la capa, no dentro del grupo.
+- Lápiz: editar/redibujar el tramo central de un trazado; Suavizar, Borrador de trazado y Pincel de manchas (v2).
+- Arco y Espiral (v2); Cuchilla (v2).
+- Las esquinas vivas de trazados solo redondean anclas de esquina entre segmentos rectos.
+- Preferencias (fidelidad del Lápiz, añadir/eliminar automático, paso de flechas).
+- Portapapeles, «Previsualizar píxeles» y Transformación libre siguen sin implementar (Fases siguientes).
+- Lo no verificado de la Fase 1 (instalador de Windows, Linux) sigue sin verificar; el rendimiento solo se midió en Windows. La prueba manual guiada (corazón, gota, engranaje «sin sorpresas para alguien habituado a Illustrator») es del usuario: lo automatizado cubre la mecánica, no la sensación.
+
 ## Fase 4 — Selección y transformación (en revisión)
 
 ### Añadido

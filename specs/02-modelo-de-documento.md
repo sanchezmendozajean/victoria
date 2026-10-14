@@ -56,7 +56,7 @@ interface Anchor {
   in: Vec2 | null;       // manejador de entrada (absoluto). null = retraído
   out: Vec2 | null;      // manejador de salida
   kind: 'corner' | 'smooth' | 'asymmetric';
-  cornerRadius?: number; // Widget de esquina viva (como Illustrator CC)
+  cornerRadius?: number; // Widget de esquina viva (como Illustrator CC); ver «Esquinas vivas» abajo
 }
 ```
 
@@ -172,3 +172,9 @@ documento.vict
 - **SVG** import: trazados, formas, grupos, `<text>` (como texto si la fuente existe), `<textPath>`, `<image>`, `clipPath`, degradados. Export: un SVG por mesa o por Espacio completo; opción "Minificar".
 - **PDF/AI**: import vía pdf.js; cada página → un Espacio con una mesa del tamaño de la página.
 - **PNG/JPG/WebP**: por mesa, ppp configurable (72/150/300/personalizado), fondo transparente o blanco.
+
+## Esquinas vivas de trazados (Fase 5)
+
+`Anchor.cornerRadius` es un dato **vivo**: el contorno que se dibuja y mide es el trazado con las esquinas redondeadas (`applyCornerRadii`, en `core/geometry/anchors.ts`), pero las anclas guardadas no cambian. Solo se redondea un ancla de **esquina sin manejadores** cuyos dos segmentos vecinos son rectos (en un trazado abierto, no los extremos); las demás se ignoran sin error. El radio se limita a la mitad del segmento vecino más corto. Cada esquina redondeada produce dos anclas con un arco cúbico entre ellas. Quitar el radio (o arrastrar el widget a 0) devuelve la esquina viva sin pérdida.
+
+La **línea** (`shape: 'line'`) se crea solo con trazo (sin relleno).

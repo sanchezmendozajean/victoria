@@ -429,3 +429,54 @@ describe('anchors helper types', () => {
     expect(a.kind).toBe('corner');
   });
 });
+
+describe('acceptance drawings (specs/12 · Fase 5): heart, drop and gear', () => {
+  it('a drop: a corner tip, three smooth anchors, closed on the tip', async () => {
+    const { createPenTool } = await import('../penTool');
+    const t = createTestHost();
+    const pen = createPenTool();
+    click(pen, t, 0, -100);
+    drag(pen, t, { x: 80, y: 20 }, { x: 80, y: 70 });
+    drag(pen, t, { x: 0, y: 100 }, { x: -50, y: 100 });
+    drag(pen, t, { x: -80, y: 20 }, { x: -80, y: -30 });
+    click(pen, t, 0, -100);
+    const p = paths(t)[0]!;
+    expect(p.closed).toBe(true);
+    expect(p.anchors.map((a) => a.kind)).toEqual(['corner', 'smooth', 'smooth', 'smooth']);
+  });
+
+  it('a heart: two lobes and a tip with the Pen, symmetric handles on the lobes', async () => {
+    const { createPenTool } = await import('../penTool');
+    const t = createTestHost();
+    const pen = createPenTool();
+    click(pen, t, 0, -40);
+    drag(pen, t, { x: 70, y: -80 }, { x: 110, y: -30 });
+    click(pen, t, 0, 80);
+    drag(pen, t, { x: -70, y: -80 }, { x: -30, y: -130 });
+    click(pen, t, 0, -40);
+    const p = paths(t)[0]!;
+    expect(p.closed).toBe(true);
+    expect(p.anchors).toHaveLength(4);
+    expect(p.anchors[1]!.in).toEqual({ x: 30, y: -130 });
+    expect(p.anchors[3]!.in).toEqual({ x: -110, y: -30 });
+  });
+
+  it('a gear: a 12-tooth star with rounded corners and a hole', async () => {
+    const { createStar, nodeGeometry } = await import('../../../core');
+    const t = createTestHost();
+    const star = createStar(t.ids, 100, 82, 12);
+    star.transform = [1, 0, 0, 1, 300, 300];
+    t.add(star);
+    const tool = (await import('../selectionTool')).createSelectionTool();
+    t.session.select({ spaceId: t.spaceId(), ids: [star.id] });
+    // The star widget rests 14 px from its top vertex (300, 200) toward the centre; pull it to round all the corners.
+    drag(tool, t, { x: 300, y: 214 }, { x: 300, y: 224 });
+    const rounded = (t.space().layers[0]!.children[0] as ShapeNode).params as { cornerRadius: number };
+    expect(rounded.cornerRadius).toBeCloseTo(24, 6);
+    expect(nodeGeometry(t.space().layers[0]!.children[0] as ShapeNode)!.subpaths[0]!.anchors.length).toBe(24 * 2);
+    // The hole is a circle in the middle.
+    const hole = (await import('../shapeDrag')).buildShape(t.ids, shapeFromDrag({ kind: 'ellipse', start: { x: 270, y: 270 }, end: { x: 330, y: 330 }, shift: false, alt: false, prefs: defaultShapePrefs() }));
+    t.add(hole);
+    expect(shapes(t)).toHaveLength(2);
+  });
+});

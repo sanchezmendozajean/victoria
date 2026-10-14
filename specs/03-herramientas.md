@@ -177,3 +177,60 @@ Imprescindibles para la sensación Illustrator:
 ## Otros ajustes
 
 Ajustar a cuadrícula, ajustar a píxel (para íconos: alinear a la cuadrícula de píxeles), reglas (Ctrl+R) con guías arrastrables, guías bloqueables.
+
+---
+
+## Reglas añadidas en la Fase 5 (dibujo)
+
+Reglas de comportamiento que la spec no cubría y que se implementaron como lo hace Illustrator, o por decisión explícita. Cada una tiene su prueba.
+
+### Pluma
+
+- El trazado vive en el documento desde el primer clic. **Cada ancla (con su arrastre de manejador) es un paso de deshacer**: Ctrl+Z quita el último punto y, con un solo punto, el trazado entero.
+- **Alt durante el arrastre** congela el manejador de entrada donde estaba y lo mantiene congelado hasta soltar (el nodo pasa a esquina); no vuelve a ser simétrico si se suelta Alt.
+- **Espacio** durante el arrastre mueve el ancla que se está colocando; el manejador conserva su distancia respecto a ella.
+- **Mayús** en un clic restringe el ancla a 45° respecto al ancla anterior; en un arrastre restringe el manejador.
+- **Cerrar**: clic sobre el primer ancla (cursor ○, con al menos 2 anclas) cierra y termina el trazado. Arrastrar al cerrar da al primer ancla manejadores simétricos (suave); con Alt solo gira el de salida. Cerrar es un solo paso de deshacer.
+- **Terminar abierto**: Esc, Intro, Ctrl+clic en vacío o cambiar de herramienta. Un trazado de un solo ancla se descarta al terminar.
+- **Continuar**: clic sobre el extremo de cualquier trazado abierto (visible y desbloqueado) lo continúa; si es su primer ancla, el trazado se invierte. Clic sobre el extremo de *otro* trazado abierto mientras se dibuja los **une** y termina.
+- **Añadir/eliminar automático**: solo actúa sobre trazados **seleccionados** (segmento: «+»; ancla: «−»). Sobre una forma viva la convierte en trazado en el mismo paso. Pendiente de hacerlo opcional en Preferencias (constante `AUTO_ADD_DELETE`).
+- **Ctrl** = Selección directa para ese clic; **Alt sobre un ancla** = Convertir punto de ancla para ese clic.
+- Cursores: pluma plana mientras se dibuja; «*» (nuevo), «/» (continuar), «○» (cerrar), «+», «−», «^» (convertir; también al pasar sobre el último ancla).
+
+### Añadir, eliminar y convertir ancla; Tijeras
+
+- Estas herramientas actúan sobre cualquier trazado visible y desbloqueado bajo el cursor (los seleccionados tienen prioridad), no solo sobre los seleccionados.
+- Sobre una **forma viva** convierten a trazado **sin aviso** y en el mismo paso de deshacer (el aviso de «convertir» es de Selección directa).
+- Eliminar ancla conserva los manejadores de los vecinos (no «reajusta» la curva); un trazado que queda con menos de 2 anclas desaparece.
+- Convertir: clic en ancla suave → esquina; arrastrar desde un ancla → suave con manejadores simétricos; arrastrar un manejador lo mueve de forma independiente y deja el ancla en esquina.
+- Tijeras: un trazado abierto cortado en un ancla interior (o dentro de un segmento) da dos trazados con anclas coincidentes; uno cerrado da un trazado abierto con las dos anclas del corte. Cortar un ancla extremo no hace nada.
+
+### Curvatura
+
+- La curva es un spline Catmull-Rom uniforme expresado en Béziers (el trazado resultante es editable con Selección directa). Los extremos salen rectos hasta que hay tercer punto.
+- Clic = suave, Alt+clic = esquina, doble clic sobre el último punto colocado = alterna suave/esquina sin añadir otro; clic sobre el primero cierra (≥ 3 puntos). Arrastrar un ancla del trazado seleccionado lo mueve y recalcula la curva; doble clic sobre un ancla alterna suave/esquina; clic sobre un segmento añade un punto.
+
+### Lápiz
+
+- Ajuste de Schneider con tolerancia **2,5 px de pantalla** (constante `PENCIL_FIDELITY_PX`; la fidelidad 1–5 de Preferencias llega con el panel de Preferencias). Cierra si termina a menos de 8 px del inicio, o con Alt.
+- Si el trazo **empieza** en el extremo de un trazado abierto lo continúa; si **termina** en el extremo de otro, los une. **Pendiente**: editar/redibujar el tramo central de un trazado.
+
+### Formas
+
+- Rectángulo (M), rectángulo redondeado (radio recordado, 12 pt), elipse (L), polígono, estrella y línea (\). Arrastrar crea una **forma viva** como un único paso de deshacer. Alt desde el centro, Mayús 1:1 (línea: 45°), Espacio la mueve mientras se arrastra, Esc la descarta.
+- Polígono y estrella se dibujan **desde el centro**; el ángulo del arrastre las gira y Mayús las deja derechas. ↑/↓ cambian lados/puntas durante el arrastre; Ctrl en la estrella mantiene fijo el radio interior. Estrella: radio interior = 50 % del exterior.
+- **Clic sin arrastrar** abre el diálogo de dimensiones exactas (rectángulo: ancho, alto y radio si es redondeado; elipse: ancho y alto; polígono: radio y lados; estrella: radios y puntas; línea: longitud y ángulo, positivo en sentido antihorario).
+- La línea es un objeto solo con trazo.
+
+### Widgets de forma viva y esquinas vivas
+
+- Visibles con Selección y Selección directa sobre formas vivas seleccionadas (hasta 24 objetos). Rectángulo: un círculo por esquina; **arrastrar cambia las cuatro esquinas, Alt solo esa**; Alt+clic cicla redonda → invertida → chaflán (todo el rectángulo). Polígono y estrella: un widget en el vértice superior para todos los vértices. Elipse: dos tiradores de **tarta** (inicio y fin).
+- En trazados, Selección directa muestra un widget en cada ancla de esquina seleccionada cuyos vecinos son segmentos rectos (`Anchor.cornerRadius`, ver spec 02). El radio se reduce hasta la mitad del segmento más corto.
+- Un widget en reposo está a 14 px de pantalla de su esquina, y sigue al radio cuando este es mayor.
+
+### Acciones sobre anclas (barra de control y menú Objeto)
+
+- **Suprimir** con anclas seleccionadas elimina las anclas (un paso de deshacer, varios trazados a la vez); sin anclas, elimina los objetos.
+- **Unir (Ctrl+J)**: con dos anclas extremo seleccionadas las une (del mismo trazado: lo cierra); con trazados abiertos seleccionados, uno solo se cierra y varios se encadenan por sus extremos más cercanos. Si los extremos no coinciden se añade un segmento recto.
+- **Promediar (Alt+Ctrl+J)** pregunta el eje: *Horizontal* alinea los puntos en la misma Y, *Vertical* en la misma X, *Ambos* los junta. Sin anclas seleccionadas actúa sobre todas las de los trazados seleccionados.
+- **Cortar en el ancla**, **convertir a esquina/suave** y **mostrar/ocultar manejadores** están en la barra de control con Selección directa.
