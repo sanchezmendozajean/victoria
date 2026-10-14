@@ -12,7 +12,7 @@ const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(mi
 
 /** GIMP palette (`.gpl`): "R G B Name" lines under a `GIMP Palette` header. Returns [] for anything else. */
 export function parseGpl(text: string): PaletteColor[] {
-  const lines = text.replace(/^﻿/, '').split(/\r?\n/);
+  const lines = text.replace(/^\uFEFF/, '').split(/\r?\n/);
   if (!/^GIMP Palette/i.test((lines[0] ?? '').trim())) return [];
   const out: PaletteColor[] = [];
   for (const raw of lines.slice(1)) {

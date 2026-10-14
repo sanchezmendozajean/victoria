@@ -78,6 +78,8 @@ export function CanvasArea() {
           if (active) useUi.getState().setIsolation(getActiveSpace(active.document).id, id);
         },
         onTransformDialog: (kind, origin) => useUi.getState().openTransformDialog(kind, origin),
+        activePaint: () => useUi.getState().activePaint,
+        setNewAppearance: (appearance) => useUi.getState().setNewLook(appearance),
         newAppearance: () => JSON.parse(JSON.stringify(useUi.getState().newLook)),
         onShapeDialog: (kind, at) => useUi.getState().openShapeDialog(kind, at),
         onRememberTransform: (transform) => useUi.getState().setLastTransform(transform),

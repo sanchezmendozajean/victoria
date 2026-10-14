@@ -1,6 +1,7 @@
 import { sameColor } from './color';
 import { childrenOf, locateNode } from './queries';
 import { defaultStroke } from './factory';
+import type { IdGenerator } from './ids';
 import type { Appearance, AppearanceItem, Node, Paint, Space, StrokeStyle } from './types';
 
 // Reading appearance across a selection for the panels: a value shared by every object is shown,
@@ -91,4 +92,14 @@ export function commonItemOpacity(nodes: readonly Node[], kind: 'fill' | 'stroke
 /** The first solid colour or swatch colour among the nodes' fills (what a plain click on a colour mode needs). */
 export function firstSolid(paint: Paint): Extract<Paint, { type: 'solid' }>['color'] | null {
   return paint.type === 'solid' ? paint.color : null;
+}
+
+/** A deep copy of an appearance whose modifier instances get fresh ids (Eyedropper, new-object look). */
+export function cloneAppearance(appearance: Appearance, ids: IdGenerator): Appearance {
+  const copy = JSON.parse(JSON.stringify(appearance)) as Appearance;
+  for (const item of copy.items) {
+    const mods = item.kind === 'modifier' ? [item.mod] : item.modifiers;
+    for (const mod of mods) mod.id = ids();
+  }
+  return copy;
 }

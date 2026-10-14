@@ -12,6 +12,7 @@ import {
   sequentialIds,
   translation,
   type Anchor,
+  type Appearance,
   type Hit,
   type Node,
   type PathNode,
@@ -78,6 +79,8 @@ export function createTestHost(init: HostInit = {}) {
       host.isolation = id;
     }),
     newAppearance: () => defaultAppearance(),
+    activePaint: 'fill',
+    setNewAppearance: vi.fn<(appearance: Appearance) => void>(),
     get activeLayerId(): string | null {
       return getActiveSpace(session.document).layers[0]?.id ?? null;
     },

@@ -108,6 +108,8 @@ describe('tool registry', () => {
     expect(createTool('tool-reflect').id).toBe('tool-reflect');
     expect(createTool('tool-pen').id).toBe('tool-pen');
     expect(createTool('tool-gradient').cursor(false)).toBe('crosshair');
+    expect(createTool('tool-eyedropper').id).toBe('tool-eyedropper');
+    expect(createTool('tool-free-transform').cursor(false)).toBe('crosshair');
     expect(createTool('tool-type').cursor(false)).toBe('text');
   });
 });

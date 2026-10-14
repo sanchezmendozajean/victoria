@@ -70,6 +70,10 @@ export interface ToolHost {
   openTransformDialog(kind: TransformKind, origin: Vec2 | null): void;
   /** Fill and stroke of the next object drawn (the toolbar / Fill panel current look). */
   newAppearance(): Appearance;
+  /** The Eyedropper with nothing selected: the next objects take this fill and stroke. */
+  setNewAppearance(appearance: Appearance): void;
+  /** Which of fill and stroke the colour controls (and the Gradient tool) act on. */
+  readonly activePaint: 'fill' | 'stroke';
   /** Layer that receives new objects: the layer of the selection, else the topmost unlocked one. */
   readonly activeLayerId: string | null;
   /** Click with a shape tool: asks for the exact size (the dialog creates the object at `at`). */

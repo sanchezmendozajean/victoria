@@ -3,6 +3,8 @@ import { createAnchorAddTool, createAnchorDeleteTool, createConvertTool } from '
 import { createCurvatureTool } from './curvatureTool';
 import { createPencilTool } from './pencilTool';
 import { createScissorsTool } from './scissorsTool';
+import { createEyedropperTool } from './eyedropperTool';
+import { createGradientTool } from './gradientTool';
 import { createDirectSelectionTool } from './directSelectionTool';
 import { createHandTool } from './handTool';
 import { createLassoTool } from './lassoTool';
@@ -52,6 +54,10 @@ export function createTool(id: ToolId): Tool {
       return createPencilTool();
     case 'tool-scissors':
       return createScissorsTool();
+    case 'tool-eyedropper':
+      return createEyedropperTool();
+    case 'tool-gradient':
+      return createGradientTool();
     case 'tool-rect':
       return createShapeTool(id, 'rect');
     case 'tool-rounded-rect':

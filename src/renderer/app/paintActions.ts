@@ -1,13 +1,12 @@
 import {
   applyGradient,
-  colorToRgb,
+  defaultGradientFor,
   copyAppearance,
   defaultAppearance,
   defaultStroke,
   defaultGradientTransform,
   deepClone,
   geometryBounds,
-  makeGradient,
   nodeGeometry,
   paintTargets,
   patchStroke,
@@ -151,10 +150,7 @@ export function paintAsGradient(target: Target): void {
   if (!s || s.nodes.length === 0) return;
   const current = primaryItem({ items: s.nodes[0]?.appearance.items ?? [] }, target);
   const from = current?.paint.type === 'solid' ? current.paint.color : lastSolid[target];
-  const [r, g, b] = colorToRgb(from);
-  const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
-  const to: Color = luminance > 128 ? { model: 'rgb', values: [0, 0, 0] } : { model: 'rgb', values: [255, 255, 255] };
-  const gradient = makeGradient(s.c.session.ids, 'linear', from, to);
+  const gradient = defaultGradientFor(s.c.session.ids, 'linear', from);
   const transforms = new Map<string, Matrix>();
   for (const node of s.nodes) {
     const bounds = localBounds(node);

@@ -130,3 +130,12 @@ export function reversedStops(stops: readonly GradientStop[]): GradientStop[] {
       return flipped;
     });
 }
+
+/** A new gradient from `base` (white if none is given) towards white or black, whichever contrasts. */
+export function defaultGradientFor(ids: IdGenerator, type: Gradient['type'], base: Color | null): Gradient {
+  const from: Color = base ?? { model: 'rgb', values: [255, 255, 255] };
+  const [r, g, b] = colorToRgb(from);
+  const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+  const to: Color = luminance > 128 ? { model: 'rgb', values: [0, 0, 0] } : { model: 'rgb', values: [255, 255, 255] };
+  return makeGradient(ids, type, from, to);
+}
