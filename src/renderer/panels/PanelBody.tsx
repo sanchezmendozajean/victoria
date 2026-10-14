@@ -1,5 +1,8 @@
+import { AlignPanel } from './AlignPanel';
 import { FillPanel } from './FillPanel';
+import { SpacingPanel } from './SpacingPanel';
 import { GradientPanel } from './GradientPanel';
+import { StrokePanel } from './StrokePanel';
 import { SwatchesPanel } from './SwatchesPanel';
 import type { PanelId } from './registry';
 
@@ -12,6 +15,12 @@ export function PanelBody({ id }: { id: PanelId }) {
       return <SwatchesPanel />;
     case 'gradient':
       return <GradientPanel />;
+    case 'stroke':
+      return <StrokePanel />;
+    case 'align':
+      return <AlignPanel />;
+    case 'spacing':
+      return <SpacingPanel />;
     default:
       return null;
   }

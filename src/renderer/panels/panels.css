@@ -455,3 +455,25 @@
   cursor: ew-resize;
   touch-action: none;
 }
+
+/* Stroke panel */
+.vc-dashgrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px 6px;
+}
+.vc-dashgrid__cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.vc-thumb {
+  flex: none;
+  color: var(--icon);
+}
+
+.vc-iconrow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+}

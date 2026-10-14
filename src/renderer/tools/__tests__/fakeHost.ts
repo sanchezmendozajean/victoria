@@ -80,6 +80,9 @@ export function createTestHost(init: HostInit = {}) {
     }),
     newAppearance: () => defaultAppearance(),
     activePaint: 'fill',
+    keyObjectMode: false,
+    keyObject: null,
+    setKeyObject: vi.fn<(id: string) => void>(),
     setNewAppearance: vi.fn<(appearance: Appearance) => void>(),
     get activeLayerId(): string | null {
       return getActiveSpace(session.document).layers[0]?.id ?? null;

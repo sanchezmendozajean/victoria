@@ -4,6 +4,7 @@ import {
   emptySelection,
   locateNode,
   marqueeTargets,
+  nodeWorldBounds,
   rectCenter,
   rotateAbout,
   scaleAbout,
@@ -32,6 +33,7 @@ import {
   rotateCornerAt,
   scaleFromHandle,
   snapAngle45,
+  toScreenRect,
   type HandleId,
 } from './boxGeometry';
 import { boxOf, currentSelection, dragged, selectedTopLevel, snapDelta, stepBetween } from './shared';
@@ -214,6 +216,12 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
       // 2. An object: select it (Shift toggles) and prepare to move.
       const hit = host.hitTest(event.doc)[0];
       const target = hit ? selectionTarget(hit, host.isolation) : null;
+      // Align › objeto clave: a click on one of several selected objects marks it as the key object.
+      if (target && host.keyObjectMode && !event.shiftKey && isSelected(selection, target.id) && selection.ids.length > 1) {
+        host.setKeyObject(target.id);
+        host.invalidateOverlay();
+        return;
+      }
       if (target) {
         if (event.shiftKey) {
           const next = toggleInSelection(selection, target.id);
@@ -350,6 +358,17 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
 
     drawOverlay(ctx, host, theme) {
       widgets.draw(ctx, host, theme);
+      if (host.keyObjectMode && host.keyObject && host.space) {
+        const rect = nodeWorldBounds(host.space, host.keyObject);
+        if (rect) {
+          const s = toScreenRect(rect, host.view.zoom, host.view.panX, host.view.panY);
+          ctx.save();
+          ctx.lineWidth = 3;
+          ctx.strokeStyle = theme.accent;
+          ctx.strokeRect(s.minX, s.minY, s.maxX - s.minX, s.maxY - s.minY);
+          ctx.restore();
+        }
+      }
       const ids = selectedTopLevel(host);
       const box = boxFor(host, ids);
       if (box && !host.options.hideEdges) {

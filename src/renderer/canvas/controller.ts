@@ -84,6 +84,8 @@ export interface CanvasCallbacks {
   onShapeDialog(kind: ShapeToolKind, at: Vec2): void;
   newAppearance(): Appearance;
   activePaint(): 'fill' | 'stroke';
+  keyObject(): { mode: boolean; id: string | null };
+  onKeyObject(id: string): void;
   setNewAppearance(appearance: Appearance): void;
   onRememberTransform(transform: { matrix: Matrix; copy: boolean } | null): void;
 }
@@ -350,6 +352,18 @@ export class CanvasController implements ToolHost, CanvasApi {
 
   setNewAppearance(appearance: Appearance): void {
     this.callbacks.setNewAppearance(appearance);
+  }
+
+  get keyObjectMode(): boolean {
+    return this.callbacks.keyObject().mode;
+  }
+
+  get keyObject(): string | null {
+    return this.callbacks.keyObject().id;
+  }
+
+  setKeyObject(id: string): void {
+    this.callbacks.onKeyObject(id);
   }
 
   get activePaint(): 'fill' | 'stroke' {

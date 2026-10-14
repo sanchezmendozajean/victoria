@@ -72,6 +72,10 @@ export interface ToolHost {
   newAppearance(): Appearance;
   /** The Eyedropper with nothing selected: the next objects take this fill and stroke. */
   setNewAppearance(appearance: Appearance): void;
+  /** Align panel "objeto clave" mode: a click on a selected object marks it instead of narrowing the selection. */
+  readonly keyObjectMode: boolean;
+  readonly keyObject: string | null;
+  setKeyObject(id: string): void;
   /** Which of fill and stroke the colour controls (and the Gradient tool) act on. */
   readonly activePaint: 'fill' | 'stroke';
   /** Layer that receives new objects: the layer of the selection, else the topmost unlocked one. */

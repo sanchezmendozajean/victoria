@@ -284,7 +284,7 @@ function ControlPaints() {
         min={0}
         step={0.5}
         decimals={3}
-        width={74}
+        width={88}
         testId="control-weight"
         tooltip={t('control.strokeWeight')}
       />
@@ -296,7 +296,7 @@ function ControlPaints() {
         min={0}
         max={100}
         decimals={0}
-        width={66}
+        width={80}
         testId="control-opacity"
         tooltip={t('control.opacity')}
       />

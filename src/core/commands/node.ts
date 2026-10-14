@@ -406,3 +406,17 @@ export const replaceNodes = (spaceId: string, replacements: ReadonlyArray<{ id: 
     }
   },
 });
+
+/** Moves several objects each by its own offset (Align, Distribute, Spacing, grid) as one history step. */
+export const translateNodes = (spaceId: string, deltas: ReadonlyMap<string, { x: number; y: number }>, label = 'node.align'): Command => ({
+  label,
+  spaceId,
+  apply: (d) => {
+    const space = findSpace(d, spaceId);
+    if (!space) return;
+    for (const [id, delta] of deltas) {
+      const found = locateNode(space, id);
+      if (found) found.node.transform = multiply([1, 0, 0, 1, delta.x, delta.y], found.node.transform);
+    }
+  },
+});
