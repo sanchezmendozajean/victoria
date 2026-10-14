@@ -224,3 +224,33 @@ export function applyCornerRadii(sub: SubPath): SubPath {
   }
   return { anchors: out, closed };
 }
+
+/**
+ * Cuts an open path at several anchors at once (positions strictly inside it), leaving coincident
+ * anchors at each cut. A closed path is first opened at its first cut position.
+ */
+export function splitAtAnchors(anchors: readonly Anchor[], closed: boolean, positions: readonly number[]): Anchor[][] {
+  const n = anchors.length;
+  const sorted = [...new Set(positions)].filter((i) => i >= 0 && i < n).sort((a, b) => a - b);
+  if (sorted.length === 0) return [anchors.map(clone)];
+  let open = anchors.map(clone);
+  let cuts = sorted;
+  if (closed) {
+    const first = sorted[0] as number;
+    const opened = cutPath(anchors, true, { anchor: first });
+    if (!opened || !opened[0]) return [anchors.map(clone)];
+    open = opened[0];
+    cuts = sorted.slice(1).map((j) => j - first + (j < first ? n : 0));
+  }
+  const inner = cuts.filter((p) => p > 0 && p < open.length - 1);
+  const pieces: Anchor[][] = [];
+  let start = 0;
+  for (const p of inner) {
+    const here = open[p] as Anchor;
+    pieces.push([...open.slice(start, p), { ...clone(here), out: null }]);
+    start = p;
+    open[p] = { ...clone(here), in: null };
+  }
+  pieces.push(open.slice(start));
+  return pieces;
+}

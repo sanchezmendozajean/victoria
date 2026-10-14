@@ -51,7 +51,7 @@ export interface ToolHost {
   readonly space: Space | null;
   /** Group being edited in isolation mode. */
   readonly isolation: string | null;
-  readonly options: { smartGuides: boolean; snapGrid: boolean; guides: boolean; hideEdges: boolean };
+  readonly options: { smartGuides: boolean; snapGrid: boolean; guides: boolean; hideEdges: boolean; showHandles: boolean };
   readonly units: Units;
   /** 4 screen px in Space units. */
   readonly pickTolerance: number;

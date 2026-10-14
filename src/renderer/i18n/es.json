@@ -424,5 +424,14 @@
   "shape.radius2": "Radio 2",
   "shape.sides": "Lados",
   "shape.points": "Puntas",
-  "shape.length": "Longitud"
+  "shape.length": "Longitud",
+  "command.path.deleteAnchors": "Eliminar puntos de ancla",
+  "command.path.convertAnchors": "Convertir puntos de ancla",
+  "command.path.cut": "Cortar trazado",
+  "command.path.average": "Promediar",
+  "average.title": "Promediar",
+  "average.detail": "Eje en el que se alinean los puntos de ancla seleccionados.",
+  "average.horizontal": "Horizontal",
+  "average.vertical": "Vertical",
+  "average.both": "Ambos"
 }

@@ -105,6 +105,7 @@ export function CanvasArea() {
         snapGrid: viewOptions.snapGrid,
         smartGuides: viewOptions.smartGuides,
         hideEdges: viewOptions.hideEdges,
+        showHandles: viewOptions.showHandles,
       },
       activeArtboardId,
       units,

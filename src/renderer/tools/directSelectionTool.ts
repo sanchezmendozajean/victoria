@@ -28,6 +28,7 @@ import {
 } from '../../core';
 import { t } from '../i18n';
 import { constrainTo45 } from './boxGeometry';
+import { createWidgetDrag } from './widgetDrag';
 import { boxOf, currentSelection, dragged, selectedTopLevel, snapDelta } from './shared';
 import type { CanvasPointerEvent, Tool, ToolHost, ToolKeyEvent } from './types';
 
@@ -96,12 +97,13 @@ function visibleHandles(selection: Selection, frames: PathFrame[]): Array<{ fram
 /** Direct Selection (A): anchors, handles, segments, objects and marquee (specs/03 · Selección directa). */
 export function createDirectSelectionTool(id: 'tool-direct-select' | 'tool-group-select' = 'tool-direct-select'): Tool {
   let state: State = { kind: 'idle' };
+  const widgets = createWidgetDrag(true);
 
   const tolerance = (host: ToolHost) => PICK_PX / host.view.zoom;
 
   function hitHandle(host: ToolHost, p: Vec2) {
     const selection = currentSelection(host);
-    if (!selection) return null;
+    if (!selection || !host.options.showHandles) return null;
     for (const h of visibleHandles(selection, selectedFrames(host))) {
       const handle = h.frame.path.anchors[h.index]?.[h.which];
       if (handle && Math.hypot(toWorld(h.frame.world, handle).x - p.x, toWorld(h.frame.world, handle).y - p.y) <= tolerance(host)) return h;
@@ -266,6 +268,9 @@ export function createDirectSelectionTool(id: 'tool-direct-select' | 'tool-group
       if (!session || !space) return;
       const selection = currentSelection(host) ?? emptySelection(space.id);
 
+      // 0. Corner and pie widgets.
+      if (event.clickCount < 2 && widgets.press(event, host)) return;
+
       // 1. A handle of a selected anchor.
       const handle = hitHandle(host, event.doc);
       if (handle) {
@@ -320,6 +325,7 @@ export function createDirectSelectionTool(id: 'tool-direct-select' | 'tool-group
     },
 
     onPointerMove(event, host) {
+      if (widgets.move(event, host)) return;
       switch (state.kind) {
         case 'idle':
           host.setHover(host.hitAt(event.doc));
@@ -340,6 +346,7 @@ export function createDirectSelectionTool(id: 'tool-direct-select' | 'tool-group
     },
 
     onPointerUp(event, host) {
+      if (widgets.release(event, host)) return;
       const { session, space } = host;
       const finished = state;
       host.setSnapLines(null);
@@ -382,6 +389,11 @@ export function createDirectSelectionTool(id: 'tool-direct-select' | 'tool-group
 
     onKey(key, host) {
       if (key !== 'Escape') return;
+      if (widgets.active) {
+        widgets.cancel(host);
+        host.invalidateOverlay();
+        return;
+      }
       if (state.kind === 'drag') host.session?.rollback();
       if (state.kind !== 'idle') {
         state = { kind: 'idle' };
@@ -418,6 +430,7 @@ export function createDirectSelectionTool(id: 'tool-direct-select' | 'tool-group
     },
 
     cancel(host) {
+      widgets.cancel(host);
       if (state.kind === 'drag') host.session?.rollback();
       state = { kind: 'idle' };
       host.setSnapLines(null);
@@ -425,6 +438,7 @@ export function createDirectSelectionTool(id: 'tool-direct-select' | 'tool-group
     },
 
     drawOverlay(ctx, host, theme) {
+      widgets.draw(ctx, host, theme);
       const selection = currentSelection(host);
       if (selection && !host.options.hideEdges) {
         const frames = selectedFrames(host);
@@ -436,7 +450,7 @@ export function createDirectSelectionTool(id: 'tool-direct-select' | 'tool-group
         ctx.save();
         ctx.lineWidth = 1;
         ctx.strokeStyle = theme.accent;
-        for (const h of visibleHandles(selection, frames)) {
+        for (const h of host.options.showHandles ? visibleHandles(selection, frames) : []) {
           const a = h.frame.path.anchors[h.index];
           const handle = a?.[h.which];
           if (!a || !handle) continue;

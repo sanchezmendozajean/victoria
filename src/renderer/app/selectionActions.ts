@@ -27,6 +27,7 @@ import {
 import { manager } from '../documents';
 import { lastSelectionOf } from '../documents/manager';
 import { topLevelIds } from '../tools/shared';
+import { deleteSelectedAnchors } from './pathActions';
 import { useUi } from './store';
 
 export interface ActionContext {
@@ -45,10 +46,11 @@ export function actionContext(): ActionContext | null {
   return { session, space, selection, ids: topLevelIds(space, selection.ids) };
 }
 
-/** Delete. With anchors selected the key belongs to Direct Selection's anchor deletion (Phase 5). */
+/** Delete: the picked anchors when there are any (Direct Selection), else the selected objects. */
 export function deleteSelection(): void {
   const c = actionContext();
-  if (!c || c.ids.length === 0 || hasAnchorSelection(c.selection)) return;
+  if (c && hasAnchorSelection(c.selection) && deleteSelectedAnchors()) return;
+  if (!c || c.ids.length === 0) return;
   c.session.run(removeNodes(c.space.id, c.ids), emptySelection(c.space.id));
 }
 

@@ -27,7 +27,7 @@ import type { CanvasPointerEvent, Tool, ToolHost, TransformKind } from '../types
 export interface HostInit {
   view?: Viewport;
   isolation?: string | null;
-  options?: Partial<{ smartGuides: boolean; snapGrid: boolean; guides: boolean; hideEdges: boolean }>;
+  options?: Partial<{ smartGuides: boolean; snapGrid: boolean; guides: boolean; hideEdges: boolean; showHandles: boolean }>;
   confirmAnswer?: string;
   units?: Units;
 }
@@ -54,7 +54,7 @@ export function createTestHost(init: HostInit = {}) {
       return getActiveSpace(session.document);
     },
     isolation: init.isolation ?? null,
-    options: { smartGuides: false, snapGrid: false, guides: true, hideEdges: false, ...init.options },
+    options: { smartGuides: false, snapGrid: false, guides: true, hideEdges: false, showHandles: true, ...init.options },
     units: init.units ?? 'pt',
     get pickTolerance(): number {
       return 4 / host.view.zoom;

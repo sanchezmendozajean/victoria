@@ -35,6 +35,7 @@ export interface SegmentItem {
   icon: IconId;
   tooltip: string;
   active?: boolean;
+  onClick?: () => void;
 }
 
 export function Segmented({ items, buttonWidth = 28 }: { items: SegmentItem[]; buttonWidth?: number }) {
@@ -47,6 +48,7 @@ export function Segmented({ items, buttonWidth = 28 }: { items: SegmentItem[]; b
           className={cx('vc-segmented__button', item.active && 'is-active')}
           style={{ width: buttonWidth }}
           aria-pressed={item.active ?? false}
+          onClick={item.onClick}
           {...tip(item.tooltip)}
         >
           <Icon id={item.icon} size={16} />

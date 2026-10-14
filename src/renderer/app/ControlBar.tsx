@@ -27,6 +27,7 @@ import { useDocuments } from '../documents';
 import { t } from '../i18n';
 import { topLevelIds } from '../tools/shared';
 import { nodeIcon, nodeLabel } from './nodeLabels';
+import { convertSelectedAnchors, cutAtSelectedAnchors, deleteSelectedAnchors, joinSelection } from './pathActions';
 import { SHORTCUTS, formatAccelerator } from './shortcuts';
 import { useUi } from './store';
 import type { ToolId } from './tools';
@@ -217,6 +218,8 @@ function findIn(children: readonly (Node | Space['layers'][number])[], id: strin
 
 function NodeControls({ session, space }: { session: DocumentSession; space: Space }) {
   const os = useUi((s) => s.platform.os);
+  const showHandles = useUi((s) => s.viewOptions.showHandles);
+  const toggleView = useUi((s) => s.toggleViewOption);
   const units = session.document.meta.units;
   const origin = useArtboardOrigin(space);
   const joinKeys = formatAccelerator(SHORTCUTS['object.join'], os);
@@ -249,21 +252,21 @@ function NodeControls({ session, space }: { session: DocumentSession; space: Spa
       <span className="vc-controlbar__muted">{t('control.convert')}</span>
       <Segmented
         items={[
-          { icon: 'tool-anchor-convert', tooltip: t('control.convertCorner') },
-          { icon: 'tool-curvature', tooltip: t('control.convertSmooth'), active: true },
+          { icon: 'tool-anchor-convert', tooltip: t('control.convertCorner'), onClick: () => convertSelectedAnchors('corner') },
+          { icon: 'tool-curvature', tooltip: t('control.convertSmooth'), onClick: () => convertSelectedAnchors('smooth') },
         ]}
       />
       <span className="vc-controlbar__muted vc-controlbar__muted--gap">{t('control.handles')}</span>
       <Segmented
         items={[
-          { icon: 'visibility', tooltip: t('control.handlesShow'), active: true },
-          { icon: 'visibility-off', tooltip: t('control.handlesHide') },
+          { icon: 'visibility', tooltip: t('control.handlesShow'), active: showHandles, onClick: () => !showHandles && toggleView('showHandles') },
+          { icon: 'visibility-off', tooltip: t('control.handlesHide'), active: !showHandles, onClick: () => showHandles && toggleView('showHandles') },
         ]}
       />
       <BarSeparator />
-      <BarButton icon="tool-anchor-delete" label={t('control.deleteAnchor')} tooltip={t('control.deleteAnchorTip')} />
-      <BarButton icon="tool-scissors" label={t('control.cutAtAnchor')} tooltip={t('control.cutAtAnchorTip')} />
-      <BarButton icon="join" label={t('control.join')} tooltip={t('control.joinTip')} shortcut={joinKeys} />
+      <BarButton icon="tool-anchor-delete" label={t('control.deleteAnchor')} tooltip={t('control.deleteAnchorTip')} onClick={() => deleteSelectedAnchors()} />
+      <BarButton icon="tool-scissors" label={t('control.cutAtAnchor')} tooltip={t('control.cutAtAnchorTip')} onClick={cutAtSelectedAnchors} />
+      <BarButton icon="join" label={t('control.join')} tooltip={t('control.joinTip')} shortcut={joinKeys} onClick={joinSelection} />
       <BarSeparator />
       <span className="vc-controlbar__muted">{t('control.anchor')}</span>
       <NumberInput label="X" suffix={units} lengthUnit={units} value={world ? ptToUnit(world.x - origin.x, units) : null} onCommit={place('x')} disabled={!world || !!frame?.live} testId="anchor-x" tooltip="X" decimals={3} />

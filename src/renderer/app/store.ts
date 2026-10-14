@@ -30,6 +30,8 @@ export interface ViewOptions {
   smartGuides: boolean;
   hideArtboards: boolean;
   hideEdges: boolean;
+  /** Direct Selection and the pen tools draw the handles of the anchors they show (control bar toggle). */
+  showHandles: boolean;
 }
 
 export const DEFAULT_VIEW_OPTIONS: ViewOptions = {
@@ -42,6 +44,7 @@ export const DEFAULT_VIEW_OPTIONS: ViewOptions = {
   smartGuides: true,
   hideArtboards: false,
   hideEdges: false,
+  showHandles: true,
 };
 
 interface UiState {

@@ -36,6 +36,7 @@ import {
 import { boxOf, currentSelection, dragged, selectedTopLevel, snapDelta, stepBetween } from './shared';
 import type { CanvasPointerEvent, Tool, ToolHost, ToolKeyEvent } from './types';
 import { ROTATE_CURSOR } from './cursors';
+import { createWidgetDrag } from './widgetDrag';
 import type { ToolId } from '../app/tools';
 
 type State =
@@ -53,6 +54,7 @@ const ARROW_STEP_SHIFT = 10;
 /** Selection (V): click, Shift+click, marquee, move (Alt duplicates, Shift constrains), box scale/rotate, arrows, isolation. */
 export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
   let state: State = { kind: 'idle' };
+  const widgets = createWidgetDrag(false);
   let hoverCursor = 'default';
 
   const size = (r: Rect, units: Parameters<typeof formatLength>[1]) => `${t('measure.width')}: ${formatLength(r.maxX - r.minX, units)}  ${t('measure.height')}: ${formatLength(r.maxY - r.minY, units)}`;
@@ -147,6 +149,11 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
     const ids = selectedTopLevel(host);
     const box = boxOf(host, ids);
     hoverCursor = 'default';
+    if (widgets.hover(event.doc, host)) {
+      hoverCursor = 'pointer';
+      host.setHover(null);
+      return;
+    }
     if (box && !host.options.hideEdges) {
       const sbox = screenBox(host, box);
       const handle = handleAt(sbox, event.screen);
@@ -164,6 +171,9 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
       const { session, space } = host;
       if (!session || !space) return;
       const selection = currentSelection(host) ?? emptySelection(space.id);
+
+      // 0. Corner and pie widgets of live shapes.
+      if (event.clickCount < 2 && widgets.press(event, host)) return;
 
       // 1. Bounding box handles (scale) and the rotate zone just outside the corners.
       const ids = selectedTopLevel(host);
@@ -209,6 +219,7 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
     },
 
     onPointerMove(event, host) {
+      if (widgets.move(event, host)) return;
       switch (state.kind) {
         case 'idle':
           updateHover(event, host);
@@ -241,6 +252,7 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
     },
 
     onPointerUp(event, host) {
+      if (widgets.release(event, host)) return;
       const { session, space } = host;
       const finished = state;
       state = { kind: 'idle' };
@@ -276,6 +288,11 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
 
     onKey(key, host) {
       if (key !== 'Escape') return;
+      if (widgets.active) {
+        widgets.cancel(host);
+        host.invalidateOverlay();
+        return;
+      }
       const s = state;
       if (s.kind === 'move' || s.kind === 'scale' || s.kind === 'rotate') {
         host.session?.rollback();
@@ -307,6 +324,7 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
     },
 
     cancel(host) {
+      widgets.cancel(host);
       if (state.kind === 'move' || state.kind === 'scale' || state.kind === 'rotate') host.session?.rollback();
       state = { kind: 'idle' };
       host.setSnapLines(null);
@@ -315,6 +333,7 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
     },
 
     drawOverlay(ctx, host, theme) {
+      widgets.draw(ctx, host, theme);
       const ids = selectedTopLevel(host);
       const box = boxOf(host, ids);
       if (box && !host.options.hideEdges) {

@@ -16,6 +16,7 @@ import {
   unlockAll,
   ungroupSelection,
 } from './selectionActions';
+import { averageSelection, joinSelection } from './pathActions';
 import type { ShortcutAction } from './shortcuts';
 import { useUi, type ViewOptions } from './store';
 
@@ -58,6 +59,8 @@ const HANDLERS: Partial<Record<ShortcutAction, () => void | Promise<unknown>>> =
   'view.hideArtboards': toggle('hideArtboards'),
   'view.hideEdges': toggle('hideEdges'),
   'edit.delete': deleteSelection,
+  'object.join': joinSelection,
+  'object.average': () => void averageSelection(),
   'object.group': groupSelection,
   'object.ungroup': ungroupSelection,
   'object.lock': lockSelection,

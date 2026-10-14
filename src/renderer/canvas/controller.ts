@@ -56,6 +56,7 @@ export interface CanvasOptions {
   snapGrid: boolean;
   smartGuides: boolean;
   hideEdges: boolean;
+  showHandles: boolean;
 }
 
 export interface CanvasInput {
@@ -172,6 +173,7 @@ export class CanvasController implements ToolHost, CanvasApi {
       previous.options.snapGrid === input.options.snapGrid &&
       previous.options.smartGuides === input.options.smartGuides &&
       previous.options.hideEdges === input.options.hideEdges &&
+      previous.options.showHandles === input.options.showHandles &&
       previous.isolation === input.isolation;
     const unchanged =
       !!previous &&
@@ -287,9 +289,9 @@ export class CanvasController implements ToolHost, CanvasApi {
   get isolation(): string | null {
     return this.input?.isolation ?? null;
   }
-  get options(): { smartGuides: boolean; snapGrid: boolean; guides: boolean; hideEdges: boolean } {
+  get options(): { smartGuides: boolean; snapGrid: boolean; guides: boolean; hideEdges: boolean; showHandles: boolean } {
     const o = this.input?.options;
-    return { smartGuides: o?.smartGuides ?? true, snapGrid: o?.snapGrid ?? false, guides: o?.guides ?? true, hideEdges: o?.hideEdges ?? false };
+    return { smartGuides: o?.smartGuides ?? true, snapGrid: o?.snapGrid ?? false, guides: o?.guides ?? true, hideEdges: o?.hideEdges ?? false, showHandles: o?.showHandles ?? true };
   }
   get units(): Units {
     return this.input?.units ?? 'mm';

@@ -241,6 +241,19 @@ export const setPathAnchors = (spaceId: string, pathId: string, anchors: Anchor[
   },
 });
 
+/** Turns the live shape `id` into a plain path in place (same id, transform and appearance). */
+function convertShapeInDraft(space: DraftSpace, id: string): void {
+  const found = locateNode(space, id);
+  if (!found || found.node.type !== 'shape') return;
+  const { shape: _shape, params: _params, type: _type, ...base } = deepClone(found.node as Node) as Node & { shape: string; params: unknown };
+  void _shape;
+  void _params;
+  void _type;
+  const [contour] = shapeSubPaths(found.node as ShapeNode);
+  if (!contour) return;
+  found.siblings[found.index] = { ...base, type: 'path', closed: contour.closed, anchors: contour.anchors } as PathNode as DraftChild;
+}
+
 /** Editing the nodes of a live shape turns it into a plain path (specs/02 · Shape). */
 export const convertShapeToPath = (spaceId: string, id: string, mergeKey?: string): Command => ({
   label: 'shape.toPath',
@@ -248,15 +261,40 @@ export const convertShapeToPath = (spaceId: string, id: string, mergeKey?: strin
   ...(mergeKey ? { mergeKey: `path.edit:${mergeKey}` } : {}),
   apply: (d) => {
     const space = findSpace(d, spaceId);
-    const found = space ? locateNode(space, id) : null;
-    if (!found || found.node.type !== 'shape') return;
-    const { shape: _shape, params: _params, type: _type, ...base } = deepClone(found.node as Node) as Node & { shape: string; params: unknown };
-    void _shape;
-    void _params;
-    void _type;
-    const [contour] = shapeSubPaths(found.node as ShapeNode);
-    if (!contour) return;
-    found.siblings[found.index] = { ...base, type: 'path', closed: contour.closed, anchors: contour.anchors } as PathNode as DraftChild;
+    if (space) convertShapeInDraft(space, id);
+  },
+});
+
+/** One path of an `editPaths` step: new anchors (and optionally open/closed), or null to delete the path. */
+export interface PathEdit {
+  pathId: string;
+  anchors: Anchor[] | null;
+  closed?: boolean;
+}
+
+/**
+ * Several path edits as a single history step (delete anchors on many paths, convert anchors, average…).
+ * Live shapes are converted first; a path left with no anchors is removed, with its object when it was alone.
+ */
+export const editPaths = (spaceId: string, edits: readonly PathEdit[], label = 'path.edit'): Command => ({
+  label,
+  spaceId,
+  apply: (d) => {
+    const space = findSpace(d, spaceId);
+    if (!space) return;
+    for (const edit of edits) {
+      convertShapeInDraft(space, edit.pathId);
+      const frame = pathFrameOf(space, edit.pathId);
+      if (!frame) continue;
+      if (edit.anchors === null) {
+        const owner = frame.owner;
+        if (owner.type === 'compound' && owner.children.length > 1) owner.children = owner.children.filter((p) => p.id !== edit.pathId);
+        else detach(space, [owner.id]);
+        continue;
+      }
+      frame.path.anchors = edit.anchors;
+      if (edit.closed !== undefined) frame.path.closed = edit.closed;
+    }
   },
 });
 
@@ -352,5 +390,19 @@ export const redrawShape = (spaceId: string, id: string, patch: Partial<ShapeNod
     const space = findSpace(d, spaceId);
     const found = space ? locateNode(space, id) : null;
     if (found) Object.assign(found.node as object, patch);
+  },
+});
+
+/** Scissors on several paths at once: each node is replaced by its pieces in the same place of the z-order. */
+export const replaceNodes = (spaceId: string, replacements: ReadonlyArray<{ id: string; nodes: readonly Node[] }>, label = 'node.replace'): Command => ({
+  label,
+  spaceId,
+  apply: (d) => {
+    const space = findSpace(d, spaceId);
+    if (!space) return;
+    for (const { id, nodes } of replacements) {
+      const found = locateNode(space, id);
+      if (found) found.siblings.splice(found.index, 1, ...(nodes as DraftChild[]));
+    }
   },
 });
