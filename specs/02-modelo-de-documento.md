@@ -178,3 +178,7 @@ documento.vict
 `Anchor.cornerRadius` es un dato **vivo**: el contorno que se dibuja y mide es el trazado con las esquinas redondeadas (`applyCornerRadii`, en `core/geometry/anchors.ts`), pero las anclas guardadas no cambian. Solo se redondea un ancla de **esquina sin manejadores** cuyos dos segmentos vecinos son rectos (en un trazado abierto, no los extremos); las demás se ignoran sin error. El radio se limita a la mitad del segmento vecino más corto. Cada esquina redondeada produce dos anclas con un arco cúbico entre ellas. Quitar el radio (o arrastrar el widget a 0) devuelve la esquina viva sin pérdida.
 
 La **línea** (`shape: 'line'`) se crea solo con trazo (sin relleno).
+
+## Campos opcionales añadidos en la Fase 6
+
+Sin cambio de versión del formato (todos opcionales): `StrokeStyle.arrowAlign` (`'inside'` por defecto | `'extend'`), `StrokeStyle.profileFlip`, `Layer.outline` (modo contorno de esa capa) e identificadores de catálogo en `StrokeStyle.startArrow / endArrow` (`simple`, `barbed`, `open`, `circle`, `diamond`, `square`, `bar`) y `StrokeStyle.profile` (`taper`, `taperStart`, `lens`, `bulge`, `pinch`, `flare`; ausente = uniforme).

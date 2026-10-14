@@ -19,7 +19,7 @@ export interface NumberInputProps {
   min?: number;
   max?: number;
   decimals?: number;
-  width?: number;
+  width?: number | string;
   label?: string;
   icon?: IconId;
   tooltip?: string;
@@ -30,7 +30,9 @@ export interface NumberInputProps {
 const clampTo = (v: number, min?: number, max?: number) => Math.min(max ?? Infinity, Math.max(min ?? -Infinity, v));
 
 export function formatNumber(value: number, decimals: number): string {
-  const text = (Math.round(value * 10 ** decimals) / 10 ** decimals).toFixed(decimals).replace(/\.?0+$/, '');
+  const fixed = (Math.round(value * 10 ** decimals) / 10 ** decimals).toFixed(decimals);
+  // Trailing zeros go only after a decimal point: "100" stays "100".
+  const text = fixed.includes('.') ? fixed.replace(/\.?0+$/, '') : fixed;
   return (text === '-0' ? '0' : text).replace('.', ',');
 }
 

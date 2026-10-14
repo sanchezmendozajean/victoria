@@ -307,6 +307,7 @@ export function GradientPanel() {
 
 function HexStop({ color, onCommit }: { color: Color; onCommit(color: Color): void }) {
   const [draft, setDraft] = useState<string | null>(null);
+  const skipBlur = useRef(false);
   const finish = (text: string) => {
     setDraft(null);
     const parsed = hexToColor(text);
@@ -323,11 +324,15 @@ function HexStop({ color, onCommit }: { color: Color; onCommit(color: Color): vo
         spellCheck={false}
         onFocus={(e) => e.currentTarget.select()}
         onChange={(e) => setDraft(e.target.value)}
-        onBlur={() => draft !== null && finish(draft)}
+        onBlur={() => {
+          if (skipBlur.current) skipBlur.current = false;
+          else if (draft !== null) finish(draft);
+        }}
         onKeyDown={(e) => {
           e.stopPropagation();
           if (e.key === 'Enter') {
             finish(draft ?? colorToHex(color));
+            skipBlur.current = true;
             e.currentTarget.blur();
           }
         }}

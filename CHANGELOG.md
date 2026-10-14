@@ -1,5 +1,34 @@
 # Changelog
 
+## Fase 6 — Color, trazo y paneles principales (en revisión)
+
+### Añadido
+- **Relleno y color**: superposición relleno/trazo (barra de herramientas y panel) con intercambiar, valores por defecto y los botones Color / Degradado / Ninguno (atajos D, X, Mayús+X, `,` `.` `/`); modelos RGB, HSB, CMYK y grises con deslizadores de su propio degradado, HEX, rampa de color, cuentagotas de pantalla, colores recientes, opacidad y modo de fusión; **selector de color completo** con vista previa en vivo y «solo colores web». Un arrastre de deslizador es un solo paso de deshacer.
+- **Aspecto actual**: los objetos nuevos nacen con el relleno y el trazo actuales (las herramientas de dibujo y el diálogo de formas lo usan); la barra de control edita relleno, trazo, grosor y opacidad.
+- **Valores mixtos**: todos los paneles muestran el valor compartido o dejan el campo vacío.
+- **Muestras**: cuadrícula/lista, grupos, globales, nueva desde la selección, opciones, eliminar, importar `.gpl` y `.ase`, biblioteca básica (29).
+- **Degradado**: panel con tipo, ángulo, relación de aspecto, barra de paradas (añadir, mover, quitar arrastrando hacia abajo, puntos medios), color y opacidad por parada, invertir; **herramienta Degradado (G)** con anotador sobre el objeto; el radial se pinta como elipse. Editar copia el degradado si lo comparten otros objetos.
+- **Trazo completo**: grosor, extremos, esquinas, límite de inglete, alinear trazo, línea discontinua (6 valores y alineación a esquinas), 7 puntas de flecha (escala y alineación), 7 perfiles de ancho con voltear.
+- **Alineación** (alinear, distribuir, objeto clave, mesa, límites de previsualización) y **Espaciado** (espacio exacto o auto, indicador, rejilla, ajustar a mesa con margen), con su geometría pura en `core/layout`.
+- **Transformar** (X/Y/An/Al con punto de referencia, ángulo, distorsión, reflejar, «escalar trazos y efectos» en todo escalado) y parámetros de **formas vivas**; **Capas** (árbol con ojo, candado, nombre editable, destino, selección, arrastrar para reordenar, capa activa, máscaras de recorte, localizar, eliminar); **Propiedades** contextual; **Cuentagotas (I)**.
+- Core: conversión entre modelos de color, lectura de valores mixtos, comandos de apariencia (`setPaint`, `patchStroke`, `editGradients`, `copyAppearance`, `scaleStrokeWidths`…), geometría de degradados, flechas, perfiles y recorte de trazos, importadores de paletas, `translateNodes`, `combineCommands`.
+- Pruebas: 545 unitarias y 81 e2e en total (la fase añade 94 unitarias y 13 e2e).
+
+### Decisiones tomadas (la spec no las cubría; detalladas en la spec 06 · «Reglas añadidas en la Fase 6»)
+- El aspecto actual vive en la interfaz y adopta el del último objeto seleccionado.
+- «Escalar trazos y efectos» desactivado por defecto (como Illustrator).
+- Las paradas del anotador del degradado cuelgan 14 px bajo el eje para no tapar el origen y el final.
+- Un perfil de ancho no se combina con guiones; las puntas de flecha recortan el trazo.
+- Editar el color de un objeto que usa una muestra lo hace sólido.
+- Se corrigió un fallo heredado de los campos numéricos: con 0 decimales los enteros acabados en cero perdían sus ceros («100» se veía «1»).
+
+### Pendiente
+- Degradado aplicado a lo largo o a través del trazo; los degradados de trazo usan una aproximación circular.
+- Panel Apariencia (Fase 9), Carácter y Párrafo (Fase 7), Buscatrazos (Fase 8), Espacios y Mesas (Fase 10), Calco (Fase 11): sus pestañas siguen vacías.
+- Miniaturas reales en Capas y arrastrar objetos dentro de grupos; «Aislar» y ajustes finos de la columna de paneles.
+- Portapapeles, «Previsualizar píxeles» y Transformación libre siguen sin implementar.
+- Lo no verificado de la Fase 1 (instalador de Windows, Linux) sigue sin verificar; el rendimiento solo se midió en Windows. La sensación de uso de los paneles frente a Illustrator es de revisión manual.
+
 ## Fase 5 — Dibujo (en revisión)
 
 ### Añadido

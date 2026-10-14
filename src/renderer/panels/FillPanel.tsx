@@ -234,6 +234,7 @@ function ObjectOpacity() {
 /** `#RRGGBB` field: Enter or leaving it applies; invalid text restores the previous value. */
 function HexField({ color, onCommit }: { color: Color | null; onCommit(color: Color): void }) {
   const [draft, setDraft] = useState<string | null>(null);
+  const skipBlur = useRef(false);
   const shown = draft ?? (color ? colorToHex(color) : '');
   const finish = (text: string) => {
     setDraft(null);
@@ -252,14 +253,19 @@ function HexField({ color, onCommit }: { color: Color | null; onCommit(color: Co
         spellCheck={false}
         onFocus={(e) => e.currentTarget.select()}
         onChange={(e) => setDraft(e.target.value)}
-        onBlur={() => draft !== null && finish(draft)}
+        onBlur={() => {
+          if (skipBlur.current) skipBlur.current = false;
+          else if (draft !== null) finish(draft);
+        }}
         onKeyDown={(e) => {
           e.stopPropagation();
           if (e.key === 'Enter') {
             finish(draft ?? shown);
+            skipBlur.current = true; // the blur below must not commit the stale draft again
             e.currentTarget.blur();
           } else if (e.key === 'Escape') {
             setDraft(null);
+            skipBlur.current = true;
             e.currentTarget.blur();
           }
         }}

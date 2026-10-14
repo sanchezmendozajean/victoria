@@ -99,3 +99,48 @@ Modos de forma: Unir, Menos frente, Intersecar, Excluir (Alt+clic = crear como B
 ## Calco de imagen
 
 Ver `08-imagenes-vectorizar-imprimir.md`.
+
+---
+
+## Reglas añadidas en la Fase 6
+
+Decisiones de comportamiento que la spec no cubría (cada una tiene su prueba) y limitaciones conocidas.
+
+### Valores mixtos y aspecto actual
+
+- Un panel muestra el valor que **comparten todos los objetos seleccionados**; si difieren, el campo queda **vacío** (los deslizadores sin pulgar) y editarlo aplica el valor a todos. Un grupo equivale a los objetos que contiene (cambiar su relleno cambia el de sus hijos). Un objeto sin relleno o sin trazo cuenta como «ninguno».
+- El **aspecto actual** (relleno, trazo y atributos de trazo del siguiente objeto) vive en la interfaz, no en el documento: con nada seleccionado los controles lo editan; al seleccionar objetos el aspecto actual adopta el del primero (los nuevos objetos nacen con lo último que se tocó). Las herramientas de dibujo y el diálogo de formas lo usan; la línea nace solo con trazo.
+- Atajos: **D** colores por defecto, **X** alternar relleno/trazo, **Mayús+X** intercambiar, **,** Color (recupera el último color usado), **.** Degradado, **/** Ninguno.
+
+### Relleno y color, muestras y selector
+
+- Los deslizadores y campos editan el color en el modelo elegido (RGB, HSB, CMYK, grises) y HEX; **un arrastre de deslizador es un solo paso de deshacer**. Editar el color de un objeto que usa una muestra lo convierte en color sólido (la muestra no cambia). La rampa tiene el tono arriba y los grises abajo. Los **colores recientes** (12) se guardan como preferencia de interfaz.
+- El selector completo (doble clic en la muestra) aplica una **vista previa en vivo**; Cancelar la revierte; «Solo colores web» ajusta cada canal a múltiplos de 51.
+- **Muestras**: cuadrícula o lista, grupos, global (triángulo blanco en la esquina; actualiza todos los objetos que la usan), nueva desde la selección, mover a grupo, opciones (nombre, color HEX, global), eliminar (los objetos conservan el color), importar `.gpl` y `.ase` (RGB, CMYK, grises, Lab; los grupos ASE son grupos de muestras) y la biblioteca básica (29 muestras, sin duplicar por nombre).
+
+### Degradado
+
+- Un degradado es un recurso del documento; **editarlo copia el recurso si lo comparten objetos fuera de la selección**, así duplicar un objeto nunca enlaza sus degradados. El ángulo es antihorario (como Illustrator); el radial admite relación de aspecto y se pinta como elipse; el punto medio de una parada curva la mezcla con la siguiente.
+- La barra del panel: clic añade una parada con el color que había ahí, arrastrar mueve, **arrastrar hacia abajo la quita** (quedan siempre dos); los rombos son los puntos medios.
+- Herramienta **Degradado (G)**: arrastrar sobre la selección da el degradado (o lo reorienta); un clic da uno que llena los límites. El anotador muestra origen (círculo), final (cuadrado), relación de aspecto (radial), paradas **colgadas 14 px bajo el eje** (para que no tapen los extremos) y puntos medios; clic en el eje añade parada, doble clic en una parada la quita, Mayús restringe a 45°.
+- **Pendiente**: aplicar degradado a lo largo / a través del trazo (el lienzo 2D no lo permite sin construir el contorno); los degradados de trazo usan la aproximación circular.
+
+### Trazo
+
+- Perfil de ancho: uniforme y 6 perfiles (afinado al final, afinado al inicio, lente, abultado, estrechado, ensanchado), con voltear. Se dibuja como un contorno relleno con el color del trazo; **un perfil no se combina con guiones** (el perfil manda) y usa extremos rectos.
+- Guiones: hasta 6 valores; «Alinear guiones a esquinas y extremos» ajusta el patrón para que quepa un número entero de veces en cada contorno.
+- Puntas de flecha (7: simple, con muescas, abierta, círculo, rombo, cuadrado, barra): tamaño proporcional al grosor, escala en % (largo y ancho), y alineación **punta en el final** (por defecto) o **extendida más allá**. El trazo se recorta bajo la punta.
+- «Escalar trazos y efectos» (panel Transformar, **desactivado por defecto**, como Illustrator) afecta a todo escalado: cajas, campos, Escala y diálogos; el grosor y los guiones siguen la raíz del determinante, en el mismo paso de deshacer.
+
+### Alineación, espaciado y Transformar
+
+- Alinear a la **selección**, al **objeto clave** (clic sobre uno de los objetos seleccionados mientras está activo ese modo; se marca con borde grueso azul) o a la **mesa**. Con un solo objeto solo alinea a la mesa. «Usar límites de previsualización» incluye el trazo.
+- Distribuir por bordes o centros deja fijos los extremos; **Distribuir espaciado** con valor deja fijo el objeto clave (o el primero), «Auto» reparte entre los extremos; el indicador muestra el espacio compartido o «Mixto».
+- Rejilla: orden de lectura, celda del tamaño del objeto mayor, objetos en la esquina superior izquierda de su celda. Ajustar a la mesa con margen: en cada eje los extremos tocan los márgenes y el resto se reparte.
+- Transformar y la barra de control comparten las mismas operaciones (X/Y con punto de referencia, An/Al con proporción, ángulo, distorsión horizontal, reflejar); el ángulo muestra el giro del objeto único. Con una forma viva seleccionada aparecen sus parámetros (radios de esquina con candado, lados, puntas, ángulos de la tarta).
+
+### Capas, Propiedades y Cuentagotas
+
+- Capas: arriba la capa superior; ojo (**Alt** = solo esta capa, otra vez la restaura; **Ctrl** = modo contorno de la capa), candado, nombre (doble clic renombra), círculo de destino y cuadro de selección. Clic en un objeto lo selecciona (Mayús/Ctrl alterna); en una capa la marca como **capa activa** (recibe los objetos nuevos cuando no hay selección). Arrastrar reordena capas y objetos y mueve objetos entre capas (los grupos no admiten arrastrar dentro). Botones: nueva capa, nueva subcapa, máscara de recorte (Ctrl+7 / Alt+Ctrl+7: el objeto más alto es la máscara), localizar objeto y eliminar (con aviso si la capa tiene contenido).
+- Propiedades: sin selección, documento (unidades, modo de color, mesa activa y «Editar mesas», reglas, guías, cuadrícula, ajustar a, preferencias rápidas); con objetos, Transformar, forma, Apariencia, Alinear y acciones rápidas.
+- **Cuentagotas (I)**: clic copia relleno, trazo, opacidad y modo de fusión al objeto seleccionado (al aspecto actual si no hay selección); **Alt+clic** aplica el aspecto de la selección al objeto clicado; **Mayús+clic** copia solo el color de la parte clicada (relleno o trazo). No copia modificadores (Fase 9) ni atributos de texto (Fase 7). El cuentagotas de pantalla del panel usa el selector del sistema.

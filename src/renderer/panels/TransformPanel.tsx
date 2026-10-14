@@ -41,13 +41,13 @@ export function TransformPanel({ compact = false }: { compact?: boolean }) {
             )),
           )}
         </div>
-        <NumberInput label="X" value={point ? ptToUnit(point.x - origin.x, units) : null} onCommit={(v) => moveSelectionTo('x', unitToPt(v, units) + origin.x)} testId="transform-x" tooltip="X" width={92} {...lengthProps} />
-        <NumberInput label="Y" value={point ? ptToUnit(point.y - origin.y, units) : null} onCommit={(v) => moveSelectionTo('y', unitToPt(v, units) + origin.y)} testId="transform-y" tooltip="Y" width={92} {...lengthProps} />
-        <NumberInput label={t('measure.width')} value={box ? ptToUnit(width, units) : null} onCommit={(v) => resizeSelection('x', unitToPt(v, units))} min={0} testId="transform-w" tooltip={t('measure.width')} width={92} {...lengthProps} />
-        <button type="button" className={linked ? 'vc-linkbutton is-on' : 'vc-linkbutton'} aria-pressed={linked} data-testid="transform-link" {...tip(t('control.keepProportions'))} onClick={toggleLink}>
+        <NumberInput label="X" value={point ? ptToUnit(point.x - origin.x, units) : null} onCommit={(v) => moveSelectionTo('x', unitToPt(v, units) + origin.x)} testId="transform-x" tooltip="X" width="100%" {...lengthProps} />
+        <NumberInput label="Y" value={point ? ptToUnit(point.y - origin.y, units) : null} onCommit={(v) => moveSelectionTo('y', unitToPt(v, units) + origin.y)} testId="transform-y" tooltip="Y" width="100%" {...lengthProps} />
+        <NumberInput label={t('measure.width')} value={box ? ptToUnit(width, units) : null} onCommit={(v) => resizeSelection('x', unitToPt(v, units))} min={0} testId="transform-w" tooltip={t('measure.width')} width="100%" {...lengthProps} />
+        <button type="button" className={linked ? 'vc-linkbutton is-on vc-transformgrid__link' : 'vc-linkbutton vc-transformgrid__link'} aria-pressed={linked} data-testid="transform-link" {...tip(t('control.keepProportions'))} onClick={toggleLink}>
           <Icon id={linked ? 'link' : 'unlink'} size={14} />
         </button>
-        <NumberInput label={t('measure.height')} value={box ? ptToUnit(height, units) : null} onCommit={(v) => resizeSelection('y', unitToPt(v, units))} min={0} testId="transform-h" tooltip={t('measure.height')} width={92} {...lengthProps} />
+        <NumberInput label={t('measure.height')} value={box ? ptToUnit(height, units) : null} onCommit={(v) => resizeSelection('y', unitToPt(v, units))} min={0} testId="transform-h" tooltip={t('measure.height')} width="100%" {...lengthProps} />
       </div>
       <Row>
         <NumberInput icon="angle" value={box ? Math.round(angle * 1000) / 1000 : null} onCommit={(v) => rotateSelection(v - angle)} suffix="°" decimals={3} width={92} disabled={off} testId="transform-angle" tooltip={t('control.angle')} />
