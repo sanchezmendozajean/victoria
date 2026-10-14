@@ -82,6 +82,8 @@ interface UiState {
   newLook: Appearance;
   /** Colour picker dialog (double click on the fill or stroke chip). */
   colorPicker: 'fill' | 'stroke' | null;
+  /** Layer that receives new objects when nothing is selected, per Space (Layers panel). */
+  activeLayer: Record<string, string>;
   /** Which of fill and stroke the colour controls edit. */
   activePaint: 'fill' | 'stroke';
   /** Align panel: the object the others align to when "Alinear a objeto clave" is chosen. */
@@ -100,6 +102,7 @@ interface UiState {
   openTransformDialog(kind: TransformKind, origin: Vec2 | null): void;
   closeTransformDialog(): void;
   setNewLook(look: Appearance): void;
+  setActiveLayer(spaceId: string, layerId: string): void;
   openColorPicker(target: 'fill' | 'stroke'): void;
   closeColorPicker(): void;
   setActivePaint(target: 'fill' | 'stroke'): void;
@@ -173,6 +176,7 @@ export const useUi = create<UiState>()((set, get) => ({
   transformDialog: null,
   newLook: defaultAppearance(),
   colorPicker: null,
+  activeLayer: {},
   activePaint: 'fill',
   keyObject: null,
   alignTo: 'selection',
@@ -187,6 +191,7 @@ export const useUi = create<UiState>()((set, get) => ({
   openTransformDialog: (kind, origin) => set({ transformDialog: { kind, origin } }),
   closeTransformDialog: () => set({ transformDialog: null }),
   setNewLook: (newLook) => set({ newLook }),
+  setActiveLayer: (spaceId, layerId) => set((s) => ({ activeLayer: { ...s.activeLayer, [spaceId]: layerId } })),
   openColorPicker: (colorPicker) => set({ colorPicker, activePaint: colorPicker }),
   closeColorPicker: () => set({ colorPicker: null }),
   setActivePaint: (activePaint) => set({ activePaint }),

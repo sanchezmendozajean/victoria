@@ -9,6 +9,8 @@ export interface CanvasApi {
   actualSize(): void;
   /** Fits one artboard (status bar navigator). */
   fitArtboardById(id: string): void;
+  /** Centres the view on a Space rectangle when it is (partly) out of view; keeps the zoom (Layers › Localizar objeto). */
+  revealRect(rect: { minX: number; minY: number; maxX: number; maxY: number }): void;
 }
 
 /** Set by the mounted canvas; null while no canvas exists. */

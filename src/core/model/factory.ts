@@ -5,6 +5,7 @@ import type {
   Appearance,
   Artboard,
   BaseNode,
+  ClipGroupNode,
   Color,
   Document,
   GroupNode,
@@ -62,6 +63,10 @@ export function createPath(ids: IdGenerator, anchors: Anchor[], closed = false):
 
 export function createGroup(ids: IdGenerator, children: GroupNode['children']): GroupNode {
   return { ...baseNode(ids), type: 'group', children };
+}
+
+export function createClipGroup(ids: IdGenerator, children: ClipGroupNode['children'] = []): ClipGroupNode {
+  return { ...baseNode(ids), type: 'clipGroup', children };
 }
 
 export function createRect(ids: IdGenerator, w: number, h: number, radius = 0): ShapeNode {

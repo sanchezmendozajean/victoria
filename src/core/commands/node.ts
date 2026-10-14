@@ -4,7 +4,7 @@ import { childrenOf, locateLayer, locateNode, walkNodes } from '../model/queries
 import { pathFrameOf } from '../geometry/world';
 import { shapeSubPaths } from '../geometry/shapes';
 import { deepClone } from '../model/deepClone';
-import type { Anchor, Appearance, BaseNode, Document, GroupNode, LayerChild, Matrix, Node, PathNode, ShapeNode, Space } from '../model/types';
+import type { Anchor, Appearance, BaseNode, ClipGroupNode, Document, GroupNode, LayerChild, Matrix, Node, PathNode, ShapeNode, Space } from '../model/types';
 import { combineCommands, type Command } from './command';
 import { scaleStrokeWidths } from './appearance';
 
@@ -169,8 +169,8 @@ export const arrangeNodes = (spaceId: string, ids: readonly string[], direction:
 });
 
 /** Ctrl+G. The nodes must share one container; `group` comes from `createGroup` with no children. */
-export const groupNodes = (spaceId: string, ids: readonly string[], group: GroupNode): Command => ({
-  label: 'node.group',
+export const groupNodes = (spaceId: string, ids: readonly string[], group: GroupNode | ClipGroupNode): Command => ({
+  label: group.type === 'clipGroup' ? 'node.clip' : 'node.group',
   spaceId,
   apply: (d) => {
     const space = findSpace(d, spaceId);
@@ -183,7 +183,9 @@ export const groupNodes = (spaceId: string, ids: readonly string[], group: Group
     const siblings = first.siblings as DraftChild[];
     const picked = new Set(tops.map((l) => l.node.id));
     const insertAt = Math.max(...tops.map((l) => siblings.indexOf(l.node as DraftChild)));
-    const members = siblings.filter((n) => picked.has(n.id)) as DraftNode[];
+    let members = siblings.filter((n) => picked.has(n.id)) as DraftNode[];
+    // A clipping mask: the topmost object is the mask and goes first (specs/02 · ClipGroup).
+    if (group.type === 'clipGroup' && members.length > 1) members = [members[members.length - 1] as DraftNode, ...members.slice(0, -1)];
     const remainingBefore = siblings.slice(0, insertAt).filter((n) => !picked.has(n.id)).length;
     const rest = siblings.filter((n) => !picked.has(n.id));
     rest.splice(remainingBefore, 0, { ...group, children: members } as DraftChild);
@@ -198,7 +200,7 @@ export const ungroupNode = (spaceId: string, groupId: string): Command => ({
   apply: (d) => {
     const space = findSpace(d, spaceId);
     const found = space ? locateNode(space, groupId) : null;
-    if (!found || found.node.type !== 'group') return;
+    if (!found || (found.node.type !== 'group' && found.node.type !== 'clipGroup')) return;
     const group = found.node;
     const freed = group.children.map((child) => ({ ...child, transform: multiply(group.transform, child.transform) }));
     found.siblings.splice(found.index, 1, ...(freed as DraftNode[]));

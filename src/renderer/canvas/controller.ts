@@ -3,6 +3,7 @@ import {
   fitRect,
   frameOf,
   hitTest,
+  locateLayer,
   multiply,
   isUntouchedView,
   moveGuide,
@@ -85,6 +86,7 @@ export interface CanvasCallbacks {
   newAppearance(): Appearance;
   activePaint(): 'fill' | 'stroke';
   keyObject(): { mode: boolean; id: string | null };
+  activeLayer(spaceId: string): string | null;
   scaleStrokes(): boolean;
   onKeyObject(id: string): void;
   setNewAppearance(appearance: Appearance): void;
@@ -241,6 +243,18 @@ export class CanvasController implements ToolHost, CanvasApi {
     const board = this.currentSpace()?.artboards.find((a) => a.id === id);
     if (board) this.fitTo(artboardRect(board));
   }
+  revealRect(rect: Rect): void {
+    const v = this.viewValue;
+    const left = rect.minX * v.zoom + v.panX;
+    const right = rect.maxX * v.zoom + v.panX;
+    const top = rect.minY * v.zoom + v.panY;
+    const bottom = rect.maxY * v.zoom + v.panY;
+    const inside = left >= 0 && right <= this.width && top >= 0 && bottom <= this.height;
+    if (inside) return;
+    const cx = ((rect.minX + rect.maxX) / 2) * v.zoom;
+    const cy = ((rect.minY + rect.maxY) / 2) * v.zoom;
+    this.setView({ zoom: v.zoom, panX: this.width / 2 - cx, panY: this.height / 2 - cy });
+  }
   fitAll(): void {
     const space = this.currentSpace();
     if (!space) return;
@@ -390,6 +404,9 @@ export class CanvasController implements ToolHost, CanvasApi {
     const first = selected && selected.spaceId === space.id ? selected.ids[0] : undefined;
     const frame = first ? frameOf(space, first) : null;
     if (frame && !frame.layer.locked) return frame.layer.id;
+    const chosen = this.callbacks.activeLayer(space.id);
+    const picked = chosen ? locateLayer(space, chosen)?.layer : undefined;
+    if (picked && !picked.locked && picked.visible) return picked.id;
     for (let i = space.layers.length - 1; i >= 0; i--) {
       const layer = space.layers[i];
       if (layer && !layer.locked && layer.visible) return layer.id;

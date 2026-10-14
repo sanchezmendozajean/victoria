@@ -1,6 +1,7 @@
 import {
   arrangeNodes,
   cloneNodes,
+  createClipGroup,
   createGroup,
   duplicateNodes,
   emptySelection,
@@ -68,6 +69,24 @@ export function ungroupSelection(): void {
   if (groups.length === 0) return;
   const children = groups.flatMap((g) => (g.type === 'group' ? g.children.map((n) => n.id) : []));
   c.session.run(ungroupNodes(c.space.id, groups.map((g) => g.id)), selectOnly(c.space.id, children));
+}
+
+/** Objeto › Máscara de recorte › Crear (Ctrl+7): the topmost selected object masks the others. */
+export function makeClipSelection(): void {
+  const c = actionContext();
+  if (!c || c.ids.length < 2) return;
+  const clip = createClipGroup(c.session.ids, []);
+  c.session.run(groupNodes(c.space.id, c.ids, clip), selectOnly(c.space.id, [clip.id]));
+}
+
+/** Objeto › Máscara de recorte › Liberar (Alt+Ctrl+7). */
+export function releaseClipSelection(): void {
+  const c = actionContext();
+  if (!c) return;
+  const clips = c.ids.map((id) => locateNode(c.space, id)?.node).filter((n): n is Node => !!n && n.type === 'clipGroup');
+  if (clips.length === 0) return;
+  const children = clips.flatMap((g) => (g.type === 'clipGroup' ? g.children.map((n) => n.id) : []));
+  c.session.run(ungroupNodes(c.space.id, clips.map((g) => g.id)), selectOnly(c.space.id, children));
 }
 
 export function arrangeSelection(direction: ArrangeDirection): void {

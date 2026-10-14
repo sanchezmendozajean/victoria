@@ -37,7 +37,7 @@ export const removeLayer = (spaceId: string, layerId: string): Command => ({
   },
 });
 
-export type LayerPatch = Partial<Pick<Layer, 'name' | 'color' | 'visible' | 'locked'>>;
+export type LayerPatch = Partial<Pick<Layer, 'name' | 'color' | 'visible' | 'locked' | 'outline'>>;
 
 export const updateLayer = (spaceId: string, layerId: string, patch: LayerPatch): Command => ({
   label: 'layer.update',

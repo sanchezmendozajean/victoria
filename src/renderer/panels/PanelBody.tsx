@@ -1,6 +1,8 @@
 import { AlignPanel } from './AlignPanel';
 import { FillPanel } from './FillPanel';
 import { TransformPanel } from './TransformPanel';
+import { LayersPanel } from './LayersPanel';
+import { PropertiesPanel } from './PropertiesPanel';
 import { SpacingPanel } from './SpacingPanel';
 import { GradientPanel } from './GradientPanel';
 import { StrokePanel } from './StrokePanel';
@@ -24,6 +26,10 @@ export function PanelBody({ id }: { id: PanelId }) {
       return <SpacingPanel />;
     case 'transform':
       return <TransformPanel />;
+    case 'layers':
+      return <LayersPanel />;
+    case 'properties':
+      return <PropertiesPanel />;
     default:
       return null;
   }
