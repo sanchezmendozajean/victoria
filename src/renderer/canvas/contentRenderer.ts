@@ -7,6 +7,17 @@ import {
   isLayer,
   nodeGeometry,
   segmentsOf,
+  alignedDash,
+  arrowheadAt,
+  sortStops,
+  colorBetween,
+  subPathLength,
+  trimSegments,
+  variableWidthOutline,
+  WIDTH_PROFILES,
+  type Segment,
+  type SubPath,
+  type Vec2,
   transformRect,
   visibleRect,
   type Appearance,
@@ -93,9 +104,7 @@ function gradientFor(ctx: CanvasRenderingContext2D, paint: Extract<Paint, { type
     paint.type === 'linear'
       ? ctx.createLinearGradient(a.x, a.y, b.x, b.y)
       : ctx.createRadialGradient(a.x, a.y, 0, a.x, a.y, Math.hypot(b.x - a.x, b.y - a.y));
-  for (const stop of resource.stops) {
-    gradient.addColorStop(Math.min(1, Math.max(0, stop.offset)), colorToCss(stop.color, stop.opacity));
-  }
+  addStops(gradient, resource.stops);
   return gradient;
 }
 
@@ -116,11 +125,11 @@ function paintStyle(ctx: CanvasRenderingContext2D, paint: Paint, resources: Reso
 
 const HUGE = 1e7;
 
-function strokeShape(ctx: CanvasRenderingContext2D, path: Path2D, stroke: StrokeStyle, rule: CanvasFillRule): void {
+function strokeShape(ctx: CanvasRenderingContext2D, path: Path2D, stroke: StrokeStyle, rule: CanvasFillRule, dash: readonly number[] | null = stroke.dash): void {
   ctx.lineCap = stroke.cap;
   ctx.lineJoin = stroke.join;
   ctx.miterLimit = stroke.miterLimit;
-  ctx.setLineDash(stroke.dash ?? []);
+  ctx.setLineDash(dash ? [...dash] : []);
   if (stroke.align === 'center') {
     ctx.lineWidth = stroke.width;
     ctx.stroke(path);
@@ -157,7 +166,7 @@ function paintGeometry(env: Env, node: Node, layer: Layer, alpha: number): void 
   const geometry = nodeGeometry(node);
   if (!path || !geometry) return;
   const { ctx } = env;
-  if (env.outline) {
+  if (env.outline || layer.outline) {
     const t = ctx.getTransform();
     const scale = Math.sqrt(Math.abs(t.a * t.d - t.b * t.c)) || 1;
     ctx.globalAlpha = 1;
@@ -167,13 +176,119 @@ function paintGeometry(env: Env, node: Node, layer: Layer, alpha: number): void 
     ctx.stroke(path);
     return;
   }
-  paintAppearance(env, path, geometry.fillRule, node.appearance, alpha);
+  paintAppearance(env, path, geometry.fillRule, node.appearance, alpha, geometry.subpaths);
 }
 
-function paintAppearance(env: Env, path: Path2D, rule: CanvasFillRule, appearance: Appearance, alpha: number): void {
+/** Path2D of a contour given as spans (used when the stroke is trimmed for arrowheads). */
+function pathOfSegments(segments: readonly Segment[], closed: boolean): Path2D {
+  const path = new Path2D();
+  const first = segments[0];
+  if (!first) return path;
+  path.moveTo(first.p0.x, first.p0.y);
+  for (const seg of segments) {
+    if (seg.c1 === seg.p0 && seg.c2 === seg.p3) path.lineTo(seg.p3.x, seg.p3.y);
+    else path.bezierCurveTo(seg.c1.x, seg.c1.y, seg.c2.x, seg.c2.y, seg.p3.x, seg.p3.y);
+  }
+  if (closed) path.closePath();
+  return path;
+}
+
+function polygonPath(points: readonly Vec2[], closed: boolean): Path2D {
+  const path = new Path2D();
+  points.forEach((p, i) => (i === 0 ? path.moveTo(p.x, p.y) : path.lineTo(p.x, p.y)));
+  if (closed) path.closePath();
+  return path;
+}
+
+/** Gradient stops for the canvas: a stop's midpoint becomes one extra stop so the blend peaks where the user put it. */
+function addStops(gradient: CanvasGradient, stops: readonly { offset: number; color: Parameters<typeof colorToCss>[0]; opacity: number; midpoint?: number }[]): void {
+  const sorted = sortStops(stops as Parameters<typeof sortStops>[0]);
+  sorted.forEach((stop, i) => {
+    gradient.addColorStop(Math.min(1, Math.max(0, stop.offset)), colorToCss(stop.color, stop.opacity));
+    const next = sorted[i + 1];
+    if (next && stop.midpoint !== undefined && Math.abs(stop.midpoint - 0.5) > 0.001) {
+      const offset = stop.offset + (next.offset - stop.offset) * stop.midpoint;
+      const mid = colorBetween(stop, next, stop.offset + (next.offset - stop.offset) * 0.5);
+      gradient.addColorStop(Math.min(1, Math.max(0, offset)), colorToCss(mid.color, mid.opacity));
+    }
+  });
+}
+
+/**
+ * Gradient fills are painted in the gradient's own unit space (axis (0,0)→(1,0), unit circle) with the
+ * paint transform applied to the canvas, so radial gradients can be ellipses and angles are exact.
+ */
+function fillGradient(env: Env, path: Path2D, rule: CanvasFillRule, paint: Extract<Paint, { type: 'linear' | 'radial' }>, alpha: number): boolean {
+  const { ctx, resources } = env;
+  const resource = resources.gradients.find((g) => g.id === paint.gradientId);
+  if (!resource || resource.stops.length === 0) return false;
+  const inverse = invert(paint.transform);
+  if (!inverse) return false;
+  const unit = new Path2D();
+  unit.addPath(path, { a: inverse[0], b: inverse[1], c: inverse[2], d: inverse[3], e: inverse[4], f: inverse[5] });
+  const gradient = paint.type === 'linear' ? ctx.createLinearGradient(0, 0, 1, 0) : ctx.createRadialGradient(0, 0, 0, 0, 0, 1);
+  addStops(gradient, resource.stops);
+  ctx.save();
+  ctx.transform(...paint.transform);
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = gradient;
+  ctx.fill(unit, rule);
+  ctx.restore();
+  return true;
+}
+
+function paintStroke(env: Env, path: Path2D, rule: CanvasFillRule, stroke: StrokeStyle, style: string | CanvasGradient, subpaths: readonly SubPath[]): void {
+  const { ctx } = env;
+  const profile = stroke.profile ? WIDTH_PROFILES[stroke.profile] : undefined;
+  const customDash = !!stroke.dash && stroke.dash.length > 0 && stroke.dashAlignToCorners;
+  const heads = subpaths.map((sub) => ({ start: arrowheadAt(sub, stroke, 'start'), end: arrowheadAt(sub, stroke, 'end') }));
+  const hasHeads = heads.some((h) => h.start || h.end);
+
+  if (profile && stroke.profile !== 'uniform') {
+    // Variable width: the stroke is an outline filled with the stroke paint.
+    ctx.fillStyle = style;
+    for (const sub of subpaths) {
+      const polygons = variableWidthOutline(sub, stroke.width, profile, stroke.profileFlip === true);
+      if (polygons.length === 0) continue;
+      const outline = new Path2D();
+      for (const poly of polygons) outline.addPath(polygonPath(poly, true));
+      ctx.fill(outline, sub.closed ? 'evenodd' : 'nonzero');
+    }
+  } else if (hasHeads || customDash) {
+    subpaths.forEach((sub, i) => {
+      const segs = segmentsOf(sub);
+      const head = heads[i];
+      const trimmed = head && (head.start || head.end) ? trimSegments(segs, head.start?.trim ?? 0, head.end?.trim ?? 0) : segs;
+      const dash = customDash && stroke.dash ? alignedDash(stroke.dash, subPathLength(sub)) : stroke.dash;
+      strokeShape(ctx, pathOfSegments(trimmed, sub.closed), stroke, rule, dash);
+    });
+  } else {
+    strokeShape(ctx, path, stroke, rule);
+  }
+
+  if (!hasHeads) return;
+  ctx.fillStyle = style;
+  ctx.strokeStyle = style;
+  ctx.setLineDash([]);
+  ctx.lineWidth = Math.max(stroke.width, 0.5);
+  ctx.lineJoin = 'miter';
+  ctx.lineCap = 'round';
+  for (const head of heads) {
+    for (const h of [head.start, head.end]) {
+      if (!h) continue;
+      for (const poly of h.fills) ctx.fill(polygonPath(poly, true));
+      for (const line of h.lines) ctx.stroke(polygonPath(line, false));
+    }
+  }
+}
+
+function paintAppearance(env: Env, path: Path2D, rule: CanvasFillRule, appearance: Appearance, alpha: number, subpaths: readonly SubPath[] = []): void {
   const { ctx, resources } = env;
   for (const item of appearance.items) {
     if (item.kind === 'modifier' || item.opacity <= 0) continue; // modifiers arrive with Phase 9
+    if (item.kind === 'fill' && (item.paint.type === 'linear' || item.paint.type === 'radial')) {
+      if (fillGradient(env, path, rule, item.paint, alpha * item.opacity)) continue;
+    }
     const style = paintStyle(ctx, item.paint, resources);
     if (style === null) continue;
     ctx.globalAlpha = alpha * item.opacity;
@@ -182,7 +297,7 @@ function paintAppearance(env: Env, path: Path2D, rule: CanvasFillRule, appearanc
       ctx.fill(path, rule);
     } else {
       ctx.strokeStyle = style;
-      strokeShape(ctx, path, item.stroke, rule);
+      paintStroke(env, path, rule, item.stroke, style, subpaths);
     }
   }
 }

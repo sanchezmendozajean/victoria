@@ -1,4 +1,6 @@
 import { useEffect } from 'react';
+import { manager } from '../documents';
+import { adoptSelectionLook } from './paintActions';
 import { runAction } from './actions';
 import { PANEL_BY_ACTION } from './menus';
 import { findShortcutAction } from './shortcuts';
@@ -38,6 +40,19 @@ export function useAppEffects() {
       symbol: styles.getPropertyValue('--icon').trim(),
     });
   }, [theme]);
+
+  // What you draw next takes the look of the last selected object (Illustrator's current attributes).
+  useEffect(() => {
+    let lastKey = '';
+    const check = () => {
+      const session = manager.active?.session;
+      const key = session ? session.selection.ids.join('|') : '';
+      if (key === lastKey) return;
+      lastKey = key;
+      if (key !== '') adoptSelectionLook();
+    };
+    return manager.subscribe(check);
+  }, []);
 
   // Keyboard: Phase 1 binds tools and panels only.
   useEffect(() => {

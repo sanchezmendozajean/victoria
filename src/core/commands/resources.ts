@@ -83,3 +83,31 @@ export const addModifierPreset = (preset: ModifierPreset): Command => ({
     d.resources.modifierPresets.push(preset);
   },
 });
+
+/** Several swatches at once (palette import, basic library): one history step. */
+export const addSwatches = (swatches: readonly Swatch[]): Command => ({
+  label: 'resource.swatch.addMany',
+  apply: (d) => {
+    for (const swatch of swatches) d.resources.swatches.push(deepClone(swatch) as Draft<Swatch>);
+  },
+});
+
+/** Delete several swatches; objects that used them keep their colour. */
+export const removeSwatches = (swatchIds: readonly string[]): Command => ({
+  label: 'resource.swatch.remove',
+  apply: (d) => {
+    for (const id of swatchIds) removeSwatch(id).apply(d);
+  },
+});
+
+/** Moves swatches into a group (undefined removes them from it). */
+export const setSwatchGroup = (swatchIds: readonly string[], group: string | undefined): Command => ({
+  label: 'resource.swatch.update',
+  apply: (d) => {
+    for (const swatch of d.resources.swatches) {
+      if (!swatchIds.includes(swatch.id)) continue;
+      if (group === undefined) delete swatch.group;
+      else swatch.group = group;
+    }
+  },
+});

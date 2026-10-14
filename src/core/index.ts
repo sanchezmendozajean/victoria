@@ -34,3 +34,5 @@ export { migrateDocument, UnsupportedVersionError, MIGRATIONS } from './io/migra
 export { AutosavePolicy, AUTOSAVE_INTERVAL_MS } from './autosave/policy';
 export * from './model/appearance';
 export * from './model/gradient';
+export * from './geometry/stroke';
+export * from './io/palettes';

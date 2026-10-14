@@ -42,7 +42,7 @@ export interface StrokeStyle {
   startArrow?: ArrowId;
   endArrow?: ArrowId;
   arrowScale: [number, number];
-  /** Where arrowheads sit: their tip beyond the path end (default) or the whole head inside it. */
+  /** Where arrowheads sit: the tip at the path end (default 'inside') or beyond it ('extend'). */
   arrowAlign?: 'extend' | 'inside';
   profile?: WidthProfileId;
   /** Flips the width profile along the path. */
