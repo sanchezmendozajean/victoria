@@ -32,3 +32,5 @@ export type { VictContents, VictManifest, VictWriteInput } from './io/vict';
 export { assertDocument, DocumentFormatError } from './io/validate';
 export { migrateDocument, UnsupportedVersionError, MIGRATIONS } from './io/migrations';
 export { AutosavePolicy, AUTOSAVE_INTERVAL_MS } from './autosave/policy';
+export * from './model/appearance';
+export * from './model/gradient';

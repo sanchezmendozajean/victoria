@@ -42,7 +42,11 @@ export interface StrokeStyle {
   startArrow?: ArrowId;
   endArrow?: ArrowId;
   arrowScale: [number, number];
+  /** Where arrowheads sit: their tip beyond the path end (default) or the whole head inside it. */
+  arrowAlign?: 'extend' | 'inside';
   profile?: WidthProfileId;
+  /** Flips the width profile along the path. */
+  profileFlip?: boolean;
 }
 
 /** A modifier of the appearance stack (specs/05). `modifierId` names an entry of the registry. */
@@ -202,6 +206,8 @@ export interface Layer {
   color: string;
   visible: boolean;
   locked: boolean;
+  /** Ctrl+click on the eye of the Layers panel: this layer is shown as outlines only. */
+  outline?: boolean;
   /** Index 0 is the bottom of the stack. */
   children: LayerChild[];
 }

@@ -7,3 +7,4 @@ export * from './artboard';
 export * from './layer';
 export * from './node';
 export * from './resources';
+export * from './appearance';
