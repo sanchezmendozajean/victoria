@@ -191,7 +191,7 @@ describe('paint commands', () => {
     let stroke = (find<ShapeNode>(a.id).appearance.items[1] as { stroke: { width: number; cap: string; join: string; startArrow?: string } }).stroke;
     expect(stroke).toMatchObject({ width: 6, cap: 'round', join: 'miter', startArrow: 'a1' });
     session.run(patchStroke(space().id, [a.id], { startArrow: undefined }));
-    stroke = (find<ShapeNode>(a.id).appearance.items[1] as { stroke: { startArrow?: string } }).stroke;
+    stroke = (find<ShapeNode>(a.id).appearance.items[1] as unknown as { stroke: typeof stroke }).stroke;
     expect('startArrow' in stroke).toBe(false);
   });
 

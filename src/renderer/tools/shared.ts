@@ -77,3 +77,10 @@ export function snapTo(host: ToolHost, p: Vec2, exclude: ReadonlySet<string> = n
   host.setSnapLines(result.lines.length > 0 ? (result.lines as SnapLine[]) : null);
   return { x: p.x + result.dx, y: p.y + result.dy };
 }
+
+/** Gives a freshly created object the look of the next objects (the current fill and stroke). */
+export function withLook<T extends { appearance: { items: unknown[] } }>(node: T, host: ToolHost, strokeOnly = false): T {
+  const look = host.newAppearance();
+  node.appearance = (strokeOnly ? { items: look.items.filter((i) => i.kind === 'stroke') } : look) as T['appearance'];
+  return node;
+}

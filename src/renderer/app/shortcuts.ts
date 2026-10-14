@@ -31,6 +31,14 @@ export const SHORTCUTS = {
   'tool.tool-hand': 'H',
   'tool.tool-zoom': 'Z',
 
+  // Color
+  'paint.default': 'D',
+  'paint.toggle': 'X',
+  'paint.swap': 'Shift+X',
+  'paint.color': ',',
+  'paint.gradient': '.',
+  'paint.none': '/',
+
   // Archivo
   'file.new': 'CmdOrCtrl+N',
   'file.open': 'CmdOrCtrl+O',

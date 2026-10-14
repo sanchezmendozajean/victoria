@@ -1,5 +1,5 @@
 import {
-  colorToCss,
+  commonStrokeField,
   getActiveSpace,
   moveAnchors,
   nodeWorldBounds,
@@ -27,6 +27,9 @@ import { useDocuments } from '../documents';
 import { t } from '../i18n';
 import { topLevelIds } from '../tools/shared';
 import { nodeIcon, nodeLabel } from './nodeLabels';
+import { applyObjectLook, applyStroke } from './paintActions';
+import { PaintChip } from '../panels/kit';
+import { usePaintLook } from '../panels/PaintWidget';
 import { convertSelectedAnchors, cutAtSelectedAnchors, deleteSelectedAnchors, joinSelection } from './pathActions';
 import { SHORTCUTS, formatAccelerator } from './shortcuts';
 import { useUi } from './store';
@@ -34,26 +37,6 @@ import type { ToolId } from './tools';
 import './ControlBar.css';
 
 const NODE_TOOLS: readonly ToolId[] = ['tool-pen', 'tool-anchor-add', 'tool-anchor-delete', 'tool-anchor-convert', 'tool-curvature', 'tool-direct-select', 'tool-group-select', 'tool-lasso'];
-
-/** Fill and stroke of the first painted items, as CSS colours (null = none). */
-function paints(node: Node): { fill: string | null; stroke: string | null; weight: number | null } {
-  let fill: string | null = null;
-  let stroke: string | null = null;
-  let weight: number | null = null;
-  for (const item of node.appearance.items) {
-    if (item.kind === 'modifier' || item.paint.type !== 'solid') continue;
-    if (item.kind === 'fill' && fill === null) fill = colorToCss(item.paint.color);
-    if (item.kind === 'stroke' && stroke === null) {
-      stroke = colorToCss(item.paint.color);
-      weight = item.stroke.width;
-    }
-  }
-  return { fill, stroke, weight };
-}
-
-const Swatch = ({ color }: { color: string | null }) => (
-  <span className={color ? 'vc-swatch' : 'vc-swatch vc-swatch--none'} style={color ? { background: color } : undefined} />
-);
 
 /**
  * Contextual bar (specs/10 §2): object fields for a selection, node fields for Direct Selection and the
@@ -109,7 +92,6 @@ function ObjectControls({ session, space, ids }: { session: DocumentSession; spa
   const width = box.maxX - box.minX;
   const height = box.maxY - box.minY;
   const point = { x: box.minX + ref.x * width, y: box.minY + ref.y * height };
-  const { fill, stroke, weight } = paints(first);
   const label = ids.length > 1 ? t('control.objects', { count: ids.length }) : nodeLabel(first);
   const icon: IconId = ids.length > 1 ? 'group' : nodeIcon(first);
   const isGroup = ids.length === 1 && (first.type === 'group' || first.type === 'clipGroup');
@@ -134,18 +116,7 @@ function ObjectControls({ session, space, ids }: { session: DocumentSession; spa
         <span>{label}</span>
       </div>
       <BarSeparator />
-      <div className="vc-controlbar__paint" {...tip(t('control.fill'))}>
-        <Icon id="fill" size={14} className="vc-controlbar__muted" />
-        <Swatch color={fill} />
-      </div>
-      <div className="vc-controlbar__paint" {...tip(t('control.stroke'))}>
-        <Icon id="stroke" size={14} className="vc-controlbar__muted" />
-        <Swatch color={stroke} />
-        <span className="vc-controlbar__muted">{weight === null ? '—' : `${Math.round(weight * 100) / 100} pt`}</span>
-      </div>
-      <span className="vc-controlbar__muted" {...tip(t('control.opacity'))}>
-        <Icon id="opacity" size={12} /> {Math.round(first.opacity * 100)} %
-      </span>
+      <ControlPaints />
       <BarSeparator />
       <div className="vc-refpoint" role="group" aria-label={t('control.referencePoint')} data-testid="ref-point">
         {[0, 0.5, 1].flatMap((y) =>
@@ -271,6 +242,64 @@ function NodeControls({ session, space }: { session: DocumentSession; space: Spa
       <span className="vc-controlbar__muted">{t('control.anchor')}</span>
       <NumberInput label="X" suffix={units} lengthUnit={units} value={world ? ptToUnit(world.x - origin.x, units) : null} onCommit={place('x')} disabled={!world || !!frame?.live} testId="anchor-x" tooltip="X" decimals={3} />
       <NumberInput label="Y" suffix={units} lengthUnit={units} value={world ? ptToUnit(world.y - origin.y, units) : null} onCommit={place('y')} disabled={!world || !!frame?.live} testId="anchor-y" tooltip="Y" decimals={3} />
+    </>
+  );
+}
+
+/** Fill, stroke (with weight) and opacity of the selection, editable right in the control bar (specs/10 §2). */
+function ControlPaints() {
+  const { look, resources, ctx } = usePaintLook();
+  const setActive = useUi((s) => s.setActivePaint);
+  const openPanel = useUi((s) => s.openPanel);
+  const openPicker = useUi((s) => s.openColorPicker);
+  const weight = ctx ? commonStrokeField(ctx.leaves, 'width') : null;
+  const chip = (target: 'fill' | 'stroke') => {
+    const paint = look[target];
+    return (
+      <button
+        type="button"
+        className="vc-controlbar__chip"
+        data-testid={`control-${target}`}
+        {...tip(t(target === 'fill' ? 'control.fill' : 'control.stroke'))}
+        onClick={() => {
+          setActive(target);
+          openPanel('fill');
+        }}
+        onDoubleClick={() => openPicker(target)}
+      >
+        <Icon id={target} size={14} className="vc-controlbar__muted" />
+        <PaintChip paint={paint.mixed ? null : paint.value} mixed={paint.mixed} resources={resources} size={16} />
+      </button>
+    );
+  };
+  return (
+    <>
+      {chip('fill')}
+      {chip('stroke')}
+      <NumberInput
+        icon="stroke-weight"
+        suffix="pt"
+        value={weight && !weight.mixed ? Math.round(weight.value * 1000) / 1000 : null}
+        onCommit={(v) => applyStroke({ width: v })}
+        min={0}
+        step={0.5}
+        decimals={3}
+        width={74}
+        testId="control-weight"
+        tooltip={t('control.strokeWeight')}
+      />
+      <NumberInput
+        icon="opacity"
+        suffix="%"
+        value={look.opacity.mixed ? null : Math.round(look.opacity.value * 100)}
+        onCommit={(v) => applyObjectLook({ opacity: v / 100 })}
+        min={0}
+        max={100}
+        decimals={0}
+        width={66}
+        testId="control-opacity"
+        tooltip={t('control.opacity')}
+      />
     </>
   );
 }

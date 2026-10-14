@@ -17,6 +17,7 @@ import {
   ungroupSelection,
 } from './selectionActions';
 import { averageSelection, joinSelection } from './pathActions';
+import { defaultPaints, paintAsColor, paintAsGradient, paintAsNone, swapPaints } from './paintActions';
 import type { ShortcutAction } from './shortcuts';
 import { useUi, type ViewOptions } from './store';
 
@@ -59,6 +60,12 @@ const HANDLERS: Partial<Record<ShortcutAction, () => void | Promise<unknown>>> =
   'view.hideArtboards': toggle('hideArtboards'),
   'view.hideEdges': toggle('hideEdges'),
   'edit.delete': deleteSelection,
+  'paint.default': defaultPaints,
+  'paint.toggle': () => useUi.getState().setActivePaint(useUi.getState().activePaint === 'fill' ? 'stroke' : 'fill'),
+  'paint.swap': swapPaints,
+  'paint.color': () => paintAsColor(useUi.getState().activePaint),
+  'paint.gradient': () => paintAsGradient(useUi.getState().activePaint),
+  'paint.none': () => paintAsNone(useUi.getState().activePaint),
   'object.join': joinSelection,
   'object.average': () => void averageSelection(),
   'object.group': groupSelection,

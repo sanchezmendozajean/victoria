@@ -5,6 +5,7 @@ import { cx } from '../components/cx';
 import { tip } from '../components/Tooltip';
 import { t } from '../i18n';
 import type { PanelGroup } from '../panels/layout';
+import { PanelBody } from '../panels/PanelBody';
 import { PANELS, type PanelId } from '../panels/registry';
 import { useUi } from './store';
 import './PanelDock.css';
@@ -185,7 +186,11 @@ export function PanelDock() {
                   <Icon id={group.open ? 'chevron-up' : 'chevron-down'} size={14} />
                 </button>
               </div>
-              {group.open && <div className="vc-group__body" data-testid={`panel-body-${group.active}`} />}
+              {group.open && (
+                <div className="vc-group__body" data-testid={`panel-body-${group.active}`}>
+                  <PanelBody id={group.active} />
+                </div>
+              )}
             </section>
           );
         })}
@@ -209,7 +214,9 @@ export function PanelDock() {
               <Icon id="close" size={14} />
             </button>
           </header>
-          <div className="vc-floatpanel__body" />
+          <div className="vc-floatpanel__body">
+            <PanelBody id={floating} />
+          </div>
         </aside>
       )}
 

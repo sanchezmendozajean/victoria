@@ -87,3 +87,18 @@
 .vc-linkbutton.is-on {
   color: var(--accent);
 }
+
+.vc-controlbar__chip {
+  display: flex;
+  align-items: center;
+  flex: none;
+  gap: 4px;
+  height: var(--h-control);
+  padding: 0 4px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+}
+.vc-controlbar__chip:hover {
+  background: var(--bg-hover);
+}

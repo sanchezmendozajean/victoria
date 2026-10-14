@@ -65,6 +65,8 @@ function ShapeForm({ kind, at }: { kind: ShapeToolKind; at: Vec2 }) {
         break;
     }
     const node = buildShape(session.ids, spec);
+    if (spec.shape !== 'line') node.appearance = JSON.parse(JSON.stringify(useUi.getState().newLook));
+    else node.appearance = { items: (JSON.parse(JSON.stringify(useUi.getState().newLook)) as typeof node.appearance).items.filter((i) => i.kind === 'stroke') };
     session.run(addNode(space.id, layer.id, node), selectOnly(space.id, [node.id]));
     close();
   };

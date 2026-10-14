@@ -7,6 +7,7 @@ import { t } from '../i18n';
 import { formatAccelerator } from './shortcuts';
 import { currentSlotTool, useUi } from './store';
 import { TOOL_SECTIONS, toolAccelerator, type ToolId, type ToolSlot } from './tools';
+import { PaintModes, PaintWidget } from '../panels/PaintWidget';
 import './Toolbar.css';
 
 const HOLD_MS = 300; // specs/03: holding the click opens the group flyout
@@ -122,26 +123,11 @@ export function Toolbar() {
         </div>
       ))}
 
-      <div className="vc-toolbar__paint" {...tip(t('toolbar.fillStroke'))}>
-        <div className="vc-toolbar__fill" {...tip(t('toolbar.fill'), 'X')} />
-        <div className="vc-toolbar__stroke" {...tip(t('toolbar.stroke'), 'X')} />
-        <button type="button" className="vc-toolbar__swap" {...tip(t('toolbar.swap'), formatAccelerator('Shift+X', os))}>
-          <Icon id="swap-fill-stroke" size={12} />
-        </button>
-        <button type="button" className="vc-toolbar__defaults" {...tip(t('toolbar.defaults'), 'D')}>
-          <Icon id="default-colors" size={12} />
-        </button>
+      <div className="vc-toolbar__paint">
+        <PaintWidget size={36} />
       </div>
       <div className="vc-toolbar__modes">
-        <button type="button" className="is-active" {...tip(t('toolbar.paintColor'), ',')}>
-          <Icon id="paint-color" size={12} />
-        </button>
-        <button type="button" {...tip(t('toolbar.paintGradient'), '.')}>
-          <Icon id="paint-gradient" size={12} />
-        </button>
-        <button type="button" {...tip(t('toolbar.paintNone'), '/')}>
-          <Icon id="paint-none" size={12} />
-        </button>
+        <PaintModes compact />
       </div>
 
       <div className="vc-toolbar__section vc-toolbar__section--end">

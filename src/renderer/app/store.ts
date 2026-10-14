@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Matrix, Vec2 } from '../../core';
+import { defaultAppearance, type Appearance, type Matrix, type Vec2 } from '../../core';
 import type { PlatformInfo, Theme } from '../../shared/ipc';
 import type { TransformKind } from '../tools/types';
 import type { ShapeToolKind } from '../tools/shapeDrag';
@@ -78,6 +78,19 @@ interface UiState {
   referencePoint: Vec2;
   linkProportions: boolean;
   transformDialog: { kind: TransformKind; origin: Vec2 | null } | null;
+  /** Fill and stroke of the next object drawn (and what the toolbar shows with nothing selected). */
+  newLook: Appearance;
+  /** Colour picker dialog (double click on the fill or stroke chip). */
+  colorPicker: 'fill' | 'stroke' | null;
+  /** Which of fill and stroke the colour controls edit. */
+  activePaint: 'fill' | 'stroke';
+  /** Align panel: the object the others align to when "Alinear a objeto clave" is chosen. */
+  keyObject: string | null;
+  alignTo: 'selection' | 'key' | 'artboard';
+  /** Use preview bounds (strokes included) in Align and Spacing. */
+  alignPreviewBounds: boolean;
+  /** Transform panel: strokes and effects scale with the object. */
+  scaleStrokes: boolean;
   shapeDialog: { kind: ShapeToolKind; at: Vec2 } | null;
 
   setIsolation(spaceId: string, groupId: string | null): void;
@@ -86,6 +99,14 @@ interface UiState {
   toggleLinkProportions(): void;
   openTransformDialog(kind: TransformKind, origin: Vec2 | null): void;
   closeTransformDialog(): void;
+  setNewLook(look: Appearance): void;
+  openColorPicker(target: 'fill' | 'stroke'): void;
+  closeColorPicker(): void;
+  setActivePaint(target: 'fill' | 'stroke'): void;
+  setKeyObject(id: string | null): void;
+  setAlignTo(mode: 'selection' | 'key' | 'artboard'): void;
+  setAlignPreviewBounds(on: boolean): void;
+  setScaleStrokes(on: boolean): void;
   openShapeDialog(kind: ShapeToolKind, at: Vec2): void;
   closeShapeDialog(): void;
 
@@ -150,6 +171,13 @@ export const useUi = create<UiState>()((set, get) => ({
   referencePoint: { x: 0.5, y: 0.5 },
   linkProportions: false,
   transformDialog: null,
+  newLook: defaultAppearance(),
+  colorPicker: null,
+  activePaint: 'fill',
+  keyObject: null,
+  alignTo: 'selection',
+  alignPreviewBounds: false,
+  scaleStrokes: true,
   shapeDialog: null,
 
   setIsolation: (spaceId, groupId) => set((s) => ({ isolation: { ...s.isolation, [spaceId]: groupId } })),
@@ -158,6 +186,14 @@ export const useUi = create<UiState>()((set, get) => ({
   toggleLinkProportions: () => set((s) => ({ linkProportions: !s.linkProportions })),
   openTransformDialog: (kind, origin) => set({ transformDialog: { kind, origin } }),
   closeTransformDialog: () => set({ transformDialog: null }),
+  setNewLook: (newLook) => set({ newLook }),
+  openColorPicker: (colorPicker) => set({ colorPicker, activePaint: colorPicker }),
+  closeColorPicker: () => set({ colorPicker: null }),
+  setActivePaint: (activePaint) => set({ activePaint }),
+  setKeyObject: (keyObject) => set({ keyObject }),
+  setAlignTo: (alignTo) => set({ alignTo }),
+  setAlignPreviewBounds: (alignPreviewBounds) => set({ alignPreviewBounds }),
+  setScaleStrokes: (scaleStrokes) => set({ scaleStrokes }),
   openShapeDialog: (kind, at) => set({ shapeDialog: { kind, at } }),
   closeShapeDialog: () => set({ shapeDialog: null }),
 

@@ -11,7 +11,7 @@ import {
 } from '../../core';
 import { endpointAt, toLocalPoint } from './pathHits';
 import type { EndpointHit } from './pathHits';
-import { dragged } from './shared';
+import { dragged, withLook } from './shared';
 import type { Tool } from './types';
 
 /** Maximum deviation of the fitted curve from the freehand stroke, in screen pixels ("Fidelity" 2.5 px of Illustrator). */
@@ -97,7 +97,7 @@ export function createPencilTool(): Tool {
       const layerId = host.activeLayerId;
       if (!layerId) return;
       if (close) anchors = closeOpenPath(anchors);
-      const node = createPath(session.ids, anchors, close);
+      const node = withLook(createPath(session.ids, anchors, close), host);
       session.run(addNode(space.id, layerId, node), selectOnly(space.id, [node.id]));
     },
 

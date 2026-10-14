@@ -5,6 +5,7 @@ import {
   createGroup,
   createPath,
   createRect,
+  defaultAppearance,
   DocumentSession,
   getActiveSpace,
   hitTest,
@@ -76,6 +77,7 @@ export function createTestHost(init: HostInit = {}) {
     setIsolation: vi.fn((id: string | null) => {
       host.isolation = id;
     }),
+    newAppearance: () => defaultAppearance(),
     get activeLayerId(): string | null {
       return getActiveSpace(session.document).layers[0]?.id ?? null;
     },

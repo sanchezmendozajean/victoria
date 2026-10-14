@@ -7,6 +7,7 @@ import { IsolationBar } from './IsolationBar';
 import { PanelDock } from './PanelDock';
 import { StatusBar } from './StatusBar';
 import { TitleBar } from './TitleBar';
+import { ColorPickerDialog } from './ColorPickerDialog';
 import { ShapeDialog } from './ShapeDialog';
 import { TransformDialog } from './TransformDialog';
 import { Toolbar } from './Toolbar';
@@ -36,6 +37,7 @@ export function App() {
       <DialogHost />
       <TransformDialog />
       <ShapeDialog />
+      <ColorPickerDialog />
     </div>
   );
 }

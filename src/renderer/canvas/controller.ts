@@ -14,6 +14,7 @@ import {
   unionRect,
   visibleRect,
   zoomAt,
+  type Appearance,
   type DocumentSession,
   type Guide,
   type Hit,
@@ -81,6 +82,7 @@ export interface CanvasCallbacks {
   onIsolation(id: string | null): void;
   onTransformDialog(kind: TransformKind, origin: Vec2 | null): void;
   onShapeDialog(kind: ShapeToolKind, at: Vec2): void;
+  newAppearance(): Appearance;
   onRememberTransform(transform: { matrix: Matrix; copy: boolean } | null): void;
 }
 
@@ -342,6 +344,10 @@ export class CanvasController implements ToolHost, CanvasApi {
 
   openTransformDialog(kind: TransformKind, origin: Vec2 | null): void {
     this.callbacks.onTransformDialog(kind, origin);
+  }
+
+  newAppearance(): Appearance {
+    return this.callbacks.newAppearance();
   }
 
   openShapeDialog(kind: ShapeToolKind, at: Vec2): void {

@@ -1,4 +1,4 @@
-import type { DocumentSession, Hit, Matrix, Space, SnapLine, SnapSources, Units, Vec2, Viewport } from '../../core';
+import type { Appearance, DocumentSession, Hit, Matrix, Space, SnapLine, SnapSources, Units, Vec2, Viewport } from '../../core';
 import type { ToolId } from '../app/tools';
 import type { CanvasTheme } from '../canvas/theme';
 import type { ShapeToolKind } from './shapeDrag';
@@ -68,6 +68,8 @@ export interface ToolHost {
   confirm(spec: DialogSpec): Promise<string>;
   setIsolation(id: string | null): void;
   openTransformDialog(kind: TransformKind, origin: Vec2 | null): void;
+  /** Fill and stroke of the next object drawn (the toolbar / Fill panel current look). */
+  newAppearance(): Appearance;
   /** Layer that receives new objects: the layer of the selection, else the topmost unlocked one. */
   readonly activeLayerId: string | null;
   /** Click with a shape tool: asks for the exact size (the dialog creates the object at `at`). */

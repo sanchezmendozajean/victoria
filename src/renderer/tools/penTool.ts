@@ -25,7 +25,7 @@ import { createConvertTool } from './anchorTools';
 import { penCursor, type PenBadge } from './cursors';
 import { createDirectSelectionTool } from './directSelectionTool';
 import { anchorAt, editableFrame, endpointAt, pickRadius, segmentAt, selectedFrames, toLocalPoint, toWorldPoint } from './pathHits';
-import { dragged, snapTo } from './shared';
+import { dragged, snapTo, withLook } from './shared';
 import type { Tool, ToolHost } from './types';
 
 /** Pen: auto add/delete anchors on the selected path (specs/03 · Pluma · 9). "Preferencias" will make it optional. */
@@ -90,7 +90,7 @@ export function createPenTool(): Tool {
     if (!session || !space || !layerId) return;
     const p = snapTo(host, doc);
     const key = host.gestureKey();
-    const node = createPath(session.ids, [cornerAnchor(p)], false);
+    const node = withLook(createPath(session.ids, [cornerAnchor(p)], false), host);
     session.run(addNode(space.id, layerId, node, undefined, `path.edit:${key}`), selectOnly(space.id, [node.id]));
     drawing = { id: node.id, created: true };
     gesture = { mode: 'place', index: 0, key, origin: p, world: [1, 0, 0, 1, 0, 0], down: doc, dragging: false, frozenIn: null, spaceOffset: null, last: doc };

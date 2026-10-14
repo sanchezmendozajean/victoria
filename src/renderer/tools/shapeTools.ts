@@ -2,7 +2,7 @@ import { addNode, redrawShape, selectOnly, type Vec2 } from '../../core';
 import type { ToolId } from '../app/tools';
 import { formatLength } from '../canvas/units';
 import { buildShape, defaultShapePrefs, isDegenerate, shapeFromDrag, type ShapePrefs, type ShapeSpec, type ShapeToolKind } from './shapeDrag';
-import { dragged, snapTo } from './shared';
+import { dragged, snapTo, withLook } from './shared';
 import type { Tool, ToolHost } from './types';
 
 /** What the shape tools remember between drags: one set for the session (Illustrator keeps it in preferences). */
@@ -73,7 +73,7 @@ export function createShapeTool(id: ToolId, kind: ShapeToolKind): Tool {
     host.setMeasure(measureText(spec, host), { x: event.screen.x + 14, y: event.screen.y + 14 });
     if (isDegenerate(spec)) return;
     if (!p.id) {
-      const node = buildShape(session.ids, spec);
+      const node = withLook(buildShape(session.ids, spec), host, spec.shape === 'line');
       p.id = node.id;
       session.run(addNode(space.id, layerId, node, undefined, `draw:${p.key}`), selectOnly(space.id, [node.id]));
       return;

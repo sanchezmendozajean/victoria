@@ -16,7 +16,7 @@ import {
 } from '../../core';
 import { penCursor, type PenBadge } from './cursors';
 import { anchorAt, editableFrame, endpointAt, segmentAt, selectedFrames, toLocalPoint, toWorldPoint } from './pathHits';
-import { dragged, snapTo } from './shared';
+import { dragged, snapTo, withLook } from './shared';
 import type { Tool, ToolHost } from './types';
 
 /** Positions and sharp anchors of a path, which is all the Curvature tool needs to rebuild its curve. */
@@ -84,7 +84,7 @@ export function createCurvatureTool(): Tool {
     if (!session || !space || !layerId) return;
     const p = snapTo(host, doc);
     const key = host.gestureKey();
-    const node = createPath(session.ids, curvatureAnchors([p]), false);
+    const node = withLook(createPath(session.ids, curvatureAnchors([p]), false), host);
     session.run(addNode(space.id, layerId, node, undefined, `path.edit:${key}`), selectOnly(space.id, [node.id]));
     drawing = { id: node.id, created: true };
   }
