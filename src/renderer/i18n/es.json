@@ -585,5 +585,17 @@
   "command.node.distribute": "Distribuir",
   "command.node.spacing": "Distribuir espaciado",
   "command.node.grid": "Organizar en rejilla",
-  "command.node.fitArtboard": "Ajustar a mesa con margen"
+  "command.node.fitArtboard": "Ajustar a mesa con margen",
+  "shape.paramsTitle": "Forma",
+  "shape.cornerType": "Tipo de esquina",
+  "shape.cornerRound": "Redonda",
+  "shape.cornerInverted": "Invertida",
+  "shape.cornerChamfer": "Chaflán",
+  "shape.pieStart": "Ángulo inicial",
+  "shape.pieEnd": "Ángulo final",
+  "transform.title": "Transformar",
+  "transform.shear": "Distorsión horizontal",
+  "transform.flipH": "Reflejar horizontalmente",
+  "transform.flipV": "Reflejar verticalmente",
+  "transform.scaleStrokes": "Escalar trazos y efectos"
 }

@@ -5,7 +5,8 @@ import { pathFrameOf } from '../geometry/world';
 import { shapeSubPaths } from '../geometry/shapes';
 import { deepClone } from '../model/deepClone';
 import type { Anchor, Appearance, BaseNode, Document, GroupNode, LayerChild, Matrix, Node, PathNode, ShapeNode, Space } from '../model/types';
-import type { Command } from './command';
+import { combineCommands, type Command } from './command';
+import { scaleStrokeWidths } from './appearance';
 
 type DraftSpace = Draft<Space>;
 type DraftNode = Draft<Node>;
@@ -420,3 +421,14 @@ export const translateNodes = (spaceId: string, deltas: ReadonlyMap<string, { x:
     }
   },
 });
+
+/**
+ * Like `transformNodes`, and with "Escalar trazos y efectos" on the stroke weights follow the scale
+ * of the matrix (the square root of its determinant), in the same history step.
+ */
+export const transformNodesScaling = (spaceId: string, ids: readonly string[], matrix: Matrix, scaleStrokes: boolean, mergeKey?: string): Command => {
+  const move = transformNodes(spaceId, ids, matrix, mergeKey);
+  const factor = Math.sqrt(Math.abs(matrix[0] * matrix[3] - matrix[1] * matrix[2]));
+  if (!scaleStrokes || !Number.isFinite(factor) || Math.abs(factor - 1) < 1e-9) return move;
+  return combineCommands('node.transform', [move, scaleStrokeWidths(spaceId, ids, factor)]);
+};

@@ -76,6 +76,8 @@ export interface ToolHost {
   readonly keyObjectMode: boolean;
   readonly keyObject: string | null;
   setKeyObject(id: string): void;
+  /** "Escalar trazos y efectos": scaling changes stroke weights too. */
+  readonly scaleStrokes: boolean;
   /** Which of fill and stroke the colour controls (and the Gradient tool) act on. */
   readonly activePaint: 'fill' | 'stroke';
   /** Layer that receives new objects: the layer of the selection, else the topmost unlocked one. */

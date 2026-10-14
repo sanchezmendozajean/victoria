@@ -4,15 +4,9 @@ import {
   moveAnchors,
   nodeWorldBounds,
   pathFrameOf,
-  rotateAbout,
-  scaleAbout,
   selectedAnchorIndices,
   selectionBounds,
   setPathAnchors,
-  toRadians,
-  transformNodes,
-  translation,
-  rectCenter,
   type DocumentSession,
   type Node,
   type Space,
@@ -28,6 +22,7 @@ import { t } from '../i18n';
 import { topLevelIds } from '../tools/shared';
 import { nodeIcon, nodeLabel } from './nodeLabels';
 import { applyObjectLook, applyStroke } from './paintActions';
+import { moveSelectionTo, resizeSelection, rotateSelection } from './transformActions';
 import { PaintChip } from '../panels/kit';
 import { usePaintLook } from '../panels/PaintWidget';
 import { convertSelectedAnchors, cutAtSelectedAnchors, deleteSelectedAnchors, joinSelection } from './pathActions';
@@ -95,19 +90,8 @@ function ObjectControls({ session, space, ids }: { session: DocumentSession; spa
   const label = ids.length > 1 ? t('control.objects', { count: ids.length }) : nodeLabel(first);
   const icon: IconId = ids.length > 1 ? 'group' : nodeIcon(first);
   const isGroup = ids.length === 1 && (first.type === 'group' || first.type === 'clipGroup');
-  const run = (matrix: ReturnType<typeof translation>) => session.run(transformNodes(space.id, ids, matrix));
-
-  const moveTo = (axis: 'x' | 'y') => (value: number) => {
-    const target = unitToPt(value, units) + origin[axis];
-    run(axis === 'x' ? translation(target - point.x, 0) : translation(0, target - point.y));
-  };
-  const resize = (axis: 'x' | 'y') => (value: number) => {
-    const size = axis === 'x' ? width : height;
-    const target = unitToPt(value, units);
-    if (size <= 0 || target <= 0) return;
-    const factor = target / size;
-    run(axis === 'x' ? scaleAbout(factor, linked ? factor : 1, point) : scaleAbout(linked ? factor : 1, factor, point));
-  };
+  const moveTo = (axis: 'x' | 'y') => (value: number) => moveSelectionTo(axis, unitToPt(value, units) + origin[axis]);
+  const resize = (axis: 'x' | 'y') => (value: number) => resizeSelection(axis, unitToPt(value, units));
 
   return (
     <>
@@ -150,7 +134,7 @@ function ObjectControls({ session, space, ids }: { session: DocumentSession; spa
         decimals={3}
         testId="field-angle"
         tooltip={t('control.angle')}
-        onCommit={(degrees) => degrees !== 0 && run(rotateAbout(toRadians(-degrees), rectCenter(box)))}
+        onCommit={rotateSelection}
       />
       <BarSeparator />
       <BarButton

@@ -177,7 +177,7 @@ export const useUi = create<UiState>()((set, get) => ({
   keyObject: null,
   alignTo: 'selection',
   alignPreviewBounds: false,
-  scaleStrokes: true,
+  scaleStrokes: false,
   shapeDialog: null,
 
   setIsolation: (spaceId, groupId) => set((s) => ({ isolation: { ...s.isolation, [spaceId]: groupId } })),

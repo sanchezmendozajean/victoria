@@ -256,3 +256,21 @@ export const removeUnusedGradients = (): Command => ({
 
 // Kept for callers that only need to know whether a node exists in a Space.
 export const hasNode = (space: Space, id: string): boolean => locateNode(space, id) !== null;
+
+/** "Escalar trazos y efectos": multiplies the weight (and dash lengths) of the strokes of the objects by `factor`. */
+export const scaleStrokeWidths = (spaceId: string, ids: readonly string[], factor: number, mergeKey?: string): Command => ({
+  label: 'appearance.strokeStyle',
+  spaceId,
+  ...mergeKeyOf('appearance.strokeStyle', mergeKey),
+  apply: (d) => {
+    const space = findSpace(d, spaceId);
+    if (!space) return;
+    for (const node of targetsOf(space, ids)) {
+      for (const item of node.appearance.items) {
+        if (item.kind !== 'stroke') continue;
+        item.stroke.width *= factor;
+        if (item.stroke.dash) item.stroke.dash = item.stroke.dash.map((v) => v * factor);
+      }
+    }
+  },
+});

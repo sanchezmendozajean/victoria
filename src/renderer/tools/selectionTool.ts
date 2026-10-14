@@ -12,6 +12,7 @@ import {
   selectOnly,
   toggleInSelection,
   transformNodes,
+  transformNodesScaling,
   translation,
   rotation,
   multiply,
@@ -111,7 +112,7 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
   function transformStep(host: ToolHost, ids: string[], key: string, next: Matrix, applied: Matrix): void {
     const { session, space } = host;
     if (!session || !space) return;
-    session.run(transformNodes(space.id, ids, stepBetween(next, applied), key));
+    session.run(transformNodesScaling(space.id, ids, stepBetween(next, applied), host.scaleStrokes, key));
   }
 
   function scale(event: CanvasPointerEvent, host: ToolHost, s: Extract<State, { kind: 'scale' }>): void {

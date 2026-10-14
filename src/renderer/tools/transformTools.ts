@@ -7,7 +7,7 @@ import {
   rotateAbout,
   scaleAbout,
   selectOnly,
-  transformNodes,
+  transformNodesScaling,
   type Matrix,
   type Node,
   type Vec2,
@@ -75,7 +75,7 @@ export function createTransformTool(kind: Exclude<TransformKind, 'move'>): Tool 
       g.ids = clones.map((c) => c.id);
       g.duplicated = true;
     } else {
-      session.run(transformNodes(space.id, g.ids, stepBetween(next, g.applied), g.key));
+      session.run(transformNodesScaling(space.id, g.ids, stepBetween(next, g.applied), host.scaleStrokes, g.key));
     }
     g.applied = next;
   }

@@ -80,6 +80,7 @@ export function createTestHost(init: HostInit = {}) {
     }),
     newAppearance: () => defaultAppearance(),
     activePaint: 'fill',
+    scaleStrokes: false,
     keyObjectMode: false,
     keyObject: null,
     setKeyObject: vi.fn<(id: string) => void>(),

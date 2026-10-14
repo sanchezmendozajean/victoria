@@ -85,6 +85,7 @@ export interface CanvasCallbacks {
   newAppearance(): Appearance;
   activePaint(): 'fill' | 'stroke';
   keyObject(): { mode: boolean; id: string | null };
+  scaleStrokes(): boolean;
   onKeyObject(id: string): void;
   setNewAppearance(appearance: Appearance): void;
   onRememberTransform(transform: { matrix: Matrix; copy: boolean } | null): void;
@@ -352,6 +353,10 @@ export class CanvasController implements ToolHost, CanvasApi {
 
   setNewAppearance(appearance: Appearance): void {
     this.callbacks.setNewAppearance(appearance);
+  }
+
+  get scaleStrokes(): boolean {
+    return this.callbacks.scaleStrokes();
   }
 
   get keyObjectMode(): boolean {

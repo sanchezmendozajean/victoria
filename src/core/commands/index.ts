@@ -1,4 +1,5 @@
 export type { Command } from './command';
+export { combineCommands } from './command';
 export { DocumentSession, DEFAULT_HISTORY_LIMIT } from './session';
 export type { ChangeKind, SessionChange, SessionOptions } from './session';
 export * from './document';

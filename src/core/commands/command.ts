@@ -17,3 +17,16 @@ export interface Command {
   mergeKey?: string;
   apply(draft: Draft<Document>): void;
 }
+
+/** Several commands as one: one history entry, merged under the first command's merge key. */
+export function combineCommands(label: string, commands: readonly Command[]): Command {
+  const first = commands[0];
+  return {
+    label,
+    ...(first?.spaceId ? { spaceId: first.spaceId } : {}),
+    ...(first?.mergeKey ? { mergeKey: first.mergeKey } : {}),
+    apply: (d) => {
+      for (const command of commands) command.apply(d);
+    },
+  };
+}

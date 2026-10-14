@@ -15,7 +15,7 @@ import {
   selectOnly,
   setAllNodesProps,
   setNodeProps,
-  transformNodes,
+  transformNodesScaling,
   ungroupNodes,
   type ArrangeDirection,
   type DocumentSession,
@@ -136,7 +136,7 @@ export const nextTransformKey = (): string => `dlg${++dialogCounter}`;
  */
 export function applyTransform(session: DocumentSession, space: Space, ids: readonly string[], matrix: Matrix, copy: boolean, key?: string): string[] {
   if (!copy) {
-    session.run(transformNodes(space.id, ids, matrix, key));
+    session.run(transformNodesScaling(space.id, ids, matrix, useUi.getState().scaleStrokes, key));
     return [...ids];
   }
   const nodes = ids.map((id) => locateNode(space, id)?.node).filter((n): n is Node => !!n);

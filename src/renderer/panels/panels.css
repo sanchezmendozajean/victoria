@@ -477,3 +477,13 @@
   flex-wrap: wrap;
   gap: 2px;
 }
+
+.vc-transformgrid {
+  display: grid;
+  grid-template-columns: 22px 1fr 1fr;
+  gap: 6px;
+  align-items: center;
+}
+.vc-transformgrid .vc-refpoint {
+  grid-row: span 2;
+}

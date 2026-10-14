@@ -79,6 +79,7 @@ export function CanvasArea() {
         },
         onTransformDialog: (kind, origin) => useUi.getState().openTransformDialog(kind, origin),
         activePaint: () => useUi.getState().activePaint,
+        scaleStrokes: () => useUi.getState().scaleStrokes,
         keyObject: () => ({ mode: useUi.getState().alignTo === 'key', id: useUi.getState().keyObject }),
         onKeyObject: (id) => useUi.getState().setKeyObject(id),
         setNewAppearance: (appearance) => useUi.getState().setNewLook(appearance),
