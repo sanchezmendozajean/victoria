@@ -17,6 +17,8 @@ import {
   zoomAt,
   type Appearance,
   type DocumentSession,
+  type ParagraphStyle,
+  type TextStyle,
   type Guide,
   type Hit,
   type Matrix,
@@ -85,6 +87,13 @@ export interface CanvasCallbacks {
   onShapeDialog(kind: ShapeToolKind, at: Vec2): void;
   newAppearance(): Appearance;
   activePaint(): 'fill' | 'stroke';
+  textStyle(): TextStyle;
+  paragraphStyle(): ParagraphStyle;
+  pendingTextStyle(): Partial<TextStyle> | null;
+  consumePendingTextStyle(): void;
+  onTextEditing(editing: { id: string; from: number; to: number } | null): void;
+  onTextInput(state: { active: boolean; at?: Vec2 }): void;
+  onSwitchTool(tool: ToolId): void;
   keyObject(): { mode: boolean; id: string | null };
   activeLayer(spaceId: string): string | null;
   scaleStrokes(): boolean;
@@ -243,6 +252,13 @@ export class CanvasController implements ToolHost, CanvasApi {
     const board = this.currentSpace()?.artboards.find((a) => a.id === id);
     if (board) this.fitTo(artboardRect(board));
   }
+  /** Repaints everything (a font finished loading, so text metrics changed). */
+  redraw(): void {
+    this.contentFromViewOnly = false;
+    this.invalidate('content');
+    this.invalidate('overlay');
+  }
+
   revealRect(rect: Rect): void {
     const v = this.viewValue;
     const left = rect.minX * v.zoom + v.panX;
@@ -367,6 +383,42 @@ export class CanvasController implements ToolHost, CanvasApi {
 
   setNewAppearance(appearance: Appearance): void {
     this.callbacks.setNewAppearance(appearance);
+  }
+
+  get textStyle(): TextStyle {
+    return this.callbacks.textStyle();
+  }
+  get paragraphStyle(): ParagraphStyle {
+    return this.callbacks.paragraphStyle();
+  }
+  get pendingTextStyle(): Partial<TextStyle> | null {
+    return this.callbacks.pendingTextStyle();
+  }
+  consumePendingTextStyle(): void {
+    this.callbacks.consumePendingTextStyle();
+  }
+  reportTextEditing(editing: { id: string; from: number; to: number } | null): void {
+    this.callbacks.onTextEditing(editing);
+  }
+  setTextInput(state: { active: boolean; at?: Vec2 }): void {
+    this.callbacks.onTextInput(state);
+  }
+  switchTool(tool: ToolId): void {
+    this.callbacks.onSwitchTool(tool);
+  }
+
+  // Typing is routed from the hidden input of the canvas to the tool that is editing text.
+  textInput(text: string): void {
+    this.tool.onTextInput?.(text, this);
+  }
+  textKeyDown(event: KeyboardEvent): boolean {
+    return this.tool.onTextKey?.({ key: event.key, shiftKey: event.shiftKey, altKey: event.altKey, ctrlKey: event.ctrlKey, metaKey: event.metaKey }, this) ?? false;
+  }
+  textClipboard(kind: 'copy' | 'cut' | 'paste', text: string | null): string | null {
+    return this.tool.onTextClipboard?.(kind, text, this) ?? null;
+  }
+  get editingText(): boolean {
+    return this.tool.editingText === true;
   }
 
   get scaleStrokes(): boolean {

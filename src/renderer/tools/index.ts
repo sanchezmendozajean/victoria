@@ -11,6 +11,7 @@ import { createLassoTool } from './lassoTool';
 import { createPenTool } from './penTool';
 import { createSelectionTool } from './selectionTool';
 import { createShapeTool } from './shapeTools';
+import { createTextTool } from './textTool';
 import { createTransformTool } from './transformTools';
 import type { Tool } from './types';
 import { createZoomTool } from './zoomTool';
@@ -58,6 +59,12 @@ export function createTool(id: ToolId): Tool {
       return createEyedropperTool();
     case 'tool-gradient':
       return createGradientTool();
+    case 'tool-type':
+      return createTextTool(id, 'point');
+    case 'tool-area-type':
+      return createTextTool(id, 'area');
+    case 'tool-type-on-path':
+      return createTextTool(id, 'onPath');
     case 'tool-rect':
       return createShapeTool(id, 'rect');
     case 'tool-rounded-rect':

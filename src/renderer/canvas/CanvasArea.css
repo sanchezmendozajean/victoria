@@ -54,3 +54,18 @@
   border-right: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
 }
+
+/* The hidden field that receives typing, accents and IME while text is edited on the canvas. */
+.vc-textinput {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  resize: none;
+  overflow: hidden;
+  pointer-events: none;
+}

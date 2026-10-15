@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { manager } from '../documents';
+import { fontManager } from '../text/fontManager';
 import { adoptSelectionLook } from './paintActions';
 import { runAction } from './actions';
 import { PANEL_BY_ACTION } from './menus';
@@ -15,6 +16,11 @@ export function useAppEffects() {
   const theme = useUi((s) => s.theme);
   const setPlatform = useUi((s) => s.setPlatform);
   const setMaximized = useUi((s) => s.setMaximized);
+
+  // System fonts: listed once at start; faces load on demand as text asks for them.
+  useEffect(() => {
+    void fontManager.init();
+  }, []);
 
   // Platform info and window state come from main through the typed preload API.
   useEffect(() => {

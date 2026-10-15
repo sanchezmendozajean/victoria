@@ -1,4 +1,4 @@
-import type { Appearance, DocumentSession, Hit, Matrix, Space, SnapLine, SnapSources, Units, Vec2, Viewport } from '../../core';
+import type { Appearance, DocumentSession, ParagraphStyle, TextStyle, Hit, Matrix, Space, SnapLine, SnapSources, Units, Vec2, Viewport } from '../../core';
 import type { ToolId } from '../app/tools';
 import type { CanvasTheme } from '../canvas/theme';
 import type { ShapeToolKind } from './shapeDrag';
@@ -78,6 +78,17 @@ export interface ToolHost {
   setKeyObject(id: string): void;
   /** "Escalar trazos y efectos": scaling changes stroke weights too. */
   readonly scaleStrokes: boolean;
+  /** Character attributes of the next text typed (Character panel with nothing selected). */
+  readonly textStyle: TextStyle;
+  readonly paragraphStyle: ParagraphStyle;
+  /** Attributes chosen in the Character panel with a collapsed caret: they apply to the next characters typed. */
+  readonly pendingTextStyle: Partial<TextStyle> | null;
+  consumePendingTextStyle(): void;
+  /** What the panels need to know about the text being edited (null = not editing). */
+  reportTextEditing(editing: { id: string; from: number; to: number } | null): void;
+  /** Focuses (or releases) the hidden input that receives typing, accents and IME, placed at `at` (screen px). */
+  setTextInput(state: { active: boolean; at?: Vec2 }): void;
+  switchTool(tool: ToolId): void;
   /** Which of fill and stroke the colour controls (and the Gradient tool) act on. */
   readonly activePaint: 'fill' | 'stroke';
   /** Layer that receives new objects: the layer of the selection, else the topmost unlocked one. */
@@ -101,6 +112,14 @@ export interface Tool {
   onKeyDown?(event: ToolKeyEvent, host: ToolHost): boolean;
   /** Space held: true while a gesture wants it for itself (Pen, shapes: move what is being drawn) instead of the temporary Hand. */
   wantsSpace?(): boolean;
+  /** True while the tool is editing text: the canvas keeps the hidden text input focused. */
+  readonly editingText?: boolean;
+  /** Text typed (or composed) into the hidden input. */
+  onTextInput?(text: string, host: ToolHost): void;
+  /** Editing keys (arrows, Backspace, Enter…) from the hidden input. Return true when handled. */
+  onTextKey?(event: ToolKeyEvent, host: ToolHost): boolean;
+  /** Copy, cut and paste inside the text being edited. Returns the plain text to put on the clipboard for copy and cut. */
+  onTextClipboard?(kind: 'copy' | 'cut' | 'paste', text: string | null, host: ToolHost): string | null;
   /** Receives key presses (arrows, Space) while its own gesture is in progress, not only between gestures. */
   readonly gestureKeys?: boolean;
   /** A key was released (Space during a drag). */

@@ -624,5 +624,6 @@
   "properties.quick": "Preferencias rápidas",
   "properties.appearance": "Apariencia",
   "properties.align": "Alinear",
-  "properties.quickActions": "Acciones rápidas"
+  "properties.quickActions": "Acciones rápidas",
+  "text.input": "Entrada de texto"
 }

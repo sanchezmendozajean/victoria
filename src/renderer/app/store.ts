@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { defaultAppearance, type Appearance, type Matrix, type Vec2 } from '../../core';
+import { defaultAppearance, type Appearance, type Matrix, type ParagraphStyle, type TextStyle, type Vec2 } from '../../core';
 import type { PlatformInfo, Theme } from '../../shared/ipc';
 import type { TransformKind } from '../tools/types';
 import type { ShapeToolKind } from '../tools/shapeDrag';
@@ -84,6 +84,12 @@ interface UiState {
   colorPicker: { target: 'fill' | 'stroke'; anchor: { left: number; top: number; right: number; bottom: number } } | null;
   /** Layer that receives new objects when nothing is selected, per Space (Layers panel). */
   activeLayer: Record<string, string>;
+  /** Character and paragraph attributes of the next text created (and shown by the panels with no text selected). */
+  textStyle: TextStyle;
+  paragraphStyle: ParagraphStyle;
+  pendingTextStyle: Partial<TextStyle> | null;
+  /** The text being edited on the canvas, with its selection (null when none). */
+  textEditing: { id: string; from: number; to: number } | null;
   /** Which of fill and stroke the colour controls edit. */
   activePaint: 'fill' | 'stroke';
   /** Align panel: the object the others align to when "Alinear a objeto clave" is chosen. */
@@ -102,6 +108,10 @@ interface UiState {
   openTransformDialog(kind: TransformKind, origin: Vec2 | null): void;
   closeTransformDialog(): void;
   setNewLook(look: Appearance): void;
+  setTextStyle(patch: Partial<TextStyle>): void;
+  setParagraphStyle(patch: Partial<ParagraphStyle>): void;
+  setPendingTextStyle(patch: Partial<TextStyle> | null): void;
+  setTextEditing(editing: { id: string; from: number; to: number } | null): void;
   setActiveLayer(spaceId: string, layerId: string): void;
   /** Opens the colour popover next to `anchor` (the chip that was clicked). */
   openColorPicker(target: 'fill' | 'stroke', anchor: Element): void;
@@ -177,6 +187,10 @@ export const useUi = create<UiState>()((set, get) => ({
   transformDialog: null,
   newLook: defaultAppearance(),
   colorPicker: null,
+  textStyle: { fontFamily: 'Arial', fontStyle: 'Regular', size: 12 },
+  paragraphStyle: {},
+  pendingTextStyle: null,
+  textEditing: null,
   activeLayer: {},
   activePaint: 'fill',
   keyObject: null,
@@ -192,6 +206,26 @@ export const useUi = create<UiState>()((set, get) => ({
   openTransformDialog: (kind, origin) => set({ transformDialog: { kind, origin } }),
   closeTransformDialog: () => set({ transformDialog: null }),
   setNewLook: (newLook) => set({ newLook }),
+  setTextStyle: (patch) =>
+    set((s) => {
+      const next = { ...s.textStyle } as Record<string, unknown>;
+      for (const [k, v] of Object.entries(patch)) {
+        if (v === undefined) delete next[k];
+        else next[k] = v;
+      }
+      return { textStyle: next as unknown as TextStyle };
+    }),
+  setParagraphStyle: (patch) =>
+    set((s) => {
+      const next = { ...s.paragraphStyle } as Record<string, unknown>;
+      for (const [k, v] of Object.entries(patch)) {
+        if (v === undefined) delete next[k];
+        else next[k] = v;
+      }
+      return { paragraphStyle: next as ParagraphStyle };
+    }),
+  setPendingTextStyle: (pendingTextStyle) => set({ pendingTextStyle }),
+  setTextEditing: (textEditing) => set({ textEditing }),
   setActiveLayer: (spaceId, layerId) => set((s) => ({ activeLayer: { ...s.activeLayer, [spaceId]: layerId } })),
   openColorPicker: (target, anchor) => {
     const r = anchor.getBoundingClientRect();

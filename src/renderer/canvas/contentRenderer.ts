@@ -83,7 +83,16 @@ function buildPath(node: Node): Path2D | null {
   return path;
 }
 
+/** Text paths are keyed by their geometry, which changes when the node or the set of loaded fonts does. */
+const textPaths = new WeakMap<object, Path2D | null>();
+
 export function pathFor(node: Node): Path2D | null {
+  if (node.type === 'text') {
+    const geometry = nodeGeometry(node);
+    if (!geometry) return null;
+    if (!textPaths.has(geometry)) textPaths.set(geometry, buildPath(node));
+    return textPaths.get(geometry) ?? null;
+  }
   if (paths.has(node)) return paths.get(node) ?? null;
   const path = buildPath(node);
   paths.set(node, path);
@@ -346,8 +355,6 @@ function drawNode(env: Env, node: Node, cull: Rect, layer: Layer, alpha: number,
     case 'image':
       drawPlaceholderImage(env, node.width, node.height);
       break;
-    case 'text':
-      break; // text layout and drawing arrive in Phase 7
     default:
       paintGeometry(env, node, layer, a);
   }

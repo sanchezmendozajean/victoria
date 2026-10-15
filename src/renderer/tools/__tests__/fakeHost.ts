@@ -23,6 +23,7 @@ import {
   type Viewport,
 } from '../../../core';
 import { createDocument } from '../../../core';
+import type { ToolId } from '../../app/tools';
 import type { ShapeToolKind } from '../shapeDrag';
 import type { CanvasPointerEvent, Tool, ToolHost, TransformKind } from '../types';
 
@@ -80,6 +81,15 @@ export function createTestHost(init: HostInit = {}) {
     }),
     newAppearance: () => defaultAppearance(),
     activePaint: 'fill',
+    textStyle: { fontFamily: 'Mono', fontStyle: 'Regular', size: 10 },
+    paragraphStyle: {},
+    pendingTextStyle: null,
+    consumePendingTextStyle: vi.fn(() => {
+      host.pendingTextStyle = null;
+    }),
+    reportTextEditing: vi.fn<(e: { id: string; from: number; to: number } | null) => void>(),
+    setTextInput: vi.fn<(s: { active: boolean; at?: Vec2 }) => void>(),
+    switchTool: vi.fn<(tool: ToolId) => void>(),
     scaleStrokes: false,
     keyObjectMode: false,
     keyObject: null,

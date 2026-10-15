@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { frameOf, getActiveSpace } from '../../core';
 import { askUser } from '../app/dialogs';
+import { fontManager } from '../text/fontManager';
 import { manager } from '../documents';
 import { RULER_SIZE } from './rulerRenderer';
 import { t } from '../i18n';
@@ -18,6 +19,7 @@ export function CanvasArea() {
   const surfaceRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLCanvasElement>(null);
   const overlayRef = useRef<HTMLCanvasElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const rulerHRef = useRef<HTMLCanvasElement>(null);
   const rulerVRef = useRef<HTMLCanvasElement>(null);
   const controllerRef = useRef<CanvasController | null>(null);
@@ -80,6 +82,25 @@ export function CanvasArea() {
         onTransformDialog: (kind, origin) => useUi.getState().openTransformDialog(kind, origin),
         activePaint: () => useUi.getState().activePaint,
         activeLayer: (spaceId) => useUi.getState().activeLayer[spaceId] ?? null,
+        textStyle: () => useUi.getState().textStyle,
+        paragraphStyle: () => useUi.getState().paragraphStyle,
+        pendingTextStyle: () => useUi.getState().pendingTextStyle,
+        consumePendingTextStyle: () => useUi.getState().setPendingTextStyle(null),
+        onTextEditing: (editing) => useUi.getState().setTextEditing(editing),
+        onSwitchTool: (tool) => useUi.getState().setActiveTool(tool),
+        onTextInput: ({ active, at }) => {
+          const input = inputRef.current;
+          if (!input) return;
+          if (active) {
+            if (at) {
+              input.style.left = `${at.x}px`;
+              input.style.top = `${at.y}px`;
+            }
+            if (document.activeElement !== input) input.focus({ preventScroll: true });
+          } else if (document.activeElement === input) {
+            input.blur();
+          }
+        },
         scaleStrokes: () => useUi.getState().scaleStrokes,
         keyObject: () => ({ mode: useUi.getState().alignTo === 'key', id: useUi.getState().keyObject }),
         onKeyObject: (id) => useUi.getState().setKeyObject(id),
@@ -91,10 +112,13 @@ export function CanvasArea() {
     );
     controllerRef.current = controller;
     canvasApi.current = controller;
+    // Text is laid out with the fonts loaded so far: repaint when more arrive.
+    const unsubscribeFonts = fontManager.subscribe(() => controller.redraw());
     return () => {
       cancelAnimationFrame(frame);
       canvasApi.current = null;
       controllerRef.current = null;
+      unsubscribeFonts();
       controller.destroy();
     };
   }, [setCursor, setZoom]);
@@ -137,6 +161,52 @@ export function CanvasArea() {
       >
         <canvas ref={contentRef} className="vc-canvas__layer" data-testid="canvas-content" aria-label={t('canvas.label')} />
         <canvas ref={overlayRef} className="vc-canvas__layer vc-canvas__overlay" data-testid="canvas-overlay" />
+        <textarea
+          ref={inputRef}
+          className="vc-textinput"
+          data-testid="text-input"
+          aria-label={t('text.input')}
+          spellCheck={false}
+          autoCapitalize="off"
+          autoComplete="off"
+          rows={1}
+          onInput={(event) => {
+            const el = event.currentTarget;
+            const native = event.nativeEvent as InputEvent;
+            if (native.isComposing) return; // the composed text arrives with compositionend
+            const text = el.value;
+            el.value = '';
+            if (text) controllerRef.current?.textInput(text);
+          }}
+          onCompositionEnd={(event) => {
+            event.currentTarget.value = '';
+            if (event.data) controllerRef.current?.textInput(event.data);
+          }}
+          onKeyDown={(event) => {
+            if (controllerRef.current?.textKeyDown(event.nativeEvent)) {
+              event.preventDefault();
+              event.stopPropagation();
+            }
+          }}
+          onCopy={(event) => {
+            const text = controllerRef.current?.textClipboard('copy', null);
+            if (text !== null && text !== undefined) {
+              event.clipboardData.setData('text/plain', text);
+              event.preventDefault();
+            }
+          }}
+          onCut={(event) => {
+            const text = controllerRef.current?.textClipboard('cut', null);
+            if (text !== null && text !== undefined) {
+              event.clipboardData.setData('text/plain', text);
+              event.preventDefault();
+            }
+          }}
+          onPaste={(event) => {
+            event.preventDefault();
+            controllerRef.current?.textClipboard('paste', event.clipboardData.getData('text/plain'));
+          }}
+        />
       </div>
       <canvas
         ref={rulerHRef}
