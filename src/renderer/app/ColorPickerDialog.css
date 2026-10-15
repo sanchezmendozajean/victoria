@@ -1,5 +1,5 @@
 .vc-picker {
-  width: 420px;
+  width: 480px;
 }
 .vc-picker__body {
   display: flex;
@@ -74,4 +74,23 @@
 .vc-popover {
   position: fixed;
   z-index: 1500;
+}
+
+.vc-picker__left {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 8px;
+}
+.vc-picker__model {
+  display: flex;
+  gap: 12px;
+}
+.vc-picker__col {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.vc-picker__rgb {
+  margin-top: 10px;
 }

@@ -23,7 +23,7 @@ export function ColorPickerDialog() {
 }
 
 type Anchor = { left: number; top: number; right: number; bottom: number };
-const POPOVER_W = 420;
+const POPOVER_W = 480;
 const POPOVER_H = 340;
 
 /** Beside the anchor when it fits (the panels live on the right, so usually to its left), kept inside the window. */
@@ -41,6 +41,8 @@ function PickerForm({ target, original, hasSelection, session, anchor }: { targe
   const initial = convertColor(original, 'hsb');
   const [hsb, setHsb] = useState<[number, number, number]>([initial.values[0] ?? 0, initial.values[1] ?? 0, initial.values[2] ?? 0]);
   const [webOnly, setWebOnly] = useState(false);
+  // CMYK is not recoverable from RGB (K can trade with C, M and Y): after typing CMYK the typed values stay on screen.
+  const [typedCmyk, setTypedCmyk] = useState<number[] | null>(null);
   const key = useRef(nextPaintKey());
   const applied = useRef(false);
   const savedLook = useRef<Appearance>(deepClone(useUi.getState().newLook) as Appearance);
@@ -53,6 +55,7 @@ function PickerForm({ target, original, hasSelection, session, anchor }: { targe
   const rgb = colorToRgb(color).map(Math.round) as [number, number, number];
 
   const set = (next: [number, number, number]) => {
+    setTypedCmyk(null);
     setHsb(next);
     applied.current = true;
     applyPaint(target, { type: 'solid', color: colorOf(next) }, key.current);
@@ -117,7 +120,7 @@ function PickerForm({ target, original, hasSelection, session, anchor }: { targe
     if (!r) return;
     set([Math.min(1, Math.max(0, (event.clientY - r.top) / r.height)) * 360, hsb[1], hsb[2]]);
   };
-  const cmyk = convertColor(color, 'cmyk').values;
+  const cmyk = typedCmyk ?? convertColor(color, 'cmyk').values;
 
   return (
     <>
@@ -141,6 +144,7 @@ function PickerForm({ target, original, hasSelection, session, anchor }: { targe
       >
         <h2 className="vc-dialog__title">{t('picker.title')}</h2>
         <div className="vc-picker__body">
+          <div className="vc-picker__left">
           <div
             ref={square}
             className="vc-picker__square"
@@ -153,6 +157,8 @@ function PickerForm({ target, original, hasSelection, session, anchor }: { targe
             onPointerMove={(e) => e.currentTarget.hasPointerCapture(e.pointerId) && dragSquare(e)}
           >
             <span className="vc-picker__marker" style={{ left: `${hsb[1]}%`, top: `${100 - hsb[2]}%` }} />
+          </div>
+          <CheckRow checked={webOnly} onChange={(v) => { setWebOnly(v); if (v) applyPaint(target, { type: 'solid', color: toWebSafe(colorOf(hsb)) }, key.current); }} label={t('picker.webOnly')} testId="picker-web" />
           </div>
           <div
             ref={hueBar}
@@ -172,46 +178,72 @@ function PickerForm({ target, original, hasSelection, session, anchor }: { targe
               <span style={{ background: colorToCss(original) }} data-testid="picker-old" />
             </div>
             <div className="vc-picker__fields">
-              {(['H', 'S', 'B'] as const).map((label, i) => (
-                <Row key={label}>
-                  <span className="vc-plabel" style={{ width: 14 }}>{label}</span>
-                  <NumberInput
-                    value={Math.round((hsb[i] as number) * 10) / 10}
-                    onCommit={(v) => set(hsb.map((x, j) => (j === i ? v : x)) as [number, number, number])}
-                    min={0}
-                    max={i === 0 ? 360 : 100}
-                    decimals={1}
-                    width={64}
-                    suffix={i === 0 ? '°' : '%'}
-                    testId={`picker-${label}`}
-                    tooltip={label}
-                  />
+              <div className="vc-picker__model">
+                <div className="vc-picker__col">
+                  {(['H', 'S', 'B'] as const).map((label, i) => (
+                    <Row key={label}>
+                      <span className="vc-plabel" style={{ width: 14 }}>{label}</span>
+                      <NumberInput
+                        value={Math.round((hsb[i] as number) * 10) / 10}
+                        onCommit={(v) => set(hsb.map((x, j) => (j === i ? v : x)) as [number, number, number])}
+                        min={0}
+                        max={i === 0 ? 360 : 100}
+                        decimals={1}
+                        width={64}
+                        suffix={i === 0 ? '°' : '%'}
+                        testId={`picker-${label}`}
+                        tooltip={label}
+                      />
+                    </Row>
+                  ))}
+                </div>
+                <div className="vc-picker__col">
+                  {(['C', 'M', 'Y', 'K'] as const).map((label, i) => (
+                    <Row key={label}>
+                      <span className="vc-plabel" style={{ width: 14 }}>{label}</span>
+                      <NumberInput
+                        value={Math.round((cmyk[i] as number) * 10) / 10}
+                        onCommit={(v) => {
+                          const values = cmyk.map((x, j) => (j === i ? v : x));
+                          setFromColor({ model: 'cmyk', values });
+                          setTypedCmyk(values);
+                        }}
+                        min={0}
+                        max={100}
+                        decimals={1}
+                        width={64}
+                        suffix="%"
+                        testId={`picker-cmyk-${label}`}
+                        tooltip={label}
+                      />
+                    </Row>
+                  ))}
+                </div>
+              </div>
+              <div className="vc-picker__col vc-picker__rgb">
+                {(['R', 'G', 'B'] as const).map((label, i) => (
+                  <Row key={`rgb${label}`}>
+                    <span className="vc-plabel" style={{ width: 14 }}>{label}</span>
+                    <NumberInput
+                      value={rgb[i] as number}
+                      onCommit={(v) => setFromColor({ model: 'rgb', values: rgb.map((x, j) => (j === i ? v : x)) })}
+                      min={0}
+                      max={255}
+                      decimals={0}
+                      width={64}
+                      testId={`picker-rgb-${label}`}
+                      tooltip={label}
+                    />
+                  </Row>
+                ))}
+                <Row>
+                  <span className="vc-plabel" style={{ width: 14 }}>#</span>
+                  <HexInput value={colorToHex(color)} onCommit={(hex) => setFromColor(hex)} />
                 </Row>
-              ))}
-              {(['R', 'G', 'B'] as const).map((label, i) => (
-                <Row key={`rgb${label}`}>
-                  <span className="vc-plabel" style={{ width: 14 }}>{label}</span>
-                  <NumberInput
-                    value={rgb[i] as number}
-                    onCommit={(v) => setFromColor({ model: 'rgb', values: rgb.map((x, j) => (j === i ? v : x)) })}
-                    min={0}
-                    max={255}
-                    decimals={0}
-                    width={64}
-                    testId={`picker-rgb-${label}`}
-                    tooltip={label}
-                  />
-                </Row>
-              ))}
-              <Row>
-                <span className="vc-plabel" style={{ width: 14 }}>#</span>
-                <HexInput value={colorToHex(color)} onCommit={(hex) => setFromColor(hex)} />
-              </Row>
-              <p className="vc-phint">CMYK {cmyk.map((v) => Math.round(v)).join(' · ')}</p>
+              </div>
             </div>
           </div>
         </div>
-        <CheckRow checked={webOnly} onChange={(v) => { setWebOnly(v); if (v) applyPaint(target, { type: 'solid', color: toWebSafe(colorOf(hsb)) }, key.current); }} label={t('picker.webOnly')} testId="picker-web" />
         <div className="vc-dialog__buttons">
           <button type="button" className="vc-dialog__button" data-testid="picker-cancel" onClick={cancel}>
             {t('dialog.cancel')}

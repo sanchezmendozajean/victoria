@@ -385,3 +385,23 @@ test.describe('colour, stroke and panels (phase 6)', () => {
     await expect(page.getByTestId('control-type')).toContainText('2');
   });
 });
+
+test('colour picker: CMYK fields sit beside HSB and keep what was typed; the web-only check is under the square', async () => {
+  const ctx = await launchApp();
+  const { page } = ctx;
+  await page.waitForTimeout(400);
+  await page.getByTestId('paint-widget-fill').dblclick();
+  await page.getByTestId('picker-cmyk-C').fill('40');
+  await page.keyboard.press('Enter');
+  await expect(page.getByTestId('picker-cmyk-C')).toHaveValue('40');
+  const h = (await page.getByTestId('picker-H').boundingBox())!;
+  const c = (await page.getByTestId('picker-cmyk-C').boundingBox())!;
+  expect(c.x).toBeGreaterThan(h.x + h.width);
+  expect(Math.abs(c.y - h.y)).toBeLessThan(4);
+  const square = (await page.getByTestId('picker-square').boundingBox())!;
+  const web = (await page.getByTestId('picker-web').boundingBox())!;
+  expect(web.y).toBeGreaterThan(square.y + square.height - 1);
+  expect(web.y - (square.y + square.height)).toBeLessThan(20);
+  await page.keyboard.press('Escape');
+  await ctx.app.close();
+});
