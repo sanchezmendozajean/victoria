@@ -11,8 +11,12 @@ import type {
   GroupNode,
   Layer,
   PathNode,
+  PathTextOptions,
   ShapeNode,
   Space,
+  TextNode,
+  TextPath,
+  TextRun,
   StrokeStyle,
   Anchor,
 } from './types';
@@ -95,6 +99,26 @@ export function createLine(ids: IdGenerator, length: number): ShapeNode {
   const node: ShapeNode = { ...baseNode(ids), type: 'shape', shape: 'line', params: { length } };
   // A line has no area: it is stroked only.
   node.appearance.items = node.appearance.items.filter((i) => i.kind === 'stroke');
+  return node;
+}
+
+/** Text takes a plain black fill and no stroke (Illustrator's text default), not the current look. */
+export function textAppearance(): Appearance {
+  return { items: [{ kind: 'fill', paint: { type: 'solid', color: BLACK }, opacity: 1, modifiers: [] }] };
+}
+
+export type NewText =
+  | { kind: 'point' }
+  | { kind: 'area'; frame: TextPath }
+  | { kind: 'onPath'; path: TextPath; options?: PathTextOptions };
+
+export function createText(ids: IdGenerator, spec: NewText, story: TextRun[]): TextNode {
+  const node: TextNode = { ...baseNode(ids), type: 'text', kind: spec.kind, story, appearance: textAppearance() };
+  if (spec.kind === 'area') node.frame = spec.frame;
+  if (spec.kind === 'onPath') {
+    node.path = spec.path;
+    node.pathOptions = spec.options ?? { effect: 'rainbow', align: 'baseline', spacing: 0, flip: false, start: 0, end: 1 };
+  }
   return node;
 }
 

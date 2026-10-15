@@ -134,7 +134,7 @@ export const storyFromText = (text: string, style: TextStyle): TextRun[] => [{ t
 export function wordAt(text: string, index: number): [number, number] {
   const isWord = (c: string | undefined) => !!c && /[\p{L}\p{N}_]/u.test(c);
   let a = Math.min(index, text.length);
-  let b = a;
+  let b: number;
   if (!isWord(text[a]) && isWord(text[a - 1])) a--;
   if (isWord(text[a])) {
     while (a > 0 && isWord(text[a - 1])) a--;

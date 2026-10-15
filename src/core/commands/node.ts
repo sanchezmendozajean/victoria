@@ -4,7 +4,7 @@ import { childrenOf, locateLayer, locateNode, walkNodes } from '../model/queries
 import { pathFrameOf } from '../geometry/world';
 import { shapeSubPaths } from '../geometry/shapes';
 import { deepClone } from '../model/deepClone';
-import type { Anchor, Appearance, BaseNode, ClipGroupNode, Document, GroupNode, LayerChild, Matrix, Node, PathNode, ShapeNode, Space } from '../model/types';
+import type { Anchor, Appearance, BaseNode, ClipGroupNode, TextNode, Document, GroupNode, LayerChild, Matrix, Node, PathNode, ShapeNode, Space } from '../model/types';
 import { combineCommands, type Command } from './command';
 import { scaleStrokeWidths } from './appearance';
 
@@ -78,10 +78,27 @@ export const transformNodes = (spaceId: string, ids: readonly string[], matrix: 
     if (!space) return;
     for (const id of topmostIds(space, ids)) {
       const found = locateNode(space, id);
-      if (found) found.node.transform = multiply(matrix, found.node.transform);
+      if (!found) continue;
+      found.node.transform = multiply(matrix, found.node.transform);
+      if (found.node.type === 'text' && found.node.kind === 'point') bakeTextScale(found.node as Draft<TextNode>);
     }
   },
 });
+
+/** Point text keeps its transform free of scale: the scale goes into the font size and the horizontal scale (as Illustrator does). */
+function bakeTextScale(node: Draft<TextNode>): void {
+  const m = node.transform;
+  const sx = Math.hypot(m[0], m[1]);
+  const sy = Math.hypot(m[2], m[3]);
+  if (sx === 0 || sy === 0 || (Math.abs(sx - 1) < 1e-9 && Math.abs(sy - 1) < 1e-9)) return;
+  node.transform = [m[0] / sx, m[1] / sx, m[2] / sy, m[3] / sy, m[4], m[5]];
+  for (const run of node.story) {
+    run.style.size *= sy;
+    if (run.style.leading !== undefined) run.style.leading *= sy;
+    if (run.style.baselineShift !== undefined) run.style.baselineShift *= sy;
+    if (Math.abs(sx - sy) > 1e-9) run.style.hScale = ((run.style.hScale ?? 100) * sx) / sy;
+  }
+}
 
 export type NodeProps = Partial<Pick<BaseNode, 'name' | 'visible' | 'locked' | 'opacity' | 'blendMode'>>;
 
