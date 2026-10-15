@@ -1,11 +1,14 @@
+import path from 'node:path';
+import { scanFontDirectories } from '../fonts';
 import type { Platform } from './types';
 import { listSystemPrinters, notImplemented } from './common';
 
 export const win32: Platform = {
   windowChrome: 'native-overlay',
 
-  // Phase 7: font-list + C:\Windows\Fonts and %LOCALAPPDATA%\Microsoft\Windows\Fonts.
-  listFonts: async () => [],
+  // C:\Windows\Fonts and the per-user folder (%LOCALAPPDATA%\Microsoft\Windows\Fonts).
+  listFonts: () =>
+    scanFontDirectories([path.join(process.env.WINDIR ?? 'C:\\Windows', 'Fonts'), path.join(process.env.LOCALAPPDATA ?? '', 'Microsoft', 'Windows', 'Fonts')]),
 
   listPrinters: listSystemPrinters,
 

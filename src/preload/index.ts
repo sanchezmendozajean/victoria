@@ -19,6 +19,8 @@ const api: VictoriaApi = {
   autosaveDiscard: (docId) => ipcRenderer.invoke(IPC.autosaveDiscard, docId),
   autosaveList: () => ipcRenderer.invoke(IPC.autosaveList),
   autosaveRead: (docId) => ipcRenderer.invoke(IPC.autosaveRead, docId),
+  listFonts: () => ipcRenderer.invoke(IPC.listFonts),
+  readFont: (path) => ipcRenderer.invoke(IPC.readFont, path),
   onBeforeClose: (handler) => {
     const listener = () => {
       void Promise.resolve(handler()).finally(() => ipcRenderer.send(IPC.closeReady));

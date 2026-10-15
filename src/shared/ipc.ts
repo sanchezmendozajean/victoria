@@ -58,6 +58,13 @@ export interface AutosaveEntry {
   modified: number;
 }
 
+/** A font installed on the system. The renderer identifies fonts by family + style; the path only travels back to read the bytes. */
+export interface SystemFont {
+  family: string;
+  style: string;
+  path: string;
+}
+
 export const IPC = {
   getPlatformInfo: 'platform:get-info',
   minimizeWindow: 'window:minimize',
@@ -71,6 +78,8 @@ export const IPC = {
   autosaveDiscard: 'autosave:discard',
   autosaveList: 'autosave:list',
   autosaveRead: 'autosave:read',
+  listFonts: 'fonts:list',
+  readFont: 'fonts:read',
   beforeClose: 'app:before-close',
   closeReady: 'app:close-ready',
 } as const;
@@ -94,6 +103,11 @@ export interface VictoriaApi {
   autosaveDiscard(docId: string): Promise<void>;
   autosaveList(): Promise<AutosaveEntry[]>;
   autosaveRead(docId: string): Promise<Uint8Array | null>;
+
+  /** System fonts (family, style, path), listed once per run. */
+  listFonts(): Promise<SystemFont[]>;
+  /** Bytes of a font returned by `listFonts`; null for anything else. */
+  readFont(path: string): Promise<Uint8Array | null>;
 
   /**
    * Called when the user closes the window. The handler must finish its autosaves; the window closes

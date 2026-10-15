@@ -1,6 +1,7 @@
 import { ipcMain, type BrowserWindow, type IpcMainEvent, type IpcMainInvokeEvent } from 'electron';
 import { IPC, type OverlayColors, type PlatformInfo, type SaveRequest, type WindowState } from '../shared/ipc';
 import * as files from './files';
+import { cachedFonts, readListedFont } from './fonts';
 import type { Platform } from './platform';
 
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -34,6 +35,8 @@ export function registerIpc(ctx: IpcContext): void {
   });
   ipcMain.on(IPC.closeWindow, (event) => fromAppWindow(event)?.close());
 
+  ipcMain.handle(IPC.listFonts, async (event) => (fromAppWindow(event) ? cachedFonts(() => ctx.platform.listFonts()) : []));
+  ipcMain.handle(IPC.readFont, async (event, file: unknown) => (fromAppWindow(event) ? readListedFont(() => ctx.platform.listFonts(), file) : null));
   ipcMain.handle(IPC.openFile, async (event, labels: unknown) => {
     const win = fromAppWindow(event);
     return win ? files.openFile(win, labels) : null;

@@ -1,11 +1,18 @@
+import path from 'node:path';
+import { fcList, scanFontDirectories } from '../fonts';
 import type { Platform } from './types';
 import { listSystemPrinters, notImplemented } from './common';
 
 export const linux: Platform = {
   windowChrome: 'custom',
 
-  // Phase 7: `fc-list --format` (fontconfig); fallback /usr/share/fonts and ~/.local/share/fonts.
-  listFonts: async () => [],
+  // `fc-list --format` (fontconfig); without it, the usual font folders.
+  listFonts: async () => {
+    const listed = await fcList();
+    if (listed && listed.length > 0) return listed;
+    const home = process.env.HOME ?? '';
+    return scanFontDirectories(['/usr/share/fonts', '/usr/local/share/fonts', path.join(home, '.local', 'share', 'fonts'), path.join(home, '.fonts')]);
+  },
 
   listPrinters: listSystemPrinters,
 
