@@ -102,7 +102,7 @@ function ObjectProperties() {
   const weight = commonStrokeField(ctx.leaves, 'width');
   const isGroup = !!selectedNode && (selectedNode.type === 'group' || selectedNode.type === 'clipGroup');
   const chip = (target: 'fill' | 'stroke') => (
-    <button type="button" className="vc-propchip" data-testid={`properties-${target}`} {...tip(t(target === 'fill' ? 'control.fill' : 'control.stroke'))} onClick={() => { setActive(target); openPicker(target); }}>
+    <button type="button" className="vc-propchip" data-testid={`properties-${target}`} {...tip(t(target === 'fill' ? 'control.fill' : 'control.stroke'))} onClick={(e) => { setActive(target); openPicker(target, e.currentTarget); }}>
       <PaintChip paint={look[target].mixed ? null : (look[target] as { value: Parameters<typeof PaintChip>[0]['paint'] }).value} mixed={look[target].mixed} resources={resources} size={18} />
     </button>
   );

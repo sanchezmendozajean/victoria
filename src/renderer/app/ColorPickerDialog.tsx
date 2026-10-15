@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { colorToCss, colorToHex, colorToRgb, convertColor, deepClone, hexToColor, toWebSafe, type Appearance, type Color, type DocumentSession } from '../../core';
 import { NumberInput } from '../components/NumberInput';
 import { solidColorOf } from '../panels/FillPanel';
@@ -13,15 +13,30 @@ import './ColorPickerDialog.css';
 
 /** Full colour picker (specs/06 · Selector de color completo): saturation/brightness square, hue bar, fields, web-only colours. */
 export function ColorPickerDialog() {
-  const target = useUi((s) => s.colorPicker);
+  const picker = useUi((s) => s.colorPicker);
   const { look, resources, ctx } = usePaintLook();
-  if (!target) return null;
+  if (!picker) return null;
+  const target = picker.target;
   const paint = look[target];
   const original = !paint.mixed ? solidColorOf(paint.value, resources) : null;
-  return <PickerForm key={target} target={target} original={original ?? { model: 'rgb', values: [0, 0, 0] }} hasSelection={!!ctx && ctx.leaves.length > 0} session={ctx?.session} />;
+  return <PickerForm key={target} anchor={picker.anchor} target={target} original={original ?? { model: 'rgb', values: [0, 0, 0] }} hasSelection={!!ctx && ctx.leaves.length > 0} session={ctx?.session} />;
 }
 
-function PickerForm({ target, original, hasSelection, session }: { target: 'fill' | 'stroke'; original: Color; hasSelection: boolean; session: DocumentSession | undefined }) {
+type Anchor = { left: number; top: number; right: number; bottom: number };
+const POPOVER_W = 420;
+const POPOVER_H = 340;
+
+/** Beside the anchor when it fits (the panels live on the right, so usually to its left), kept inside the window. */
+function placeBeside(anchor: Anchor): { left: number; top: number } {
+  const room = window.innerWidth;
+  let left = anchor.right + 8;
+  if (left + POPOVER_W > room - 8) left = anchor.left - POPOVER_W - 8;
+  left = Math.max(8, Math.min(left, room - POPOVER_W - 8));
+  const top = Math.max(8, Math.min(anchor.top - 8, window.innerHeight - POPOVER_H - 8));
+  return { left, top };
+}
+
+function PickerForm({ target, original, hasSelection, session, anchor }: { target: 'fill' | 'stroke'; original: Color; hasSelection: boolean; session: DocumentSession | undefined; anchor: Anchor }) {
   const close = useUi((s) => s.closeColorPicker);
   const initial = convertColor(original, 'hsb');
   const [hsb, setHsb] = useState<[number, number, number]>([initial.values[0] ?? 0, initial.values[1] ?? 0, initial.values[2] ?? 0]);
@@ -61,6 +76,33 @@ function PickerForm({ target, original, hasSelection, session }: { target: 'fill
     close();
   };
 
+  const root = useRef<HTMLFormElement>(null);
+  // A popover, not a modal: a click anywhere else keeps what was picked and closes it.
+  const acceptRef = useRef(accept);
+  const cancelRef = useRef(cancel);
+  useEffect(() => {
+    acceptRef.current = accept;
+    cancelRef.current = cancel;
+  });
+  useEffect(() => {
+    const onDown = (event: PointerEvent) => {
+      if (root.current && event.target instanceof Node && !root.current.contains(event.target)) acceptRef.current();
+    };
+    // Escape cancels wherever the focus is (the fields stop key events from bubbling).
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.stopPropagation();
+        cancelRef.current();
+      }
+    };
+    document.addEventListener('pointerdown', onDown, true);
+    document.addEventListener('keydown', onKey, true);
+    return () => {
+      document.removeEventListener('pointerdown', onDown, true);
+      document.removeEventListener('keydown', onKey, true);
+    };
+  }, []);
+
   const square = useRef<HTMLDivElement>(null);
   const hueBar = useRef<HTMLDivElement>(null);
   const dragSquare = (event: React.PointerEvent) => {
@@ -78,9 +120,12 @@ function PickerForm({ target, original, hasSelection, session }: { target: 'fill
   const cmyk = convertColor(color, 'cmyk').values;
 
   return (
-    <div className="vc-dialog__backdrop" data-testid="color-picker">
+    <>
       <form
-        className="vc-dialog vc-picker"
+        ref={root}
+        data-testid="color-picker"
+        style={placeBeside(anchor)}
+        className="vc-dialog vc-picker vc-popover"
         role="dialog"
         aria-label={t('picker.title')}
         onSubmit={(event) => {
@@ -176,7 +221,7 @@ function PickerForm({ target, original, hasSelection, session }: { target: 'fill
           </button>
         </div>
       </form>
-    </div>
+    </>
   );
 }
 

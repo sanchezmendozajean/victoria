@@ -46,7 +46,7 @@ export function PaintWidget({ size = 36, testId = 'paint-widget' }: { size?: num
         data-testid={`${testId}-stroke`}
         data-active={active === 'stroke'}
         onClick={() => setActive('stroke')}
-        onDoubleClick={() => openPicker('stroke')}
+        onDoubleClick={(e) => openPicker('stroke', e.currentTarget)}
         {...tip(t('toolbar.stroke'), 'X')}
       />
       <div
@@ -55,7 +55,7 @@ export function PaintWidget({ size = 36, testId = 'paint-widget' }: { size?: num
         data-testid={`${testId}-fill`}
         data-active={active === 'fill'}
         onClick={() => setActive('fill')}
-        onDoubleClick={() => openPicker('fill')}
+        onDoubleClick={(e) => openPicker('fill', e.currentTarget)}
         {...tip(t('toolbar.fill'), 'X')}
       />
       <button type="button" className="vc-paintwidget__swap" data-testid={`${testId}-swap`} {...tip(t('toolbar.swap'), formatAccelerator(SHORTCUTS['paint.swap'], os))} onClick={swapPaints}>

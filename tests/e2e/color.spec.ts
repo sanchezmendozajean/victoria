@@ -144,6 +144,28 @@ test.describe('colour, stroke and panels (phase 6)', () => {
     await expectPixel(page, -100, -20, [0, 0, 255]);
   });
 
+  test('colour picker is a popover: Escape cancels, a click elsewhere keeps the colour', async () => {
+    const { page } = ctx;
+    await rectangle(page, -150, -60, -50, 20);
+    await page.getByTestId('paint-widget-fill').dblclick();
+    const popover = page.getByTestId('color-picker');
+    await expect(popover).toBeVisible();
+    const chip = (await page.getByTestId('paint-widget-fill').boundingBox())!;
+    const box = (await popover.boundingBox())!;
+    expect(box.x + box.width <= chip.x || box.x >= chip.x + chip.width).toBe(true); // beside the chip, not over it
+    await page.getByTestId('picker-hex').fill('123456');
+    await page.keyboard.press('Enter');
+    await page.keyboard.press('Escape');
+    await expect(popover).toHaveCount(0);
+    await expectPixel(page, -100, -20, [255, 255, 255]);
+    await page.getByTestId('paint-widget-fill').dblclick();
+    await page.getByTestId('picker-hex').fill('FF00FF');
+    await page.keyboard.press('Enter');
+    await page.getByTestId('control-bar').click({ position: { x: 4, y: 4 } }); // outside the popover
+    await expect(popover).toHaveCount(0);
+    await expectPixel(page, -100, -20, [255, 0, 255]);
+  });
+
   test('Swatches: the basic library applies colours, and a global swatch updates every object that uses it', async () => {
     const { page } = ctx;
     await rectangle(page, -150, -60, -50, 20);

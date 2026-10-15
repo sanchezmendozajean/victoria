@@ -81,7 +81,7 @@ interface UiState {
   /** Fill and stroke of the next object drawn (and what the toolbar shows with nothing selected). */
   newLook: Appearance;
   /** Colour picker dialog (double click on the fill or stroke chip). */
-  colorPicker: 'fill' | 'stroke' | null;
+  colorPicker: { target: 'fill' | 'stroke'; anchor: { left: number; top: number; right: number; bottom: number } } | null;
   /** Layer that receives new objects when nothing is selected, per Space (Layers panel). */
   activeLayer: Record<string, string>;
   /** Which of fill and stroke the colour controls edit. */
@@ -103,7 +103,8 @@ interface UiState {
   closeTransformDialog(): void;
   setNewLook(look: Appearance): void;
   setActiveLayer(spaceId: string, layerId: string): void;
-  openColorPicker(target: 'fill' | 'stroke'): void;
+  /** Opens the colour popover next to `anchor` (the chip that was clicked). */
+  openColorPicker(target: 'fill' | 'stroke', anchor: Element): void;
   closeColorPicker(): void;
   setActivePaint(target: 'fill' | 'stroke'): void;
   setKeyObject(id: string | null): void;
@@ -192,7 +193,10 @@ export const useUi = create<UiState>()((set, get) => ({
   closeTransformDialog: () => set({ transformDialog: null }),
   setNewLook: (newLook) => set({ newLook }),
   setActiveLayer: (spaceId, layerId) => set((s) => ({ activeLayer: { ...s.activeLayer, [spaceId]: layerId } })),
-  openColorPicker: (colorPicker) => set({ colorPicker, activePaint: colorPicker }),
+  openColorPicker: (target, anchor) => {
+    const r = anchor.getBoundingClientRect();
+    set({ colorPicker: { target, anchor: { left: r.left, top: r.top, right: r.right, bottom: r.bottom } }, activePaint: target });
+  },
   closeColorPicker: () => set({ colorPicker: null }),
   setActivePaint: (activePaint) => set({ activePaint }),
   setKeyObject: (keyObject) => set({ keyObject }),

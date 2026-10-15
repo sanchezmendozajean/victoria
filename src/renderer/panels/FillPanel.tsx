@@ -96,7 +96,7 @@ export function FillPanel() {
           >
             <Icon id="eyedropper" size={16} />
           </button>
-          <button type="button" className="vc-pbutton vc-pbutton--icon" {...tip(t('fill.fullPicker'))} data-testid="fill-open-picker" onClick={() => openPicker(active)}>
+          <button type="button" className="vc-pbutton vc-pbutton--icon" {...tip(t('fill.fullPicker'))} data-testid="fill-open-picker" onClick={(e) => openPicker(active, e.currentTarget)}>
             <Icon id="swatches" size={16} />
           </button>
         </Row>

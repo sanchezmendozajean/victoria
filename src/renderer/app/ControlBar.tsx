@@ -249,7 +249,7 @@ function ControlPaints() {
           setActive(target);
           openPanel('fill');
         }}
-        onDoubleClick={() => openPicker(target)}
+        onDoubleClick={(e) => openPicker(target, e.currentTarget)}
       >
         <Icon id={target} size={14} className="vc-controlbar__muted" />
         <PaintChip paint={paint.mixed ? null : paint.value} mixed={paint.mixed} resources={resources} size={16} />
