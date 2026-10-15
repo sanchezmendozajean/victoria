@@ -133,26 +133,24 @@
   pointer-events: none;
 }
 
-/* Drop-down */
+/* Drop-down: the native select covers the whole control, so every click on it toggles the list. */
 .vc-choice {
   position: relative;
-  display: flex;
-  align-items: center;
   flex: none;
-  gap: 4px;
   height: var(--h-control);
-  padding: 0 6px;
   border: 1px solid var(--border);
   border-radius: var(--radius-control);
   background: var(--bg-input);
   color: var(--text);
 }
 .vc-choice select {
-  flex: 1;
-  min-width: 0;
+  position: absolute;
+  inset: 0;
+  width: 100%;
   height: 100%;
-  padding: 0;
+  padding: 0 20px 0 6px;
   border: 0;
+  border-radius: inherit;
   background: transparent;
   color: var(--text);
   font: inherit;
@@ -161,8 +159,22 @@
   outline: none;
   cursor: pointer;
 }
-.vc-choice > .vc-icon {
+.vc-choice.has-icon select {
+  padding-left: 24px;
+}
+.vc-choice__lead,
+.vc-choice__chevron {
+  position: absolute;
+  top: 50%;
+  margin-top: -6px;
   pointer-events: none;
+}
+.vc-choice__lead {
+  left: 6px;
+}
+.vc-choice__chevron {
+  right: 6px;
+  margin-top: -5px;
 }
 .vc-choice select option {
   background: var(--bg-panel);

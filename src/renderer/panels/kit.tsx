@@ -181,16 +181,8 @@ export function CheckRow({ checked, mixed, onChange, label, testId, disabled }: 
 /** Native select styled as the app's drop-down, with an optional icon on the left. */
 export function Choice<T extends string | number>({ value, options, onChange, icon, mixed, testId, width, label }: { value: T | null; options: ReadonlyArray<{ id: T; label: string }>; onChange(value: T): void; icon?: IconId; mixed?: boolean; testId?: string; width?: number; label: string }) {
   return (
-    <div
-      className="vc-choice"
-      style={width ? { width } : undefined}
-      onClick={(event) => {
-        // The icons and padding around the native select open it too.
-        const select = event.currentTarget.querySelector('select');
-        if (select && event.target !== select) select.showPicker?.();
-      }}
-    >
-      {icon && <Icon id={icon} size={12} className="vc-field__icon" />}
+    <div className={cx('vc-choice', icon && 'has-icon')} style={width ? { width } : undefined}>
+      {icon && <Icon id={icon} size={12} className="vc-field__icon vc-choice__lead" />}
       <select
         value={mixed || value === null ? '' : String(value)}
         aria-label={label}
@@ -207,7 +199,7 @@ export function Choice<T extends string | number>({ value, options, onChange, ic
           </option>
         ))}
       </select>
-      <Icon id="chevron-down" size={10} className="vc-field__icon" />
+      <Icon id="chevron-down" size={10} className="vc-field__icon vc-choice__chevron" />
     </div>
   );
 }
