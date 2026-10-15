@@ -33,7 +33,6 @@ import { ancestorIds, buildRows, planDrop, type DropPosition, type LayerRow } fr
 import { usePanelContext } from './context';
 
 const ROW_HEIGHT = 28;
-const LIST_HEIGHT = 260;
 const DRAG_TYPE = 'application/x-victoria-layerrow';
 
 /** Capas (specs/06): tree with eye, lock, colour bar, name, target and selection square; drag to reorder; layer buttons. */
@@ -47,6 +46,7 @@ export function LayersPanel() {
   const [drop, setDrop] = useState<{ id: string; position: DropPosition } | null>(null);
   const [scroll, setScroll] = useState(0);
   const list = useRef<HTMLDivElement>(null);
+  const [viewHeight, setViewHeight] = useState(260);
   const dragging = useRef<{ kind: 'layer' | 'node'; ids: string[] } | null>(null);
 
   const space = ctx?.space;
@@ -60,6 +60,15 @@ export function LayersPanel() {
     const top = index * ROW_HEIGHT;
     if (top < el.scrollTop || top + ROW_HEIGHT > el.scrollTop + el.clientHeight) el.scrollTop = Math.max(0, top - el.clientHeight / 2);
   };
+  const hasList = space !== undefined;
+  // The list fills the panel: the virtual window follows its real height.
+  useEffect(() => {
+    const el = list.current;
+    if (!el) return;
+    const observer = new ResizeObserver(() => setViewHeight(el.clientHeight || 260));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasList]);
   const pendingReveal = useRef<string | null>(null);
   useEffect(() => {
     if (pendingReveal.current) {
@@ -72,7 +81,6 @@ export function LayersPanel() {
   const { session, selection } = ctx;
   const selected = new Set(selection.ids);
   const active = activeLayerMap[space.id] ?? null;
-  const viewHeight = LIST_HEIGHT;
   const first = Math.max(0, Math.floor(scroll / ROW_HEIGHT) - 6);
   const last = Math.min(rows.length, Math.ceil((scroll + viewHeight) / ROW_HEIGHT) + 6);
 
@@ -306,7 +314,6 @@ export function LayersPanel() {
         className="vc-layers__list"
         role="tree"
         data-testid="layers-list"
-        style={{ height: Math.min(LIST_HEIGHT, Math.max(ROW_HEIGHT, rows.length * ROW_HEIGHT)) }}
         onScroll={(e) => setScroll(e.currentTarget.scrollTop)}
       >
         <div style={{ position: 'relative', height: rows.length * ROW_HEIGHT }}>{rows.slice(first, last).map((row, i) => renderRow(row, first + i))}</div>

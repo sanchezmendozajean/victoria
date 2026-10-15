@@ -510,8 +510,16 @@
 }
 
 /* Layers */
+.vc-layers {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
 .vc-layers__list {
   position: relative;
+  flex: 1;
+  min-height: 56px;
   overflow-x: hidden;
   overflow-y: auto;
   border-bottom: 1px solid var(--border);
