@@ -306,6 +306,7 @@ export function LayersPanel() {
         className="vc-layers__list"
         role="tree"
         data-testid="layers-list"
+        style={{ height: Math.min(LIST_HEIGHT, Math.max(ROW_HEIGHT, rows.length * ROW_HEIGHT)) }}
         onScroll={(e) => setScroll(e.currentTarget.scrollTop)}
       >
         <div style={{ position: 'relative', height: rows.length * ROW_HEIGHT }}>{rows.slice(first, last).map((row, i) => renderRow(row, first + i))}</div>
