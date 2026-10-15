@@ -161,6 +161,9 @@
   outline: none;
   cursor: pointer;
 }
+.vc-choice > .vc-icon {
+  pointer-events: none;
+}
 .vc-choice select option {
   background: var(--bg-panel);
   color: var(--text);
