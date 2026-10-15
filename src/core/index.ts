@@ -37,3 +37,4 @@ export * from './model/gradient';
 export * from './geometry/stroke';
 export * from './io/palettes';
 export * from './layout/align';
+export * from './text';

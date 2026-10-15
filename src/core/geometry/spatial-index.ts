@@ -1,3 +1,4 @@
+import { fontEpoch } from '../text/font';
 import RBush from 'rbush';
 import { multiply } from '../model/matrix';
 import { isLayer } from '../model/queries';
@@ -87,14 +88,16 @@ export class SpaceIndex {
   }
 }
 
-const indexes = new WeakMap<Space, SpaceIndex>();
+const indexes = new WeakMap<Space, { epoch: number; index: SpaceIndex }>();
 
 /** Index of an immutable Space, built once per version of it (Immer keeps unchanged Spaces identical). */
 export function indexFor(space: Space): SpaceIndex {
-  let index = indexes.get(space);
-  if (!index) {
-    index = new SpaceIndex(space);
-    indexes.set(space, index);
+  // Text bounds depend on the loaded fonts: the index is rebuilt when the set of fonts changes.
+  const epoch = fontEpoch();
+  let entry = indexes.get(space);
+  if (!entry || entry.epoch !== epoch) {
+    entry = { epoch, index: new SpaceIndex(space) };
+    indexes.set(space, entry);
   }
-  return index;
+  return entry.index;
 }

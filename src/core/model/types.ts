@@ -160,23 +160,87 @@ export interface ClipGroupNode extends BaseNode {
   children: Node[];
 }
 
-/** specs/07: attributes per range. Only the fields Phase 7 needs first; it will grow there. */
+/**
+ * Attributes of a range of characters (specs/07). Everything after `size` is optional so documents
+ * made before it keep opening (no format bump).
+ */
 export interface TextStyle {
   fontFamily: string;
   fontStyle: string;
+  /** pt */
   size: number;
+  /** Line spacing in pt; absent = auto (120 % of the size). */
+  leading?: number;
+  /** Extra space between characters in thousandths of an em. */
+  tracking?: number;
+  /** Pair kerning: 'auto' (the font's table, default), 'none', or a number of thousandths of an em added to every pair. */
+  kerning?: 'auto' | 'none' | number;
+  /** Horizontal / vertical scale in percent (default 100). */
+  hScale?: number;
+  vScale?: number;
+  /** Baseline shift in pt, positive raises the text. */
+  baselineShift?: number;
+  /** Rotation of every character around its own origin, degrees counter-clockwise. */
+  charRotation?: number;
+  caps?: boolean;
+  smallCaps?: boolean;
+  superscript?: boolean;
+  subscript?: boolean;
+  underline?: boolean;
+  strikethrough?: boolean;
+  language?: string;
 }
 export interface TextRun {
   text: string;
   style: TextStyle;
 }
+
+export interface ParagraphStyle {
+  align?: 'left' | 'center' | 'right' | 'justify' | 'justifyCenter' | 'justifyRight' | 'justifyAll';
+  /** pt */
+  indentLeft?: number;
+  indentRight?: number;
+  /** First-line indent in pt (may be negative). */
+  indentFirst?: number;
+  spaceBefore?: number;
+  spaceAfter?: number;
+  hyphenate?: boolean;
+}
+
+/** A path stored inside a text object: the frame of area text or the line that text on a path follows (local coordinates). */
+export interface TextPath {
+  anchors: Anchor[];
+  closed: boolean;
+}
+
+export type PathTextEffect = 'rainbow' | 'skew' | 'ribbon' | 'stair' | 'gravity';
+
+export interface PathTextOptions {
+  effect: PathTextEffect;
+  /** Which part of the line sits on the path. */
+  align: 'ascender' | 'descender' | 'center' | 'baseline';
+  /** Extra spacing between characters on sharp curves, pt. */
+  spacing: number;
+  /** Text on the other side of the path. */
+  flip: boolean;
+  /** Where the text starts and the limit where it stops, as fractions (0–1) of the path length. */
+  start: number;
+  end: number;
+}
+
 export interface TextNode extends BaseNode {
   type: 'text';
   kind: 'point' | 'area' | 'onPath';
   story: TextRun[];
-  /** Area text: id of the path that bounds it. */
+  /** Style of each paragraph (index = paragraph); missing entries use the defaults. */
+  paragraphs?: ParagraphStyle[];
+  /** Area text: the shape the text flows in (a rectangle for a dragged box). Absent for point text. */
+  frame?: TextPath;
+  /** Text on a path: the path it follows. */
+  path?: TextPath;
+  pathOptions?: PathTextOptions;
+  /** Unused since the frame and the path live inside the object; kept so older documents still validate. */
   areaPathId?: string;
-  /** Text on path: id of the path it follows. */
   pathRef?: string;
 }
 

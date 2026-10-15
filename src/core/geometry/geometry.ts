@@ -5,6 +5,7 @@ import { applyCornerRadii } from './anchors';
 import { subPathBounds, type SubPath } from './path';
 import { inflateRect, transformRect, unionRect, type Rect } from './rect';
 import { shapeSubPaths } from './shapes';
+import { textGeometry, type TextGeometry } from '../text/geometry';
 
 export interface NodeGeometry {
   subpaths: SubPath[];
@@ -17,7 +18,35 @@ const cache = new WeakMap<Node, NodeGeometry | null>();
  * Contours of a leaf object in its local space. Groups and text have none here (text arrives with
  * the text engine in Phase 7). Cached per node: nodes are immutable, so identity is the key.
  */
+const textWrappers = new WeakMap<TextGeometry, NodeGeometry>();
+
+/** Contours of a text object: its glyphs. Cached per layout, which changes when the node or the loaded fonts do. */
+function textNodeGeometry(node: Extract<Node, { type: 'text' }>): NodeGeometry {
+  const g = textGeometry(node);
+  let wrapped = textWrappers.get(g);
+  if (!wrapped) {
+    wrapped = { subpaths: g.subpaths, fillRule: 'nonzero' };
+    textWrappers.set(g, wrapped);
+  }
+  return wrapped;
+}
+
+const textHitWrappers = new WeakMap<TextGeometry, NodeGeometry>();
+
+/** What a click can hit: the line boxes (or the frame) of text, the painted contours of everything else. */
+export function hitGeometry(node: Node): NodeGeometry | null {
+  if (node.type !== 'text') return nodeGeometry(node);
+  const g = textGeometry(node);
+  let wrapped = textHitWrappers.get(g);
+  if (!wrapped) {
+    wrapped = { subpaths: g.boxes.map((poly) => ({ anchors: poly.map((p) => ({ p, in: null, out: null, kind: 'corner' as const })), closed: true })), fillRule: 'nonzero' };
+    textHitWrappers.set(g, wrapped);
+  }
+  return wrapped;
+}
+
 export function nodeGeometry(node: Node): NodeGeometry | null {
+  if (node.type === 'text') return textNodeGeometry(node);
   if (cache.has(node)) return cache.get(node) as NodeGeometry | null;
   let geometry: NodeGeometry | null;
   switch (node.type) {
@@ -72,19 +101,23 @@ const geometricCache = new WeakMap<Node, Rect | null>();
 
 function computeBounds(node: Node, withStroke: boolean): Rect | null {
   const cache = withStroke ? boundsCache : geometricCache;
-  if (cache.has(node)) return cache.get(node) as Rect | null;
+  // Text depends on the loaded fonts, so its bounds are not cached here (textGeometry caches the layout).
+  if (node.type !== 'text' && cache.has(node)) return cache.get(node) as Rect | null;
   let local: Rect | null = null;
   if (node.type === 'group' || node.type === 'clipGroup') {
     // A clip group shows only what the mask (first child) covers.
     const members = node.type === 'clipGroup' ? node.children.slice(0, 1) : node.children;
     for (const child of members) local = unionRect(local, computeBounds(child, withStroke));
+  } else if (node.type === 'text') {
+    local = textGeometry(node).bounds;
+    if (local && withStroke) local = inflateRect(local, strokeInflation(node.appearance));
   } else {
     const geometry = nodeGeometry(node);
     local = geometry ? geometryBounds(geometry) : null;
     if (local && withStroke) local = inflateRect(local, strokeInflation(node.appearance));
   }
   const result = local ? transformRect(node.transform, local) : null;
-  cache.set(node, result);
+  if (node.type !== 'text') cache.set(node, result);
   return result;
 }
 

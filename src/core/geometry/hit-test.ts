@@ -1,7 +1,7 @@
 import { invert } from '../model/matrix';
 import type { Layer, Matrix, Node, Space, Vec2 } from '../model/types';
 import { applyToPoint } from '../model/matrix';
-import { hasFill, nodeGeometry, strokesOf } from './geometry';
+import { hasFill, hitGeometry, nodeGeometry, strokesOf } from './geometry';
 import { distanceToOutline, flattenGeometry, pointInFill } from './hit';
 import { indexFor, type IndexItem } from './spatial-index';
 
@@ -44,7 +44,7 @@ function insideMask(item: IndexItem, p: Vec2, tolerance: number): boolean {
 }
 
 function testItem(item: IndexItem, p: Vec2, tolerance: number): Hit | null {
-  const geometry = nodeGeometry(item.node);
+  const geometry = hitGeometry(item.node);
   if (!geometry) return null;
   const local = toLocal(item.world, p);
   if (!local || local.scale === 0) return null;
