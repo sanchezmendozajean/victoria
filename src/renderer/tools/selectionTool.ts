@@ -394,7 +394,7 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
           { x: s.maxX, y: s.minY },
           { x: s.maxX, y: s.maxY },
           { x: s.minX, y: s.maxY },
-        ].map((p) => rotatePoint(p, box.theta));
+        ].map((p) => rotatePoint(p, box.theta)).map((p) => ({ x: Math.floor(p.x) + 0.5, y: Math.floor(p.y) + 0.5 })); // pixel centres: crisp line, handles share its centre
         ctx.save();
         ctx.lineWidth = 1;
         ctx.strokeStyle = theme.accent;
@@ -405,10 +405,10 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
         ctx.fillStyle = '#ffffff';
         for (const h of Object.values(handlePoints(s))) {
           const p = rotatePoint(h, box.theta);
-          const x = Math.round(p.x) - 3;
-          const y = Math.round(p.y) - 3;
-          ctx.fillRect(x + 0.5, y + 0.5, 7, 7);
-          ctx.strokeRect(x + 0.5, y + 0.5, 7, 7);
+          const x = Math.floor(p.x) + 0.5 - 3;
+          const y = Math.floor(p.y) + 0.5 - 3;
+          ctx.fillRect(x, y, 6, 6);
+          ctx.strokeRect(x, y, 6, 6);
         }
         ctx.restore();
       }
