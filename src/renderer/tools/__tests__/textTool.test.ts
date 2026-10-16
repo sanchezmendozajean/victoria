@@ -114,6 +114,20 @@ describe('Type on a Path', () => {
   });
 });
 
+describe('Type on a Path over a live ellipse', () => {
+  it('clicking the circle puts text on it', () => {
+    const t = createTestHost();
+    const e = t.ellipse(0, 0, 200, 200);
+    const tool = createTextTool('tool-type-on-path', 'onPath');
+    click(tool, t, 100, 2); // just inside the top of the circle
+    typed(tool, t, 'Hi');
+    const list = texts(t);
+    expect(list).toHaveLength(1);
+    expect(list[0]!.kind).toBe('onPath');
+    expect(t.space().layers[0]!.children.some((c) => c.id === e.id)).toBe(false);
+  });
+});
+
 describe('Area Type', () => {
   it('clicking a closed path flows text inside it', () => {
     const t = createTestHost();

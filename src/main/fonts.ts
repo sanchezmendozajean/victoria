@@ -15,6 +15,8 @@ const u32 = (b: Buffer, o: number) => b.readUInt32BE(o);
 
 interface NameEntry {
   platform: number;
+  /** Windows language id (0x0409 = English US); only meaningful for platform 3. */
+  lang: number;
   id: number;
   value: string;
 }
@@ -29,6 +31,7 @@ export function parseNameTable(table: Buffer): NameEntry[] {
     const at = 6 + i * 12;
     if (at + 12 > table.length) break;
     const platform = u16(table, at);
+    const lang = u16(table, at + 4);
     const id = u16(table, at + 6);
     const length = u16(table, at + 8);
     const offset = storage + u16(table, at + 10);
@@ -37,14 +40,17 @@ export function parseNameTable(table: Buffer): NameEntry[] {
     let value = '';
     if (platform === 3 || platform === 0) for (let k = 0; k + 1 < raw.length; k += 2) value += String.fromCharCode(raw.readUInt16BE(k));
     else value = raw.toString('latin1');
-    out.push({ platform, id, value });
+    out.push({ platform, lang, id, value });
   }
   return out;
 }
 
-/** Family and style of a font from its name entries: typographic names (16/17) win over the legacy ones (1/2). */
+/**
+ * Family and style of a font from its name entries: typographic names (16/17) win over the legacy ones (1/2),
+ * and English wins over localized ones, so a document made on a Spanish Windows still finds "Bold" on Linux.
+ */
 export function familyAndStyle(entries: readonly NameEntry[]): { family: string; style: string } | null {
-  const pick = (id: number): string | undefined => (entries.find((e) => e.id === id && e.platform === 3) ?? entries.find((e) => e.id === id))?.value.trim() || undefined;
+  const pick = (id: number): string | undefined => (entries.find((e) => e.id === id && e.platform === 3 && (e.lang & 0xff) === 0x09) ?? entries.find((e) => e.id === id && e.platform === 3) ?? entries.find((e) => e.id === id))?.value.trim() || undefined;
   const family = pick(16) ?? pick(1);
   if (!family) return null;
   return { family, style: pick(17) ?? pick(2) ?? 'Regular' };

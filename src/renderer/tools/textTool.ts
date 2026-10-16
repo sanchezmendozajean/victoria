@@ -436,6 +436,11 @@ export function createTextTool(id: ToolId, mode: TextToolMode): Tool {
         return;
       }
       if (s.kind === 'select') state = { kind: 'idle' };
+      // The browser moves focus to the clicked canvas after the press: take it back for the hidden input.
+      if (editing || pending) {
+        host.setTextInput({ active: true });
+        placeInput(host);
+      }
     },
 
     onTextInput(text, host) {

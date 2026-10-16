@@ -5,7 +5,7 @@ import { afterAll, describe, expect, it } from 'vitest';
 import { familyAndStyle, parseFcList, parseNameTable, readListedFont, scanFontDirectories } from './fonts';
 
 /** A `name` table with Windows (UTF-16BE) entries. */
-function nameTable(entries: Array<{ id: number; value: string; platform?: number }>): Buffer {
+function nameTable(entries: Array<{ id: number; value: string; platform?: number; lang?: number }>): Buffer {
   const strings = entries.map((e) => (e.platform === 1 ? Buffer.from(e.value, 'latin1') : Buffer.from(e.value, 'utf16le').swap16()));
   const header = Buffer.alloc(6 + entries.length * 12);
   header.writeUInt16BE(0, 0);
@@ -15,7 +15,7 @@ function nameTable(entries: Array<{ id: number; value: string; platform?: number
   entries.forEach((e, i) => {
     const at = 6 + i * 12;
     header.writeUInt16BE(e.platform ?? 3, at);
-    header.writeUInt16BE(e.platform === 1 ? 0 : 0x409, at + 4);
+    header.writeUInt16BE(e.lang ?? (e.platform === 1 ? 0 : 0x409), at + 4);
     header.writeUInt16BE(e.id, at + 6);
     header.writeUInt16BE((strings[i] as Buffer).length, at + 8);
     header.writeUInt16BE(offset, at + 10);
@@ -61,8 +61,8 @@ describe('name tables', () => {
   it('reads UTF-16 and Mac Roman strings', () => {
     const entries = parseNameTable(nameTable([{ id: 1, value: 'Árbol' }, { id: 2, value: 'Bold', platform: 1 }]));
     expect(entries).toEqual([
-      { platform: 3, id: 1, value: 'Árbol' },
-      { platform: 1, id: 2, value: 'Bold' },
+      { platform: 3, lang: 0x409, id: 1, value: 'Árbol' },
+      { platform: 1, lang: 0, id: 2, value: 'Bold' },
     ]);
     expect(parseNameTable(Buffer.alloc(2))).toEqual([]);
   });
@@ -71,6 +71,9 @@ describe('name tables', () => {
     expect(familyAndStyle(parseNameTable(nameTable([{ id: 1, value: 'Foo Light' }, { id: 2, value: 'Regular' }, { id: 16, value: 'Foo' }, { id: 17, value: 'Light' }])))).toEqual({ family: 'Foo', style: 'Light' });
     expect(familyAndStyle(parseNameTable(nameTable([{ id: 1, value: 'Foo' }])))).toEqual({ family: 'Foo', style: 'Regular' });
     expect(familyAndStyle([])).toBeNull();
+    // Localized names (Spanish Windows lists "Negreta") lose to the English ones.
+    const localized = nameTable([{ id: 1, value: 'Arial', lang: 0x0c0a }, { id: 2, value: 'Negreta', lang: 0x0c0a }, { id: 1, value: 'Arial' }, { id: 2, value: 'Bold' }]);
+    expect(familyAndStyle(parseNameTable(localized))).toEqual({ family: 'Arial', style: 'Bold' });
   });
 });
 

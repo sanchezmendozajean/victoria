@@ -1,5 +1,26 @@
 # Changelog
 
+## Fase 7 — Texto (en revisión)
+
+### Añadido
+- **Herramientas de texto**: Texto (T, clic = punto, arrastre = área), Texto de área (clic en trazado cerrado) y Texto en trazado (clic en trazado abierto o cerrado). Se escribe en una entrada oculta del lienzo (acentos, IME y portapapeles funcionan); cursor parpadeante, selección por arrastre, doble clic = palabra, triple = párrafo, flechas / Inicio / Fin / Ctrl+flechas con Mayús, Alt+←→ tracking, Alt+↑↓ interlineado, Ctrl+Mayús+< > tamaño, copiar/cortar/pegar con estilo. Una ráfaga de escritura es un paso de deshacer; Esc vuelve a Selección.
+- **Motor de texto** en `core/text`: layout (párrafos, ajuste de línea, kerning, tracking, escalas, versalitas, super/subíndice, subrayado, tachado, sangrías, espaciado, justificación), texto en trazado con los 5 efectos, alineación, espaciado y voltear, geometría compartida, **Crear contornos** (Mayús+Ctrl+O).
+- **Fuentes del sistema**: listado en el proceso principal (tablas `name` de sfnt, fontconfig en Linux), carga bajo demanda con opentype.js; se resuelven por familia + estilo.
+- **Paneles Carácter (Ctrl+T) y Párrafo (Alt+Ctrl+T)** con selector de fuente (búsqueda, vista previa en la propia fuente, favoritas y recientes), estilo, tamaño, interlineado, kerning, tracking, escalas, línea base, rotación, mayúsculas/versalitas/super/subíndice/subrayado/tachado, idioma, alineación y justificación, sangrías, espaciado y guionado. Valores mixtos en blanco.
+- **Selección**: doble clic sobre texto lo edita; círculo de conversión punto ↔ área; tres corchetes del texto en trazado (inicio, fin, centro que desliza y voltea); escalar un texto de área cambia el marco, no la fuente.
+- Menú Texto: Crear contornos y Opciones de texto en trazado (diálogo con efecto, alineación, espaciado y voltear).
+- Pruebas: 633 unitarias en total (la fase añade 19 en el cliente y 40 en el core) y 5 e2e de texto con fuentes reales del sistema.
+
+### Decisiones tomadas (detalladas en la spec 07 · «Reglas añadidas en la Fase 7»)
+- El marco o trazado viaja dentro del objeto y sustituye al trazado original; un texto vacío se elimina; Esc vuelve a Selección.
+- Se prefieren los nombres de fuente en inglés (Windows en español lista «Negreta»).
+- Los paneles actúan sobre el rango editado, los siguientes caracteres (cursor sin selección), los textos seleccionados o los valores por defecto.
+
+### Pendiente
+- Opciones de texto de área (columnas, márgenes, alineación vertical): el menú está desactivado. Ligaduras. Diálogo «Buscar fuente» (solo hay resaltado rosa). Incrustar fuentes en `.vict`. Sección de texto en Propiedades. El guionado es una heurística simple.
+- **Paridad con SVG y PDF**: los exportadores son de la Fase 11; hoy se verifica por geometría compartida (lienzo y contornos), no con archivos exportados.
+- Sin verificar: Linux (listado con fontconfig y carga de fuentes), el instalador de Windows (`spawn EPERM`); rendimiento solo medido en Windows.
+
 ## Fase 6 — Color, trazo y paneles principales (en revisión)
 
 ### Añadido

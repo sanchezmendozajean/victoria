@@ -23,8 +23,8 @@ export function faceOf(font: opentype.Font): FontFace {
       let data = cache.get(ch);
       if (!data) {
         const g = font.charToGlyph(ch);
-        // opentype.js commands are in font units with Y up, which is what the core expects.
-        data = { advance: g.advanceWidth ?? font.unitsPerEm / 2, commands: g.path.commands.map((c) => ({ ...c }) as unknown as PathCmd) };
+        // opentype.js commands are in font units with Y up, which is what the core expects (its `type` is our `t`).
+        data = { advance: g.advanceWidth ?? font.unitsPerEm / 2, commands: g.path.commands.map(({ type, ...rest }) => ({ ...rest, t: type }) as unknown as PathCmd) };
         cache.set(ch, data);
       }
       return data;

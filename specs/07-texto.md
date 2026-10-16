@@ -44,3 +44,22 @@
 - Menú de fuentes con vista previa ("Victoria" en la propia fuente), búsqueda, filtro por favoritas, recientes.
 - Fuentes faltantes al abrir: diálogo "Buscar fuente" con sustitución; se marcan con resaltado rosa (como Illustrator).
 - Opción de incrustar fuentes en `.vict` (solo si la licencia `fsType` lo permite).
+
+## Reglas añadidas en la Fase 7
+
+- **El marco viaja con el objeto.** Un texto de área lleva su marco (`TextNode.frame`) y uno en trazado su trazado (`TextNode.path`, `pathOptions`) dentro del propio nodo, en coordenadas locales; al crearlo sobre un trazado o forma existente, ese objeto se **sustituye** por el texto. Deshacer lo devuelve.
+- **Un solo paso de deshacer por ráfaga de escritura.** Crear el objeto y escribir el primer bloque es un paso; cada ráfaga posterior (hasta que el cursor se mueve, se cambia la selección o se pulsa un atributo) es otro. Los comandos de texto se fusionan con la clave `text.edit:<id>:<ráfaga>`.
+- **Esc termina la edición y vuelve a Selección** (Illustrator hace lo mismo). Un texto que queda vacío se elimina.
+- **Doble clic con Selección sobre un texto** lo edita con el cursor donde se hizo clic. Con un texto de punto o de área seleccionado, el círculo a la derecha del cuadro (doble clic) lo convierte en área o punto; con un texto en trazado se muestran los tres corchetes (inicio, fin, centro). Arrastrar el central a más de 6 px del trazado, al otro lado, voltea el texto; el rango se mide desde el otro extremo al voltear.
+- **Escalar.** Texto de punto: la escala pasa al tamaño de fuente (y a la escala horizontal si no es uniforme). Texto de área: la escala pasa a los anclajes del marco y la fuente no cambia. En ambos la matriz del objeto queda sin escala.
+- **Panel Carácter / Párrafo.** Actúan, por orden: sobre el rango seleccionado del texto en edición; con el cursor sin selección, sobre los **siguientes caracteres escritos** (`pendingTextStyle`, no crea paso de deshacer); sobre los textos seleccionados; y sin nada seleccionado, sobre los valores por defecto del próximo texto. Un valor distinto entre rangos se muestra vacío.
+- **Fuentes por nombre.** Familia y estilo se leen de la tabla `name` y se prefieren los nombres en inglés (un Windows en español lista «Negreta» donde Linux dice «Bold»). Si el estilo pedido no existe se usa el regular de la familia; si la familia falta, el motor usa glifos de caja y el selector marca la fuente en rosa.
+- **Paridad lienzo = contornos = exportación.** El lienzo, *Crear contornos* y los exportadores (Fase 11) consumen la misma `textGeometry(node)`; la prueba `core/text/parity.test.ts` comprueba, sobre un círculo y una onda, que cada glifo está sobre el trazado y que los contornos creados son idénticos a lo pintado.
+- **Crear contornos** deja seleccionado el grupo resultante, con el nombre y la apariencia del texto.
+
+### Pendiente de la Fase 7 (no implementado)
+- Opciones de texto de área (filas, columnas, medianil, margen, alineación vertical) y encadenado: la entrada de menú existe y está desactivada.
+- Ligaduras (`liga`); el guionado es una heurística simple de corte.
+- Diálogo «Buscar fuente» con sustitución (hoy solo el resaltado rosa) e incrustación de fuentes en `.vict`.
+- Sección de texto en el panel Propiedades.
+- Archivos SVG y PDF reales: son de la Fase 11; la paridad con ellos se comprueba por la geometría compartida.
