@@ -10,6 +10,7 @@ import { createHandTool } from './handTool';
 import { createLassoTool } from './lassoTool';
 import { createPenTool } from './penTool';
 import { createSelectionTool } from './selectionTool';
+import { createShapeBuilderTool } from './shapeBuilderTool';
 import { createShapeTool } from './shapeTools';
 import { createTextTool } from './textTool';
 import { createTransformTool } from './transformTools';
@@ -57,6 +58,8 @@ export function createTool(id: ToolId): Tool {
       return createScissorsTool();
     case 'tool-eyedropper':
       return createEyedropperTool();
+    case 'tool-shape-builder':
+      return createShapeBuilderTool();
     case 'tool-gradient':
       return createGradientTool();
     case 'tool-type':

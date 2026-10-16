@@ -125,6 +125,9 @@ export function computePieces(op: PathfinderOp, operands: readonly Operand[]): {
   }
 }
 
+/** How many objects with contours the selection holds (the operations need at least two). */
+export const operandCount = (space: Space, ids: readonly string[]): number => gather(space, new Set(ids)).operands.length;
+
 /**
  * Applies a pathfinder operation to the selected objects. Returns null when it cannot apply (fewer than two
  * objects with contours, or the geometry engine failed). The result replaces the topmost object in the z-order.

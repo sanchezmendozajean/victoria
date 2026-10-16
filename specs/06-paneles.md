@@ -96,6 +96,15 @@ X, Y, An, Al con punto de referencia (cuadrícula 3×3), ángulo, distorsión, e
 
 Modos de forma: Unir, Menos frente, Intersecar, Excluir (Alt+clic = crear como Buscatrazos vivo / modificador), botón Expandir. Buscatrazos: Dividir, Recortar, Combinar, Cortar, Contorno, Menos detrás.
 
+### Reglas añadidas en la Fase 8
+- **Motor**: `core/geometry/booleans.ts` con paper.js sin interfaz (dependencia de desarrollo, empaquetada en el renderer); las curvas se parten en las intersecciones y **siguen siendo Béziers**. Las órdenes viven en `core/commands/pathfinder.ts` y cada operación es **un solo paso de deshacer**.
+- **Operandos**: las hojas con contorno de los objetos seleccionados, en orden de pintado (los grupos aportan sus hojas), con la geometría tomada en coordenadas del Espacio; hacen falta **al menos dos**. El resultado ocupa el lugar del objeto más alto y queda seleccionado.
+- **Aspecto del resultado**: Unir, Intersecar y Excluir toman el del objeto superior; Menos frente el del inferior; Menos detrás el del superior. Dividir conserva el aspecto completo del objeto más alto que cubre cada región. Recortar, Combinar y Cortar dejan solo el relleno (sin trazos). Contorno produce trazos de 0,25 pt del color del relleno de origen.
+- **Resultados**: los modos de forma dejan un objeto por pieza disjunta (un trazado compuesto si hay huecos); Dividir, Recortar, Combinar, Cortar y Contorno devuelven un **grupo**. Intersecar objetos que no se tocan los elimina, como Illustrator.
+- **Combinar** une las piezas que se tocan y tienen el mismo relleno tras Recortar; las que no se tocan siguen separadas.
+- **Contorno** duplica los bordes compartidos entre regiones (Illustrator los fusiona): pendiente de afinar.
+- **Pendiente hasta la Fase 9**: Alt+clic (Buscatrazos vivo) aplica la operación normal, y «Expandir» está desactivado, porque aún no existen los modificadores.
+
 ## Calco de imagen
 
 Ver `08-imagenes-vectorizar-imprimir.md`.

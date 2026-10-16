@@ -1,5 +1,19 @@
 # Changelog
 
+## Fase 8 — Construcción de formas (en revisión)
+
+### Añadido
+- **Panel Buscatrazos** (Mayús+Ctrl+F9): Unir, Menos frente, Intersecar, Excluir, Dividir, Recortar, Combinar, Cortar, Contorno y Menos detrás sobre la selección (grupos incluidos, objetos transformados), cada uno en un paso de deshacer.
+- **Creador de formas (Mayús+M)**: regiones de la selección con resaltado de puntos, clic = regiones independientes, arrastrar = unir, Alt = eliminar.
+- **Motor booleano** con **paper.js** en `core/geometry/booleans.ts`, que mantiene las curvas Bézier (unir dos círculos da 8 nodos, no un polígono; tres círculos dan las 7 regiones del diagrama de Venn).
+- Dependencia nueva: `paper` 0.12 (MIT), ya prevista en el stack; el core sigue probándose en Node.
+- Pruebas: 646 → 667 unitarias (la fase añade 21) y 3 e2e nuevos.
+
+### Pendiente
+- Buscatrazos vivo (Alt+clic) y «Expandir»: dependen de los modificadores (Fase 9); hoy Alt+clic aplica la operación normal.
+- Contorno duplica los bordes compartidos; opciones del Creador de formas y eliminar aristas abiertas con Alt.
+- Sin verificar: Linux y el instalador de Windows; el rendimiento solo se midió en Windows (20 círculos solapados → 111 regiones en ~0,2 s); con cientos de objetos puede notarse.
+
 ## Lector de EPS simples (entre las fases 7 y 8)
 
 ### Añadido

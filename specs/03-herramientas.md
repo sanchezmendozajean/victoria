@@ -135,6 +135,13 @@ Ver `07-texto.md`. Resumen:
 7. Opciones (doble clic en el ícono): detección de huecos, considerar trazados abiertos como cerrados, modo de color, resaltar trazado al editar.
 8. Implementación: `core/geometry/planar.ts` — aplanar curvas con tolerancia adaptativa solo para *detectar intersecciones*; los resultados deben conservar Béziers originales (dividir curvas en los parámetros t de intersección, no poligonizar).
 
+### Reglas añadidas en la Fase 8
+- Las regiones son la **disposición plana** de las hojas con contorno de la selección (Dividir de `core/commands/pathfinder.ts`); cada región recuerda qué objetos la cubren y toma el aspecto del más alto.
+- **Clic** en una región: toda la selección se convierte en sus regiones (cada una, un objeto independiente) en un paso de deshacer. **Arrastrar** por varias: las une en una (la primera región da el aspecto) y el resto quedan sueltas. **Alt + clic/arrastrar**: elimina las regiones tocadas.
+- El resultado de cada edición queda seleccionado y la disposición se recalcula con él, así que se puede seguir editando.
+- Resaltado: región bajo el cursor con trama de puntos grises y contorno en el acento; durante el arrastre, las regiones visitadas y la línea roja del recorrido (Alt: contorno rojo).
+- **Pendiente**: opciones de la herramienta (huecos, trazados abiertos como cerrados, modo de color), eliminar aristas abiertas con Alt, y elegir como color la muestra activa.
+
 ## Tijeras (C)
 
 Clic sobre un segmento o nodo divide el trazado ahí (dos nodos superpuestos).

@@ -27,3 +27,12 @@ export function penCursor(badge: PenBadge): string {
   const svg = "<svg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'>" + layer('white', 4) + layer('black', 1.5) + '</svg>';
   return `url("data:image/svg+xml,${encodeURIComponent(svg)}") 3 25, crosshair`;
 }
+
+/** Arrow with a badge: "+" merges regions (click or drag), "−" deletes them (Alt). Tip at the upper left. */
+export function shapeBuilderCursor(mode: 'merge' | 'delete'): string {
+  const arrow = "<path d='M4 3l0 15 4-4 3 7 3-1.5-3-6.5 6 0z'/>";
+  const badge = mode === 'merge' ? "<path d='M20 6v8M16 10h8'/>" : "<path d='M16 10h8'/>";
+  const layer = (stroke: string, width: number) => `<g stroke='${stroke}' stroke-width='${width}' fill='${stroke === 'black' ? 'white' : 'none'}' stroke-linecap='round' stroke-linejoin='round'>${arrow}${badge}</g>`;
+  const svg = "<svg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'>" + layer('white', 4) + layer('black', 1.4) + '</svg>';
+  return `url("data:image/svg+xml,${encodeURIComponent(svg)}") 4 3, crosshair`;
+}

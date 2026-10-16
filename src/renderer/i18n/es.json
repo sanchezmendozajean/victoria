@@ -703,5 +703,19 @@
   "doc.epsItem.pattern": "motivos",
   "doc.epsItem.operator": "operadores no admitidos",
   "doc.epsItem.halted": "parte del contenido",
-  "doc.epsItem.limit": "contenido por exceso de tamaño"
+  "doc.epsItem.limit": "contenido por exceso de tamaño",
+  "pf.shapeModes": "Modos de forma",
+  "pf.pathfinders": "Buscatrazos",
+  "pf.unite": "Unir",
+  "pf.minusFront": "Menos frente",
+  "pf.intersect": "Intersecar",
+  "pf.exclude": "Excluir",
+  "pf.divide": "Dividir",
+  "pf.trim": "Recortar",
+  "pf.merge": "Combinar",
+  "pf.crop": "Cortar",
+  "pf.outline": "Contorno",
+  "pf.minusBack": "Menos detrás",
+  "pf.expand": "Expandir",
+  "pf.expandTip": "Expandir: disponible con los modificadores (Fase 9), cuando existan los Buscatrazos vivos"
 }
