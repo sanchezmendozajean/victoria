@@ -19,6 +19,7 @@ export * from './geometry/edit';
 export * from './geometry/anchors';
 export * from './geometry/fit';
 export * from './geometry/marquee';
+export * from './geometry/booleans';
 export * from './snap/snap';
 export * from './model/transforms';
 export { evaluateExpression } from './expression/evaluate';

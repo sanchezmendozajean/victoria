@@ -10,3 +10,4 @@ export * from './node';
 export * from './resources';
 export * from './appearance';
 export * from './text';
+export * from './pathfinder';
