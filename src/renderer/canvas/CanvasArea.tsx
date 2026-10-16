@@ -88,6 +88,12 @@ export function CanvasArea() {
         consumePendingTextStyle: () => useUi.getState().setPendingTextStyle(null),
         onTextEditing: (editing) => useUi.getState().setTextEditing(editing),
         onSwitchTool: (tool) => useUi.getState().setActiveTool(tool),
+        onTextEditRequest: (request) => useUi.getState().setTextEditRequest(request),
+        takeTextEditRequest: () => {
+          const request = useUi.getState().textEditRequest;
+          if (request) useUi.getState().setTextEditRequest(null);
+          return request;
+        },
         onTextInput: ({ active, at }) => {
           const input = inputRef.current;
           if (!input) return;

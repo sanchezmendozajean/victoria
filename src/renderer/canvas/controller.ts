@@ -94,6 +94,8 @@ export interface CanvasCallbacks {
   onTextEditing(editing: { id: string; from: number; to: number } | null): void;
   onTextInput(state: { active: boolean; at?: Vec2 }): void;
   onSwitchTool(tool: ToolId): void;
+  onTextEditRequest(request: { id: string; at: Vec2 } | null): void;
+  takeTextEditRequest(): { id: string; at: Vec2 } | null;
   keyObject(): { mode: boolean; id: string | null };
   activeLayer(spaceId: string): string | null;
   scaleStrokes(): boolean;
@@ -403,6 +405,12 @@ export class CanvasController implements ToolHost, CanvasApi {
   setTextInput(state: { active: boolean; at?: Vec2 }): void {
     this.callbacks.onTextInput(state);
   }
+  requestTextEdit(request: { id: string; at: Vec2 }): void {
+    this.callbacks.onTextEditRequest(request);
+  }
+  takeTextEditRequest(): { id: string; at: Vec2 } | null {
+    return this.callbacks.takeTextEditRequest();
+  }
   switchTool(tool: ToolId): void {
     this.callbacks.onSwitchTool(tool);
   }
@@ -536,6 +544,7 @@ export class CanvasController implements ToolHost, CanvasApi {
     this.activeGestureTool?.cancel?.(this);
     this.tool.cancel?.(this);
     this.tool = createTool(id);
+    this.tool.onActivate?.(this);
     this.hover = null;
     this.updateCursor();
   }

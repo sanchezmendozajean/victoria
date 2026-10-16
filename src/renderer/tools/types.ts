@@ -89,6 +89,9 @@ export interface ToolHost {
   /** Focuses (or releases) the hidden input that receives typing, accents and IME, placed at `at` (screen px). */
   setTextInput(state: { active: boolean; at?: Vec2 }): void;
   switchTool(tool: ToolId): void;
+  /** Asks the Type tool (activated next) to start editing a text object, with the caret at a document point. */
+  requestTextEdit(request: { id: string; at: Vec2 }): void;
+  takeTextEditRequest(): { id: string; at: Vec2 } | null;
   /** Which of fill and stroke the colour controls (and the Gradient tool) act on. */
   readonly activePaint: 'fill' | 'stroke';
   /** Layer that receives new objects: the layer of the selection, else the topmost unlocked one. */
@@ -112,6 +115,8 @@ export interface Tool {
   onKeyDown?(event: ToolKeyEvent, host: ToolHost): boolean;
   /** Space held: true while a gesture wants it for itself (Pen, shapes: move what is being drawn) instead of the temporary Hand. */
   wantsSpace?(): boolean;
+  /** Called right after the tool becomes the active one. */
+  onActivate?(host: ToolHost): void;
   /** True while the tool is editing text: the canvas keeps the hidden text input focused. */
   readonly editingText?: boolean;
   /** Text typed (or composed) into the hidden input. */

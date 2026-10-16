@@ -80,18 +80,35 @@ export const transformNodes = (spaceId: string, ids: readonly string[], matrix: 
       const found = locateNode(space, id);
       if (!found) continue;
       found.node.transform = multiply(matrix, found.node.transform);
-      if (found.node.type === 'text' && found.node.kind === 'point') bakeTextScale(found.node as Draft<TextNode>);
+      if (found.node.type === 'text' && (found.node.kind === 'point' || found.node.kind === 'area')) bakeTextScale(found.node as Draft<TextNode>);
     }
   },
 });
 
-/** Point text keeps its transform free of scale: the scale goes into the font size and the horizontal scale (as Illustrator does). */
+/**
+ * Point and area text keep their transform free of scale. Point text puts it into the font size and the
+ * horizontal scale; area text scales its frame instead and leaves the font alone (as Illustrator does).
+ */
 function bakeTextScale(node: Draft<TextNode>): void {
   const m = node.transform;
   const sx = Math.hypot(m[0], m[1]);
   const sy = Math.hypot(m[2], m[3]);
   if (sx === 0 || sy === 0 || (Math.abs(sx - 1) < 1e-9 && Math.abs(sy - 1) < 1e-9)) return;
   node.transform = [m[0] / sx, m[1] / sx, m[2] / sy, m[3] / sy, m[4], m[5]];
+  if (node.kind === 'area' && node.frame) {
+    const scale = (p: { x: number; y: number } | null) => {
+      if (p) {
+        p.x *= sx;
+        p.y *= sy;
+      }
+    };
+    for (const a of node.frame.anchors) {
+      scale(a.p);
+      scale(a.in);
+      scale(a.out);
+    }
+    return;
+  }
   for (const run of node.story) {
     run.style.size *= sy;
     if (run.style.leading !== undefined) run.style.leading *= sy;

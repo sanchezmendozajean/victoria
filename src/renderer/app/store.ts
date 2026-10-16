@@ -90,6 +90,7 @@ interface UiState {
   pendingTextStyle: Partial<TextStyle> | null;
   /** The text being edited on the canvas, with its selection (null when none). */
   textEditing: { id: string; from: number; to: number } | null;
+  textEditRequest: { id: string; at: Vec2 } | null;
   /** Which of fill and stroke the colour controls edit. */
   activePaint: 'fill' | 'stroke';
   /** Align panel: the object the others align to when "Alinear a objeto clave" is chosen. */
@@ -113,6 +114,7 @@ interface UiState {
   setParagraphStyle(patch: Partial<ParagraphStyle>): void;
   setPendingTextStyle(patch: Partial<TextStyle> | null): void;
   setTextEditing(editing: { id: string; from: number; to: number } | null): void;
+  setTextEditRequest(request: { id: string; at: Vec2 } | null): void;
   setActiveLayer(spaceId: string, layerId: string): void;
   /** Opens the colour popover next to `anchor` (the chip that was clicked). */
   openColorPicker(target: 'fill' | 'stroke', anchor: Element): void;
@@ -193,6 +195,7 @@ export const useUi = create<UiState>()((set, get) => ({
   paragraphStyle: {},
   pendingTextStyle: null,
   textEditing: null,
+  textEditRequest: null,
   activeLayer: {},
   activePaint: 'fill',
   keyObject: null,
@@ -229,6 +232,7 @@ export const useUi = create<UiState>()((set, get) => ({
     }),
   setPendingTextStyle: (pendingTextStyle) => set({ pendingTextStyle }),
   setTextEditing: (textEditing) => set({ textEditing }),
+  setTextEditRequest: (textEditRequest) => set({ textEditRequest }),
   setActiveLayer: (spaceId, layerId) => set((s) => ({ activeLayer: { ...s.activeLayer, [spaceId]: layerId } })),
   openColorPicker: (target, anchor) => {
     const r = anchor.getBoundingClientRect();

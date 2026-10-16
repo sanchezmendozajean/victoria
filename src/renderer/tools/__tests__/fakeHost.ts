@@ -41,6 +41,7 @@ export function createTestHost(init: HostInit = {}) {
   const doc = createDocument({ name: 'T', spaceName: 'S', artboardName: 'B', layerName: 'L', ids, now: '2026-01-01T00:00:00.000Z' });
   const session = new DocumentSession(doc, { ids, historyLimit: 1000 });
   let gesture = 0;
+  let editRequest: { id: string; at: Vec2 } | null = null;
 
   type MutableHost = { -readonly [K in keyof ToolHost]: ToolHost[K] };
   const host: MutableHost = {
@@ -90,6 +91,14 @@ export function createTestHost(init: HostInit = {}) {
     reportTextEditing: vi.fn<(e: { id: string; from: number; to: number } | null) => void>(),
     setTextInput: vi.fn<(s: { active: boolean; at?: Vec2 }) => void>(),
     switchTool: vi.fn<(tool: ToolId) => void>(),
+    requestTextEdit: vi.fn((r: { id: string; at: Vec2 }) => {
+      editRequest = r;
+    }),
+    takeTextEditRequest: () => {
+      const r = editRequest;
+      editRequest = null;
+      return r;
+    },
     scaleStrokes: false,
     keyObjectMode: false,
     keyObject: null,

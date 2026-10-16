@@ -315,6 +315,14 @@ export function createTextTool(id: ToolId, mode: TextToolMode): Tool {
   return {
     id,
     cursor: () => 'text',
+    onActivate(host) {
+      // Double click on text with the Selection tool: edit it, the caret where the click was.
+      const request = host.takeTextEditRequest();
+      const target = request ? nodeOf(host, request.id) : null;
+      if (!request || !target) return;
+      const index = indexIn(host, target, request.at);
+      begin(host, request.id, index);
+    },
     get editingText() {
       return editing !== null || pending !== null;
     },
@@ -665,7 +673,7 @@ export function createTextTool(id: ToolId, mode: TextToolMode): Tool {
 }
 
 /** Fraction (0..1) of a path's length at a span and parameter, by sampling span lengths. */
-function fractionAlong(anchors: readonly Anchor[], closed: boolean, segment: number, t: number): number {
+export function fractionAlong(anchors: readonly Anchor[], closed: boolean, segment: number, t: number): number {
   const sample = (a: Anchor, b: Anchor, upTo: number): number => {
     let length = 0;
     let prev = a.p;

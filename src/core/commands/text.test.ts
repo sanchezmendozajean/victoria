@@ -148,11 +148,15 @@ describe('scaling point text changes the font size', () => {
     expect(get().transform.slice(4)).toEqual([5 * 1 + 0, 5]);
   });
 
-  it('leaves area text and plain objects alone', () => {
+  it('scales the frame of area text and leaves the font and the matrix alone', () => {
     const { session, space, get } = setup('area');
-    session.run(transformNodes(space().id, [get().id], scaling(2, 2)));
+    session.run(transformNodes(space().id, [get().id], scaling(2, 3)));
     expect(get().story[0]!.style.size).toBe(10);
-    expect(get().transform[0]).toBe(2);
+    expect(get().transform.slice(0, 4)).toEqual([1, 0, 0, 1]);
+    const xs = get().frame!.anchors.map((a) => a.p.x);
+    const ys = get().frame!.anchors.map((a) => a.p.y);
+    expect(Math.max(...xs)).toBe(80);
+    expect(Math.max(...ys)).toBe(180);
   });
 });
 

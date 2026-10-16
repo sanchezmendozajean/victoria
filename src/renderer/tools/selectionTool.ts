@@ -41,6 +41,7 @@ import { boxOf, currentSelection, dragged, selectedTopLevel, snapDelta, stepBetw
 import type { CanvasPointerEvent, Tool, ToolHost, ToolKeyEvent } from './types';
 import { ROTATE_CURSOR } from './cursors';
 import { createWidgetDrag } from './widgetDrag';
+import { createTextWidgets } from './textWidgets';
 import { boxScreenRect, cursorForTurnedHandle, fromBoxSpace, orientedBoxOf, rotatePoint, toBoxScreen, toBoxSpace, type OrientedBox } from './orientedBox';
 import type { ToolId } from '../app/tools';
 
@@ -60,6 +61,7 @@ const ARROW_STEP_SHIFT = 10;
 export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
   let state: State = { kind: 'idle' };
   const widgets = createWidgetDrag(false);
+  const textWidgets = createTextWidgets();
   let hoverCursor = 'default';
   /** Several objects rotated together keep their turned box until the selection changes (as in Illustrator). */
   let sticky: { key: string; theta: number } | null = null;
@@ -152,6 +154,12 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
       if (host.isolation) host.setIsolation(null);
       return true;
     }
+    if (target.type === 'text') {
+      session.select(selectOnly(space.id, [target.id]));
+      host.requestTextEdit({ id: target.id, at: event.doc });
+      host.switchTool('tool-type');
+      return true;
+    }
     if (target.type === 'group' || target.type === 'clipGroup') {
       host.setIsolation(target.id);
       const inner = selectionTarget(hit, target.id);
@@ -165,7 +173,7 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
     const ids = selectedTopLevel(host);
     const box = boxFor(host, ids);
     hoverCursor = 'default';
-    if (widgets.hover(event.doc, host)) {
+    if (widgets.hover(event.doc, host) || textWidgets.hover(event.doc, host)) {
       hoverCursor = 'pointer';
       host.setHover(null);
       return;
@@ -190,7 +198,11 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
       const selection = currentSelection(host) ?? emptySelection(space.id);
 
       // 0. Corner and pie widgets of live shapes.
-      if (event.clickCount < 2 && widgets.press(event, host)) return;
+      if (event.clickCount < 2 && (widgets.press(event, host) || textWidgets.press(event, host))) return;
+      if (event.clickCount >= 2 && textWidgets.doubleClick(event, host)) {
+        state = { kind: 'idle' };
+        return;
+      }
 
       // 1. Bounding box handles (scale) and the rotate zone just outside the corners.
       const ids = selectedTopLevel(host);
@@ -243,7 +255,7 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
     },
 
     onPointerMove(event, host) {
-      if (widgets.move(event, host)) return;
+      if (widgets.move(event, host) || textWidgets.move(event, host)) return;
       switch (state.kind) {
         case 'idle':
           updateHover(event, host);
@@ -276,7 +288,7 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
     },
 
     onPointerUp(event, host) {
-      if (widgets.release(event, host)) return;
+      if (widgets.release(event, host) || textWidgets.release(event, host)) return;
       const { session, space } = host;
       const finished = state;
       state = { kind: 'idle' };
@@ -313,8 +325,9 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
 
     onKey(key, host) {
       if (key !== 'Escape') return;
-      if (widgets.active) {
+      if (widgets.active || textWidgets.active) {
         widgets.cancel(host);
+        textWidgets.cancel(host);
         host.invalidateOverlay();
         return;
       }
@@ -350,6 +363,7 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
 
     cancel(host) {
       widgets.cancel(host);
+      textWidgets.cancel(host);
       if (state.kind === 'move' || state.kind === 'scale' || state.kind === 'rotate') host.session?.rollback();
       state = { kind: 'idle' };
       host.setSnapLines(null);
@@ -359,6 +373,7 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
 
     drawOverlay(ctx, host, theme) {
       widgets.draw(ctx, host, theme);
+      textWidgets.draw(ctx, host, theme);
       if (host.keyObjectMode && host.keyObject && host.space) {
         const rect = nodeWorldBounds(host.space, host.keyObject);
         if (rect) {
