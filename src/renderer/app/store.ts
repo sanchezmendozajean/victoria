@@ -99,6 +99,7 @@ interface UiState {
   alignPreviewBounds: boolean;
   /** Transform panel: strokes and effects scale with the object. */
   scaleStrokes: boolean;
+  pathTextDialog: boolean;
   shapeDialog: { kind: ShapeToolKind; at: Vec2 } | null;
 
   setIsolation(spaceId: string, groupId: string | null): void;
@@ -123,6 +124,7 @@ interface UiState {
   setScaleStrokes(on: boolean): void;
   openShapeDialog(kind: ShapeToolKind, at: Vec2): void;
   closeShapeDialog(): void;
+  setPathTextDialog(open: boolean): void;
 
   toggleViewOption(key: keyof ViewOptions): void;
   setActiveArtboard(spaceId: string, artboardId: string): void;
@@ -197,6 +199,7 @@ export const useUi = create<UiState>()((set, get) => ({
   alignTo: 'selection',
   alignPreviewBounds: false,
   scaleStrokes: false,
+  pathTextDialog: false,
   shapeDialog: null,
 
   setIsolation: (spaceId, groupId) => set((s) => ({ isolation: { ...s.isolation, [spaceId]: groupId } })),
@@ -239,6 +242,7 @@ export const useUi = create<UiState>()((set, get) => ({
   setScaleStrokes: (scaleStrokes) => set({ scaleStrokes }),
   openShapeDialog: (kind, at) => set({ shapeDialog: { kind, at } }),
   closeShapeDialog: () => set({ shapeDialog: null }),
+  setPathTextDialog: (pathTextDialog) => set({ pathTextDialog }),
 
   toggleViewOption: (key) => set((s) => ({ viewOptions: { ...s.viewOptions, [key]: !s.viewOptions[key] } })),
   setActiveArtboard: (spaceId, artboardId) => set((s) => ({ activeArtboard: { ...s.activeArtboard, [spaceId]: artboardId } })),

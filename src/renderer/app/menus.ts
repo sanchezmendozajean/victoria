@@ -6,7 +6,8 @@ import { PANEL_ORDER, PANELS, type PanelId } from '../panels/registry';
 import { commandLabel } from '../i18n';
 import { hasHandler, runAction } from './actions';
 import { formatAccelerator, SHORTCUTS, type OsFamily, type ShortcutAction } from './shortcuts';
-import type { ViewOptions, WorkspaceId } from './store';
+import { useUi, type ViewOptions, type WorkspaceId } from './store';
+import { selectedPathText, selectedTextIds } from './textActions';
 
 export interface MenuContext {
   os: OsFamily;
@@ -151,10 +152,10 @@ export function buildMenus(ctx: MenuContext): MenuDef[] {
     item('character', 'menu.type.character', 'type', 'type.character', { onSelect: () => ctx.openPanel('character') }),
     item('paragraph', 'menu.type.paragraph', 'pilcrow', 'type.paragraph', { onSelect: () => ctx.openPanel('paragraph') }),
     sep('s1'),
-    item('outlines', 'menu.type.createOutlines', 'create-outlines', 'type.createOutlines'),
+    item('outlines', 'menu.type.createOutlines', 'create-outlines', 'type.createOutlines', { disabled: selectedTextIds().length === 0 }),
     sep('s2'),
-    item('path-options', 'menu.type.pathOptions', 'text-on-path-options'),
-    item('area-options', 'menu.type.areaOptions', 'area-type-options'),
+    item('path-options', 'menu.type.pathOptions', 'text-on-path-options', undefined, { disabled: !selectedPathText(), onSelect: () => useUi.getState().setPathTextDialog(true) }),
+    item('area-options', 'menu.type.areaOptions', 'area-type-options', undefined, { disabled: true }),
   ];
 
   const select: MenuEntry[] = [

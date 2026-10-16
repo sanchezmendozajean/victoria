@@ -21,6 +21,7 @@ import {
 import { averageSelection, joinSelection } from './pathActions';
 import { defaultPaints, paintAsColor, paintAsGradient, paintAsNone, swapPaints } from './paintActions';
 import type { ShortcutAction } from './shortcuts';
+import { outlineSelection } from './textActions';
 import { useUi, type ViewOptions } from './store';
 
 const toggle = (key: keyof ViewOptions) => () => useUi.getState().toggleViewOption(key);
@@ -70,6 +71,7 @@ const HANDLERS: Partial<Record<ShortcutAction, () => void | Promise<unknown>>> =
   'paint.none': () => paintAsNone(useUi.getState().activePaint),
   'object.join': joinSelection,
   'object.average': () => void averageSelection(),
+  'type.createOutlines': outlineSelection,
   'object.clipMake': makeClipSelection,
   'object.clipRelease': releaseClipSelection,
   'object.group': groupSelection,

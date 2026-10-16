@@ -8,6 +8,7 @@ import { PanelDock } from './PanelDock';
 import { StatusBar } from './StatusBar';
 import { TitleBar } from './TitleBar';
 import { ColorPickerDialog } from './ColorPickerDialog';
+import { PathTextDialog } from './PathTextDialog';
 import { ShapeDialog } from './ShapeDialog';
 import { TransformDialog } from './TransformDialog';
 import { Toolbar } from './Toolbar';
@@ -37,6 +38,7 @@ export function App() {
       <DialogHost />
       <TransformDialog />
       <ShapeDialog />
+      <PathTextDialog />
       <ColorPickerDialog />
     </div>
   );

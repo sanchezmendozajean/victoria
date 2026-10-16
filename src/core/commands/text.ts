@@ -139,7 +139,8 @@ export const convertTextKind = (spaceId: string, id: string, to: 'point' | 'area
  * Texto › Crear contornos (Mayús+Ctrl+O): each text object becomes a group with one compound path per
  * character (the counters of "o", "a"… are holes), painted like the text. Spaces vanish.
  */
-export const createOutlines = (spaceId: string, ids: readonly string[], newIds: IdGenerator): Command => ({
+/** Replaces text by groups of filled shapes. `created` receives the ids of the new groups (to select them). */
+export const createOutlines = (spaceId: string, ids: readonly string[], newIds: IdGenerator, created?: string[]): Command => ({
   label: 'text.outlines',
   spaceId,
   apply: (d) => {
@@ -203,6 +204,7 @@ export const createOutlines = (spaceId: string, ids: readonly string[], newIds: 
       }
       const group: GroupNode = { ...createGroup(newIds, children as GroupNode['children']), transform: [...node.transform] as GroupNode['transform'], opacity: node.opacity, blendMode: node.blendMode, name: node.name ?? 'Texto' };
       found.siblings.splice(found.index, 1, group as unknown as Draft<LayerChild>);
+      created?.push(group.id);
     }
   },
 });

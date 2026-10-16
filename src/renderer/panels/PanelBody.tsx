@@ -1,3 +1,5 @@
+import { CharacterPanel } from './CharacterPanel';
+import { ParagraphPanel } from './ParagraphPanel';
 import { AlignPanel } from './AlignPanel';
 import { FillPanel } from './FillPanel';
 import { TransformPanel } from './TransformPanel';
@@ -20,6 +22,10 @@ export function PanelBody({ id }: { id: PanelId }) {
       return <GradientPanel />;
     case 'stroke':
       return <StrokePanel />;
+    case 'character':
+      return <CharacterPanel />;
+    case 'paragraph':
+      return <ParagraphPanel />;
     case 'align':
       return <AlignPanel />;
     case 'spacing':

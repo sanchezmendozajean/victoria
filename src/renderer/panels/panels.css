@@ -673,3 +673,107 @@
 .vc-propchip:hover {
   background: var(--bg-hover);
 }
+
+/* Font picker (Character panel) */
+.vc-fontpicker {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+.vc-fontpicker__button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  height: var(--h-control);
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--bg-panel-alt);
+  color: var(--text);
+  font-size: var(--fs-label);
+}
+.vc-fontpicker__button[data-missing='true'] {
+  background: color-mix(in srgb, #ff4fa3 35%, var(--bg-panel-alt));
+}
+.vc-fontpicker__current {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.vc-fontpicker__popup {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 2px);
+  left: 0;
+  right: 0;
+  min-width: 220px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--bg-panel);
+  box-shadow: var(--shadow-popover, 0 8px 24px rgb(0 0 0 / 0.35));
+}
+.vc-fontpicker__search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+}
+.vc-fontpicker__search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+  font-size: var(--fs-label);
+}
+.vc-fontpicker__list {
+  max-height: 280px;
+  overflow-y: auto;
+}
+.vc-fontpicker__group {
+  padding: 6px 8px 2px;
+  color: var(--text-disabled);
+  font-size: 10px;
+  text-transform: uppercase;
+}
+.vc-fontpicker__empty {
+  padding: 12px;
+  color: var(--text-disabled);
+  text-align: center;
+}
+.vc-fontpicker__item {
+  display: flex;
+  align-items: center;
+}
+.vc-fontpicker__item:hover,
+.vc-fontpicker__item[data-active='true'] {
+  background: var(--bg-hover);
+}
+.vc-fontpicker__name {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 8px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font-size: 14px;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.vc-fontpicker__star {
+  padding: 4px 8px;
+  border: 0;
+  background: transparent;
+  color: var(--icon);
+}
+.vc-fontpicker__star[aria-pressed='true'] {
+  color: var(--accent);
+}
