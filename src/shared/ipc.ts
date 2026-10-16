@@ -32,6 +32,8 @@ export interface DialogLabels {
   title: string;
   /** File type name shown in the filter, e.g. "Documento de Victoria". */
   filterName: string;
+  /** When set, the open dialog also lists EPS files under this name. */
+  importFilterName?: string;
 }
 
 export interface OpenedFile {

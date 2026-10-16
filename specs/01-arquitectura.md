@@ -13,8 +13,8 @@
 | Texto | opentype.js | Convertir glifos a curvas, métricas, texto sobre trazado |
 | Vectorizar | potrace (WASM) en Worker | Calco de imagen |
 | PDF export | pdf-lib (vectorial) | Exportar mesas a PDF |
-| PDF import | pdf.js (operadores → trazados) | Abrir PDF/AI (con PDF incrustado) |
-| EPS import/export | Intérprete propio de EPS de Illustrator; Ghostscript externo opcional para EPS genérico; escritor PostScript propio | Abrir y guardar EPS |
+| PDF import | pdf.js (operadores → trazados) | Abrir PDF (Fase 11); `.ai` con PDF incrustado, muy posterior |
+| EPS import | Intérprete PostScript propio (`core/io/eps.ts`) | Abrir EPS simples |
 | Íconos | lucide-react + SVG propios | Todo con ícono |
 | Pruebas | Vitest, Playwright (`_electron`) | — |
 | Empaquetado | electron-builder | Windows: NSIS + portable. Linux: AppImage, .deb, .rpm (Flatpak en v2) |

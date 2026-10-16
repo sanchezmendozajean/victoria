@@ -170,8 +170,8 @@ documento.vict
 ## Importar / exportar
 
 - **SVG** import: trazados, formas, grupos, `<text>` (como texto si la fuente existe), `<textPath>`, `<image>`, `clipPath`, degradados. Export: un SVG por mesa o por Espacio completo; opción "Minificar".
-- **PDF/AI**: import vía pdf.js; cada página → un Espacio con una mesa del tamaño de la página. `.ai` solo con PDF incrustado.
-- **EPS**: import (Illustrator EPS con intérprete propio; EPS genérico vía Ghostscript si está instalado) y export (PostScript nivel 3). Detalle en `08-imagenes-vectorizar-imprimir.md`.
+- **PDF/AI**: import vía pdf.js; cada página → un Espacio con una mesa del tamaño de la página. `.ai` solo con PDF incrustado y mucho más adelante.
+- **EPS**: import de EPS simples ya implementado (`core/io/eps.ts`); export y EPS exóticos, pendientes. Detalle en `08-imagenes-vectorizar-imprimir.md`.
 - **PNG/JPG/WebP**: por mesa, ppp configurable (72/150/300/personalizado), fondo transparente o blanco.
 
 ## Esquinas vivas de trazados (Fase 5)

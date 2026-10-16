@@ -32,6 +32,8 @@ function fakeEnv() {
       artboard: (n) => `Mesa ${n}`,
       layer: (n) => `Capa ${n}`,
       openFailed: (r) => `open failed: ${r}`,
+      epsSkipped: (items) => `eps skipped: ${items}`,
+      epsItem: (code) => code,
       saveFailed: 'save failed',
       openLabels: { title: 'o', filterName: 'f' },
       saveLabels: { title: 's', filterName: 'f' },
@@ -50,6 +52,19 @@ const edit = (m: DocumentManager, name = 'Edited') => {
 };
 
 describe('DocumentManager', () => {
+  it('opens an EPS as a new unsaved document sized to its bounding box and reports what was skipped', async () => {
+    const { manager, state, errors } = fakeEnv();
+    const ps = '%!PS-Adobe-3.0 EPSF-3.0\n%%BoundingBox: 0 0 120 80\nnewpath 0 0 moveto 50 0 lineto 50 50 lineto fill /F findfont 12 scalefont setfont (x) show\n';
+    state.nextPick = { path: 'C:\\art\\logo.eps', bytes: Uint8Array.from(ps, (c) => c.charCodeAt(0)) };
+    const doc = await manager.open();
+    expect(doc?.path).toBeNull();
+    expect(doc?.session.document.meta.name).toBe('logo');
+    const space = doc!.session.document.spaces[0]!;
+    expect([space.artboards[0]!.w, space.artboards[0]!.h]).toEqual([120, 80]);
+    expect(space.layers[0]!.children).toHaveLength(1);
+    expect(errors).toEqual(['eps skipped: text']);
+  });
+
   it('creates documents with unique untitled names and a Space, artboard and layer', () => {
     const { manager } = fakeEnv();
     const a = manager.newDocument();

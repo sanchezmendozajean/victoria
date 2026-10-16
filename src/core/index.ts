@@ -29,6 +29,8 @@ export * from './commands';
 export * from './selection/selection';
 export { writeVict, readVict, peekVict } from './io/vict';
 export type { VictContents, VictManifest, VictWriteInput } from './io/vict';
+export { readEps, EpsFormatError } from './io/eps';
+export type { EpsResult, EpsWarning } from './io/eps';
 export { assertDocument, DocumentFormatError } from './io/validate';
 export { migrateDocument, UnsupportedVersionError, MIGRATIONS } from './io/migrations';
 export { AutosavePolicy, AUTOSAVE_INTERVAL_MS } from './autosave/policy';

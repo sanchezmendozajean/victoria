@@ -1,5 +1,16 @@
 # Changelog
 
+## Lector de EPS simples (entre las fases 7 y 8)
+
+### Añadido
+- **Archivo › Abrir** ahora lista también `.eps` / `.epsf`: un EPS simple se abre como documento nuevo sin guardar, con una mesa del tamaño de su `%%BoundingBox`. Lee trazados, colores (gris, RGB, CMYK), trazos y guiones, regla par-impar, recorte, transformaciones, procedimientos y flujo de control PostScript, el dialecto compacto de Illustrator AI3–AI8 (grupos, trazados compuestos, grupos de recorte) y la cabecera DOS EPS. Intérprete propio en `core/io/eps.ts`, sin dependencias nuevas.
+- Lo que no entiende (texto, imágenes, degradados, motivos, `arc`) se omite y se avisa al abrir; un programa que no termina o es enorme se corta con límites de seguridad conservando lo dibujado.
+- Pruebas: 12 del intérprete y 1 de apertura (el EPS se probó solo con archivos escritos a mano: **falta probarlo con EPS reales** de Illustrator, Inkscape y Cairo).
+
+### Decisiones (spec 08)
+- AI queda para mucho después; EPS exóticos y guardar EPS, para otra oportunidad; no se distribuye Ghostscript.
+- Reglas del dialecto AI supuestas sin especificación (regla par-impar con `1 D`, tinte de color personalizado, subtrazados con `n`): verificar con archivos reales.
+
 ## Fase 7 — Texto (en revisión)
 
 ### Añadido

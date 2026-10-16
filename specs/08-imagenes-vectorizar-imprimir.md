@@ -47,35 +47,25 @@ Diálogo propio (no solo el nativo) con previsualización:
   - Linux: `webContents.print` sobre CUPS; fallback `lp -d <impresora> -o fit-to-page=false -o media=<papel>` con el PDF temporal.
 - Debe imprimir **a escala real** en ambos sistemas (verificación 100 mm = 100 mm en papel).
 
-## Formatos EPS y AI (Fase 11)
+## Formatos EPS y AI
 
-Investigación (Adobe no publica la especificación de los datos privados de Illustrator moderno; lo que sigue se apoya en documentación pública y en lo que hacen Inkscape, Scribus o Ghostscript):
+Decisiones del usuario: **el AI queda para mucho después** (fuera del plan actual); **el lector de EPS simples se implementa ya** (ya existe, ver abajo); los EPS «exóticos» y la escritura de EPS quedan para otra oportunidad. No se distribuye ni se exige Ghostscript por ahora.
 
-- **Un `.ai` moderno es un PDF** con los datos nativos de Illustrator en un flujo privado (`AIPrivateData`, comprimido y **no documentado**). Si se guardó con «Crear archivo compatible con PDF», el PDF contiene el dibujo completo; si no, solo existen los datos privados y ninguna otra aplicación puede abrirlo. Los `.ai` anteriores a CS (v3–v8) son PostScript/EPS con comentarios `%AI5_…` y sí tienen especificación pública.
-- **Conclusión sobre «abrirlo del todo, tal cual en Illustrator»: no es posible con garantías.** Lo que Illustrator guarda más allá del PDF (formas vivas, apariencias con varios rellenos y trazos, efectos, símbolos, pinceles, estilos gráficos, capas con nombres exactos, texto enlazado, perfiles de color) vive en los datos privados. Leemos solo el PDF incrustado, igual que cualquier otro programa. Se pierden la edición de esos elementos, pero no el aspecto.
+### Importar EPS simples (implementado)
+- **Qué es «simple»**: EPS vectorial hecho de trazados, colores sólidos (gris, RGB, CMYK), trazos (grosor, extremos, esquinas, límite de inglete, guiones), rellenos (regla par-impar con `eofill`), recorte (`clip`/`eoclip`), transformaciones, procedimientos y control de flujo (`def`, `dict`, `if`, `ifelse`, `for`, `repeat`…), tal como lo escriben Cairo, Inkscape, matplotlib o el propio Illustrator. Cabecera DOS EPS (`C5 D0 D3 C6`) admitida.
+- **Dialecto de Illustrator (AI3–AI8)**: operadores compactos (`m l c v y h f F s S b B n N`, `g G k K Xa XA x X`, `w j J M d D`), grupos (`u U`), trazados compuestos (`*u *U`) y grupos de recorte (`q W Q`). Se omiten el prólogo y las capas (todo va a una capa).
+- **Implementación**: `core/io/eps.ts` (`readEps`), un intérprete PostScript mínimo en TypeScript puro, sin dependencias. Un EPS se abre como **documento nuevo sin guardar**, con una mesa del tamaño del `%%BoundingBox` (Y invertida, origen en la esquina de la caja). Límites de seguridad: 4 millones de pasos y 200 000 objetos.
+- **Lo que no lee (lo avisa al abrir, no falla)**: texto y fuentes, imágenes (`image`, `colorimage`, datos `currentfile`/`eexec`; el intérprete se detiene ahí y conserva lo dibujado), degradados, motivos, `shfill`, `arc`/`arcn` y operadores desconocidos. Son los EPS «exóticos»: pendientes.
+- **Reglas supuestas del dialecto AI** (sin especificación a mano; verificar con archivos reales): `1 D` = par-impar; el tinte de un color personalizado `x`/`X` se aplica como `1 − tinte`; dentro de `*u … *U` los subtrazados terminan en `n` y el último operador de pintura fija la apariencia.
 
-### Importar `.ai`
-- Si el archivo empieza por `%PDF`: importar con el mismo camino que PDF (pdf.js → trazados, degradados, texto, imágenes, máscaras de recorte), **una mesa por mesa de Illustrator** cuando el PDF las declara (cajas `ArtBox`/páginas) y, si no, una por página.
-- **Texto**: como texto editable si la fuente instalada coincide por familia + estilo; si no, como contornos (con aviso) para no cambiar el aspecto.
-- **Capas**: se recuperan de los contenidos opcionales (`OCG`) del PDF cuando existen; si no, una sola capa.
-- Sin PDF incrustado (guardado sin compatibilidad): mensaje claro «Este archivo se guardó sin contenido compatible con PDF; vuelve a guardarlo en Illustrator marcando “Crear archivo compatible con PDF”». Sin intentar leer los datos privados.
-- **Fuera de alcance**: filtros y efectos de Photoshop (rasterizados en el PDF: se importan como imagen), efectos vivos (se importan ya aplicados), símbolos y pinceles (expandidos), sobreimpresión y tintas planas (se pasan a su equivalente de proceso).
-- Los `.ai` antiguos en PostScript (v3–v8) se leen con el intérprete de EPS de abajo.
+### Pendiente (otra oportunidad)
+- EPS exóticos: texto (como contornos o como texto), imágenes, degradados y motivos de Illustrator, `arc`, capas con nombre. Opciones estudiadas: Ghostscript como proceso aparte (AGPL: exige incluir licencia y oferta de código; solo si el proyecto lo asume) o detectar el del sistema.
+- **Guardar EPS**: PostScript nivel 3, un archivo por mesa, trazados, degradados (`shfill`), recorte e imágenes; texto como contornos; transparencia aplanada a 300 ppp. No es ida y vuelta (el formato de edición es `.vict`).
 
-### Importar EPS
-- EPS de **Illustrator** (`%!PS-Adobe-3.0 EPSF-3.0` con `%%Creator: Adobe Illustrator`): intérprete propio de los operadores del formato AI (`m l c v y h f F s S b B n`, `Xa/XA` y degradados por `%AI5_BeginGradient`, capas `%AI5_BeginLayer`, texto como contornos si no hay fuente). Sin dependencias externas.
-- EPS **genérico** (cualquier PostScript): se usa la vista previa incrustada solo para mostrar, y el contenido se convierte con **Ghostscript** si está instalado (`gs -sDEVICE=pdfwrite` → importar el PDF). No se distribuye Ghostscript (licencia AGPL): se detecta en el sistema y, si falta, se informa y se ofrece colocar la vista previa como imagen. Decisión pendiente de confirmar con el usuario antes de implementarlo.
-- Cabecera DOS EPS (`C5 D0 D3 C6`) y vista previa TIFF/WMF: se omiten correctamente al leer.
+### AI (muy posterior)
+- Un `.ai` moderno es un PDF con los datos nativos de Illustrator en un flujo privado (`AIPrivateData`) **comprimido y sin documentación pública**. Sin «Crear archivo compatible con PDF» solo existen esos datos y ninguna otra aplicación puede abrirlo. Abrirlo «tal cual» en Victoria no es posible con garantías: lo único recuperable es el PDF incrustado (aspecto, no formas vivas, apariencias, efectos, símbolos ni pinceles). Los `.ai` v3–v8 son EPS y se leen ya con el lector de arriba.
+- Cuando llegue: importar el PDF incrustado por el camino del PDF (una mesa por mesa declarada, capas desde `OCG`, texto editable si la fuente coincide); sin PDF incrustado, un mensaje claro. Escribir: **no** se escribe `.ai` nativo; como mucho, un PDF con extensión `.ai` que Illustrator abre como PDF importado.
+- Filtros y efectos de Photoshop quedan fuera.
 
-### Guardar como EPS
-- **Archivo › Guardar como… › EPS** y **Exportar › EPS**: PostScript nivel 3, `%%BoundingBox` y `%%HiResBoundingBox` de la mesa (un archivo por mesa, como las demás exportaciones), colores RGB o CMYK según el modo del documento, trazados, formas, degradados (`shfill`), máscaras de recorte (`clip`), imágenes incrustadas (`image` con ASCII85 + Flate) y texto **convertido en contornos** (EPS no incrusta fuentes de forma fiable). Opciones: vista previa (ninguna / TIFF de 8 bits), transparencia (aplanar a 300 ppp), incluir páginas de color CMYK.
-- Lo no representable en PostScript (modos de fusión, opacidad, modificadores de apariencia) se **aplana** a ráster a 300 ppp, como el PDF.
-- No es ida y vuelta: al reabrir un EPS creado por Victoria se obtienen trazados y contornos, no formas vivas ni texto. El formato nativo de edición sigue siendo `.vict`.
-
-### Guardar como AI
-- **No se escribe `.ai` nativo** (formato propietario). Se ofrece **Exportar › PDF compatible con Illustrator** (PDF con extensión `.pdf`) y, a petición, el mismo PDF con extensión `.ai`: Illustrator lo abre como un PDF importado (texto editable, trazados, degradados, capas por `OCG`) pero **sin** formas vivas ni apariencias de Illustrator. Se avisa de ello en el diálogo.
-
-### Criterios de aceptación (Fase 11)
-- Un `.ai` de Illustrator CC con PDF incrustado se abre con el mismo aspecto (comparación visual de página completa, tolerancia ≤ 1 % de píxeles distintos) con sus mesas y capas.
-- Un `.ai` guardado sin compatibilidad PDF muestra el mensaje y no falla.
-- Un EPS de Illustrator con trazados, degradado y máscara se abre y su geometría coincide con la del PDF equivalente; un EPS creado por Victoria se abre en Illustrator, Inkscape y Ghostscript con el mismo tamaño de mesa.
+### Migrar diseños desde Illustrator mientras tanto
+Desde Illustrator: **Archivo › Guardar como… › SVG** (la vía recomendada; Fase 11 trae el importador), **EPS** (importable ya si es simple: convertir el texto en contornos y expandir degradados, efectos y pinceles antes), o **PDF** (Fase 11). Para que se parezcan lo más posible: Objeto › Expandir y Objeto › Expandir apariencia, Texto › Crear contornos, y guardar sin perfiles ni transparencia compleja.

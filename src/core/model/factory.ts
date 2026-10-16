@@ -7,6 +7,7 @@ import type {
   BaseNode,
   ClipGroupNode,
   Color,
+  CompoundNode,
   Document,
   GroupNode,
   Layer,
@@ -63,6 +64,10 @@ function baseNode(ids: IdGenerator): Omit<BaseNode, 'type'> {
 
 export function createPath(ids: IdGenerator, anchors: Anchor[], closed = false): PathNode {
   return { ...baseNode(ids), type: 'path', closed, anchors };
+}
+
+export function createCompound(ids: IdGenerator, children: PathNode[], fillRule: CompoundNode['fillRule'] = 'nonzero'): CompoundNode {
+  return { ...baseNode(ids), type: 'compound', children, fillRule };
 }
 
 export function createGroup(ids: IdGenerator, children: GroupNode['children']): GroupNode {

@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { askUser } from '../app/dialogs';
-import { t } from '../i18n';
+import { t, type TranslationKey } from '../i18n';
 import { DocumentManager, type CloseChoice } from './manager';
 
 /** The one manager of the window; talks to the main process through the typed preload API. */
@@ -36,8 +36,10 @@ export const manager = new DocumentManager({
     artboard: (n) => t('doc.defaultArtboard', { n }),
     layer: (n) => t('doc.defaultLayer', { n }),
     openFailed: (reason) => t('doc.openFailed', { reason }),
+    epsSkipped: (items) => t('doc.epsSkipped', { items }),
+    epsItem: (code) => t(`doc.epsItem.${code}` as TranslationKey),
     saveFailed: t('doc.saveFailed'),
-    openLabels: { title: t('doc.openTitle'), filterName: t('doc.fileDialog') },
+    openLabels: { title: t('doc.openTitle'), filterName: t('doc.fileDialog'), importFilterName: t('doc.epsDialog') },
     saveLabels: { title: t('doc.saveTitle'), filterName: t('doc.fileDialog') },
   },
   appVersion: typeof __APP_VERSION__ === 'string' ? __APP_VERSION__ : '0.0.0',

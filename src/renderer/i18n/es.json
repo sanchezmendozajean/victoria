@@ -694,5 +694,14 @@
   "pathText.align.descender": "Descendente",
   "pathText.align.center": "Centro",
   "pathText.align.baseline": "Línea base",
-  "pathText.close": "Cerrar"
+  "pathText.close": "Cerrar",
+  "doc.epsDialog": "Documento EPS",
+  "doc.epsSkipped": "El EPS se abrió, pero se omitió o aproximó: {items}.",
+  "doc.epsItem.text": "texto",
+  "doc.epsItem.image": "imágenes",
+  "doc.epsItem.gradient": "degradados",
+  "doc.epsItem.pattern": "motivos",
+  "doc.epsItem.operator": "operadores no admitidos",
+  "doc.epsItem.halted": "parte del contenido",
+  "doc.epsItem.limit": "contenido por exceso de tamaño"
 }

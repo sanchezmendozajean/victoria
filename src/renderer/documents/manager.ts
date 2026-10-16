@@ -4,8 +4,10 @@ import {
   DocumentSession,
   peekVict,
   randomIds,
+  readEps,
   readVict,
   writeVict,
+  type EpsWarning,
   type IdGenerator,
   type Selection,
 } from '../../core';
@@ -36,6 +38,9 @@ export interface Names {
   artboard(n: number): string;
   layer(n: number): string;
   openFailed(reason: string): string;
+  /** Notice after opening an EPS: what was left out (already joined, e.g. "texto, imágenes"). */
+  epsSkipped(items: string): string;
+  epsItem(code: EpsWarning['code']): string;
   saveFailed: string;
   openLabels: DialogLabels;
   saveLabels: DialogLabels;
@@ -169,12 +174,40 @@ export class DocumentManager {
       return existing;
     }
     try {
+      if (/\.epsf?$/i.test(picked.path)) return await this.importEps(picked);
       const { document } = readVict(picked.bytes);
       return this.adopt(new DocumentSession(document, { ids: this.ids }), picked.path);
     } catch (error) {
       await this.deps.prompts.reportError(this.deps.names.openFailed(error instanceof Error ? error.message : String(error)));
       return null;
     }
+  }
+
+  /** An EPS opens as a new, unsaved document with one artboard of the size of its bounding box. */
+  private async importEps(picked: { path: string; bytes: Uint8Array }): Promise<OpenDocument> {
+    const { names } = this.deps;
+    const result = readEps(picked.bytes, this.ids);
+    const base = picked.path.split(/[\\/]/).pop() ?? picked.path;
+    const document = createDocument({
+      name: base.replace(/\.[^.]+$/, ''),
+      spaceName: names.space(1),
+      artboardName: names.artboard(1),
+      layerName: names.layer(1),
+      ids: this.ids,
+      now: new Date(this.clock()).toISOString(),
+    });
+    const space = document.spaces[0];
+    const board = space?.artboards[0];
+    const layer = space?.layers[0];
+    if (!space || !board || !layer) throw new Error('Invalid new document');
+    board.w = result.width;
+    board.h = result.height;
+    delete board.preset;
+    layer.children = result.nodes as typeof layer.children;
+    const opened = this.adopt(new DocumentSession(document, { ids: this.ids }), null);
+    const skipped = [...new Set(result.warnings.map((w) => names.epsItem(w.code)))];
+    if (skipped.length > 0) await this.deps.prompts.reportError(names.epsSkipped(skipped.join(', ')));
+    return opened;
   }
 
   private async fail(message: string): Promise<null> {
