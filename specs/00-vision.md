@@ -40,8 +40,8 @@ Persona habituada a Illustrator, uso no profesional. Prioriza: estabilidad, ataj
 
 - Herramientas de `03-herramientas.md` marcadas **v1**.
 - Modificadores de `05-modificadores.md` marcados **v1**.
-- Importar: SVG, PDF (primera página, vectorial básica), PNG/JPG/WebP, y `.ai` solo si es PDF-compatible (Illustrator guarda PDF dentro).
-- Exportar: SVG, PNG, JPG, PDF (por mesa, todas las mesas, o por Espacio).
+- Importar: SVG, PDF (primera página, vectorial básica), PNG/JPG/WebP, `.ai` solo si es PDF-compatible (Illustrator guarda PDF dentro) y EPS.
+- Exportar: SVG, PNG, JPG, PDF, EPS (por mesa, todas las mesas, o por Espacio).
 - Imprimir: diálogo nativo, por mesa de trabajo, con marcas de corte y sangrado.
 - **Windows y Linux** como plataformas de primera clase: mismas funciones, mismos atajos (salvo conflictos documentados), paquetes oficiales para ambos. Windows es donde se usa hoy; Linux será el sistema principal del usuario en unos meses, así que no puede quedar como "puerto secundario".
 
