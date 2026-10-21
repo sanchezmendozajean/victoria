@@ -394,22 +394,20 @@ test.describe('colour, stroke and panels (phase 6)', () => {
   });
 });
 
-test('colour picker: CMYK fields sit beside HSB and keep what was typed; the web-only check is under the square', async () => {
+test('colour picker: channel sliders by model keep typed CMYK; the web-only check sits right of the square with the swatch below it', async () => {
   const ctx = await launchApp();
   const { page } = ctx;
   await page.waitForTimeout(400);
   await page.getByTestId('paint-widget-fill').dblclick({ position: { x: 4, y: 4 } });
-  await page.getByTestId('picker-cmyk-C').fill('40');
+  await page.getByTestId('picker-model').selectOption('cmyk');
+  await page.getByTestId('picker-field-C').fill('40');
   await page.keyboard.press('Enter');
-  await expect(page.getByTestId('picker-cmyk-C')).toHaveValue('40');
-  const h = (await page.getByTestId('picker-H').boundingBox())!;
-  const c = (await page.getByTestId('picker-cmyk-C').boundingBox())!;
-  expect(c.x).toBeGreaterThan(h.x + h.width);
-  expect(Math.abs(c.y - h.y)).toBeLessThan(4);
+  await expect(page.getByTestId('picker-field-C')).toHaveValue('40');
   const square = (await page.getByTestId('picker-square').boundingBox())!;
   const web = (await page.getByTestId('picker-web').boundingBox())!;
-  expect(web.y).toBeGreaterThan(square.y + square.height - 1);
-  expect(web.y - (square.y + square.height)).toBeLessThan(20);
+  const swatch = (await page.getByTestId('picker-new').boundingBox())!;
+  expect(web.x).toBeGreaterThan(square.x + square.width);
+  expect(swatch.y).toBeGreaterThan(web.y);
   await page.keyboard.press('Escape');
   await ctx.app.close();
 });

@@ -1,5 +1,5 @@
 .vc-picker {
-  width: 480px;
+  width: 400px;
 }
 .vc-picker__body {
   display: flex;
@@ -56,13 +56,19 @@
 .vc-picker__preview {
   display: flex;
   flex-direction: column;
-  height: 44px;
+  height: 22px;
   border-radius: 2px;
   overflow: hidden;
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35);
 }
 .vc-picker__preview span {
   flex: 1;
+}
+.vc-picker__channels {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 10px;
 }
 .vc-picker__fields {
   display: flex;
