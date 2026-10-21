@@ -130,7 +130,12 @@
   border-radius: 50%;
   background: #fff;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55);
-  pointer-events: none;
+}
+/* Taller hit area than the 4 px track, so the whole thumb (and its surroundings) grabs. */
+.vc-slider::before {
+  content: '';
+  position: absolute;
+  inset: -8px -5px;
 }
 
 /* Drop-down: the native select covers the whole control, so every click on it toggles the list. */
