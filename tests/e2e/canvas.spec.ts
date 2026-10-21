@@ -88,8 +88,8 @@ test.describe('canvas on a blank document', () => {
   test('a new document opens fitted on its artboard, drawn white on the canvas colour', async () => {
     const { page } = ctx;
     const box = await surfaceBox(page);
-    const centre = await pixel(page, 'canvas-content', Math.round(box.width / 2), Math.round(box.height / 2));
-    expect(centre.slice(0, 3)).toEqual([255, 255, 255]);
+    // The first paint can land a moment after the window shows: wait for it instead of racing it.
+    await expect.poll(async () => (await pixel(page, 'canvas-content', Math.round(box.width / 2), Math.round(box.height / 2))).slice(0, 3)).toEqual([255, 255, 255]);
     expect((await pixel(page, 'canvas-content', 3, 3))[3]).toBe(0); // outside the artboard: the CSS canvas colour shows
     expect(await zoomOf(page)).toBeGreaterThan(30);
     await page.screenshot({ path: 'test-results/canvas-new.png' });
