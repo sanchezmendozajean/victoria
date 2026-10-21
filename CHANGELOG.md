@@ -13,13 +13,15 @@
 - Dependencias: `paper` ya estaba (Fase 8). Se probó `clipper2-js` para el desplazamiento y se descartó (resultados erróneos); el desplazamiento es propio sobre paper.js.
 - Pruebas: instantáneas de geometría por modificador, órdenes, Aplicar, Buscatrazos vivo, persistencia y 4 e2e.
 
+- **Zonas** (ajuste posterior): los modificadores se aplican a un relleno o trazo concreto (anidados bajo él) o a **Todo el objeto** (etiqueta bajo los rellenos), y se arrastran entre zonas; las sombras se proyectan desde el relleno y el contorno del objeto entero.
+
 ### Decisiones y aproximaciones (spec 05 · «Reglas añadidas en la Fase 9»)
 - La caja delimitadora y la alineación usan los contornos originales; el pintado y la selección por clic, los evaluados.
 - Fruncir/engordar, Hacer áspero, las deformaciones, la sombra (sin modo de fusión) y el resplandor son aproximaciones propias: la spec no da fórmulas, hay que compararlas con Illustrator a mano.
 - Al aplicar, la sombra pasa a ser un objeto aparte **sin desenfoque** y el resplandor se pierde.
 
 ### Pendiente
-- Preajustes de modificadores, modificadores por relleno/trazo en la interfaz, preferencia de límites de previsualización, los modificadores v2 y Contornear objeto; exportación SVG/PDF de los efectos (Fase 11).
+- Preajustes de modificadores, preferencia de límites de previsualización, los modificadores v2 y Contornear objeto; exportación SVG/PDF de los efectos (Fase 11).
 - Sin verificar: Linux y el instalador de Windows; rendimiento solo medido en Windows (modificadores con miles de objetos sin medir).
 
 ## Fase 8 — Construcción de formas (en revisión)

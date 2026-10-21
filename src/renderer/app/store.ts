@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import { defaultAppearance, type Appearance, type Matrix, type Params, type ParagraphStyle, type TextStyle, type Vec2 } from '../../core';
+import { defaultAppearance, type Appearance, type Matrix, type ModifierTarget,
+  type Params, type ParagraphStyle, type TextStyle, type Vec2 } from '../../core';
 import type { PlatformInfo, Theme } from '../../shared/ipc';
 import type { TransformKind } from '../tools/types';
 import type { ShapeToolKind } from '../tools/shapeDrag';
@@ -101,7 +102,7 @@ interface UiState {
   /** Transform panel: strokes and effects scale with the object. */
   scaleStrokes: boolean;
   pathTextDialog: boolean;
-  modifierDialog: { modifierId: string; nodeIds: string[]; edit: { nodeId: string; modId: string } | null } | null;
+  modifierDialog: { modifierId: string; nodeIds: string[]; edit: { nodeId: string; modId: string } | null; target?: ModifierTarget } | null;
   /** The last modifier applied, with its parameters (Mayús+Ctrl+E repeats it). */
   lastModifier: { modifierId: string; params: Params } | null;
   shapeDialog: { kind: ShapeToolKind; at: Vec2 } | null;

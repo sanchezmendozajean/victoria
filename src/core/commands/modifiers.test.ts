@@ -85,10 +85,10 @@ describe('modifier commands', () => {
     const a = t.add(r, 'transform', { scaleX: 200, scaleY: 100 });
     const b = t.add(r, 'offset-path', { offset: 10, join: 'miter' });
     const first = JSON.stringify(evaluateNode(t.get(r.id))!.geometry);
-    t.session.run(moveModifier(t.space().id, r.id, b.id, 0));
+    t.session.run(moveModifier(t.space().id, r.id, b.id, { zone: 'object' }, 0));
     const items = t.get(r.id).appearance.items;
-    expect(items.findIndex((i) => i.kind === 'modifier' && i.mod.id === b.id)).toBe(0);
-    expect(items.findIndex((i) => i.kind === 'modifier' && i.mod.id === a.id)).toBeGreaterThan(0);
+    const at = (id: string) => items.findIndex((i) => i.kind === 'modifier' && i.mod.id === id);
+    expect(at(b.id)).toBeLessThan(at(a.id));
     expect(JSON.stringify(evaluateNode(t.get(r.id))!.geometry)).not.toBe(first);
   });
 
@@ -198,3 +198,66 @@ describe('persistence', () => {
     expect(evaluateNode(node)).not.toBeNull();
   });
 });
+
+describe('modifiers of one fill or stroke', () => {
+  const strokeIndex = (n: Node) => n.appearance.items.findIndex((i) => i.kind === 'stroke');
+  const fillIndex = (n: Node) => n.appearance.items.findIndex((i) => i.kind === 'fill');
+
+  it('a modifier on the stroke changes only the stroke; one on the whole object changes both', () => {
+    const t = setup();
+    const r = t.rect(0, 0);
+    const mod = newModifier(t.ids, 'offset-path', { ...defaultParams('offset-path'), offset: 10 });
+    t.session.run(addModifier(t.space().id, [{ nodeId: r.id, mod, target: { zone: 'item', index: strokeIndex(t.get(r.id)) } }]));
+    const e = evaluateNode(t.get(r.id))!;
+    // The fill keeps the original square; the stroke is painted on the grown one.
+    const xs = (g: { subpaths: Array<{ anchors: Array<{ p: { x: number } }> }> }) => g.subpaths.flatMap((s) => s.anchors.map((a) => a.p.x));
+    expect(Math.min(...xs(e.geometry))).toBe(0);
+    expect(Math.min(...xs(e.items.get(strokeIndex(t.get(r.id)))!.geometry))).toBeCloseTo(-10);
+    expect(e.items.has(fillIndex(t.get(r.id)))).toBe(false);
+    // What can be picked covers both.
+    expect(Math.min(...xs(e.shape))).toBeCloseTo(-10);
+    // Moved to the whole object, it now changes the fill too.
+    t.session.run(moveModifier(t.space().id, r.id, mod.id, { zone: 'object' }));
+    const whole = evaluateNode(t.get(r.id))!;
+    expect(whole.items.size).toBe(0);
+    expect(Math.min(...xs(whole.geometry))).toBeCloseTo(-10);
+    // And back onto the fill alone.
+    t.session.run(moveModifier(t.space().id, r.id, mod.id, { zone: 'item', index: fillIndex(t.get(r.id)) }));
+    const back = evaluateNode(t.get(r.id))!;
+    expect([...back.items.keys()]).toEqual([fillIndex(t.get(r.id))]);
+  });
+
+  it('edits, switches off, duplicates and removes modifiers wherever they live', () => {
+    const t = setup();
+    const r = t.rect(0, 0);
+    const mod = newModifier(t.ids, 'zigzag', defaultParams('zigzag'));
+    const target = { zone: 'item' as const, index: fillIndex(t.get(r.id)) };
+    t.session.run(addModifier(t.space().id, [{ nodeId: r.id, mod, target }]));
+    t.session.run(updateModifier(t.space().id, r.id, mod.id, { params: { size: 9 } }));
+    const item = t.get(r.id).appearance.items[target.index]!;
+    expect(item.kind !== 'modifier' && item.modifiers[0]!.params.size).toBe(9);
+    t.session.run(duplicateModifier(t.space().id, r.id, mod.id, 'dup'));
+    expect(t.get(r.id).appearance.items[target.index]!.kind !== 'modifier' && (t.get(r.id).appearance.items[target.index] as { modifiers: unknown[] }).modifiers).toHaveLength(2);
+    t.session.run(updateModifier(t.space().id, r.id, mod.id, { enabled: false }));
+    t.session.run(updateModifier(t.space().id, r.id, 'dup', { enabled: false }));
+    expect(evaluateNode(t.get(r.id))).toBeNull();
+    t.session.run(removeModifier(t.space().id, r.id, 'dup'));
+    expect((t.get(r.id).appearance.items[target.index] as { modifiers: unknown[] }).modifiers).toHaveLength(1);
+  });
+
+  it('applying splits an object whose items have modifiers into one object per fill and stroke', () => {
+    const t = setup();
+    const r = t.rect(0, 0);
+    const mod = newModifier(t.ids, 'offset-path', { ...defaultParams('offset-path'), offset: 10 });
+    t.session.run(addModifier(t.space().id, [{ nodeId: r.id, mod, target: { zone: 'item', index: strokeIndex(t.get(r.id)) } }]));
+    const result = expandModifiers(t.space(), [r.id], t.ids)!;
+    t.session.run(result.command);
+    const group = t.space().layers[0]!.children[0] as GroupNode;
+    expect(group.children.map((c) => c.appearance.items[0]!.kind)).toEqual(['fill', 'stroke']);
+    const stroke = group.children[1] as PathNode;
+    expect(Math.min(...stroke.anchors.map((a) => a.p.x))).toBeCloseTo(-10);
+    expect(hasModifiersCheck(group)).toBe(false);
+  });
+});
+
+import { hasModifiers as hasModifiersCheck } from '..';

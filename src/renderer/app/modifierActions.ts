@@ -7,6 +7,7 @@ import {
   locateNode,
   newModifier,
   selectOnly,
+  type ModifierTarget,
   type Params,
 } from '../../core';
 import { MODIFIER_MENU } from './modifierCatalog';
@@ -22,11 +23,11 @@ export function modifierLabelKey(modifierId: string) {
   return null;
 }
 
-/** Opens the dialog of a modifier for the selected objects (Modificador › …). */
-export function openModifier(modifierId: string): void {
+/** Opens the dialog of a modifier for the selected objects (Modificador › …); `target` picks a fill or stroke instead of the whole object. */
+export function openModifier(modifierId: string, target?: ModifierTarget): void {
   const c = actionContext();
   if (!c || c.ids.length === 0 || !getModifier(modifierId)) return;
-  useUi.getState().openModifierDialog({ modifierId, nodeIds: [...c.ids], edit: null });
+  useUi.getState().openModifierDialog({ modifierId, nodeIds: [...c.ids], edit: null, ...(target ? { target } : {}) });
 }
 
 /** Double click on a modifier row: edits it with its dialog. */

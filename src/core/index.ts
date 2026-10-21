@@ -22,7 +22,7 @@ export * from './geometry/marquee';
 export * from './geometry/booleans';
 export * from './modifiers/types';
 export { getModifier, listModifiers, defaultParams, isStructural } from './modifiers/registry';
-export { evaluateNode, evaluatedGeometry, objectModifiers, type Evaluated } from './modifiers/evaluate';
+export { evaluateNode, evaluatedGeometry, objectModifiers, itemModifiers, type Evaluated, type ItemEvaluated } from './modifiers/evaluate';
 export { offsetGeometry } from './modifiers/offset';
 export * from './snap/snap';
 export * from './model/transforms';

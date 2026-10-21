@@ -10,13 +10,30 @@ import { mapGeometry } from './util';
 // contours (for a group with a live pathfinder, on the combined children); appearance modifiers describe effects.
 // Cached per node: nodes are immutable, so a change of the node or of the stack makes a new key.
 
-export interface Evaluated {
+/** What one fill or stroke is painted with when it has modifiers of its own. */
+export interface ItemEvaluated {
   geometry: Geometry;
-  /** The geometry as the shape of the object (one shared instance, so caches can key on it). */
+  /** The geometry as a shape (one shared instance, so caches can key on it). */
   shape: NodeGeometry;
-  /** Set by Outline Stroke: strokes are painted as fills of this contour. */
+  /** Outline Stroke on this item: the stroke is painted as a fill of this contour. */
   strokeOutline: Geometry | null;
+  /** Shadows and glows of this item alone. */
   effects: AppearanceEffect[];
+}
+
+export interface Evaluated {
+  /** The contours of the object as a whole (its own modifiers applied). */
+  geometry: Geometry;
+  /** Same, as a shape: what the items without modifiers of their own are painted with. */
+  paintShape: NodeGeometry;
+  /** Everything the object covers (object and items together): what is picked and measured. */
+  shape: NodeGeometry;
+  /** Set by Outline Stroke on the whole object: strokes are painted as fills of this contour. */
+  strokeOutline: Geometry | null;
+  /** Shadows and glows of the object as a whole (fills and strokes together). */
+  effects: AppearanceEffect[];
+  /** Fills and strokes that have modifiers of their own, by position in the appearance list. */
+  items: Map<number, ItemEvaluated>;
   /** True for a group drawn as one shape (live pathfinder) instead of through its children. */
   groupAsShape: boolean;
 }
@@ -49,14 +66,43 @@ function leafShapes(node: Node, matrix: Matrix, out: BooleanShape[]): void {
   out.push({ subpaths: mapped.subpaths.map((s) => ({ closed: true, anchors: s.anchors })), fillRule: g.fillRule });
 }
 
-function firstStroke(node: Node): ModifierContext['stroke'] {
-  for (const item of node.appearance.items) {
-    if (item.kind === 'stroke' && item.paint.type !== 'none' && item.opacity > 0) {
-      return { width: item.stroke.width, cap: item.stroke.cap, join: item.stroke.join, miterLimit: item.stroke.miterLimit };
-    }
-  }
+type StrokeContext = ModifierContext['stroke'];
+const strokeContext = (stroke: { width: number; cap: 'butt' | 'round' | 'square'; join: 'miter' | 'round' | 'bevel'; miterLimit: number }): StrokeContext => ({ width: stroke.width, cap: stroke.cap, join: stroke.join, miterLimit: stroke.miterLimit });
+
+function firstStroke(node: Node): StrokeContext {
+  for (const item of node.appearance.items) if (item.kind === 'stroke' && item.paint.type !== 'none' && item.opacity > 0) return strokeContext(item.stroke);
   return null;
 }
+
+/** The enabled, known modifiers of a list. */
+const enabled = (list: readonly ModifierInstance[]): ModifierInstance[] => list.filter((m) => m.enabled && getModifier(m.modifierId));
+
+/** The enabled modifiers of one fill or stroke. */
+export const itemModifiers = (item: { kind: string; modifiers?: ModifierInstance[] }): ModifierInstance[] => (item.kind === 'modifier' ? [] : enabled(item.modifiers ?? []));
+
+interface Run {
+  geometry: Geometry;
+  strokeOutline: Geometry | null;
+  effects: AppearanceEffect[];
+}
+
+/** Runs a list of modifiers over a geometry, in order (live pathfinders were already consumed by the caller). */
+function run(start: Geometry, mods: readonly ModifierInstance[], stroke: StrokeContext): Run {
+  let geometry = start;
+  let strokeOutline: Geometry | null = null;
+  const effects: AppearanceEffect[] = [];
+  for (const mod of mods) {
+    const def = getModifier(mod.modifierId);
+    if (!def || def.groupOp) continue;
+    const out = def.apply(geometry, paramsOf(mod), { bounds: geometryBounds(geometry as NodeGeometry), stroke });
+    if (out.geometry) geometry = out.geometry;
+    if (out.strokeOutline) strokeOutline = out.strokeOutline;
+    if (out.effect) effects.push(out.effect);
+  }
+  return { geometry, strokeOutline, effects };
+}
+
+const asShape = (g: Geometry): NodeGeometry => ({ subpaths: g.subpaths, fillRule: g.fillRule });
 
 /** The evaluated geometry and effects of an object, or null when it has no enabled modifier (use the base). */
 export function evaluateNode(node: Node): Evaluated | null {
@@ -67,9 +113,14 @@ export function evaluateNode(node: Node): Evaluated | null {
 }
 
 function compute(node: Node): Evaluated | null {
-  const mods = objectModifiers(node).filter((m) => getModifier(m.modifierId));
-  if (mods.length === 0) return null;
-  let geometry: Geometry | null = null;
+  const mods = enabled(objectModifiers(node));
+  const itemIndexes: number[] = [];
+  node.appearance.items.forEach((item, i) => {
+    if (itemModifiers(item).length > 0) itemIndexes.push(i);
+  });
+  if (mods.length === 0 && itemIndexes.length === 0) return null;
+
+  let base: Geometry | null = null;
   let groupAsShape = false;
   const isGroup = node.type === 'group' || node.type === 'clipGroup';
   const liveOp = isGroup ? mods.map((m) => getModifier(m.modifierId)?.groupOp).find((op) => op !== undefined) : undefined;
@@ -78,30 +129,37 @@ function compute(node: Node): Evaluated | null {
     leafShapes(node, [1, 0, 0, 1, 0, 0], shapes);
     try {
       const pieces = shapes.length > 0 ? shapeOperation(liveOp, shapes) : [];
-      geometry = { fillRule: 'evenodd', subpaths: pieces.flatMap((p) => p.subpaths) };
+      base = { fillRule: 'evenodd', subpaths: pieces.flatMap((p) => p.subpaths) };
     } catch {
-      geometry = { fillRule: 'nonzero', subpaths: [] };
+      base = { fillRule: 'nonzero', subpaths: [] };
     }
     groupAsShape = true;
   } else {
-    const base = nodeGeometry(node);
-    if (base) geometry = { fillRule: base.fillRule, subpaths: base.subpaths };
+    const g = nodeGeometry(node);
+    if (g) base = { fillRule: g.fillRule, subpaths: g.subpaths };
   }
-  const effects: AppearanceEffect[] = [];
-  let strokeOutline: Geometry | null = null;
-  if (!geometry) return null;
-  const stroke = firstStroke(node);
-  for (const mod of mods) {
-    const def = getModifier(mod.modifierId);
-    if (!def) continue;
-    if (def.groupOp) continue; // already consumed above
-    const bounds = geometryBounds(geometry as NodeGeometry);
-    const out = def.apply(geometry, paramsOf(mod), { bounds, stroke });
-    if (out.geometry) geometry = out.geometry;
-    if (out.strokeOutline) strokeOutline = out.strokeOutline;
-    if (out.effect) effects.push(out.effect);
+  if (!base) return null;
+
+  const whole = run(base, mods, firstStroke(node));
+  const items = new Map<number, ItemEvaluated>();
+  for (const i of itemIndexes) {
+    const item = node.appearance.items[i] as Extract<(typeof node.appearance.items)[number], { kind: 'fill' | 'stroke' }>;
+    const stroke = item.kind === 'stroke' ? strokeContext(item.stroke) : firstStroke(node);
+    // The modifiers of an item run first; those of the whole object then act on the result.
+    const own = run(base, itemModifiers(item), stroke);
+    const final = run(own.geometry, mods, stroke);
+    items.set(i, { geometry: final.geometry, shape: asShape(final.geometry), strokeOutline: own.strokeOutline ?? final.strokeOutline, effects: own.effects });
   }
-  return { geometry, shape: { subpaths: geometry.subpaths, fillRule: geometry.fillRule }, strokeOutline, effects, groupAsShape };
+  const subpaths = [...whole.geometry.subpaths, ...[...items.values()].flatMap((it) => it.geometry.subpaths)];
+  return {
+    geometry: whole.geometry,
+    paintShape: asShape(whole.geometry),
+    shape: items.size === 0 ? asShape(whole.geometry) : { subpaths, fillRule: 'nonzero' },
+    strokeOutline: whole.strokeOutline,
+    effects: whole.effects,
+    items,
+    groupAsShape,
+  };
 }
 
 /** Geometry to paint and hit-test: the evaluated one when the object has modifiers, else the base contours. */
@@ -110,7 +168,9 @@ export const evaluatedGeometry = (node: Node): NodeGeometry | null => evaluateNo
 /** Room an object's shadows and glows need around its geometry. */
 function effectMargin(node: Node): number {
   let m = 0;
-  for (const e of evaluateNode(node)?.effects ?? []) m = Math.max(m, e.type === 'shadow' ? Math.hypot(e.dx, e.dy) + e.blur * 2 : e.blur * 2);
+  const e = evaluateNode(node);
+  const all = [...(e?.effects ?? []), ...[...(e?.items.values() ?? [])].flatMap((it) => it.effects)];
+  for (const fx of all) m = Math.max(m, fx.type === 'shadow' ? Math.hypot(fx.dx, fx.dy) + fx.blur * 2 : fx.blur * 2);
   return m;
 }
 

@@ -8,6 +8,7 @@ import {
   nodeGeometry,
   renderGeometry,
   evaluateNode,
+  type Evaluated,
   isGroupShape,
   segmentsOf,
   alignedDash,
@@ -178,9 +179,11 @@ interface Env {
 }
 
 function paintGeometry(env: Env, node: Node, layer: Layer, alpha: number): void {
-  const path = pathFor(node);
-  const geometry = renderGeometry(node);
-  if (!path || !geometry) return;
+  const evaluated = evaluateNode(node);
+  // Items without modifiers of their own are painted with the contours of the object as a whole.
+  const shape = evaluated ? evaluated.paintShape : renderGeometry(node);
+  const path = evaluated ? pathOfShape(evaluated.paintShape) : pathFor(node);
+  if (!path || !shape) return;
   const { ctx } = env;
   if (env.outline || layer.outline) {
     const t = ctx.getTransform();
@@ -192,19 +195,29 @@ function paintGeometry(env: Env, node: Node, layer: Layer, alpha: number): void 
     ctx.stroke(path);
     return;
   }
-  const evaluated = evaluateNode(node);
-  paintAppearance(env, path, geometry.fillRule, node.appearance, alpha, geometry.subpaths, evaluated ? { effects: evaluated.effects, outline: evaluated.strokeOutline ? { path: outlinePathOf(evaluated), rule: 'nonzero' } : null } : undefined);
+  paintAppearance(env, path, shape.fillRule, node.appearance, alpha, shape.subpaths, evaluated);
+}
+
+const shapePaths = new WeakMap<object, Path2D>();
+/** Path2D of an evaluated shape, built once per evaluation. */
+function pathOfShape(shape: { subpaths: readonly SubPath[] }): Path2D {
+  let p = shapePaths.get(shape);
+  if (!p) {
+    p = buildPathOf(shape);
+    shapePaths.set(shape, p);
+  }
+  return p;
 }
 
 const outlinePaths = new WeakMap<object, Path2D>();
-/** Path2D of an Outline Stroke result, built once per evaluation. */
-function outlinePathOf(evaluated: NonNullable<ReturnType<typeof evaluateNode>>): Path2D {
-  let p = outlinePaths.get(evaluated);
-  if (!p && evaluated.strokeOutline) {
-    p = buildPathOf(evaluated.strokeOutline);
-    outlinePaths.set(evaluated, p);
+/** Path2D of an Outline Stroke result (of the object, or of one stroke), built once. */
+function outlinePathOf(outline: { subpaths: readonly SubPath[] }): Path2D {
+  let p = outlinePaths.get(outline);
+  if (!p) {
+    p = buildPathOf(outline);
+    outlinePaths.set(outline, p);
   }
-  return p as Path2D;
+  return p;
 }
 
 /** Path2D of a contour given as spans (used when the stroke is trimmed for arrowheads). */
@@ -310,17 +323,14 @@ function paintStroke(env: Env, path: Path2D, rule: CanvasFillRule, stroke: Strok
   }
 }
 
-interface Extras {
-  effects: readonly AppearanceEffect[];
-  /** Outline Stroke: strokes are painted as fills of this contour. */
-  outline: { path: Path2D; rule: CanvasFillRule } | null;
-}
-
 /** Far enough off screen that only the shadow of a shape drawn there lands on the canvas. */
 const OFFSCREEN = 100000;
 
-/** Shadows and glows are drawn under the object: its silhouette is cast from outside the canvas, so only the shadow shows. */
-function paintEffects(env: Env, path: Path2D, rule: CanvasFillRule, effects: readonly AppearanceEffect[], alpha: number): void {
+/**
+ * Shadows and glows are drawn under what they belong to. Its silhouette (`draw`) is cast from outside the
+ * canvas, so only the shadow shows; the shadow follows the fills and strokes that `draw` paints.
+ */
+function paintEffects(env: Env, effects: readonly AppearanceEffect[], alpha: number, draw: () => void): void {
   const { ctx } = env;
   const t = ctx.getTransform();
   const scale = Math.sqrt(Math.abs(t.a * t.d - t.b * t.c)) || 1;
@@ -335,34 +345,74 @@ function paintEffects(env: Env, path: Path2D, rule: CanvasFillRule, effects: rea
     ctx.shadowOffsetY = t.b * dx + t.d * dy;
     ctx.setTransform(t.a, t.b, t.c, t.d, t.e + OFFSCREEN, t.f);
     ctx.fillStyle = '#000';
-    ctx.fill(path, rule);
+    ctx.strokeStyle = '#000';
+    draw();
     ctx.restore();
   }
 }
 
-function paintAppearance(env: Env, path: Path2D, rule: CanvasFillRule, appearance: Appearance, alpha: number, subpaths: readonly SubPath[] = [], extras?: Extras): void {
+/** A fill or stroke as a solid silhouette (what a shadow is cast from). */
+function paintSilhouette(env: Env, item: Extract<Appearance['items'][number], { kind: 'fill' | 'stroke' }>, path: Path2D, rule: CanvasFillRule, outline: Path2D | null): void {
+  const { ctx } = env;
+  if (item.paint.type === 'none' || item.opacity <= 0) return;
+  if (item.kind === 'fill') ctx.fill(path, rule);
+  else if (outline) ctx.fill(outline, 'nonzero');
+  else {
+    ctx.lineWidth = item.stroke.width;
+    ctx.lineJoin = item.stroke.join;
+    ctx.lineCap = item.stroke.cap;
+    ctx.miterLimit = item.stroke.miterLimit;
+    ctx.stroke(path);
+  }
+}
+
+function paintAppearance(env: Env, path: Path2D, rule: CanvasFillRule, appearance: Appearance, alpha: number, subpaths: readonly SubPath[] = [], evaluated?: Evaluated | null): void {
   const { ctx, resources } = env;
-  if (extras && extras.effects.length > 0) paintEffects(env, path, rule, extras.effects, alpha);
-  for (const item of appearance.items) {
-  if (item.kind === 'modifier' || item.opacity <= 0) continue; // modifiers act through the evaluated geometry and effects
+  const wholeOutline = evaluated?.strokeOutline ? outlinePathOf(evaluated.strokeOutline) : null;
+  /** What an item is painted with: its own evaluated geometry when it has modifiers of its own, else the object's. */
+  const shapeOf = (index: number) => {
+    const own = evaluated?.items.get(index);
+    return {
+      path: own ? pathOfShape(own.shape) : path,
+      rule: (own ? own.shape.fillRule : rule) as CanvasFillRule,
+      subpaths: own ? own.geometry.subpaths : subpaths,
+      outline: own?.strokeOutline ? outlinePathOf(own.strokeOutline) : wholeOutline,
+      effects: own?.effects ?? [],
+    };
+  };
+  // Effects of the object as a whole come first, cast by every fill and stroke together.
+  if (evaluated && evaluated.effects.length > 0) {
+    paintEffects(env, evaluated.effects, alpha, () => {
+      appearance.items.forEach((item, index) => {
+        if (item.kind === 'modifier') return;
+        const sh = shapeOf(index);
+        paintSilhouette(env, item, sh.path, sh.rule, sh.outline);
+      });
+    });
+  }
+  appearance.items.forEach((item, index) => {
+    if (item.kind === 'modifier' || item.opacity <= 0) return; // modifiers act through the evaluated geometry and effects
+    const sh = shapeOf(index);
+    // Effects of this fill or stroke alone are cast by it only.
+    if (sh.effects.length > 0) paintEffects(env, sh.effects, alpha * item.opacity, () => paintSilhouette(env, item, sh.path, sh.rule, sh.outline));
     if (item.kind === 'fill' && (item.paint.type === 'linear' || item.paint.type === 'radial')) {
-      if (fillGradient(env, path, rule, item.paint, alpha * item.opacity)) continue;
+      if (fillGradient(env, sh.path, sh.rule, item.paint, alpha * item.opacity)) return;
     }
     const style = paintStyle(ctx, item.paint, resources);
-    if (style === null) continue;
+    if (style === null) return;
     ctx.globalAlpha = alpha * item.opacity;
     if (item.kind === 'fill') {
       ctx.fillStyle = style;
-      ctx.fill(path, rule);
-    } else if (extras?.outline) {
+      ctx.fill(sh.path, sh.rule);
+    } else if (sh.outline) {
       // Outline Stroke: the stroke is a filled contour painted with the stroke's paint.
       ctx.fillStyle = style;
-      ctx.fill(extras.outline.path, extras.outline.rule);
+      ctx.fill(sh.outline, 'nonzero');
     } else {
       ctx.strokeStyle = style;
-      paintStroke(env, path, rule, item.stroke, style, subpaths);
+      paintStroke(env, sh.path, sh.rule, item.stroke, style, sh.subpaths);
     }
-  }
+  });
 }
 
 function drawPlaceholderImage(env: Env, width: number, height: number): void {

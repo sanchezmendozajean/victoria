@@ -95,4 +95,25 @@ test.describe('modifiers (phase 9)', () => {
     await page.getByTestId('pf-expand').click();
     await expect(typeLabel(page)).toContainText('Trazado');
   });
+
+  test('a modifier acts on one stroke or fill, or on the whole object: drag it between zones', async () => {
+    const { page } = ctx;
+    await expect(page.getByTestId('appearance-zone')).toContainText('Todo el objeto');
+    // With the stroke selected, fx adds the modifier to that stroke only (nested under it).
+    await page.locator('[data-testid="appearance-row"][data-kind="stroke"]').click();
+    await addFromFx(page, /Distorsionar/, /Zigzag/);
+    await page.getByTestId('mod-ok').click();
+    const row = modifierRows(page);
+    await expect(row).toHaveCount(1);
+    await expect(row).toHaveAttribute('data-zone', 'item');
+    // Dragged to "Todo el objeto" it now acts on the object as a whole...
+    await row.dragTo(page.getByTestId('appearance-zone'));
+    await expect(modifierRows(page)).toHaveAttribute('data-zone', 'object');
+    // ...and dropped on the fill it acts on the fill alone.
+    await modifierRows(page).dragTo(page.locator('[data-testid="appearance-row"][data-kind="fill"]'));
+    await expect(modifierRows(page)).toHaveAttribute('data-zone', 'item');
+    // The whole thing is undoable step by step.
+    await page.keyboard.press('Control+z');
+    await expect(modifierRows(page)).toHaveAttribute('data-zone', 'object');
+  });
 });

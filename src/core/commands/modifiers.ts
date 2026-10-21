@@ -14,26 +14,75 @@ import { replaceNodes } from './node';
 // and "apply" (expand), which makes the result of the modifiers permanent geometry.
 
 type DraftSpace = Draft<Space>;
-const findSpace = (d: Draft<Document>, id: string): DraftSpace | undefined => d.spaces.find((s) => s.id === id);
+const findSpace = (d: Draft<Document>, id: string): DraftSpace | undefined => d.spaces.find((sp) => sp.id === id);
 
-/** The entry of the appearance list that holds a modifier of the object itself. */
-function entryOf(node: Draft<Node>, modId: string) {
-  return node.appearance.items.findIndex((i) => i.kind === 'modifier' && i.mod.id === modId);
+/**
+ * Where a modifier acts: on the whole object (its entries in the appearance list) or on one fill or stroke
+ * (the `modifiers` of that item, by its position in the list).
+ */
+export type ModifierTarget = { zone: 'object' } | { zone: 'item'; index: number };
+
+type DraftNode = Draft<Node>;
+type DraftMods = Draft<ModifierInstance>[];
+
+/** The modifier list of a zone as plain operations, so that the object-level entries behave like an array. */
+function zoneOf(node: DraftNode, target: ModifierTarget) {
+  if (target.zone === 'item') {
+    const item = node.appearance.items[target.index];
+    const list: DraftMods | null = item && item.kind !== 'modifier' ? (item.modifiers as DraftMods) : null;
+    return {
+      list: (): DraftMods => list ?? [],
+      insert(mod: Draft<ModifierInstance>, position?: number) {
+        if (list) list.splice(position ?? list.length, 0, mod);
+      },
+    };
+  }
+  const items = node.appearance.items;
+  return {
+    list: (): DraftMods => items.flatMap((i) => (i.kind === 'modifier' ? [i.mod] : [])) as DraftMods,
+    insert(mod: Draft<ModifierInstance>, position?: number) {
+      const slots = items.flatMap((i, at) => (i.kind === 'modifier' ? [at] : []));
+      const at = position === undefined || position >= slots.length ? items.length : (slots[position] as number);
+      items.splice(at, 0, { kind: 'modifier', mod } as Draft<AppearanceItem>);
+    },
+  };
 }
+
+/** Finds a modifier wherever it lives in the object and returns how to take it out. */
+function locateModifier(node: DraftNode, modId: string): { target: ModifierTarget; mod: Draft<ModifierInstance>; position: number; remove(): void } | null {
+  const items = node.appearance.items;
+  const objectMods = items.flatMap((i, at) => (i.kind === 'modifier' ? [{ mod: i.mod, at }] : []));
+  const own = objectMods.findIndex((m) => m.mod.id === modId);
+  if (own !== -1) {
+    const entry = objectMods[own] as (typeof objectMods)[number];
+    return { target: { zone: 'object' }, mod: entry.mod, position: own, remove: () => void items.splice(entry.at, 1) };
+  }
+  for (let index = 0; index < items.length; index++) {
+    const item = items[index] as DraftNode['appearance']['items'][number];
+    if (item.kind === 'modifier') continue;
+    const position = (item.modifiers as DraftMods).findIndex((m) => m.id === modId);
+    if (position !== -1) return { target: { zone: 'item', index }, mod: item.modifiers[position] as Draft<ModifierInstance>, position, remove: () => void item.modifiers.splice(position, 1) };
+  }
+  return null;
+}
+
+const nodeIn = (d: Draft<Document>, spaceId: string, nodeId: string): DraftNode | null => {
+  const space = findSpace(d, spaceId);
+  const found = space ? locateNode(space as Space, nodeId) : null;
+  return found ? (found.node as DraftNode) : null;
+};
 
 export const newModifier = (ids: IdGenerator, modifierId: string, params: Params): ModifierInstance => ({ id: ids(), modifierId, enabled: true, params: { ...params } as { [key: string]: JsonValue } });
 
 /** Adds a modifier to each object (a fresh instance per object, built by the caller so that ids stay unique). */
-export const addModifier = (spaceId: string, additions: ReadonlyArray<{ nodeId: string; mod: ModifierInstance }>, mergeKey?: string): Command => ({
+export const addModifier = (spaceId: string, additions: ReadonlyArray<{ nodeId: string; mod: ModifierInstance; target?: ModifierTarget }>, mergeKey?: string): Command => ({
   label: 'modifier.add',
   spaceId,
   ...(mergeKey ? { mergeKey } : {}),
   apply: (d) => {
-    const space = findSpace(d, spaceId);
-    if (!space) return;
-    for (const { nodeId, mod } of additions) {
-      const found = locateNode(space as Space, nodeId);
-      if (found) (found.node as Draft<Node>).appearance.items.push({ kind: 'modifier', mod: deepClone(mod) } as Draft<AppearanceItem>);
+    for (const { nodeId, mod, target } of additions) {
+      const node = nodeIn(d, spaceId, nodeId);
+      if (node) zoneOf(node, target ?? { zone: 'object' }).insert(deepClone(mod) as Draft<ModifierInstance>);
     }
   },
 });
@@ -44,15 +93,11 @@ export const updateModifier = (spaceId: string, nodeId: string, modId: string, p
   spaceId,
   ...(mergeKey ? { mergeKey } : {}),
   apply: (d) => {
-    const space = findSpace(d, spaceId);
-    const found = space ? locateNode(space as Space, nodeId) : null;
+    const node = nodeIn(d, spaceId, nodeId);
+    const found = node ? locateModifier(node, modId) : null;
     if (!found) return;
-    const node = found.node as Draft<Node>;
-    const at = entryOf(node, modId);
-    const item = node.appearance.items[at];
-    if (!item || item.kind !== 'modifier') return;
-    if (patch.params) item.mod.params = { ...item.mod.params, ...(patch.params as { [key: string]: JsonValue }) };
-    if (patch.enabled !== undefined) item.mod.enabled = patch.enabled;
+    if (patch.params) found.mod.params = { ...found.mod.params, ...(patch.params as { [key: string]: JsonValue }) };
+    if (patch.enabled !== undefined) found.mod.enabled = patch.enabled;
   },
 });
 
@@ -60,42 +105,40 @@ export const removeModifier = (spaceId: string, nodeId: string, modId: string): 
   label: 'modifier.remove',
   spaceId,
   apply: (d) => {
-    const space = findSpace(d, spaceId);
-    const found = space ? locateNode(space as Space, nodeId) : null;
-    if (!found) return;
-    const node = found.node as Draft<Node>;
-    const at = entryOf(node, modId);
-    if (at !== -1) node.appearance.items.splice(at, 1);
+    const node = nodeIn(d, spaceId, nodeId);
+    locateModifier(node as DraftNode, modId)?.remove();
   },
 });
 
-/** Moves a modifier to another position of the appearance list (the order of modifiers is the order they run in). */
-export const moveModifier = (spaceId: string, nodeId: string, modId: string, toIndex: number): Command => ({
+/**
+ * Moves a modifier to a position of a zone: before the `position`-th modifier of the target (at the end when
+ * omitted). The same call reorders within a zone and moves between the whole object and one of its fills or strokes.
+ */
+export const moveModifier = (spaceId: string, nodeId: string, modId: string, target: ModifierTarget, position?: number): Command => ({
   label: 'modifier.move',
   spaceId,
   apply: (d) => {
-    const space = findSpace(d, spaceId);
-    const found = space ? locateNode(space as Space, nodeId) : null;
-    if (!found) return;
-    const items = (found.node as Draft<Node>).appearance.items;
-    const at = entryOf(found.node as Draft<Node>, modId);
-    if (at === -1) return;
-    const [item] = items.splice(at, 1);
-    if (item) items.splice(Math.max(0, Math.min(items.length, toIndex)), 0, item);
+    const node = nodeIn(d, spaceId, nodeId);
+    const found = node ? locateModifier(node, modId) : null;
+    if (!node || !found) return;
+    const mod = deepClone(found.mod) as Draft<ModifierInstance>;
+    found.remove();
+    // Taking it out shifts the positions of the modifiers after it in the same zone.
+    const sameZone = JSON.stringify(found.target) === JSON.stringify(target);
+    const at = position !== undefined && sameZone && position > found.position ? position - 1 : position;
+    zoneOf(node, target).insert(mod, at);
   },
 });
 
+/** Duplicates a modifier right after the original, in the same zone. */
 export const duplicateModifier = (spaceId: string, nodeId: string, modId: string, newId: string): Command => ({
   label: 'modifier.duplicate',
   spaceId,
   apply: (d) => {
-    const space = findSpace(d, spaceId);
-    const found = space ? locateNode(space as Space, nodeId) : null;
-    if (!found) return;
-    const node = found.node as Draft<Node>;
-    const at = entryOf(node, modId);
-    const item = node.appearance.items[at];
-    if (item && item.kind === 'modifier') node.appearance.items.splice(at + 1, 0, { kind: 'modifier', mod: { ...deepClone(item.mod), id: newId } } as Draft<AppearanceItem>);
+    const node = nodeIn(d, spaceId, nodeId);
+    const found = node ? locateModifier(node, modId) : null;
+    if (!node || !found) return;
+    zoneOf(node, found.target).insert({ ...(deepClone(found.mod) as Draft<ModifierInstance>), id: newId }, found.position + 1);
   },
 });
 
@@ -122,6 +165,39 @@ function nodeFromGeometry(ids: IdGenerator, geometry: Geometry, like: Node, appe
 const withoutModifiers = (appearance: Appearance): AppearanceItem[] =>
   appearance.items.flatMap((i): AppearanceItem[] => (i.kind === 'modifier' ? [] : [{ ...(deepClone(i) as typeof i), modifiers: [] }]));
 
+/** Replaces an object whose fills or strokes have their own modifiers by one object per fill or stroke, grouped. */
+function expandItems(node: Node, e: NonNullable<ReturnType<typeof evaluateNode>>, ids: IdGenerator): Node[] {
+  const parts: Node[] = [];
+  const shadowOf = (geometry: Geometry, fx: (typeof e.effects)[number]) => {
+    if (fx.type !== 'shadow') return;
+    const shadow = nodeFromGeometry(ids, geometry, node, { items: [{ kind: 'fill', paint: { type: 'solid', color: fx.color }, opacity: fx.opacity, modifiers: [] }] }, translation(fx.dx, fx.dy));
+    if (shadow) parts.push(shadow);
+  };
+  for (const fx of e.effects) shadowOf(e.geometry, fx);
+  node.appearance.items.forEach((item, index) => {
+    if (item.kind === 'modifier') return;
+    const own = e.items.get(index);
+    for (const fx of own?.effects ?? []) shadowOf(own?.geometry ?? e.geometry, fx);
+    const plain = { ...(deepClone(item) as typeof item), modifiers: [] };
+    let geometry = own?.geometry ?? e.geometry;
+    let look: AppearanceItem = plain;
+    if (own?.strokeOutline && item.kind === 'stroke') {
+      // Outline Stroke on this stroke: it is now a filled contour painted with the stroke's paint.
+      geometry = own.strokeOutline;
+      look = { kind: 'fill', paint: item.paint, opacity: item.opacity, modifiers: [] };
+    }
+    const part = nodeFromGeometry(ids, geometry, node, { items: [look] }, [1, 0, 0, 1, 0, 0]);
+    if (part) parts.push(part);
+  });
+  if (parts.length === 0) return [];
+  const group = createGroup(ids, parts as never);
+  if (node.name) group.name = node.name;
+  group.opacity = node.opacity;
+  group.blendMode = node.blendMode;
+  group.transform = [...node.transform] as Node['transform'];
+  return [group];
+}
+
 /** The objects that replace `node` once its modifiers are made permanent (null when it has none to apply). */
 function expandNode(node: Node, ids: IdGenerator): Node[] | null {
   if ((node.type === 'group' || node.type === 'clipGroup') && evaluateNode(node)?.groupAsShape !== true) {
@@ -137,6 +213,9 @@ function expandNode(node: Node, ids: IdGenerator): Node[] | null {
   }
   const e = evaluateNode(node);
   if (!e) return null;
+  // Fills and strokes with modifiers of their own become separate objects (one per item, in paint order).
+  if (e.items.size > 0) return expandItems(node, e, ids);
+
   const items = withoutModifiers(node.appearance);
   const out: Node[] = [];
 
@@ -210,7 +289,7 @@ export function expandModifiers(space: Space, selected: readonly string[], ids: 
 
 /** True when the object, or anything inside it, has a modifier that is switched on. */
 export function hasModifiers(node: Node): boolean {
-  if (node.appearance.items.some((i) => i.kind === 'modifier')) return true;
+  if (node.appearance.items.some((i) => i.kind === 'modifier' || i.modifiers.length > 0)) return true;
   return (node.type === 'group' || node.type === 'clipGroup') && node.children.some(hasModifiers);
 }
 

@@ -77,7 +77,7 @@ function ModifierForm({ dialog, session }: { dialog: NonNullable<ReturnType<type
     }
     if (!touched.current) {
       for (const nodeId of dialog.nodeIds) instances.current.set(nodeId, newModifier(session.ids, dialog.modifierId, params));
-      session.run(addModifier(space.id, [...instances.current].map(([nodeId, mod]) => ({ nodeId, mod })), mergeKey));
+      session.run(addModifier(space.id, [...instances.current].map(([nodeId, mod]) => ({ nodeId, mod, ...(dialog.target ? { target: dialog.target } : {}) })), mergeKey));
       return;
     }
     session.run(combineCommands('modifier.edit', [...instances.current].map(([nodeId, mod]) => updateModifier(space.id, nodeId, mod.id, { params }, mergeKey))));

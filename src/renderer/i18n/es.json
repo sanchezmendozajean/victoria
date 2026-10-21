@@ -787,5 +787,8 @@
   "appearance.down": "Bajar",
   "appearance.apply": "Aplicar modificadores",
   "appearance.edit": "Editar modificador",
-  "appearance.object": "Objeto"
+  "appearance.object": "Objeto",
+  "appearance.wholeObject": "Todo el objeto",
+  "appearance.wholeObjectTip": "Los modificadores de esta zona se aplican al objeto entero, con su contorno. Arrastra uno aquí para aplicarlo a todo.",
+  "appearance.dropTip": "Suelta un modificador sobre un relleno o un trazo para aplicarlo solo a él"
 }
