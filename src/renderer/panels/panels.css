@@ -778,14 +778,24 @@
   color: var(--accent);
 }
 
-/* Appearance panel */
+/* Appearance panel: the list fills the panel and the toolbar stays at the bottom, like Layers */
+.vc-appearance {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  padding-bottom: 0;
+}
 .vc-appearance__list {
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: 1px;
-  margin: 4px 0;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-control);
+  min-height: 56px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
   background: var(--bg-input);
 }
 .vc-appearance__row {
@@ -819,7 +829,8 @@
 }
 .vc-appearance__toolbar {
   display: flex;
+  flex: none;
   align-items: center;
   gap: 4px;
-  padding: 4px 0;
+  padding: 6px 10px;
 }
