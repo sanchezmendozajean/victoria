@@ -674,7 +674,7 @@
   height: 28px;
   padding: 0 10px;
   border-bottom: 1px solid var(--border);
-  font-size: 12px;
+  font-size: 11px;
 }
 .vc-propheader .vc-icon {
   color: var(--icon);
@@ -755,7 +755,7 @@
 .vc-fontpicker__group {
   padding: 6px 8px 2px;
   color: var(--text-disabled);
-  font-size: 10px;
+  font-size: 9px;
   text-transform: uppercase;
 }
 .vc-fontpicker__empty {
@@ -778,7 +778,7 @@
   border: 0;
   background: transparent;
   color: var(--text);
-  font-size: 14px;
+  font-size: 13px;
   text-align: left;
   overflow: hidden;
   text-overflow: ellipsis;

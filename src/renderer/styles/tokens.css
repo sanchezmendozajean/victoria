@@ -41,7 +41,7 @@
   --space-1: #4C8DFF; --space-2: #3FB97A; --space-3: #F2B33D; --space-4: #F0524F;
   --space-5: #A77BFF; --space-6: #2EC4C9; --space-7: #FF8A3D; --space-8: #9AA0A6;
   --font-ui: "Inter Variable", "Inter", system-ui, sans-serif;
-  --fs-micro: 10px; --fs-label: 11px; --fs-menu: 12px; --fs-dialog: 13px;
+  --fs-micro: 9px; --fs-label: 10px; --fs-menu: 11px; --fs-dialog: 12px;
   --radius-control: 3px; --radius-float: 6px;
   --h-control: 22px; --h-row: 28px; --h-menu-row: 26px;
   --icon-panel: 16px; --icon-tool: 20px; --icon-stroke: 1.5px;
@@ -58,7 +58,7 @@ html, body {
   background: var(--bg-app);
   color: var(--text);
   font-family: var(--font-ui);
-  font-size: 12px;
+  font-size: 11px;
   -webkit-font-smoothing: antialiased;
 }
 a { color: var(--accent); text-decoration: none; }
