@@ -79,8 +79,10 @@ export function createShapeTool(id: ToolId, kind: ShapeToolKind): Tool {
       return;
     }
     const existing = p.id;
-    const { id: _id, ...patch } = buildShape(() => existing, spec);
+    // Only the geometry follows the drag: the look chosen when the shape was created must not be reset.
+    const { id: _id, appearance: _look, ...patch } = buildShape(() => existing, spec);
     void _id;
+    void _look;
     session.run(redrawShape(space.id, existing, patch, p.key));
   }
 

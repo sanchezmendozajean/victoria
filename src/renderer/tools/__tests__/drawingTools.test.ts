@@ -480,3 +480,14 @@ describe('acceptance drawings (specs/12 · Fase 5): heart, drop and gear', () =>
     expect(shapes(t)).toHaveLength(2);
   });
 });
+
+describe('shape tools keep the current look while dragging', () => {
+  it('a dragged rectangle has the fill chosen before (none), not the default white', () => {
+    const t = createTestHost();
+    t.host.newAppearance = () => ({ items: [{ kind: 'fill', paint: { type: 'none' }, opacity: 1, modifiers: [] }] });
+    const tool = createShapeTool('tool-rect', 'rect');
+    drag(tool, t, { x: 10, y: 10 }, { x: 110, y: 90 });
+    const node = t.space().layers[0]!.children[0] as ShapeNode;
+    expect(node.appearance.items).toEqual([{ kind: 'fill', paint: { type: 'none' }, opacity: 1, modifiers: [] }]);
+  });
+});
