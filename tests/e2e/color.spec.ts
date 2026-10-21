@@ -135,7 +135,7 @@ test.describe('colour, stroke and panels (phase 6)', () => {
   test('colour picker dialog: opens on double click, previews live and Cancel restores', async () => {
     const { page } = ctx;
     await rectangle(page, -150, -60, -50, 20);
-    await page.getByTestId('paint-widget-fill').dblclick();
+    await page.getByTestId('paint-widget-fill').dblclick({ position: { x: 4, y: 4 } });
     await expect(page.getByTestId('color-picker')).toBeVisible();
     const hex = page.getByTestId('picker-hex');
     await hex.fill('00FF00');
@@ -144,7 +144,7 @@ test.describe('colour, stroke and panels (phase 6)', () => {
     await page.getByTestId('picker-cancel').click();
     await expect(page.getByTestId('color-picker')).toHaveCount(0);
     await expectPixel(page, -100, -20, [255, 255, 255]);
-    await page.getByTestId('paint-widget-fill').dblclick();
+    await page.getByTestId('paint-widget-fill').dblclick({ position: { x: 4, y: 4 } });
     await page.getByTestId('picker-hex').fill('0000FF');
     await page.keyboard.press('Enter');
     await page.getByTestId('picker-ok').click();
@@ -154,7 +154,7 @@ test.describe('colour, stroke and panels (phase 6)', () => {
   test('colour picker is a popover: Escape cancels, a click elsewhere keeps the colour', async () => {
     const { page } = ctx;
     await rectangle(page, -150, -60, -50, 20);
-    await page.getByTestId('paint-widget-fill').dblclick();
+    await page.getByTestId('paint-widget-fill').dblclick({ position: { x: 4, y: 4 } });
     const popover = page.getByTestId('color-picker');
     await expect(popover).toBeVisible();
     const chip = (await page.getByTestId('paint-widget-fill').boundingBox())!;
@@ -165,7 +165,7 @@ test.describe('colour, stroke and panels (phase 6)', () => {
     await page.keyboard.press('Escape');
     await expect(popover).toHaveCount(0);
     await expectPixel(page, -100, -20, [255, 255, 255]);
-    await page.getByTestId('paint-widget-fill').dblclick();
+    await page.getByTestId('paint-widget-fill').dblclick({ position: { x: 4, y: 4 } });
     await page.getByTestId('picker-hex').fill('FF00FF');
     await page.keyboard.press('Enter');
     await page.getByTestId('control-bar').click({ position: { x: 4, y: 4 } }); // outside the popover
@@ -398,7 +398,7 @@ test('colour picker: CMYK fields sit beside HSB and keep what was typed; the web
   const ctx = await launchApp();
   const { page } = ctx;
   await page.waitForTimeout(400);
-  await page.getByTestId('paint-widget-fill').dblclick();
+  await page.getByTestId('paint-widget-fill').dblclick({ position: { x: 4, y: 4 } });
   await page.getByTestId('picker-cmyk-C').fill('40');
   await page.keyboard.press('Enter');
   await expect(page.getByTestId('picker-cmyk-C')).toHaveValue('40');

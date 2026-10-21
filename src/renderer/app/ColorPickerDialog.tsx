@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { colorToCss, colorToHex, colorToRgb, convertColor, deepClone, hexToColor, toWebSafe, type Appearance, type Color, type DocumentSession } from '../../core';
+import { setPaintItem, colorToCss, colorToHex, colorToRgb, convertColor, deepClone, hexToColor, toWebSafe, type Appearance, type Color, type Paint, type DocumentSession } from '../../core';
 import { NumberInput } from '../components/NumberInput';
 import { solidColorOf } from '../panels/FillPanel';
 import { CheckRow, Row } from '../panels/kit';
 import { usePaintLook } from '../panels/PaintWidget';
 import { rememberColor } from '../panels/recentColors';
 import { t } from '../i18n';
-import { applyPaint, nextPaintKey } from './paintActions';
+import { applyPaint as applyLookPaint, nextPaintKey } from './paintActions';
 import { useUi } from './store';
 import '../components/DialogHost.css';
 import './ColorPickerDialog.css';
@@ -18,8 +18,8 @@ export function ColorPickerDialog() {
   if (!picker) return null;
   const target = picker.target;
   const paint = look[target];
-  const original = !paint.mixed ? solidColorOf(paint.value, resources) : null;
-  return <PickerForm key={target} anchor={picker.anchor} target={target} original={original ?? { model: 'rgb', values: [0, 0, 0] }} hasSelection={!!ctx && ctx.leaves.length > 0} session={ctx?.session} />;
+  const original = picker.item ? picker.item.color : !paint.mixed ? solidColorOf(paint.value, resources) : null;
+  return <PickerForm key={`${target}:${picker.item?.nodeId ?? ''}:${picker.item?.index ?? ''}`} item={picker.item} anchor={picker.anchor} target={target} original={original ?? { model: 'rgb', values: [0, 0, 0] }} hasSelection={!!picker.item || (!!ctx && ctx.leaves.length > 0)} session={ctx?.session} />;
 }
 
 type Anchor = { left: number; top: number; right: number; bottom: number };
@@ -36,7 +36,7 @@ function placeBeside(anchor: Anchor): { left: number; top: number } {
   return { left, top };
 }
 
-function PickerForm({ target, original, hasSelection, session, anchor }: { target: 'fill' | 'stroke'; original: Color; hasSelection: boolean; session: DocumentSession | undefined; anchor: Anchor }) {
+function PickerForm({ target, original, hasSelection, session, anchor, item }: { item: { nodeId: string; index: number } | undefined; target: 'fill' | 'stroke'; original: Color; hasSelection: boolean; session: DocumentSession | undefined; anchor: Anchor }) {
   const close = useUi((s) => s.closeColorPicker);
   const initial = convertColor(original, 'hsb');
   const [hsb, setHsb] = useState<[number, number, number]>([initial.values[0] ?? 0, initial.values[1] ?? 0, initial.values[2] ?? 0]);
@@ -47,6 +47,12 @@ function PickerForm({ target, original, hasSelection, session, anchor }: { targe
   const applied = useRef(false);
   const savedLook = useRef<Appearance>(deepClone(useUi.getState().newLook) as Appearance);
 
+  // Pointed at one item of the Appearance list the paint goes there; otherwise to the selection and the next objects.
+  const applyPaint = (to: 'fill' | 'stroke', paint: Paint, mergeKey: string) => {
+    const space = session?.document.spaces.find((sp) => sp.id === session.document.activeSpaceId);
+    if (item && session && space) session.run(setPaintItem(space.id, item.nodeId, item.index, { paint }, mergeKey));
+    else applyLookPaint(to, paint, mergeKey);
+  };
   const colorOf = (v: [number, number, number]): Color => {
     const c: Color = { model: 'hsb', values: v, ...(original.alpha === undefined ? {} : { alpha: original.alpha }) };
     return webOnly ? toWebSafe(c) : c;

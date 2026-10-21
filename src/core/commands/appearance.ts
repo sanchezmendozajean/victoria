@@ -329,3 +329,18 @@ export const duplicateAppearanceItem = (spaceId: string, id: string, index: numb
     if (items && item && item.kind !== 'modifier') items.splice(index + 1, 0, deepClone(item) as DraftItem);
   },
 });
+
+/** Edits one fill or stroke of an object by its position in the list (panel Apariencia): its paint and/or stroke weight. */
+export const setPaintItem = (spaceId: string, id: string, index: number, patch: { paint?: Paint; width?: number }, mergeKey?: string): Command => ({
+  label: 'appearance.item',
+  spaceId,
+  ...mergeKeyOf('appearance.item', mergeKey ? `${id}:${index}:${mergeKey}` : undefined),
+  apply: (d) => {
+    const space = findSpace(d, spaceId);
+    const found = space ? locateNode(space as Space, id) : null;
+    const item = found ? (found.node as Draft<Node>).appearance.items[index] : null;
+    if (!item || item.kind === 'modifier') return;
+    if (patch.paint) item.paint = deepClone(patch.paint) as Draft<Paint>;
+    if (patch.width !== undefined && item.kind === 'stroke') item.stroke.width = Math.max(0, patch.width);
+  },
+});

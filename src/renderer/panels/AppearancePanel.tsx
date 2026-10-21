@@ -11,6 +11,7 @@ import {
   moveModifier,
   removeAppearanceItem,
   removeModifier,
+  setPaintItem,
   updateModifier,
   type AppearanceItem,
   type ModifierInstance,
@@ -26,6 +27,9 @@ import { MenuPopup, type MenuEntry } from '../components/Menu';
 import { tip } from '../components/Tooltip';
 import { cx } from '../components/cx';
 import { t, type TranslationKey } from '../i18n';
+import { NumberInput } from '../components/NumberInput';
+import { useUi } from '../app/store';
+import { solidColorOf } from './FillPanel';
 import { PaintChip } from './kit';
 import { usePanelContext } from './context';
 
@@ -210,8 +214,19 @@ export function AppearancePanel() {
         <span className="vc-layerrow__btn" style={{ visibility: 'hidden' }} />
         <Icon id={item.kind === 'fill' ? 'fill' : 'stroke'} size={14} className="vc-field__icon" />
         <span className="vc-appearance__name">{item.kind === 'fill' ? t('appearance.fill') : t('appearance.stroke')}</span>
-        <PaintChip paint={item.paint} resources={ctx.resources as Resources} size={14} />
-        {item.kind === 'stroke' && <span className="vc-appearance__value">{Math.round(item.stroke.width * 100) / 100} pt</span>}
+        <span
+          data-testid="appearance-chip"
+          onDoubleClick={(e) => {
+            e.stopPropagation();
+            const color = item.paint.type === 'none' ? undefined : solidColorOf(item.paint, ctx.resources as Resources);
+            useUi.getState().openColorPicker(item.kind, e.currentTarget, { nodeId: node.id, index, color: color ?? { model: 'rgb', values: item.kind === 'fill' ? [255, 255, 255] : [0, 0, 0] } });
+          }}
+        >
+          <PaintChip paint={item.paint} resources={ctx.resources as Resources} size={14} />
+        </span>
+        {item.kind === 'stroke' && (
+          <NumberInput value={Math.round(item.stroke.width * 100) / 100} onCommit={(v) => run(setPaintItem(spaceId, node.id, index, { width: v }))} min={0} step={0.25} decimals={2} suffix="pt" width={64} testId="appearance-weight" tooltip={t('stroke.weight')} />
+        )}
         <button type="button" className="vc-layerrow__btn" aria-label={t('appearance.up')} disabled={!later} onClick={(e) => { e.stopPropagation(); if (later) { run(moveAppearanceItem(spaceId, node.id, index, later.index)); setPick({ kind: 'paint', index: later.index }); } }}>
           <Icon id="chevron-up" size={12} />
         </button>

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { defaultAppearance, type Appearance, type Matrix, type ModifierTarget,
+import { defaultAppearance, type Appearance, type Color, type Matrix, type ModifierTarget,
   type Params, type ParagraphStyle, type TextStyle, type Vec2 } from '../../core';
 import type { PlatformInfo, Theme } from '../../shared/ipc';
 import type { TransformKind } from '../tools/types';
@@ -82,7 +82,7 @@ interface UiState {
   /** Fill and stroke of the next object drawn (and what the toolbar shows with nothing selected). */
   newLook: Appearance;
   /** Colour picker dialog (double click on the fill or stroke chip). */
-  colorPicker: { target: 'fill' | 'stroke'; anchor: { left: number; top: number; right: number; bottom: number } } | null;
+  colorPicker: { target: 'fill' | 'stroke'; anchor: { left: number; top: number; right: number; bottom: number }; item?: { nodeId: string; index: number; color: Color } } | null;
   /** Layer that receives new objects when nothing is selected, per Space (Layers panel). */
   activeLayer: Record<string, string>;
   /** Character and paragraph attributes of the next text created (and shown by the panels with no text selected). */
@@ -121,7 +121,8 @@ interface UiState {
   setTextEditRequest(request: { id: string; at: Vec2 } | null): void;
   setActiveLayer(spaceId: string, layerId: string): void;
   /** Opens the colour popover next to `anchor` (the chip that was clicked). */
-  openColorPicker(target: 'fill' | 'stroke', anchor: Element): void;
+  /** `item` points the picker at one fill or stroke of an object (panel Apariencia) instead of the selection's look. */
+  openColorPicker(target: 'fill' | 'stroke', anchor: Element, item?: { nodeId: string; index: number; color: Color }): void;
   closeColorPicker(): void;
   setActivePaint(target: 'fill' | 'stroke'): void;
   setKeyObject(id: string | null): void;
@@ -243,9 +244,9 @@ export const useUi = create<UiState>()((set, get) => ({
   setTextEditing: (textEditing) => set({ textEditing }),
   setTextEditRequest: (textEditRequest) => set({ textEditRequest }),
   setActiveLayer: (spaceId, layerId) => set((s) => ({ activeLayer: { ...s.activeLayer, [spaceId]: layerId } })),
-  openColorPicker: (target, anchor) => {
+  openColorPicker: (target, anchor, item) => {
     const r = anchor.getBoundingClientRect();
-    set({ colorPicker: { target, anchor: { left: r.left, top: r.top, right: r.right, bottom: r.bottom } }, activePaint: target });
+    set({ colorPicker: { target, anchor: { left: r.left, top: r.top, right: r.right, bottom: r.bottom }, ...(item ? { item } : {}) }, activePaint: target });
   },
   closeColorPicker: () => set({ colorPicker: null }),
   setActivePaint: (activePaint) => set({ activePaint }),

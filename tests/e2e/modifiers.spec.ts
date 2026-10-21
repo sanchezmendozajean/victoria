@@ -46,6 +46,23 @@ test.describe('modifiers (phase 9)', () => {
     await expect(page.getByTestId('appearance-panel')).toBeVisible();
   });
 
+  test('the weight of a stroke is editable in the Appearance list and double click on its colour opens the picker', async () => {
+    const { page } = ctx;
+    const stroke = page.locator('[data-testid="appearance-row"][data-kind="stroke"]').first();
+    await page.getByTestId('appearance-weight').fill('7');
+    await page.keyboard.press('Enter');
+    await expect(page.getByTestId('appearance-weight')).toHaveValue(/7/);
+    await stroke.getByTestId('appearance-chip').dblclick();
+    await expect(page.getByTestId('color-picker')).toBeVisible();
+    await page.getByTestId('picker-hex').fill('ff0000');
+    await page.keyboard.press('Enter');
+    await page.getByTestId('picker-ok').click();
+    await expect(page.getByTestId('color-picker')).toHaveCount(0);
+    await expect(page.getByTestId('appearance-weight')).toHaveValue(/7/);
+    // leave the whole object as the target of fx for the next tests
+    await page.getByTestId('appearance-zone').click();
+  });
+
   test('a modifier from the fx menu is a single undo step and shows in the Appearance list', async () => {
     const { page } = ctx;
     await expect(modifierRows(page)).toHaveCount(0);
