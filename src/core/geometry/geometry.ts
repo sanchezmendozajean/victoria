@@ -35,7 +35,7 @@ const textHitWrappers = new WeakMap<TextGeometry, NodeGeometry>();
 
 /** What a click can hit: the line boxes (or the frame) of text, the painted contours of everything else. */
 export function hitGeometry(node: Node): NodeGeometry | null {
-  if (node.type !== 'text') return nodeGeometry(node);
+  if (node.type !== 'text') return renderGeometry(node);
   const g = textGeometry(node);
   let wrapped = textHitWrappers.get(g);
   if (!wrapped) {
@@ -44,6 +44,25 @@ export function hitGeometry(node: Node): NodeGeometry | null {
   }
   return wrapped;
 }
+
+/**
+ * What the modifiers module plugs in (it imports this file, so it registers itself here): the contours an
+ * object is painted and picked with once its modifiers are applied, and the room its effects need.
+ */
+export interface RenderOverride {
+  geometry(node: Node): NodeGeometry | null;
+  /** True for a group drawn as one shape (live pathfinder) instead of through its children. */
+  groupAsShape(node: Node): boolean;
+  /** Extra room around the geometry for shadows and glows. */
+  margin(node: Node): number;
+}
+let renderOverride: RenderOverride | null = null;
+export const setRenderOverride = (override: RenderOverride | null): void => {
+  renderOverride = override;
+};
+export const isGroupShape = (node: Node): boolean => renderOverride?.groupAsShape(node) === true;
+/** Contours to paint and pick: the evaluated ones when the object has modifiers, else the base contours. */
+export const renderGeometry = (node: Node): NodeGeometry | null => renderOverride?.geometry(node) ?? nodeGeometry(node);
 
 export function nodeGeometry(node: Node): NodeGeometry | null {
   if (node.type === 'text') return textNodeGeometry(node);
@@ -104,7 +123,7 @@ function computeBounds(node: Node, withStroke: boolean): Rect | null {
   // Text depends on the loaded fonts, so its bounds are not cached here (textGeometry caches the layout).
   if (node.type !== 'text' && cache.has(node)) return cache.get(node) as Rect | null;
   let local: Rect | null = null;
-  if (node.type === 'group' || node.type === 'clipGroup') {
+  if ((node.type === 'group' || node.type === 'clipGroup') && !(withStroke && isGroupShape(node))) {
     // A clip group shows only what the mask (first child) covers.
     const members = node.type === 'clipGroup' ? node.children.slice(0, 1) : node.children;
     for (const child of members) local = unionRect(local, computeBounds(child, withStroke));
@@ -112,9 +131,10 @@ function computeBounds(node: Node, withStroke: boolean): Rect | null {
     local = textGeometry(node).bounds;
     if (local && withStroke) local = inflateRect(local, strokeInflation(node.appearance));
   } else {
-    const geometry = nodeGeometry(node);
+    // Visible bounds follow the modifiers (and the room their effects need); geometric bounds stay on the base contours.
+    const geometry = withStroke ? renderGeometry(node) : nodeGeometry(node);
     local = geometry ? geometryBounds(geometry) : null;
-    if (local && withStroke) local = inflateRect(local, strokeInflation(node.appearance));
+    if (local && withStroke) local = inflateRect(local, strokeInflation(node.appearance) + (renderOverride?.margin(node) ?? 0));
   }
   const result = local ? transformRect(node.transform, local) : null;
   if (node.type !== 'text') cache.set(node, result);

@@ -3,7 +3,7 @@ import RBush from 'rbush';
 import { multiply } from '../model/matrix';
 import { isLayer } from '../model/queries';
 import type { Layer, LayerChild, Matrix, Node, Space, Vec2 } from '../model/types';
-import { boundsInParent, geometricBoundsInParent } from './geometry';
+import { boundsInParent, geometricBoundsInParent, isGroupShape } from './geometry';
 import { transformRect, type Rect } from './rect';
 
 /** A visible leaf object with everything hit testing needs; one per leaf, in the R-tree. */
@@ -50,7 +50,7 @@ export class SpaceIndex {
         if (!child.visible) continue;
         const world = multiply(parentWorld, child.transform);
         const nodeLocked = locked || child.locked;
-        if (child.type === 'group' || child.type === 'clipGroup') {
+        if ((child.type === 'group' || child.type === 'clipGroup') && !isGroupShape(child)) {
           const inner = [...ancestors, child];
           if (child.type === 'clipGroup') {
             const [mask, ...rest] = child.children;

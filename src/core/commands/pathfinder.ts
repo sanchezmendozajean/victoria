@@ -8,7 +8,8 @@ import { applyToPoint, invert, multiply } from '../model/matrix';
 import { isLayer } from '../model/queries';
 import type { Anchor, Appearance, AppearanceItem, LayerChild, Matrix, Node, Paint, Space } from '../model/types';
 import { combineCommands, type Command } from './command';
-import { removeNodes, replaceNode } from './node';
+import { groupNodes, removeNodes, replaceNode } from './node';
+import { newModifier } from './modifiers';
 
 // Pathfinder (specs/06 · Buscatrazos): shape modes and pathfinders over the selected objects. Geometry
 // comes from `geometry/booleans.ts` (paper.js, Béziers preserved); here the objects are gathered in paint
@@ -200,3 +201,24 @@ export function shapeBuilderEdit(space: Space, arrangement: Arrangement, groups:
   return { command: combineCommands('shapeBuilder', commands), resultIds: nodes.map((n) => n.id) };
 }
 
+
+const LIVE_IDS: Partial<Record<PathfinderOp, string>> = { unite: 'pf-unite', minusFront: 'pf-minus-front', intersect: 'pf-intersect', exclude: 'pf-exclude' };
+
+/** Whether an operation exists as a live pathfinder (only the shape modes do, in v1). */
+export const hasLiveVersion = (op: PathfinderOp): boolean => op in LIVE_IDS;
+
+/**
+ * Alt+click on a shape mode: the selection is grouped and the group gets the pathfinder as a modifier, so the
+ * objects stay editable. The group is painted as one shape with the look of the topmost object.
+ */
+export function makeLivePathfinder(space: Space, ids: readonly string[], op: PathfinderOp, newIds: IdGenerator): PathfinderResult | null {
+  const modifierId = LIVE_IDS[op];
+  const { operands, owners } = gather(space, new Set(ids));
+  if (!modifierId || operands.length < 2 || owners.length === 0) return null;
+  const top = operands[operands.length - 1] as Operand;
+  const group = createGroup(newIds, []);
+  group.appearance = {
+    items: [...(deepClone(top.appearance.items.filter((i) => i.kind !== 'modifier')) as AppearanceItem[]), { kind: 'modifier', mod: newModifier(newIds, modifierId, {}) }],
+  };
+  return { command: combineCommands(`pathfinder.live.${op}`, [groupNodes(space.id, owners, group)]), resultIds: [group.id] };
+}

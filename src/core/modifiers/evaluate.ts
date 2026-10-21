@@ -1,5 +1,5 @@
 import { shapeOperation, type BooleanShape } from '../geometry/booleans';
-import { geometryBounds, nodeGeometry, type NodeGeometry } from '../geometry/geometry';
+import { geometryBounds, nodeGeometry, setRenderOverride, type NodeGeometry } from '../geometry/geometry';
 import { applyToPoint, multiply } from '../model/matrix';
 import type { Matrix, ModifierInstance, Node } from '../model/types';
 import { getModifier } from './registry';
@@ -12,6 +12,8 @@ import { mapGeometry } from './util';
 
 export interface Evaluated {
   geometry: Geometry;
+  /** The geometry as the shape of the object (one shared instance, so caches can key on it). */
+  shape: NodeGeometry;
   /** Set by Outline Stroke: strokes are painted as fills of this contour. */
   strokeOutline: Geometry | null;
   effects: AppearanceEffect[];
@@ -99,11 +101,21 @@ function compute(node: Node): Evaluated | null {
     if (out.strokeOutline) strokeOutline = out.strokeOutline;
     if (out.effect) effects.push(out.effect);
   }
-  return { geometry, strokeOutline, effects, groupAsShape };
+  return { geometry, shape: { subpaths: geometry.subpaths, fillRule: geometry.fillRule }, strokeOutline, effects, groupAsShape };
 }
 
 /** Geometry to paint and hit-test: the evaluated one when the object has modifiers, else the base contours. */
-export function evaluatedGeometry(node: Node): NodeGeometry | null {
-  const e = evaluateNode(node);
-  return e ? { subpaths: e.geometry.subpaths, fillRule: e.geometry.fillRule } : nodeGeometry(node);
+export const evaluatedGeometry = (node: Node): NodeGeometry | null => evaluateNode(node)?.shape ?? nodeGeometry(node);
+
+/** Room an object's shadows and glows need around its geometry. */
+function effectMargin(node: Node): number {
+  let m = 0;
+  for (const e of evaluateNode(node)?.effects ?? []) m = Math.max(m, e.type === 'shadow' ? Math.hypot(e.dx, e.dy) + e.blur * 2 : e.blur * 2);
+  return m;
 }
+
+setRenderOverride({
+  geometry: (node) => evaluateNode(node)?.shape ?? null,
+  groupAsShape: (node) => evaluateNode(node)?.groupAsShape === true,
+  margin: effectMargin,
+});
