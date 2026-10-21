@@ -59,6 +59,8 @@ function PickerForm({ target, original, hasSelection, session, anchor, item }: {
     return webOnly ? toWebSafe(c) : c;
   };
   const color = colorOf(hsb);
+  // What the colour is before snapping to the web palette, to compare it with its web version.
+  const real: Color = { model: 'hsb', values: hsb, ...(original.alpha === undefined ? {} : { alpha: original.alpha }) };
 
   const set = (next: [number, number, number]) => {
     setTypedCmyk(null);
@@ -184,9 +186,15 @@ function PickerForm({ target, original, hasSelection, session, anchor, item }: {
           </div>
           <div className="vc-picker__side">
             <CheckRow checked={webOnly} onChange={(v) => { setWebOnly(v); if (v) applyPaint(target, { type: 'solid', color: toWebSafe(colorOf(hsb)) }, key.current); }} label={t('picker.webOnly')} testId="picker-web" />
-            <div className="vc-picker__preview" aria-label={t('picker.newOld')}>
-              <span style={{ background: colorToCss(color) }} data-testid="picker-new" />
-              <span style={{ background: colorToCss(original) }} data-testid="picker-old" />
+            <div className="vc-picker__compare" aria-label={t('picker.webReal')}>
+              <div className="vc-picker__half">
+                <span className="vc-picker__swatch" style={{ background: colorToCss(toWebSafe(real)) }} data-testid="picker-web-swatch" />
+                <span className="vc-picker__caption">{t('picker.web')}</span>
+              </div>
+              <div className="vc-picker__half">
+                <span className="vc-picker__swatch" style={{ background: colorToCss(real) }} data-testid="picker-real-swatch" />
+                <span className="vc-picker__caption">{t('picker.real')}</span>
+              </div>
             </div>
           </div>
         </div>

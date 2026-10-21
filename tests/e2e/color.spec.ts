@@ -405,7 +405,7 @@ test('colour picker: channel sliders by model keep typed CMYK; the web-only chec
   await expect(page.getByTestId('picker-field-C')).toHaveValue('40');
   const square = (await page.getByTestId('picker-square').boundingBox())!;
   const web = (await page.getByTestId('picker-web').boundingBox())!;
-  const swatch = (await page.getByTestId('picker-new').boundingBox())!;
+  const swatch = (await page.getByTestId('picker-web-swatch').boundingBox())!;
   expect(web.x).toBeGreaterThan(square.x + square.width);
   expect(swatch.y).toBeGreaterThan(web.y);
   await page.keyboard.press('Escape');
