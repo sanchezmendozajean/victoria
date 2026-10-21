@@ -246,7 +246,7 @@
 .vc-paintwidget__stroke {
   position: absolute;
   border-radius: 2px;
-  box-shadow: 0 0 0 1px var(--border-strong);
+  box-shadow: inset 0 0 0 1px var(--border-strong);
   background-color: #fff;
 }
 .vc-paintwidget__fill {
@@ -258,7 +258,7 @@
 }
 .vc-paintwidget__fill.is-active,
 .vc-paintwidget__stroke.is-active {
-  box-shadow: 0 0 0 1px var(--accent), 0 0 0 2px var(--bg-panel);
+  box-shadow: inset 0 0 0 1px var(--accent);
 }
 /* The stroke is a hollow frame: its paint shows only on a ring. */
 .vc-paintwidget__stroke {
