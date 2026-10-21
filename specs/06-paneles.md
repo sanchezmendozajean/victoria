@@ -103,7 +103,7 @@ Modos de forma: Unir, Menos frente, Intersecar, Excluir (Alt+clic = crear como B
 - **Resultados**: los modos de forma dejan un objeto por pieza disjunta (un trazado compuesto si hay huecos); Dividir, Recortar, Combinar, Cortar y Contorno devuelven un **grupo**. Intersecar objetos que no se tocan los elimina, como Illustrator.
 - **Combinar** une las piezas que se tocan y tienen el mismo relleno tras Recortar; las que no se tocan siguen separadas.
 - **Contorno** duplica los bordes compartidos entre regiones (Illustrator los fusiona): pendiente de afinar.
-- **Pendiente hasta la Fase 9**: Alt+clic (Buscatrazos vivo) aplica la operación normal, y «Expandir» está desactivado, porque aún no existen los modificadores.
+- **Buscatrazos vivo** (Fase 9): Alt+clic en un modo de forma agrupa la selección y le añade el modificador (ver spec 05); «Expandir» lo convierte en geometría real y se activa cuando la selección tiene modificadores. Solo los cuatro modos de forma tienen versión viva en v1.
 
 ## Calco de imagen
 

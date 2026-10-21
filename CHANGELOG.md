@@ -1,5 +1,27 @@
 # Changelog
 
+## Fase 9 — Modificadores (en revisión)
+
+### Añadido
+- **Registro de modificadores** (`core/modifiers`): funciones puras y deterministas (los aleatorios, con semilla guardada), un `schema` por modificador que genera su diálogo y una evaluación cacheada por nodo.
+- **Catálogo v1 (17)**: Desplazar trazado, Contornear trazo, Buscatrazos vivo (Unir, Menos frente, Intersecar, Excluir), Redondear esquinas, Zigzag, Fruncir y engordar, Hacer áspero, Transformar, Arco, Bandera, Onda, Inflar, Sombra paralela y Resplandor exterior; el resto del menú Modificador aparece con la etiqueta «v2».
+- **Panel Apariencia** (Mayús+F6): lista de relleno, trazo y modificadores con ojo, doble clic para editar, subir/bajar, duplicar, eliminar; botones de añadir trazo y relleno, **fx**, borrar apariencia y aplicar. Botón fx también en Propiedades.
+- **Menú Modificador** funcional por categorías, **Aplicar último modificador** (Mayús+Ctrl+E) y **Último modificador…** (Alt+Mayús+Ctrl+E); **Objeto › Aplicar modificadores** (Alt+Ctrl+E).
+- **Diálogo generado por esquema** con Previsualizar (un solo paso de deshacer; Cancelar lo revierte), rueda y expresiones aritméticas en los campos.
+- **Buscatrazos vivo**: Alt+clic en un modo de forma del panel Buscatrazos; «Expandir» ya funciona.
+- El pintado y la selección por clic usan la geometría evaluada; las sombras y resplandores se pintan en el lienzo; los modificadores se guardan en el `.vict`.
+- Dependencias: `paper` ya estaba (Fase 8). Se probó `clipper2-js` para el desplazamiento y se descartó (resultados erróneos); el desplazamiento es propio sobre paper.js.
+- Pruebas: instantáneas de geometría por modificador, órdenes, Aplicar, Buscatrazos vivo, persistencia y 4 e2e.
+
+### Decisiones y aproximaciones (spec 05 · «Reglas añadidas en la Fase 9»)
+- La caja delimitadora y la alineación usan los contornos originales; el pintado y la selección por clic, los evaluados.
+- Fruncir/engordar, Hacer áspero, las deformaciones, la sombra (sin modo de fusión) y el resplandor son aproximaciones propias: la spec no da fórmulas, hay que compararlas con Illustrator a mano.
+- Al aplicar, la sombra pasa a ser un objeto aparte **sin desenfoque** y el resplandor se pierde.
+
+### Pendiente
+- Preajustes de modificadores, modificadores por relleno/trazo en la interfaz, preferencia de límites de previsualización, los modificadores v2 y Contornear objeto; exportación SVG/PDF de los efectos (Fase 11).
+- Sin verificar: Linux y el instalador de Windows; rendimiento solo medido en Windows (modificadores con miles de objetos sin medir).
+
 ## Fase 8 — Construcción de formas (en revisión)
 
 ### Añadido

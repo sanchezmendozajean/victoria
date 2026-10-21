@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { defaultAppearance, type Appearance, type Matrix, type ParagraphStyle, type TextStyle, type Vec2 } from '../../core';
+import { defaultAppearance, type Appearance, type Matrix, type Params, type ParagraphStyle, type TextStyle, type Vec2 } from '../../core';
 import type { PlatformInfo, Theme } from '../../shared/ipc';
 import type { TransformKind } from '../tools/types';
 import type { ShapeToolKind } from '../tools/shapeDrag';
@@ -101,6 +101,9 @@ interface UiState {
   /** Transform panel: strokes and effects scale with the object. */
   scaleStrokes: boolean;
   pathTextDialog: boolean;
+  modifierDialog: { modifierId: string; nodeIds: string[]; edit: { nodeId: string; modId: string } | null } | null;
+  /** The last modifier applied, with its parameters (Mayús+Ctrl+E repeats it). */
+  lastModifier: { modifierId: string; params: Params } | null;
   shapeDialog: { kind: ShapeToolKind; at: Vec2 } | null;
 
   setIsolation(spaceId: string, groupId: string | null): void;
@@ -126,6 +129,9 @@ interface UiState {
   setScaleStrokes(on: boolean): void;
   openShapeDialog(kind: ShapeToolKind, at: Vec2): void;
   closeShapeDialog(): void;
+  openModifierDialog(dialog: NonNullable<UiState['modifierDialog']>): void;
+  closeModifierDialog(): void;
+  setLastModifier(modifier: NonNullable<UiState['lastModifier']>): void;
   setPathTextDialog(open: boolean): void;
 
   toggleViewOption(key: keyof ViewOptions): void;
@@ -203,6 +209,8 @@ export const useUi = create<UiState>()((set, get) => ({
   alignPreviewBounds: false,
   scaleStrokes: false,
   pathTextDialog: false,
+  modifierDialog: null,
+  lastModifier: null,
   shapeDialog: null,
 
   setIsolation: (spaceId, groupId) => set((s) => ({ isolation: { ...s.isolation, [spaceId]: groupId } })),
@@ -245,6 +253,9 @@ export const useUi = create<UiState>()((set, get) => ({
   setAlignPreviewBounds: (alignPreviewBounds) => set({ alignPreviewBounds }),
   setScaleStrokes: (scaleStrokes) => set({ scaleStrokes }),
   openShapeDialog: (kind, at) => set({ shapeDialog: { kind, at } }),
+  openModifierDialog: (modifierDialog) => set({ modifierDialog }),
+  closeModifierDialog: () => set({ modifierDialog: null }),
+  setLastModifier: (lastModifier) => set({ lastModifier }),
   closeShapeDialog: () => set({ shapeDialog: null }),
   setPathTextDialog: (pathTextDialog) => set({ pathTextDialog }),
 

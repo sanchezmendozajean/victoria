@@ -777,3 +777,49 @@
 .vc-fontpicker__star[aria-pressed='true'] {
   color: var(--accent);
 }
+
+/* Appearance panel */
+.vc-appearance__list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 4px 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--bg-input);
+}
+.vc-appearance__row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 26px;
+  padding: 0 6px;
+  color: var(--text);
+  font-size: var(--fs-label);
+  cursor: default;
+}
+.vc-appearance__row:hover {
+  background: var(--bg-hover);
+}
+.vc-appearance__row.is-selected {
+  background: var(--bg-active);
+}
+.vc-appearance__row.is-off .vc-appearance__name {
+  color: var(--text-disabled);
+}
+.vc-appearance__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.vc-appearance__value {
+  color: var(--text-muted);
+}
+.vc-appearance__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0;
+}

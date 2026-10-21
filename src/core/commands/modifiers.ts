@@ -24,9 +24,10 @@ function entryOf(node: Draft<Node>, modId: string) {
 export const newModifier = (ids: IdGenerator, modifierId: string, params: Params): ModifierInstance => ({ id: ids(), modifierId, enabled: true, params: { ...params } as { [key: string]: JsonValue } });
 
 /** Adds a modifier to each object (a fresh instance per object, built by the caller so that ids stay unique). */
-export const addModifier = (spaceId: string, additions: ReadonlyArray<{ nodeId: string; mod: ModifierInstance }>, label = 'modifier.add'): Command => ({
-  label,
+export const addModifier = (spaceId: string, additions: ReadonlyArray<{ nodeId: string; mod: ModifierInstance }>, mergeKey?: string): Command => ({
+  label: 'modifier.add',
   spaceId,
+  ...(mergeKey ? { mergeKey } : {}),
   apply: (d) => {
     const space = findSpace(d, spaceId);
     if (!space) return;
@@ -37,11 +38,11 @@ export const addModifier = (spaceId: string, additions: ReadonlyArray<{ nodeId: 
   },
 });
 
-/** Changes the parameters and/or the on-off state of a modifier. A key merges a drag of a slider into one step. */
+/** Changes the parameters and/or the on-off state of a modifier. The key (used verbatim) merges a dialog's edits into one step. */
 export const updateModifier = (spaceId: string, nodeId: string, modId: string, patch: { params?: Params; enabled?: boolean }, mergeKey?: string): Command => ({
   label: 'modifier.edit',
   spaceId,
-  ...(mergeKey ? { mergeKey: `modifier.edit:${nodeId}:${modId}:${mergeKey}` } : {}),
+  ...(mergeKey ? { mergeKey } : {}),
   apply: (d) => {
     const space = findSpace(d, spaceId);
     const found = space ? locateNode(space as Space, nodeId) : null;

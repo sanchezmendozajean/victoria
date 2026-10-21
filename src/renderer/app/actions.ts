@@ -21,6 +21,7 @@ import {
 import { averageSelection, joinSelection } from './pathActions';
 import { defaultPaints, paintAsColor, paintAsGradient, paintAsNone, swapPaints } from './paintActions';
 import type { ShortcutAction } from './shortcuts';
+import { applyLastModifier, applyModifiersToSelection, lastModifierDialog } from './modifierActions';
 import { outlineSelection } from './textActions';
 import { useUi, type ViewOptions } from './store';
 
@@ -72,6 +73,9 @@ const HANDLERS: Partial<Record<ShortcutAction, () => void | Promise<unknown>>> =
   'object.join': joinSelection,
   'object.average': () => void averageSelection(),
   'type.createOutlines': outlineSelection,
+  'object.applyModifiers': () => void applyModifiersToSelection(),
+  'modifier.applyLast': applyLastModifier,
+  'modifier.lastDialog': lastModifierDialog,
   'object.clipMake': makeClipSelection,
   'object.clipRelease': releaseClipSelection,
   'object.group': groupSelection,

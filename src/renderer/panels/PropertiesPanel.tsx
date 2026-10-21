@@ -8,6 +8,7 @@ import { NumberInput } from '../components/NumberInput';
 import { tip } from '../components/Tooltip';
 import { t } from '../i18n';
 import { AlignButtons } from './AlignPanel';
+import { FxButton } from './AppearancePanel';
 import { CheckRow, Choice, PaintChip, Row, Section } from './kit';
 import { usePanelContext, type PanelContext } from './context';
 import { usePaintLook } from './PaintWidget';
@@ -132,6 +133,7 @@ function ObjectProperties() {
         <Row>
           <Icon id="opacity" size={14} className="vc-field__icon" />
           <span className="vc-plabel" style={{ width: 56 }}>{t('fill.opacity')}</span>
+          <FxButton testId="properties-fx" />
           <NumberInput value={look.opacity.mixed ? null : Math.round(look.opacity.value * 100)} onCommit={(v) => applyObjectLook({ opacity: v / 100 })} suffix="%" min={0} max={100} decimals={0} width={80} testId="properties-opacity" tooltip={t('fill.opacity')} />
         </Row>
       </Section>

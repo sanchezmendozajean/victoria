@@ -274,3 +274,58 @@ export const scaleStrokeWidths = (spaceId: string, ids: readonly string[], facto
     }
   },
 });
+
+// ── Appearance list (panel Apariencia) ──
+
+/** Adds a fill (white) or a stroke (1 pt black) on top of the appearance of each object. */
+export const addPaintItem = (spaceId: string, ids: readonly string[], kind: Target, paint: Paint): Command => ({
+  label: 'appearance.add',
+  spaceId,
+  apply: (d) => {
+    const space = findSpace(d, spaceId);
+    if (!space) return;
+    for (const node of targetsOf(space, ids)) {
+      node.appearance.items.push(
+        (kind === 'fill' ? { kind: 'fill', paint, opacity: 1, modifiers: [] } : { kind: 'stroke', paint, stroke: defaultStroke(), opacity: 1, modifiers: [] }) as DraftItem,
+      );
+    }
+  },
+});
+
+/** Removes the item at a position of the appearance list (fill, stroke or modifier). */
+export const removeAppearanceItem = (spaceId: string, id: string, index: number): Command => ({
+  label: 'appearance.remove',
+  spaceId,
+  apply: (d) => {
+    const space = findSpace(d, spaceId);
+    const found = space ? locateNode(space as Space, id) : null;
+    if (found) (found.node as Draft<Node>).appearance.items.splice(index, 1);
+  },
+});
+
+/** Moves an item of the appearance list (paint order, order of modifiers). */
+export const moveAppearanceItem = (spaceId: string, id: string, from: number, to: number): Command => ({
+  label: 'appearance.move',
+  spaceId,
+  apply: (d) => {
+    const space = findSpace(d, spaceId);
+    const found = space ? locateNode(space as Space, id) : null;
+    if (!found) return;
+    const items = (found.node as Draft<Node>).appearance.items;
+    const [item] = items.splice(from, 1);
+    if (item) items.splice(Math.max(0, Math.min(items.length, to)), 0, item);
+  },
+});
+
+/** Duplicates the item at a position (a fill or stroke; modifiers have their own command). */
+export const duplicateAppearanceItem = (spaceId: string, id: string, index: number): Command => ({
+  label: 'appearance.duplicate',
+  spaceId,
+  apply: (d) => {
+    const space = findSpace(d, spaceId);
+    const found = space ? locateNode(space as Space, id) : null;
+    const items = found ? (found.node as Draft<Node>).appearance.items : null;
+    const item = items?.[index];
+    if (items && item && item.kind !== 'modifier') items.splice(index + 1, 0, deepClone(item) as DraftItem);
+  },
+});

@@ -2,6 +2,7 @@ import { CharacterPanel } from './CharacterPanel';
 import { ParagraphPanel } from './ParagraphPanel';
 import { PathfinderPanel } from './PathfinderPanel';
 import { AlignPanel } from './AlignPanel';
+import { AppearancePanel } from './AppearancePanel';
 import { FillPanel } from './FillPanel';
 import { TransformPanel } from './TransformPanel';
 import { LayersPanel } from './LayersPanel';
@@ -27,6 +28,8 @@ export function PanelBody({ id }: { id: PanelId }) {
       return <CharacterPanel />;
     case 'paragraph':
       return <ParagraphPanel />;
+    case 'appearance':
+      return <AppearancePanel />;
     case 'pathfinder':
       return <PathfinderPanel />;
     case 'align':

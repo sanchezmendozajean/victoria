@@ -8,6 +8,9 @@ import { hasHandler, runAction } from './actions';
 import { formatAccelerator, SHORTCUTS, type OsFamily, type ShortcutAction } from './shortcuts';
 import { useUi, type ViewOptions, type WorkspaceId } from './store';
 import { selectedPathText, selectedTextIds } from './textActions';
+import { MODIFIER_MENU } from './modifierCatalog';
+import { openModifier, selectionHasModifiers } from './modifierActions';
+import { actionContext } from './selectionActions';
 
 export interface MenuContext {
   os: OsFamily;
@@ -66,8 +69,6 @@ export function buildMenus(ctx: MenuContext): MenuDef[] {
   });
   const sep = (id: string): MenuEntry => ({ type: 'separator', id });
   const sub = (id: string, label: TranslationKey, icon: IconId, submenu: MenuEntry[]): MenuItem => item(id, label, icon, undefined, { submenu });
-  const mod = (id: string, label: TranslationKey, icon: IconId, kind: 'structural' | 'appearance', v2 = false): MenuItem =>
-    item(id, label, icon, undefined, { kind, badge: v2 ? 'v2' : undefined });
 
   const file: MenuEntry[] = [
     item('new', 'menu.file.new', 'new', 'file.new'),
@@ -145,7 +146,7 @@ export function buildMenus(ctx: MenuContext): MenuDef[] {
       item('clip-release', 'menu.object.clipRelease', 'clip-mask', 'object.clipRelease'),
     ]),
     sep('s4'),
-    item('apply-modifiers', 'menu.object.applyModifiers', 'mod-apply', 'object.applyModifiers'),
+    item('apply-modifiers', 'menu.object.applyModifiers', 'mod-apply', 'object.applyModifiers', { disabled: !selectionHasModifiers() }),
   ];
 
   const type: MenuEntry[] = [
@@ -165,68 +166,29 @@ export function buildMenus(ctx: MenuContext): MenuDef[] {
     item('reselect', 'menu.select.reselect', 'redo', 'select.reselect'),
   ];
 
+  // Modifier entries are generated from the catalog; the ones of v1 open their dialog on the selection.
+  const hasSelection = (actionContext()?.ids.length ?? 0) > 0;
+  const modifierCategories: MenuEntry[] = MODIFIER_MENU.map((category) => {
+    const entries: MenuEntry[] = [];
+    category.items.forEach((entry, index) => {
+      if (entry.v2 && index > 0 && !(category.items[index - 1] as { v2: boolean }).v2) entries.push(sep(`${category.id}-v2`));
+      entries.push(
+        item(entry.id, entry.label, entry.icon, undefined, {
+          kind: entry.kind,
+          badge: entry.v2 ? 'v2' : undefined,
+          disabled: entry.v2 || !hasSelection,
+          ...(entry.v2 ? {} : { onSelect: () => openModifier(entry.id) }),
+        }),
+      );
+    });
+    return sub(category.id, ('menu.modifier.' + category.id) as TranslationKey, category.icon, entries);
+  });
+
   const modifier: MenuEntry[] = [
-    item('apply-last', 'menu.modifier.applyLast', 'mod-apply', 'modifier.applyLast'),
-    item('last-dialog', 'menu.modifier.lastDialog', 'fx', 'modifier.lastDialog'),
+    item('apply-last', 'menu.modifier.applyLast', 'mod-apply', 'modifier.applyLast', { disabled: !useUi.getState().lastModifier || !hasSelection }),
+    item('last-dialog', 'menu.modifier.lastDialog', 'fx', 'modifier.lastDialog', { disabled: !useUi.getState().lastModifier || !hasSelection }),
     sep('s1'),
-    sub('path', 'menu.modifier.path', 'offset-path', [
-      mod('offset-path', 'modifier.offsetPath', 'offset-path', 'structural'),
-      mod('outline-stroke', 'modifier.outlineStroke', 'outline-stroke', 'structural'),
-      mod('outline-object', 'modifier.outlineObject', 'outline-mode', 'structural', true),
-    ]),
-    sub('pathfinder', 'menu.modifier.pathfinder', 'pf-unite', [
-      mod('pf-unite', 'modifier.pfUnite', 'pf-unite', 'structural'),
-      mod('pf-minus-front', 'modifier.pfMinusFront', 'pf-minus-front', 'structural'),
-      mod('pf-intersect', 'modifier.pfIntersect', 'pf-intersect', 'structural'),
-      mod('pf-exclude', 'modifier.pfExclude', 'pf-exclude', 'structural'),
-      sep('p1'),
-      mod('pf-divide', 'modifier.pfDivide', 'pf-divide', 'structural', true),
-      mod('pf-trim', 'modifier.pfTrim', 'pf-trim', 'structural', true),
-      mod('pf-merge', 'modifier.pfMerge', 'pf-merge', 'structural', true),
-      mod('pf-crop', 'modifier.pfCrop', 'pf-crop', 'structural', true),
-      mod('pf-outline', 'modifier.pfOutline', 'pf-outline', 'structural', true),
-      mod('pf-minus-back', 'modifier.pfMinusBack', 'pf-minus-back', 'structural', true),
-    ]),
-    sub('distort', 'menu.modifier.distort', 'pucker-bloat', [
-      mod('round-corners', 'modifier.roundCorners', 'round-corners', 'structural'),
-      mod('zigzag', 'modifier.zigzag', 'zigzag', 'structural'),
-      mod('pucker-bloat', 'modifier.puckerBloat', 'pucker-bloat', 'structural'),
-      mod('roughen', 'modifier.roughen', 'roughen', 'structural'),
-      mod('transform', 'modifier.transform', 'mod-transform', 'structural'),
-      sep('d1'),
-      mod('twist', 'modifier.twist', 'twist', 'structural', true),
-      mod('free-distort', 'modifier.freeDistort', 'free-distort', 'structural', true),
-      mod('scribble', 'modifier.scribble', 'tool-pencil', 'structural', true),
-    ]),
-    sub('warp', 'menu.modifier.warp', 'warp-arc', [
-      mod('warp-arc', 'modifier.warpArc', 'warp-arc', 'structural'),
-      mod('warp-flag', 'modifier.warpFlag', 'warp-flag', 'structural'),
-      mod('warp-wave', 'modifier.warpWave', 'warp-wave', 'structural'),
-      mod('warp-inflate', 'modifier.warpInflate', 'warp-inflate', 'structural'),
-      sep('w1'),
-      mod('warp-arc-lower', 'modifier.warpArcLower', 'warp-arc-lower', 'structural', true),
-      mod('warp-arc-upper', 'modifier.warpArcUpper', 'warp-arc-upper', 'structural', true),
-      mod('warp-arch', 'modifier.warpArch', 'warp-arch', 'structural', true),
-      mod('warp-bulge', 'modifier.warpBulge', 'warp-bulge', 'structural', true),
-      mod('warp-shell-lower', 'modifier.warpShellLower', 'warp-shell-lower', 'structural', true),
-      mod('warp-shell-upper', 'modifier.warpShellUpper', 'warp-shell-upper', 'structural', true),
-      mod('warp-fish', 'modifier.warpFish', 'warp-fish', 'structural', true),
-      mod('warp-rise', 'modifier.warpRise', 'warp-rise', 'structural', true),
-      mod('warp-fisheye', 'modifier.warpFisheye', 'warp-fisheye', 'structural', true),
-      mod('warp-squeeze', 'modifier.warpSqueeze', 'warp-squeeze', 'structural', true),
-      mod('warp-twist', 'modifier.warpTwist', 'warp-twist', 'structural', true),
-    ]),
-    sub('convert', 'menu.modifier.convert', 'convert-rect', [
-      mod('convert-rect', 'modifier.convertRect', 'convert-rect', 'structural', true),
-      mod('convert-rounded', 'modifier.convertRounded', 'convert-rounded', 'structural', true),
-      mod('convert-ellipse', 'modifier.convertEllipse', 'convert-ellipse', 'structural', true),
-    ]),
-    sub('stylize', 'menu.modifier.stylize', 'drop-shadow', [
-      mod('drop-shadow', 'modifier.dropShadow', 'drop-shadow', 'appearance'),
-      mod('outer-glow', 'modifier.outerGlow', 'outer-glow', 'appearance'),
-      mod('inner-glow', 'modifier.innerGlow', 'inner-glow', 'appearance', true),
-      mod('feather', 'modifier.feather', 'feather', 'appearance', true),
-    ]),
+    ...modifierCategories,
     sep('s2'),
     item('save-preset', 'menu.modifier.savePreset', 'save'),
     sub('presets', 'menu.modifier.presets', 'swatches', [item('presets-none', 'menu.modifier.presetsEmpty', 'file')]),

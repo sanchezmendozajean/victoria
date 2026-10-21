@@ -19,6 +19,12 @@ async function rectangle(page: Page, x0: number, y0: number, x1: number, y1: num
   await page.keyboard.press('v');
 }
 
+/** Deselects and resets fill and stroke to the defaults (new objects take the current look, as in Illustrator). */
+async function resetLook(page: Page) {
+  await page.keyboard.press('Control+Shift+a');
+  await page.keyboard.press('d');
+}
+
 async function click(page: Page, dx: number, dy: number, modifiers: Array<'Shift' | 'Alt' | 'Control'> = []) {
   const p = await at(page, dx, dy);
   await page.mouse.move(p.x, p.y);
@@ -66,7 +72,7 @@ test.describe('colour, stroke and panels (phase 6)', () => {
     await page.keyboard.press('v');
     await page.keyboard.press('Control+a');
     await page.keyboard.press('Delete');
-    await page.keyboard.press('Control+Shift+a');
+    await resetLook(page);
   });
 
   test('Fill panel: hex colours the object, one undo step; mixed fills show empty fields', async () => {
@@ -80,6 +86,7 @@ test.describe('colour, stroke and panels (phase 6)', () => {
     await page.keyboard.press('Control+Shift+z');
     await expectPixel(page, -100, -20, [255, 0, 0]);
 
+    await resetLook(page);
     await rectangle(page, 50, -60, 150, 20);
     await page.keyboard.press('Control+a');
     await expect(page.getByTestId('fill-hex')).toHaveValue('');
@@ -365,6 +372,7 @@ test.describe('colour, stroke and panels (phase 6)', () => {
     await rectangle(page, -150, -60, -50, 20);
     await page.keyboard.press('F6');
     await setHex(page, 'FF8800');
+    await resetLook(page);
     await rectangle(page, 50, -60, 150, 20);
     await page.keyboard.press('i');
     await click(page, 0, 0); // empty canvas: nothing happens

@@ -6,6 +6,9 @@ import {
   invert,
   isLayer,
   nodeGeometry,
+  renderGeometry,
+  evaluateNode,
+  isGroupShape,
   segmentsOf,
   alignedDash,
   arrowheadAt,
@@ -21,6 +24,7 @@ import {
   transformRect,
   visibleRect,
   type Appearance,
+  type AppearanceEffect,
   type Artboard,
   type BlendMode,
   type Layer,
@@ -66,9 +70,7 @@ const BLEND: Record<BlendMode, GlobalCompositeOperation> = {
 
 const paths = new WeakMap<Node, Path2D | null>();
 
-function buildPath(node: Node): Path2D | null {
-  const geometry = nodeGeometry(node);
-  if (!geometry) return null;
+function buildPathOf(geometry: { subpaths: readonly SubPath[] }): Path2D {
   const path = new Path2D();
   for (const sub of geometry.subpaths) {
     const first = sub.anchors[0];
@@ -83,12 +85,17 @@ function buildPath(node: Node): Path2D | null {
   return path;
 }
 
+function buildPath(node: Node): Path2D | null {
+  const geometry = renderGeometry(node);
+  return geometry ? buildPathOf(geometry) : null;
+}
+
 /** Text paths are keyed by their geometry, which changes when the node or the set of loaded fonts does. */
 const textPaths = new WeakMap<object, Path2D | null>();
 
 export function pathFor(node: Node): Path2D | null {
   if (node.type === 'text') {
-    const geometry = nodeGeometry(node);
+    const geometry = renderGeometry(node);
     if (!geometry) return null;
     if (!textPaths.has(geometry)) textPaths.set(geometry, buildPath(node));
     return textPaths.get(geometry) ?? null;
@@ -172,7 +179,7 @@ interface Env {
 
 function paintGeometry(env: Env, node: Node, layer: Layer, alpha: number): void {
   const path = pathFor(node);
-  const geometry = nodeGeometry(node);
+  const geometry = renderGeometry(node);
   if (!path || !geometry) return;
   const { ctx } = env;
   if (env.outline || layer.outline) {
@@ -185,7 +192,19 @@ function paintGeometry(env: Env, node: Node, layer: Layer, alpha: number): void 
     ctx.stroke(path);
     return;
   }
-  paintAppearance(env, path, geometry.fillRule, node.appearance, alpha, geometry.subpaths);
+  const evaluated = evaluateNode(node);
+  paintAppearance(env, path, geometry.fillRule, node.appearance, alpha, geometry.subpaths, evaluated ? { effects: evaluated.effects, outline: evaluated.strokeOutline ? { path: outlinePathOf(evaluated), rule: 'nonzero' } : null } : undefined);
+}
+
+const outlinePaths = new WeakMap<object, Path2D>();
+/** Path2D of an Outline Stroke result, built once per evaluation. */
+function outlinePathOf(evaluated: NonNullable<ReturnType<typeof evaluateNode>>): Path2D {
+  let p = outlinePaths.get(evaluated);
+  if (!p && evaluated.strokeOutline) {
+    p = buildPathOf(evaluated.strokeOutline);
+    outlinePaths.set(evaluated, p);
+  }
+  return p as Path2D;
 }
 
 /** Path2D of a contour given as spans (used when the stroke is trimmed for arrowheads). */
@@ -291,10 +310,41 @@ function paintStroke(env: Env, path: Path2D, rule: CanvasFillRule, stroke: Strok
   }
 }
 
-function paintAppearance(env: Env, path: Path2D, rule: CanvasFillRule, appearance: Appearance, alpha: number, subpaths: readonly SubPath[] = []): void {
+interface Extras {
+  effects: readonly AppearanceEffect[];
+  /** Outline Stroke: strokes are painted as fills of this contour. */
+  outline: { path: Path2D; rule: CanvasFillRule } | null;
+}
+
+/** Far enough off screen that only the shadow of a shape drawn there lands on the canvas. */
+const OFFSCREEN = 100000;
+
+/** Shadows and glows are drawn under the object: its silhouette is cast from outside the canvas, so only the shadow shows. */
+function paintEffects(env: Env, path: Path2D, rule: CanvasFillRule, effects: readonly AppearanceEffect[], alpha: number): void {
+  const { ctx } = env;
+  const t = ctx.getTransform();
+  const scale = Math.sqrt(Math.abs(t.a * t.d - t.b * t.c)) || 1;
+  for (const effect of effects) {
+    ctx.save();
+    ctx.globalAlpha = 1;
+    const dx = effect.type === 'shadow' ? effect.dx : 0;
+    const dy = effect.type === 'shadow' ? effect.dy : 0;
+    ctx.shadowColor = colorToCss(effect.color, effect.opacity * alpha);
+    ctx.shadowBlur = effect.blur * scale;
+    ctx.shadowOffsetX = t.a * dx + t.c * dy - OFFSCREEN;
+    ctx.shadowOffsetY = t.b * dx + t.d * dy;
+    ctx.setTransform(t.a, t.b, t.c, t.d, t.e + OFFSCREEN, t.f);
+    ctx.fillStyle = '#000';
+    ctx.fill(path, rule);
+    ctx.restore();
+  }
+}
+
+function paintAppearance(env: Env, path: Path2D, rule: CanvasFillRule, appearance: Appearance, alpha: number, subpaths: readonly SubPath[] = [], extras?: Extras): void {
   const { ctx, resources } = env;
+  if (extras && extras.effects.length > 0) paintEffects(env, path, rule, extras.effects, alpha);
   for (const item of appearance.items) {
-    if (item.kind === 'modifier' || item.opacity <= 0) continue; // modifiers arrive with Phase 9
+  if (item.kind === 'modifier' || item.opacity <= 0) continue; // modifiers act through the evaluated geometry and effects
     if (item.kind === 'fill' && (item.paint.type === 'linear' || item.paint.type === 'radial')) {
       if (fillGradient(env, path, rule, item.paint, alpha * item.opacity)) continue;
     }
@@ -304,6 +354,10 @@ function paintAppearance(env: Env, path: Path2D, rule: CanvasFillRule, appearanc
     if (item.kind === 'fill') {
       ctx.fillStyle = style;
       ctx.fill(path, rule);
+    } else if (extras?.outline) {
+      // Outline Stroke: the stroke is a filled contour painted with the stroke's paint.
+      ctx.fillStyle = style;
+      ctx.fill(extras.outline.path, extras.outline.rule);
     } else {
       ctx.strokeStyle = style;
       paintStroke(env, path, rule, item.stroke, style, subpaths);
@@ -338,7 +392,8 @@ function drawNode(env: Env, node: Node, cull: Rect, layer: Layer, alpha: number,
 
   switch (node.type) {
     case 'group':
-      drawChildren(env, node.children, localCull, layer, a, inIsolation);
+      if (isGroupShape(node)) paintGeometry(env, node, layer, a);
+      else drawChildren(env, node.children, localCull, layer, a, inIsolation);
       break;
     case 'clipGroup': {
       const [mask, ...rest] = node.children;

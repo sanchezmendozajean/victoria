@@ -183,3 +183,18 @@ describe('live pathfinder', () => {
     expect(makeLivePathfinder(t.space(), [a.id, b.id], 'divide', t.ids)).toBeNull();
   });
 });
+
+describe('persistence', () => {
+  it('modifiers survive saving and opening a .vict (parameters included)', async () => {
+    const { writeVict, readVict } = await import('..');
+    const t = setup();
+    const r = t.rect(0, 0);
+    t.add(r, 'zigzag', { size: 7, ridges: 5 });
+    const bytes = writeVict({ document: t.session.document, app: 'test' });
+    const back = readVict(bytes).document;
+    const node = getActiveSpace(back).layers[0]!.children[0] as Node;
+    const mod = node.appearance.items.find((i) => i.kind === 'modifier');
+    expect(mod && mod.kind === 'modifier' && mod.mod.params).toMatchObject({ size: 7, ridges: 5 });
+    expect(evaluateNode(node)).not.toBeNull();
+  });
+});

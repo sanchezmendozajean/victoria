@@ -52,7 +52,22 @@ function warpModifier(id: string, shape: keyof typeof SHAPES, defaults: Params):
         const dy = (vertical ? d.x : d.y) * (h / 2);
         return { x: p.x + dx + dH * (w / 2) * v, y: p.y + dy + dV * (h / 2) * u };
       };
-      return { geometry: mapGeometry(subdivide(input, 8), map) };
+      const warped = mapGeometry(subdivide(input, 8), map);
+      // The points added on straight spans have no handles: give them the smooth ones of their neighbours so
+      // that a straight edge bends into a curve instead of a polyline with visible kinks.
+      for (const sub of warped.subpaths) {
+        const n = sub.anchors.length;
+        sub.anchors.forEach((a, i) => {
+          if (a.kind !== 'smooth' || a.in || a.out) return;
+          if (!sub.closed && (i === 0 || i === n - 1)) return;
+          const prev = sub.anchors[(i - 1 + n) % n]!.p;
+          const next = sub.anchors[(i + 1) % n]!.p;
+          const tangent = { x: (next.x - prev.x) / 6, y: (next.y - prev.y) / 6 };
+          a.in = { x: a.p.x - tangent.x, y: a.p.y - tangent.y };
+          a.out = { x: a.p.x + tangent.x, y: a.p.y + tangent.y };
+        });
+      }
+      return { geometry: warped };
     },
   };
 }
