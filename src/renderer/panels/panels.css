@@ -247,6 +247,10 @@
 .vc-paintwidget__fill {
   z-index: 2;
 }
+/* The active one is drawn on top, as in Illustrator. */
+.vc-paintwidget__stroke.is-active {
+  z-index: 3;
+}
 .vc-paintwidget__fill.is-active,
 .vc-paintwidget__stroke.is-active {
   box-shadow: 0 0 0 1px var(--accent), 0 0 0 2px var(--bg-panel);
