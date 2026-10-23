@@ -5,6 +5,7 @@ export * from './model/matrix';
 export * from './model/presets';
 export * from './model/factory';
 export * from './model/queries';
+export * from './model/exportScope';
 export * from './model/clone';
 export * from './model/color';
 export * from './geometry/rect';

@@ -5,9 +5,11 @@ import { getActiveSpace, locateNode } from '../model/queries';
 import { selectOnly } from '../selection/selection';
 import { sampleDocument, sequentialIds } from '../testing/random-ops';
 import { addArtboard, removeArtboard } from './artboard';
-import { addNode, arrangeNodes, groupNodes, moveNodesToSpace, removeNodes, transformNodes, ungroupNode } from './node';
+import { addNode, arrangeNodes, groupNodes, moveNodesToNewSpace, moveNodesToSpace, removeNodes, transformNodes, ungroupNode } from './node';
 import { DocumentSession } from './session';
-import { addSpace, removeSpace, renameSpace } from './space';
+import { exportTargets } from '../model/exportScope';
+import { readVict, writeVict } from '../io/vict';
+import { addSpace, removeSpace, renameSpace, setSpaceExcluded } from './space';
 
 function setup() {
   const ids = sequentialIds('t');
@@ -294,5 +296,59 @@ describe('node commands', () => {
     session.undo();
     expect(session.document.spaces[0] && locateNode(session.document.spaces[0], rect.id)).not.toBeNull();
     expect(session.document.spaces[1] && locateNode(session.document.spaces[1], rect.id)).toBeNull();
+  });
+});
+
+describe('Spaces: phase 10', () => {
+  it('moves objects to a new Space in one step, keeping the active Space', () => {
+    const { session, spaceId, layerId, ids } = setup();
+    const rect = createRect(ids, 10, 10);
+    rect.transform = translation(5, 6);
+    session.run(addNode(spaceId, layerId, rect));
+    const fresh = createSpace(ids, { name: 'New', order: 1, artboards: [createArtboard(ids, { name: 'B', w: 10, h: 10 })], layers: [createLayer(ids, 'L')] });
+    session.run(moveNodesToNewSpace(spaceId, [rect.id], fresh));
+    expect(session.document.spaces).toHaveLength(2);
+    expect(session.document.activeSpaceId).toBe(spaceId);
+    expect(session.document.spaces[1]?.layers[0]?.children[0]?.id).toBe(rect.id);
+    expect(session.document.spaces[1] && locateNode(session.document.spaces[1], rect.id)?.node.transform).toEqual(translation(5, 6));
+    session.undo();
+    expect(session.document.spaces).toHaveLength(1);
+    expect(locateNode(getActiveSpace(session.document), rect.id)).not.toBeNull();
+  });
+
+  it('a document with 3 Spaces survives save and open, and undo brings the Space of the step to the front', () => {
+    const { session, spaceId, layerId, ids } = setup();
+    const make = (name: string, order: number) => createSpace(ids, { name, order, artboards: [createArtboard(ids, { name: 'B', w: 10, h: 10 })], layers: [createLayer(ids, 'L')] });
+    const two = make('Dos', 1);
+    const three = make('Tres', 2);
+    session.run(addSpace(two));
+    session.run(addSpace(three));
+    session.run(addNode(three.id, three.layers[0]?.id as string, createRect(ids, 4, 4)));
+    session.run(addNode(spaceId, layerId, createRect(ids, 8, 8)));
+    session.setActiveSpace(two.id);
+    session.undo(); // the last step belongs to the first Space
+    expect(session.document.activeSpaceId).toBe(spaceId);
+    session.redo();
+    const bytes = writeVict({ document: session.document, app: 'test' });
+    const back = readVict(bytes).document;
+    expect(back.spaces.map((s) => s.name)).toEqual([session.document.spaces[0]?.name, 'Dos', 'Tres']);
+    expect(back.spaces.map((s) => s.order)).toEqual([0, 1, 2]);
+    expect(back.spaces[2]?.layers[0]?.children).toHaveLength(1);
+    session.undo();
+    session.undo();
+    expect(session.document.activeSpaceId).toBe(three.id);
+  });
+
+  it('exportTargets: active artboard, the Space, or every Space but the excluded ones', () => {
+    const { session, ids } = setup();
+    const two = createSpace(ids, { name: 'Dos', order: 1, artboards: [createArtboard(ids, { name: 'B1', w: 10, h: 10 }), createArtboard(ids, { name: 'B2', w: 10, h: 10 })], layers: [createLayer(ids, 'L')] });
+    session.run(addSpace(two));
+    session.run(setSpaceExcluded(two.id, true));
+    const doc = session.document;
+    expect(exportTargets(doc, 'all-spaces').map((t) => t.space.name)).toEqual([doc.spaces[0]?.name]);
+    // asking for the excluded Space explicitly still works
+    expect(exportTargets(doc, 'space-artboards').map((t) => t.artboard.name)).toEqual(['B1', 'B2']);
+    expect(exportTargets(doc, 'active-artboard', two.artboards[1]?.id).map((t) => t.artboard.name)).toEqual(['B2']);
+    expect(exportTargets(doc, 'active-artboard')).toHaveLength(1);
   });
 });

@@ -46,7 +46,7 @@ Ctrl+Y Contorno/Previsualizar · Alt+Ctrl+Y Previsualizar píxeles · Ctrl++ / C
 
 ## Espacios (nuevos)
 
-Ctrl+Alt+N Nuevo Espacio · Ctrl+Alt+RePág Espacio anterior · Ctrl+Alt+AvPág Espacio siguiente · Ctrl+Alt+1…9 Ir al Espacio n.
+Ctrl+Alt+N Nuevo Espacio · Ctrl+Alt+RePág Espacio anterior · Ctrl+Alt+AvPág Espacio siguiente · Alt+1…9 Ir al Espacio n (decisión de la Fase 10: Ctrl+Alt+2, 3 y 7 ya son Desbloquear todo, Mostrar todo y Liberar máscara de Illustrator) · Ctrl+Mayús+RePág/AvPág Espacio anterior/siguiente (alternativa implementada en la Fase 10, porque GNOME y KDE reservan Ctrl+Alt+RePág/AvPág).
 
 ## Texto
 

@@ -7,7 +7,9 @@ import { IsolationBar } from './IsolationBar';
 import { PanelDock } from './PanelDock';
 import { StatusBar } from './StatusBar';
 import { TitleBar } from './TitleBar';
+import { CanvasContextMenu } from './CanvasContextMenu';
 import { ColorPickerDialog } from './ColorPickerDialog';
+import { SpacePropertiesDialog } from './SpacePropertiesDialog';
 import { ModifierDialog } from './ModifierDialog';
 import { PathTextDialog } from './PathTextDialog';
 import { ShapeDialog } from './ShapeDialog';
@@ -42,6 +44,8 @@ export function App() {
       <PathTextDialog />
       <ModifierDialog />
       <ColorPickerDialog />
+      <SpacePropertiesDialog />
+      <CanvasContextMenu />
     </div>
   );
 }

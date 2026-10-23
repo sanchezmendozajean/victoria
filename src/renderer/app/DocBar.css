@@ -233,3 +233,6 @@
   outline: none;
   user-select: text;
 }
+.vc-spacetab.is-drop {
+  box-shadow: inset 2px 0 0 var(--accent);
+}

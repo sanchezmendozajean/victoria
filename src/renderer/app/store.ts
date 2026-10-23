@@ -106,6 +106,10 @@ interface UiState {
   /** The last modifier applied, with its parameters (Mayús+Ctrl+E repeats it). */
   lastModifier: { modifierId: string; params: Params } | null;
   shapeDialog: { kind: ShapeToolKind; at: Vec2 } | null;
+  /** Right click on the canvas: where the context menu opens (screen px). */
+  canvasMenu: { x: number; y: number } | null;
+  /** Properties dialog of a Space (grid and canvas colour), by id. */
+  spaceProps: string | null;
 
   setIsolation(spaceId: string, groupId: string | null): void;
   setLastTransform(transform: { matrix: Matrix; copy: boolean } | null): void;
@@ -131,6 +135,10 @@ interface UiState {
   setScaleStrokes(on: boolean): void;
   openShapeDialog(kind: ShapeToolKind, at: Vec2): void;
   closeShapeDialog(): void;
+  openCanvasMenu(x: number, y: number): void;
+  closeCanvasMenu(): void;
+  openSpaceProps(spaceId: string): void;
+  closeSpaceProps(): void;
   openModifierDialog(dialog: NonNullable<UiState['modifierDialog']>): void;
   closeModifierDialog(): void;
   setLastModifier(modifier: NonNullable<UiState['lastModifier']>): void;
@@ -214,6 +222,8 @@ export const useUi = create<UiState>()((set, get) => ({
   modifierDialog: null,
   lastModifier: null,
   shapeDialog: null,
+  canvasMenu: null,
+  spaceProps: null,
 
   setIsolation: (spaceId, groupId) => set((s) => ({ isolation: { ...s.isolation, [spaceId]: groupId } })),
   setLastTransform: (lastTransform) => set({ lastTransform }),
@@ -259,6 +269,10 @@ export const useUi = create<UiState>()((set, get) => ({
   closeModifierDialog: () => set({ modifierDialog: null }),
   setLastModifier: (lastModifier) => set({ lastModifier }),
   closeShapeDialog: () => set({ shapeDialog: null }),
+  openCanvasMenu: (x, y) => set({ canvasMenu: { x, y } }),
+  closeCanvasMenu: () => set({ canvasMenu: null }),
+  openSpaceProps: (spaceProps) => set({ spaceProps }),
+  closeSpaceProps: () => set({ spaceProps: null }),
   setPathTextDialog: (pathTextDialog) => set({ pathTextDialog }),
 
   toggleViewOption: (key) => set((s) => ({ viewOptions: { ...s.viewOptions, [key]: !s.viewOptions[key] } })),

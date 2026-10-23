@@ -5,8 +5,13 @@ import {
   createArtboard,
   createLayer,
   createSpace,
+  emptySelection,
   findPreset,
+  getActiveSpace,
+  moveNodesToNewSpace,
+  moveNodesToSpace,
   removeSpace,
+  reorderSpace,
   renameSpace,
   setSpaceColor,
   setSpaceExcluded,
@@ -73,3 +78,42 @@ export const toggleSpaceExcluded = (session: DocumentSession, spaceId: string): 
   const space = session.document.spaces.find((s) => s.id === spaceId);
   if (space) session.run(setSpaceExcluded(spaceId, !space.excludeFromExport));
 };
+
+/** Brings the Space at a position (0-based) to the front; Ctrl+Alt+1…9. */
+export function goToSpaceIndex(session: DocumentSession, index: number): void {
+  const target = session.document.spaces[index];
+  if (target) session.setActiveSpace(target.id);
+}
+
+/** Moves a Space one place up or down the list (panel Espacios). */
+export function shiftSpace(session: DocumentSession, spaceId: string, delta: -1 | 1): void {
+  const index = session.document.spaces.findIndex((s) => s.id === spaceId);
+  if (index === -1) return;
+  const to = index + delta;
+  if (to < 0 || to >= session.document.spaces.length) return;
+  session.run(reorderSpace(spaceId, to));
+}
+
+/**
+ * "Mover a Espacio…": the objects keep their coordinates and land on the first layer of the target (a new Space for
+ * `'new'`). The view stays on the source Space and the selection is cleared, as the objects are no longer there.
+ */
+export function moveToSpace(session: DocumentSession, ids: readonly string[], target: string | 'new'): void {
+  const from = getActiveSpace(session.document);
+  if (ids.length === 0) return;
+  if (target === 'new') {
+    const a4 = findPreset('A4');
+    const space = createSpace(session.ids, {
+      name: nextSpaceName(session),
+      order: session.document.spaces.length,
+      artboards: [createArtboard(session.ids, { name: t('doc.defaultArtboard', { n: 1 }), w: a4?.w ?? 595, h: a4?.h ?? 842, preset: 'A4' })],
+      layers: [createLayer(session.ids, t('doc.defaultLayer', { n: 1 }))],
+    });
+    session.run(moveNodesToNewSpace(from.id, ids, space), emptySelection(from.id));
+    return;
+  }
+  const to = session.document.spaces.find((s) => s.id === target);
+  const layer = to?.layers[0];
+  if (!to || !layer || to.id === from.id) return;
+  session.run(moveNodesToSpace(from.id, ids, to.id, layer.id), emptySelection(from.id));
+}

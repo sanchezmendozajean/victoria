@@ -66,3 +66,14 @@ Lista numerada del Espacio activo con nombre y tamaño; reordenar (afecta orden 
 - Nombre de mesa encima de su esquina superior izquierda (clic para activar, doble clic para renombrar).
 - Sangrado: línea roja fina fuera de la mesa.
 - Opción de vista "Recortar a mesa" (Mayús+Ctrl+H en Illustrator: "Ver › Modo de recorte") que oculta lo que queda fuera.
+
+## Reglas añadidas en la Fase 10
+
+- **Mover a Espacio**: Objeto › Mover a Espacio, clic derecho sobre el lienzo y «Mover selección aquí» en el menú de la pestaña de otro Espacio. Los objetos conservan sus coordenadas y aterrizan en la **primera capa** del destino (arriba del todo); «Nuevo Espacio…» crea uno (A4, una capa) y mueve en el mismo paso. La vista **se queda en el Espacio de origen** y la selección se vacía (los objetos ya no están ahí). Es **un solo paso** de deshacer, que pertenece al Espacio de origen: deshacer devuelve a ese Espacio.
+- **Menú contextual del lienzo**: Agrupar, Desagrupar, Traer al frente, Enviar al fondo y Mover a Espacio, sobre la selección actual (sin selección están desactivados).
+- **Panel Espacios**: lista con punto de color, miniatura (el propio renderizador del lienzo, ajustada a las mesas), nombre, «N mesas · M objetos», ojo de exportación y el número del atajo (1–9). Clic = ir al Espacio; doble clic = renombrar. Botones: Nuevo, Duplicar, Subir, Bajar, Eliminar (con confirmación si hay contenido; el último Espacio no se puede eliminar). Reordenar es una orden deshacible (`space.reorder`).
+- **Barra de Espacios**: las pestañas se reordenan arrastrando (indicador azul a la izquierda del destino).
+- **Atajos**: Ctrl+Alt+RePág/AvPág, Ctrl+Mayús+RePág/AvPág (alternativa para GNOME/KDE), Alt+1…9 (ir al n-ésimo; no se usa Ctrl+Alt+1…9 porque choca con Desbloquear todo, Mostrar todo y Liberar máscara de recorte de Illustrator) y Ctrl+Alt+N. Ventana › Espacios los lista (con el activo marcado).
+- **Propiedades del Espacio**: tamaño y subdivisiones de la cuadrícula (en las unidades del documento; el ajuste a la cuadrícula las usa) y color del lienzo (por defecto, el del tema). La visibilidad de la cuadrícula sigue siendo global (Ver › Cuadrícula).
+- **Alcance de exportar e imprimir** (`core/model/exportScope.ts`, la interfaz llega en la Fase 11): `active-artboard` (la mesa activa), `space-artboards` (todas las mesas del Espacio activo) y `all-spaces` (todas las mesas de todos los Espacios). **«Excluir de exportación» solo filtra `all-spaces`**: pedir expresamente el Espacio o la mesa activa siempre los incluye. El orden es el de los Espacios y, dentro, el de las mesas.
+- **Deshacer entre Espacios**: deshacer o rehacer un paso hecho en otro Espacio trae ese Espacio al frente (ya estaba en la sesión; ahora se cubre con pruebas de un documento de tres Espacios guardado y reabierto).

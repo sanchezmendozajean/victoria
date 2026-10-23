@@ -266,6 +266,21 @@ export const moveNodesToSpace = (fromSpaceId: string, ids: readonly string[], to
   },
 });
 
+/** "Mover a Espacio… › Nuevo Espacio…": the new Space is created and receives the objects in one step (the step belongs to the source Space). */
+export const moveNodesToNewSpace = (fromSpaceId: string, ids: readonly string[], space: Space): Command => ({
+  label: 'node.moveToSpace',
+  spaceId: fromSpaceId,
+  apply: (d) => {
+    const from = findSpace(d, fromSpaceId);
+    const layer = space.layers[0];
+    if (!from || !layer) return;
+    const draftSpace = deepClone(space) as Draft<Space>;
+    d.spaces.push(draftSpace);
+    d.spaces.forEach((sp, i) => (sp.order = i));
+    draftSpace.layers[0]?.children.push(...detach(from, ids));
+  },
+});
+
 /** Replaces the anchors of a path (or of a compound sub-path): the single command behind every node edit. */
 export const setPathAnchors = (spaceId: string, pathId: string, anchors: Anchor[], mergeKey?: string): Command => ({
   label: 'path.edit',

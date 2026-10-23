@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { SPACE_COLORS, type Space } from '../../core';
+import { reorderSpace, SPACE_COLORS, type Space } from '../../core';
 import { Icon } from '../components/Icon';
 import { MenuPopup, type Anchor, type MenuEntry } from '../components/Menu';
 import { cx } from '../components/cx';
@@ -10,12 +10,14 @@ import {
   createNewSpace,
   deleteSpaceOf,
   duplicateSpaceOf,
+  moveToSpace,
   recolorSpace,
   renameSpaceOf,
   toggleSpaceExcluded,
 } from '../documents/spaceActions';
 import { t, type TranslationKey } from '../i18n';
 import { formatAccelerator, SHORTCUTS } from './shortcuts';
+import { actionContext } from './selectionActions';
 import { useUi } from './store';
 import './DocBar.css';
 
@@ -41,12 +43,14 @@ export function DocBar() {
   const documents = useDocuments();
   const [menu, setMenu] = useState<OpenSpaceMenu | null>(null);
   const [renaming, setRenaming] = useState<string | null>(null);
+  const [dragSpace, setDragSpace] = useState<{ id: string; over: string | null } | null>(null);
 
   const active = documents.active;
   if (!active) return null;
   const session = active.session;
   const doc = session.document;
 
+  const selectedIds = actionContext()?.ids ?? [];
   const showMenu = (spaceId: string, el: HTMLElement) => {
     const r = el.getBoundingClientRect();
     setMenu({ spaceId, anchor: { rect: { left: r.left, top: r.top, right: r.right, bottom: r.bottom }, placement: 'below' } });
@@ -74,9 +78,15 @@ export function DocBar() {
       checked: space.excludeFromExport,
       onSelect: () => toggleSpaceExcluded(session, space.id),
     },
-    // Needs a selection to move; arrives with the selection tools (Phase 4) and Phase 10.
-    { id: 'move-here', label: t('space.moveHere'), icon: 'space-move-to', disabled: true },
-    { id: 'properties', label: t('space.properties'), icon: 'space-properties', disabled: true },
+    // The selection belongs to the active Space: it can be moved into any other one.
+    {
+      id: 'move-here',
+      label: t('space.moveHere'),
+      icon: 'space-move-to',
+      disabled: space.id === doc.activeSpaceId || selectedIds.length === 0,
+      onSelect: () => moveToSpace(session, selectedIds, space.id),
+    },
+    { id: 'properties', label: t('space.properties'), icon: 'space-properties', onSelect: () => useUi.getState().openSpaceProps(space.id) },
     { type: 'separator', id: 'sep' },
     {
       id: 'delete',
@@ -157,7 +167,26 @@ export function DocBar() {
               key={space.id}
               role="tab"
               aria-selected={isActive}
-              className={cx('vc-spacetab', isActive && 'is-active')}
+              className={cx('vc-spacetab', isActive && 'is-active', dragSpace?.over === space.id && dragSpace.id !== space.id && 'is-drop')}
+              draggable={renaming !== space.id}
+              onDragStart={(event) => {
+                event.dataTransfer.setData('application/x-victoria-space', space.id);
+                event.dataTransfer.effectAllowed = 'move';
+                setDragSpace({ id: space.id, over: null });
+              }}
+              onDragOver={(event) => {
+                if (!dragSpace) return;
+                event.preventDefault();
+                if (dragSpace.over !== space.id) setDragSpace({ ...dragSpace, over: space.id });
+              }}
+              onDrop={(event) => {
+                event.preventDefault();
+                const from = event.dataTransfer.getData('application/x-victoria-space');
+                setDragSpace(null);
+                const to = doc.spaces.findIndex((x) => x.id === space.id);
+                if (from && from !== space.id && to >= 0) session.run(reorderSpace(from, to));
+              }}
+              onDragEnd={() => setDragSpace(null)}
               style={{ ['--space' as string]: space.color }}
               data-testid="space-tab"
               {...(renaming === space.id ? {} : tip(space.excludeFromExport ? `${label} · ${t('space.excludedTip')}` : label))}

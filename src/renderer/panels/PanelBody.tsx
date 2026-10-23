@@ -7,6 +7,7 @@ import { FillPanel } from './FillPanel';
 import { TransformPanel } from './TransformPanel';
 import { LayersPanel } from './LayersPanel';
 import { PropertiesPanel } from './PropertiesPanel';
+import { SpacesPanel } from './SpacesPanel';
 import { SpacingPanel } from './SpacingPanel';
 import { GradientPanel } from './GradientPanel';
 import { StrokePanel } from './StrokePanel';
@@ -40,6 +41,8 @@ export function PanelBody({ id }: { id: PanelId }) {
       return <TransformPanel />;
     case 'layers':
       return <LayersPanel />;
+    case 'spaces':
+      return <SpacesPanel />;
     case 'properties':
       return <PropertiesPanel />;
     default:

@@ -158,7 +158,15 @@ export function CanvasArea() {
   };
 
   return (
-    <main className="vc-canvas" data-testid="canvas" style={{ ['--ruler' as string]: rulers ? `${RULER_SIZE}px` : '0px' }}>
+    <main
+      className="vc-canvas"
+      data-testid="canvas"
+      style={{ ['--ruler' as string]: rulers ? `${RULER_SIZE}px` : '0px' }}
+      onContextMenu={(event) => {
+        event.preventDefault();
+        useUi.getState().openCanvasMenu(event.clientX, event.clientY);
+      }}
+    >
       <div
         ref={surfaceRef}
         className="vc-canvas__surface"

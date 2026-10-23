@@ -11,6 +11,9 @@ import { selectedPathText, selectedTextIds } from './textActions';
 import { MODIFIER_MENU } from './modifierCatalog';
 import { openModifier, selectionHasModifiers } from './modifierActions';
 import { actionContext } from './selectionActions';
+import { moveToSpaceEntries } from './spaceMenus';
+import { goToSpaceIndex } from '../documents/spaceActions';
+import { manager } from '../documents';
 
 export interface MenuContext {
   os: OsFamily;
@@ -70,6 +73,8 @@ export function buildMenus(ctx: MenuContext): MenuDef[] {
   const sep = (id: string): MenuEntry => ({ type: 'separator', id });
   const sub = (id: string, label: TranslationKey, icon: IconId, submenu: MenuEntry[]): MenuItem => item(id, label, icon, undefined, { submenu });
 
+  const hasSelection = (actionContext()?.ids.length ?? 0) > 0;
+
   const file: MenuEntry[] = [
     item('new', 'menu.file.new', 'new', 'file.new'),
     item('open', 'menu.file.open', 'open', 'file.open'),
@@ -120,6 +125,7 @@ export function buildMenus(ctx: MenuContext): MenuDef[] {
       item('scale', 'menu.object.scale', 'tool-scale', undefined, { onSelect: () => ctx.openTransformDialog('scale') }),
     ]),
     item('move', 'menu.object.move', 'transform', 'object.move'),
+    item('move-to-space', 'menu.object.moveToSpace', 'space-move-to', undefined, { submenu: moveToSpaceEntries(), disabled: !hasSelection }),
     sep('s1'),
     item('group', 'menu.object.group', 'group', 'object.group'),
     item('ungroup', 'menu.object.ungroup', 'ungroup', 'object.ungroup'),
@@ -167,7 +173,6 @@ export function buildMenus(ctx: MenuContext): MenuDef[] {
   ];
 
   // Modifier entries are generated from the catalog; the ones of v1 open their dialog on the selection.
-  const hasSelection = (actionContext()?.ids.length ?? 0) > 0;
   const modifierCategories: MenuEntry[] = MODIFIER_MENU.map((category) => {
     const entries: MenuEntry[] = [];
     category.items.forEach((entry, index) => {
@@ -228,6 +233,20 @@ export function buildMenus(ctx: MenuContext): MenuDef[] {
     sub('theme', 'menu.window.theme', 'theme', [
       item('theme-dark', 'menu.window.themeDark', 'theme', undefined, { checked: ctx.theme === 'dark', onSelect: () => ctx.setTheme('dark') }),
       item('theme-light', 'menu.window.themeLight', 'theme', undefined, { checked: ctx.theme === 'light', onSelect: () => ctx.setTheme('light') }),
+    ]),
+    sub('spaces', 'menu.window.spaces', 'spaces', [
+      item('space-new', 'space.new', 'space-add', 'space.new', { disabled: !manager.active }),
+      item('space-prev', 'spaces.previous', 'chevron-left', 'space.previous', { disabled: !manager.active }),
+      item('space-next', 'spaces.next', 'chevron-right', 'space.next', { disabled: !manager.active }),
+      sep('space-sep'),
+      ...(manager.active?.session.document.spaces ?? []).slice(0, 9).map((space, index) =>
+        item(`space-go-${space.id}`, 'menu.window.goToSpace', 'spaces', undefined, {
+          label: space.name,
+          shortcut: formatAccelerator(SHORTCUTS[`space.go${index + 1}` as ShortcutAction], ctx.os),
+          checked: manager.active?.session.document.activeSpaceId === space.id,
+          onSelect: () => manager.active && goToSpaceIndex(manager.active.session, index),
+        }),
+      ),
     ]),
     item('reset-panels', 'menu.window.resetPanels', 'restore-backup', undefined, { onSelect: ctx.resetPanels }),
     sep('s1'),

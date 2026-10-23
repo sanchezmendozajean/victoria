@@ -120,6 +120,18 @@ export const SHORTCUTS = {
   'space.new': 'CmdOrCtrl+Alt+N',
   'space.previous': 'CmdOrCtrl+Alt+PageUp',
   'space.next': 'CmdOrCtrl+Alt+PageDown',
+  // GNOME and KDE reserve Ctrl+Alt+RePág/AvPág for virtual desktops (specs/09), so the Space also answers to Ctrl+Mayús.
+  'space.previousAlt': 'CmdOrCtrl+Shift+PageUp',
+  'space.nextAlt': 'CmdOrCtrl+Shift+PageDown',
+  'space.go1': 'Alt+1',
+  'space.go2': 'Alt+2',
+  'space.go3': 'Alt+3',
+  'space.go4': 'Alt+4',
+  'space.go5': 'Alt+5',
+  'space.go6': 'Alt+6',
+  'space.go7': 'Alt+7',
+  'space.go8': 'Alt+8',
+  'space.go9': 'Alt+9',
 
   // Paneles (Carácter y Párrafo comparten atajo con el menú Texto)
   'panel.fill': 'F6',

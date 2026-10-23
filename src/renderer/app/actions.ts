@@ -1,6 +1,6 @@
 import { canvasApi } from '../canvas/api';
 import { manager } from '../documents';
-import { createNewSpace } from '../documents/spaceActions';
+import { createNewSpace, goToSpaceIndex } from '../documents/spaceActions';
 import {
   arrangeSelection,
   deleteSelection,
@@ -35,6 +35,11 @@ function stepSpace(delta: number): void {
   const next = spaces[(index + delta + spaces.length) % spaces.length];
   if (next) session.setActiveSpace(next.id);
 }
+
+const goTo = (index: number) => {
+  const session = manager.active?.session;
+  if (session) goToSpaceIndex(session, index);
+};
 
 /** Behaviour bound to menu entries and shortcuts. Actions without a handler are not implemented yet. */
 const HANDLERS: Partial<Record<ShortcutAction, () => void | Promise<unknown>>> = {
@@ -96,6 +101,17 @@ const HANDLERS: Partial<Record<ShortcutAction, () => void | Promise<unknown>>> =
   'select.reselect': reselect,
   'space.previous': () => stepSpace(-1),
   'space.next': () => stepSpace(1),
+  'space.previousAlt': () => stepSpace(-1),
+  'space.nextAlt': () => stepSpace(1),
+  'space.go1': () => goTo(0),
+  'space.go2': () => goTo(1),
+  'space.go3': () => goTo(2),
+  'space.go4': () => goTo(3),
+  'space.go5': () => goTo(4),
+  'space.go6': () => goTo(5),
+  'space.go7': () => goTo(6),
+  'space.go8': () => goTo(7),
+  'space.go9': () => goTo(8),
 };
 
 export const hasHandler = (action: ShortcutAction): boolean => action in HANDLERS;
