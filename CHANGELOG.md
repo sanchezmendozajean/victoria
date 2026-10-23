@@ -7,7 +7,7 @@
 - **Mover a Espacio** (Objeto, clic derecho en el lienzo y «Mover selección aquí» en la pestaña): conserva coordenadas, un solo paso de deshacer, y «Nuevo Espacio…» crea el destino en el mismo paso.
 - **Menú contextual del lienzo** con Agrupar, Desagrupar, Traer al frente, Enviar al fondo y Mover a Espacio.
 - **Barra de Espacios**: reordenar pestañas arrastrando. **Propiedades del Espacio**: cuadrícula (tamaño, subdivisiones) y color del lienzo.
-- **Atajos**: Alt+1…9 (ir al Espacio n; Ctrl+Alt+2, 3 y 7 ya son de Illustrator) y Ctrl+Mayús+RePág/AvPág (alternativa para GNOME/KDE); Ventana › Espacios.
+- **Atajos**: Alt+1…9 (ir al Espacio n; Ctrl+Alt+2, 3 y 7 ya son de Illustrator) y Ctrl+Mayús+RePág/AvPág (Espacio anterior/siguiente, el mismo en Windows y Linux); Ventana › Espacios.
 - **Alcance de exportación** en el núcleo (`exportTargets`: mesa activa, mesas del Espacio, todos los Espacios sin los excluidos); la interfaz de exportar e imprimir llega en la Fase 11.
 - Pruebas: un documento de 3 Espacios guardado y reabierto, deshacer entre Espacios, mover a Espacio nuevo, alcance de exportación y e2e del panel, atajos, menús y propiedades.
 

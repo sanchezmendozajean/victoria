@@ -24,7 +24,7 @@ En Illustrator un archivo tiene un único lienzo donde viven todas las mesas. En
 ### Interfaz
 
 - **Barra de Espacios**: fila de pestañas debajo de las pestañas de documento, encima del lienzo. Cada pestaña: punto de color + nombre + menú (⋯). Botón "+" al final. Arrastrar para reordenar. Doble clic para renombrar.
-- Atajos: Ctrl+Alt+RePág / AvPág = Espacio anterior / siguiente. Ctrl+Alt+N = nuevo Espacio.
+- Atajos: Ctrl+Mayús+RePág / AvPág = Espacio anterior / siguiente (los mismos en Windows y Linux; GNOME y KDE reservan Ctrl+Alt+RePág/AvPág). Ctrl+Alt+N = nuevo Espacio.
 - **Panel Espacios**: lista con miniaturas, número de mesas y objetos, visibilidad en exportación, botones Nuevo, Duplicar, Eliminar, Mover arriba/abajo.
 - Menú de Espacio: Renombrar, Color de etiqueta, Duplicar, Eliminar (confirmación si tiene contenido), Excluir de exportación, Propiedades (unidades de la cuadrícula, color de fondo del lienzo).
 
@@ -73,7 +73,7 @@ Lista numerada del Espacio activo con nombre y tamaño; reordenar (afecta orden 
 - **Menú contextual del lienzo**: Agrupar, Desagrupar, Traer al frente, Enviar al fondo y Mover a Espacio, sobre la selección actual (sin selección están desactivados).
 - **Panel Espacios**: lista con punto de color, miniatura (el propio renderizador del lienzo, ajustada a las mesas), nombre, «N mesas · M objetos», ojo de exportación y el número del atajo (1–9). Clic = ir al Espacio; doble clic = renombrar. Botones: Nuevo, Duplicar, Subir, Bajar, Eliminar (con confirmación si hay contenido; el último Espacio no se puede eliminar). Reordenar es una orden deshacible (`space.reorder`).
 - **Barra de Espacios**: las pestañas se reordenan arrastrando (indicador azul a la izquierda del destino).
-- **Atajos**: Ctrl+Alt+RePág/AvPág, Ctrl+Mayús+RePág/AvPág (alternativa para GNOME/KDE), Alt+1…9 (ir al n-ésimo; no se usa Ctrl+Alt+1…9 porque choca con Desbloquear todo, Mostrar todo y Liberar máscara de recorte de Illustrator) y Ctrl+Alt+N. Ventana › Espacios los lista (con el activo marcado).
+- **Atajos**: Ctrl+Mayús+RePág/AvPág (anterior/siguiente, iguales en todas las plataformas), Alt+1…9 (ir al n-ésimo; no se usa Ctrl+Alt+1…9 porque choca con Desbloquear todo, Mostrar todo y Liberar máscara de recorte de Illustrator) y Ctrl+Alt+N. Ventana › Espacios los lista (con el activo marcado).
 - **Propiedades del Espacio**: tamaño y subdivisiones de la cuadrícula (en las unidades del documento; el ajuste a la cuadrícula las usa) y color del lienzo (por defecto, el del tema). La visibilidad de la cuadrícula sigue siendo global (Ver › Cuadrícula).
 - **Alcance de exportar e imprimir** (`core/model/exportScope.ts`, la interfaz llega en la Fase 11): `active-artboard` (la mesa activa), `space-artboards` (todas las mesas del Espacio activo) y `all-spaces` (todas las mesas de todos los Espacios). **«Excluir de exportación» solo filtra `all-spaces`**: pedir expresamente el Espacio o la mesa activa siempre los incluye. El orden es el de los Espacios y, dentro, el de las mesas.
 - **Deshacer entre Espacios**: deshacer o rehacer un paso hecho en otro Espacio trae ese Espacio al frente (ya estaba en la sesión; ahora se cubre con pruebas de un documento de tres Espacios guardado y reabierto).

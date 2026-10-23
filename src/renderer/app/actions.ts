@@ -101,8 +101,6 @@ const HANDLERS: Partial<Record<ShortcutAction, () => void | Promise<unknown>>> =
   'select.reselect': reselect,
   'space.previous': () => stepSpace(-1),
   'space.next': () => stepSpace(1),
-  'space.previousAlt': () => stepSpace(-1),
-  'space.nextAlt': () => stepSpace(1),
   'space.go1': () => goTo(0),
   'space.go2': () => goTo(1),
   'space.go3': () => goTo(2),

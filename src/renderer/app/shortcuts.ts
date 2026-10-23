@@ -118,11 +118,9 @@ export const SHORTCUTS = {
 
   // Espacios
   'space.new': 'CmdOrCtrl+Alt+N',
-  'space.previous': 'CmdOrCtrl+Alt+PageUp',
-  'space.next': 'CmdOrCtrl+Alt+PageDown',
-  // GNOME and KDE reserve Ctrl+Alt+RePág/AvPág for virtual desktops (specs/09), so the Space also answers to Ctrl+Mayús.
-  'space.previousAlt': 'CmdOrCtrl+Shift+PageUp',
-  'space.nextAlt': 'CmdOrCtrl+Shift+PageDown',
+  // The same on every platform: GNOME and KDE reserve Ctrl+Alt+RePág/AvPág for virtual desktops, so Windows uses Ctrl+Mayús too.
+  'space.previous': 'CmdOrCtrl+Shift+PageUp',
+  'space.next': 'CmdOrCtrl+Shift+PageDown',
   'space.go1': 'Alt+1',
   'space.go2': 'Alt+2',
   'space.go3': 'Alt+3',
