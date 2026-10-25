@@ -7,6 +7,8 @@ export interface CanvasApi {
   fitArtboard(): void;
   fitAll(): void;
   actualSize(): void;
+  /** Centre of what the window shows, in Space coordinates (where a paste lands). */
+  viewCenter(): { x: number; y: number };
   /** Fits one artboard (status bar navigator). */
   fitArtboardById(id: string): void;
   /** Centres the view on a Space rectangle when it is (partly) out of view; keeps the zoom (Layers › Localizar objeto). */

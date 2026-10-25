@@ -18,6 +18,7 @@ import {
   unlockAll,
   ungroupSelection,
 } from './selectionActions';
+import { copySelection, cutSelection, pasteClipboard } from './clipboardActions';
 import { placeImages } from './imageActions';
 import { averageSelection, joinSelection } from './pathActions';
 import { defaultPaints, paintAsColor, paintAsGradient, paintAsNone, swapPaints } from './paintActions';
@@ -70,6 +71,13 @@ const HANDLERS: Partial<Record<ShortcutAction, () => void | Promise<unknown>>> =
   'view.smartGuides': toggle('smartGuides'),
   'view.hideArtboards': toggle('hideArtboards'),
   'view.hideEdges': toggle('hideEdges'),
+  'edit.cut': cutSelection,
+  'edit.copy': copySelection,
+  'edit.paste': () => pasteClipboard('center'),
+  'edit.pasteInPlace': () => pasteClipboard('inPlace'),
+  'edit.pasteFront': () => pasteClipboard('front'),
+  'edit.pasteBack': () => pasteClipboard('back'),
+  'edit.pasteInAllArtboards': () => pasteClipboard('allArtboards'),
   'edit.delete': deleteSelection,
   'paint.default': defaultPaints,
   'paint.toggle': () => useUi.getState().setActivePaint(useUi.getState().activePaint === 'fill' ? 'stroke' : 'fill'),

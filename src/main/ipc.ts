@@ -1,8 +1,12 @@
-import { ipcMain, type BrowserWindow, type IpcMainEvent, type IpcMainInvokeEvent } from 'electron';
-import { IPC, type OverlayColors, type PlatformInfo, type SaveRequest, type WindowState } from '../shared/ipc';
+import { clipboard, ClipboardItem, ipcMain, type BrowserWindow, type IpcMainEvent, type IpcMainInvokeEvent } from 'electron';
+import { IPC, type ClipboardContents, type OverlayColors, type PlatformInfo, type SaveRequest, type WindowState } from '../shared/ipc';
 import * as files from './files';
 import { cachedFonts, readListedFont } from './fonts';
 import type { Platform } from './platform';
+
+/** Clipboard format of Victoria objects: a Chromium web custom format, which behaves the same on Windows and Linux. */
+const CLIP_FORMAT = 'web application/x-victoria-clip';
+const MAX_CLIP_BYTES = 512 * 1024 * 1024;
 
 const HEX = /^#[0-9a-f]{6}$/i;
 
@@ -44,6 +48,24 @@ export function registerIpc(ctx: IpcContext): void {
   ipcMain.handle(IPC.openImages, async (event, labels: unknown) => {
     const win = fromAppWindow(event);
     return win ? files.openImages(win, labels) : [];
+  });
+  ipcMain.handle(IPC.clipboardWrite, async (event, clip: unknown) => {
+    if (!fromAppWindow(event) || !(clip instanceof Uint8Array) || clip.length > MAX_CLIP_BYTES) return;
+    await clipboard.write([new ClipboardItem({ [CLIP_FORMAT]: new Blob([clip as unknown as ArrayBuffer]) })]);
+  });
+  ipcMain.handle(IPC.clipboardRead, async (event): Promise<ClipboardContents> => {
+    const empty: ClipboardContents = { clip: null, image: null };
+    if (!fromAppWindow(event)) return empty;
+    const bytesOf = async (item: ClipboardItem, type: string) => new Uint8Array(await ((await item.getType(type)) as Blob).arrayBuffer());
+    try {
+      const items = await clipboard.read();
+      const own = items.find((i) => i.types.includes(CLIP_FORMAT));
+      if (own) return { clip: await bytesOf(own, CLIP_FORMAT), image: null };
+      const picture = items.find((i) => i.types.includes('image/png'));
+      return { clip: null, image: picture ? await bytesOf(picture, 'image/png') : null };
+    } catch {
+      return empty; // an unreadable clipboard is an empty one
+    }
   });
   ipcMain.handle(IPC.saveFile, async (event, request: SaveRequest) => {
     const win = fromAppWindow(event);

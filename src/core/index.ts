@@ -37,6 +37,7 @@ export { writeVict, readVict, peekVict } from './io/vict';
 export type { VictContents, VictManifest, VictWriteInput } from './io/vict';
 export * from './io/imageInfo';
 export * from './io/imageStore';
+export * from './clipboard/clip';
 export { sha256Hex } from './io/sha256';
 export { readEps, EpsFormatError } from './io/eps';
 export type { EpsResult, EpsWarning } from './io/eps';

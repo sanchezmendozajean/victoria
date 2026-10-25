@@ -89,6 +89,12 @@ function checkNode(raw: unknown, path: string): void {
   }
 }
 
+/** Structural check of a list of objects that come from outside a document (the clipboard). */
+export function assertNodes(raw: unknown, path: string): void {
+  assertFinite(raw, path);
+  arr(raw, path).forEach((n, i) => checkNode(n, `${path}[${i}]`));
+}
+
 /** Structural check of `document.json`. Throws DocumentFormatError with the offending path. */
 export function assertDocument(raw: unknown): asserts raw is Document {
   const doc = rec(raw, 'document');

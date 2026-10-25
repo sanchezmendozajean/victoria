@@ -70,10 +70,12 @@ test('the renderer is sandboxed and only sees the typed API', async () => {
     'onWindowStateChange',
     'openFile',
     'openImages',
+    'readClipboard',
     'readFont',
     'saveFile',
     'setOverlayColors',
     'toggleMaximizeWindow',
+    'writeClipboard',
   ]);
 });
 

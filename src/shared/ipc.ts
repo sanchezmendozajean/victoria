@@ -54,6 +54,11 @@ export interface SaveResult {
   path: string;
 }
 
+export interface ClipboardContents {
+  clip: Uint8Array | null;
+  image: Uint8Array | null;
+}
+
 export interface AutosaveEntry {
   docId: string;
   /** Last write, ms since epoch. */
@@ -76,6 +81,8 @@ export const IPC = {
   setOverlayColors: 'window:set-overlay-colors',
   openFile: 'file:open',
   openImages: 'file:open-images',
+  clipboardWrite: 'clipboard:write',
+  clipboardRead: 'clipboard:read',
   saveFile: 'file:save',
   autosaveWrite: 'autosave:write',
   autosaveDiscard: 'autosave:discard',
@@ -103,6 +110,11 @@ export interface VictoriaApi {
   openImages(labels: DialogLabels): Promise<OpenedFile[]>;
   /** Writes atomically (temp file + rename). null if the user cancels the Save As dialog. */
   saveFile(request: SaveRequest): Promise<SaveResult | null>;
+
+  /** Puts Victoria objects on the system clipboard (its own format; other applications ignore it). */
+  writeClipboard(clip: Uint8Array): Promise<void>;
+  /** What the system clipboard holds that Victoria can paste: its own objects, else a picture (PNG). */
+  readClipboard(): Promise<ClipboardContents>;
 
   autosaveWrite(docId: string, bytes: Uint8Array): Promise<void>;
   autosaveDiscard(docId: string): Promise<void>;

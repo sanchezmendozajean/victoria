@@ -27,7 +27,7 @@ export interface PickedImage {
 const baseName = (path: string) => path.split(/[\\/]/).pop() ?? path;
 
 /** Layer that receives a placed image: that of the selection, the one chosen in Layers, else the topmost free one. */
-function targetLayerId(space: Space, session: DocumentSession): string | null {
+export function targetLayerId(space: Space, session: DocumentSession): string | null {
   const selected = session.selection.spaceId === space.id ? session.selection.ids[0] : undefined;
   const frame = selected ? frameOf(space, selected) : null;
   if (frame && !frame.layer.locked) return frame.layer.id;

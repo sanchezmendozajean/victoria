@@ -241,6 +241,10 @@ export class CanvasController implements ToolHost, CanvasApi {
   zoomTo(zoom: number): void {
     this.setView(zoomAt(this.viewValue, zoom, { x: this.width / 2, y: this.height / 2 }));
   }
+  viewCenter(): Vec2 {
+    return screenToDoc(this.viewValue, { x: this.width / 2, y: this.height / 2 });
+  }
+
   actualSize(): void {
     this.zoomTo(1);
   }
