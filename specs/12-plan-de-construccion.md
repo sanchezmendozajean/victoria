@@ -62,6 +62,8 @@ Cada fase tiene entregables y **criterios de aceptación verificables**. No pasa
 
 ## Fase 11 — Imágenes, vectorizar, exportar, imprimir
 
+Se construye por etapas, cada una con su commit y sus pruebas: **11.1** colocar imágenes · **11.2** portapapeles, Transformación libre y Previsualizar píxeles (v1 que no tenían fase) · **11.3** exportar (SVG, PNG, JPG, PDF y Exportar para pantallas) · **11.4** importar SVG y PDF · **11.5** imprimir · **11.6** recortar, máscaras y vínculos · **11.7** Calco de imagen.
+
 - Colocar, recortar, máscaras, Calco de imagen (Worker), Exportar para pantallas, Imprimir con marcas, importar SVG/PDF (el lector de EPS simples ya está hecho; guardar EPS, EPS exóticos y AI quedan fuera del plan: ver «Formatos EPS y AI» en la spec 08).
 - Aceptación: imprimir una mesa A4 con un cuadrado de 100 mm da 100 mm en papel **desde Windows y desde Linux**; un `.vict` con texto guardado en Windows se abre en Linux con las mismas fuentes (si están instaladas) o con el diálogo de sustitución; vectorizar un logotipo de 1000 px en < 3 s.
 

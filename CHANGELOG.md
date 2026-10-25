@@ -1,5 +1,19 @@
 # Changelog
 
+## Fase 11 — Imágenes, exportar, imprimir (en curso)
+
+### 11.1 Colocar imágenes
+- **Archivo › Colocar** (Mayús+Ctrl+P) abre el diálogo nativo (varias imágenes a la vez) y **soltar archivos sobre el lienzo** coloca PNG, JPEG y WebP incrustados, a su tamaño natural (la resolución del archivo o 72 ppp), centrados en la mesa o en el punto donde se soltaron. Un paso de deshacer por imagen.
+- El lienzo **pinta las imágenes** (antes solo un marcador): decodificación asíncrona con caché por contenido.
+- **Los bytes viajan en el **: nuevo  por documento (SHA-256 propio, el core no tiene DOM); el gestor ya los conserva al guardar, abrir, autoguardar y recuperar (antes se descartaban).
+- Lectura de cabeceras sin decodificar (): formato, tamaño, ppp y orientación EXIF.
+- Pruebas: 712 unitarias en total (la etapa añade 20) y 1 e2e (colocar, pintar, deshacer, rehacer). La prueba de la API expuesta incluye .
+
+### Pendiente
+- Colocar con clic o arrastre y cola de varias imágenes; pegar desde el portapapeles; Incrustar/Desincrustar y reubicar vínculos; miniaturas de Espacios con imágenes reales.
+- Etapas 11.2 a 11.7 (ver el plan). Sin verificar: Linux y el instalador de Windows.
+- Ya fallaba antes de esta fase: el e2e «Ctrl+rueda hace zoom en el cursor» (canvas.spec.ts) no encuentra el píxel oscuro esperado tras el zoom.
+
 ## Fase 10 — Espacios, interfaz completa (en revisión)
 
 ### Añadido

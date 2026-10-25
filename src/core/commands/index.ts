@@ -8,6 +8,7 @@ export * from './artboard';
 export * from './layer';
 export * from './node';
 export * from './resources';
+export * from './image';
 export * from './appearance';
 export * from './text';
 export * from './pathfinder';

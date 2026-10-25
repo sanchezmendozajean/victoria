@@ -75,6 +75,7 @@ export const IPC = {
   windowState: 'window:state',
   setOverlayColors: 'window:set-overlay-colors',
   openFile: 'file:open',
+  openImages: 'file:open-images',
   saveFile: 'file:save',
   autosaveWrite: 'autosave:write',
   autosaveDiscard: 'autosave:discard',
@@ -98,6 +99,8 @@ export interface VictoriaApi {
 
   /** Open dialog + read. null if the user cancels. */
   openFile(labels: DialogLabels): Promise<OpenedFile | null>;
+  /** Dialog to pick one or more PNG, JPEG or WebP files (Archivo › Colocar). Empty if the user cancels. */
+  openImages(labels: DialogLabels): Promise<OpenedFile[]>;
   /** Writes atomically (temp file + rename). null if the user cancels the Save As dialog. */
   saveFile(request: SaveRequest): Promise<SaveResult | null>;
 

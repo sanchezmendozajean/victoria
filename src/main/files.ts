@@ -46,6 +46,27 @@ export async function openFile(win: BrowserWindow, labels: unknown): Promise<Ope
   return { path: file, bytes: new Uint8Array(await readFile(file)) };
 }
 
+const IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'webp'];
+const MAX_IMAGE_BYTES = 512 * 1024 * 1024;
+
+/** Several images at once; paths are not granted for saving (they are only read). */
+export async function openImages(win: BrowserWindow, labels: unknown): Promise<OpenedFile[]> {
+  if (!isLabels(labels)) throw new Error('Invalid dialog labels');
+  const result = await dialog.showOpenDialog(win, {
+    title: labels.title,
+    defaultPath: app.getPath('pictures'),
+    properties: ['openFile', 'multiSelections'],
+    filters: [{ name: labels.filterName, extensions: IMAGE_EXTENSIONS }],
+  });
+  if (result.canceled) return [];
+  const opened: OpenedFile[] = [];
+  for (const file of result.filePaths) {
+    if ((await stat(file)).size > MAX_IMAGE_BYTES) continue;
+    opened.push({ path: file, bytes: new Uint8Array(await readFile(file)) });
+  }
+  return opened;
+}
+
 export async function saveFile(win: BrowserWindow, request: SaveRequest): Promise<SaveResult | null> {
   if (!request || !isLabels(request.labels) || typeof request.suggestedName !== 'string' || !(request.bytes instanceof Uint8Array)) {
     throw new Error('Invalid save request');

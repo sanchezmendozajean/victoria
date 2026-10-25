@@ -2,6 +2,7 @@ import {
   AutosavePolicy,
   createDocument,
   DocumentSession,
+  ImageStore,
   peekVict,
   randomIds,
   readEps,
@@ -175,8 +176,8 @@ export class DocumentManager {
     }
     try {
       if (/\.epsf?$/i.test(picked.path)) return await this.importEps(picked);
-      const { document } = readVict(picked.bytes);
-      return this.adopt(new DocumentSession(document, { ids: this.ids }), picked.path);
+      const { document, images } = readVict(picked.bytes);
+      return this.adopt(new DocumentSession(document, { ids: this.ids, images: new ImageStore(images) }), picked.path);
     } catch (error) {
       await this.deps.prompts.reportError(this.deps.names.openFailed(error instanceof Error ? error.message : String(error)));
       return null;
@@ -231,12 +232,18 @@ export class DocumentManager {
     return this.write(id, true);
   }
 
+  /** The .vict of a document: its images travel inside, but only the ones it still lists as resources. */
+  private serialize(doc: OpenDocument): Uint8Array {
+    const { document, images } = doc.session;
+    return writeVict({ document, app: this.deps.appVersion, images: images.toRecord(Object.keys(document.resources.images)) });
+  }
+
   private async write(id: string | null, forceDialog: boolean): Promise<boolean> {
     const doc = this.docs_.find((d) => d.id === id);
     if (!doc) return false;
-    const { files, names, appVersion } = this.deps;
+    const { files, names } = this.deps;
     try {
-      const bytes = writeVict({ document: doc.session.document, app: appVersion });
+      const bytes = this.serialize(doc);
       const result = await files.saveFile({
         path: forceDialog ? null : doc.path,
         suggestedName: displayName(doc),
@@ -285,7 +292,7 @@ export class DocumentManager {
   }
 
   private async writeAutosave(doc: OpenDocument): Promise<void> {
-    const bytes = writeVict({ document: doc.session.document, app: this.deps.appVersion });
+    const bytes = this.serialize(doc);
     await this.deps.files.autosaveWrite(doc.id, bytes);
     doc.hasAutosave = true;
     doc.policy.markSaved(doc.session.revision, this.clock());
@@ -335,8 +342,8 @@ export class DocumentManager {
     const bytes = await this.deps.files.autosaveRead(docId).catch(() => null);
     if (!bytes) return null;
     try {
-      const { document } = readVict(bytes);
-      const session = new DocumentSession(document, { ids: this.ids });
+      const { document, images } = readVict(bytes);
+      const session = new DocumentSession(document, { ids: this.ids, images: new ImageStore(images) });
       session.markUnsaved();
       return this.adopt(session, null, docId, true);
     } catch {

@@ -1,4 +1,5 @@
 import { applyPatches, enablePatches, produce, produceWithPatches, type Patch } from 'immer';
+import { ImageStore } from '../io/imageStore';
 import { randomIds, type IdGenerator } from '../model/ids';
 import { getSpace } from '../model/queries';
 import type { Document, SpaceView } from '../model/types';
@@ -34,6 +35,8 @@ export interface SessionOptions {
   ids?: IdGenerator;
   /** ISO timestamp provider; injectable for deterministic tests. */
   now?: () => string;
+  /** Bytes of the images the document uses (a document opened from a .vict brings its own). */
+  images?: ImageStore;
 }
 
 /**
@@ -42,6 +45,7 @@ export interface SessionOptions {
  */
 export class DocumentSession {
   readonly ids: IdGenerator;
+  readonly images: ImageStore;
   private doc: Document;
   private sel: Selection;
   private undoStack: HistoryEntry[] = [];
@@ -57,6 +61,7 @@ export class DocumentSession {
     this.doc = document;
     this.limit = options.historyLimit ?? DEFAULT_HISTORY_LIMIT;
     this.ids = options.ids ?? randomIds;
+    this.images = options.images ?? new ImageStore();
     this.now = options.now ?? (() => new Date().toISOString());
     this.sel = emptySelection(document.activeSpaceId);
     this.savedSerial = 0; // a freshly opened document has an empty history and is clean

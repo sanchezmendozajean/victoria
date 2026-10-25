@@ -14,6 +14,7 @@ const api: VictoriaApi = {
   },
   setOverlayColors: (colors) => ipcRenderer.send(IPC.setOverlayColors, colors),
   openFile: (labels) => ipcRenderer.invoke(IPC.openFile, labels),
+  openImages: (labels) => ipcRenderer.invoke(IPC.openImages, labels),
   saveFile: (request) => ipcRenderer.invoke(IPC.saveFile, request),
   autosaveWrite: (docId, bytes) => ipcRenderer.invoke(IPC.autosaveWrite, docId, bytes),
   autosaveDiscard: (docId) => ipcRenderer.invoke(IPC.autosaveDiscard, docId),

@@ -18,6 +18,7 @@ import {
   unlockAll,
   ungroupSelection,
 } from './selectionActions';
+import { placeImages } from './imageActions';
 import { averageSelection, joinSelection } from './pathActions';
 import { defaultPaints, paintAsColor, paintAsGradient, paintAsNone, swapPaints } from './paintActions';
 import type { ShortcutAction } from './shortcuts';
@@ -45,6 +46,7 @@ const goTo = (index: number) => {
 const HANDLERS: Partial<Record<ShortcutAction, () => void | Promise<unknown>>> = {
   'file.new': () => void manager.newDocument(),
   'file.open': () => manager.open(),
+  'file.place': placeImages,
   'file.save': () => manager.save(),
   'file.saveAs': () => manager.saveAs(),
   'file.close': () => manager.close(),

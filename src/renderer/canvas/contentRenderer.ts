@@ -28,6 +28,8 @@ import {
   type AppearanceEffect,
   type Artboard,
   type BlendMode,
+  type ImageNode,
+  type ImageStore,
   type Layer,
   type LayerChild,
   type Node,
@@ -38,6 +40,7 @@ import {
   type StrokeStyle,
   type Viewport,
 } from '../../core';
+import { bitmapFor } from './imageCache';
 import type { CanvasTheme } from './theme';
 
 export interface RenderOptions {
@@ -56,6 +59,10 @@ export interface RenderOptions {
   theme: CanvasTheme;
   /** Group being edited in isolation: everything else is dimmed. */
   isolatedId: string | null;
+  /** Bytes of the document's images; without them (thumbnails of other documents) images draw as placeholders. */
+  images?: ImageStore;
+  /** Called when an image finishes decoding, so the caller repaints. */
+  onImageReady?: () => void;
 }
 
 const BLEND: Record<BlendMode, GlobalCompositeOperation> = {
@@ -176,6 +183,8 @@ interface Env {
   resources: Resources;
   outline: boolean;
   dpr: number;
+  images: ImageStore | undefined;
+  onImageReady: (() => void) | undefined;
 }
 
 function paintGeometry(env: Env, node: Node, layer: Layer, alpha: number): void {
@@ -415,6 +424,19 @@ function paintAppearance(env: Env, path: Path2D, rule: CanvasFillRule, appearanc
   });
 }
 
+function drawImage(env: Env, node: ImageNode, alpha: number): void {
+  const bitmap = env.images ? bitmapFor(env.images, node.resourceId, env.onImageReady) : null;
+  if (!bitmap) {
+    drawPlaceholderImage(env, node.width, node.height);
+    return;
+  }
+  const { ctx } = env;
+  ctx.globalAlpha = alpha;
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(bitmap, 0, 0, node.width, node.height);
+}
+
 function drawPlaceholderImage(env: Env, width: number, height: number): void {
   const { ctx } = env;
   ctx.globalAlpha = 1;
@@ -458,7 +480,7 @@ function drawNode(env: Env, node: Node, cull: Rect, layer: Layer, alpha: number,
       break;
     }
     case 'image':
-      drawPlaceholderImage(env, node.width, node.height);
+      drawImage(env, node, a);
       break;
     default:
       paintGeometry(env, node, layer, a);
@@ -598,7 +620,7 @@ export function renderContent(ctx: CanvasRenderingContext2D, o: RenderOptions): 
   ctx.transform(view.zoom * 1, 0, 0, view.zoom * 1, view.panX, view.panY);
   const frame = o.isolatedId ? frameOf(o.space, o.isolatedId) : null;
   const isolation = frame ? { id: o.isolatedId as string, chain: new Set([...frame.ancestors.map((n) => n.id), o.isolatedId as string]) } : null;
-  const env: Env = { ctx, resources: o.resources, outline: o.outline, dpr, isolation };
+  const env: Env = { ctx, resources: o.resources, outline: o.outline, dpr, isolation, images: o.images, onImageReady: o.onImageReady };
   for (const layer of o.space.layers) {
     if (layer.visible) drawChildren(env, layer.children, visibleRect(view, o.width, o.height), layer, 1, false);
   }

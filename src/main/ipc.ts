@@ -41,6 +41,10 @@ export function registerIpc(ctx: IpcContext): void {
     const win = fromAppWindow(event);
     return win ? files.openFile(win, labels) : null;
   });
+  ipcMain.handle(IPC.openImages, async (event, labels: unknown) => {
+    const win = fromAppWindow(event);
+    return win ? files.openImages(win, labels) : [];
+  });
   ipcMain.handle(IPC.saveFile, async (event, request: SaveRequest) => {
     const win = fromAppWindow(event);
     return win ? files.saveFile(win, request) : null;

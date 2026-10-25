@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { frameOf, getActiveSpace } from '../../core';
 import { askUser } from '../app/dialogs';
+import { placeImageFiles } from '../app/imageActions';
 import { fontManager } from '../text/fontManager';
 import { manager } from '../documents';
 import { RULER_SIZE } from './rulerRenderer';
@@ -165,6 +166,18 @@ export function CanvasArea() {
       onContextMenu={(event) => {
         event.preventDefault();
         useUi.getState().openCanvasMenu(event.clientX, event.clientY);
+      }}
+      onDragOver={(event) => {
+        if (!event.dataTransfer.types.includes('Files')) return;
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'copy';
+      }}
+      onDrop={(event) => {
+        const dropped = Array.from(event.dataTransfer.files);
+        if (dropped.length === 0) return;
+        event.preventDefault();
+        const at = controllerRef.current?.docAtClient(event.clientX, event.clientY);
+        void Promise.all(dropped.map(async (file) => ({ name: file.name, bytes: new Uint8Array(await file.arrayBuffer()) }))).then((files) => placeImageFiles(files, at));
       }}
     >
       <div

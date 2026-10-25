@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { renameSpace, sequentialIds } from '../../core';
+import { createImage, getActiveSpace, placeImage, renameSpace, sequentialIds } from '../../core';
 import type { AutosaveEntry, OpenedFile, SaveRequest } from '../../shared/ipc';
 import { DocumentManager, displayName, type CloseChoice, type FilesPort } from './manager';
 
@@ -51,7 +51,34 @@ const edit = (m: DocumentManager, name = 'Edited') => {
   return doc;
 };
 
+const PNG = Uint8Array.from([
+  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, 0x49, 0x48, 0x44, 0x52, 0, 0, 0, 64, 0, 0, 0, 32, 8, 6, 0, 0, 0, 0, 0, 0, 0,
+]);
+
 describe('DocumentManager', () => {
+  it('keeps the bytes of placed images through save, reopen and autosave recovery', async () => {
+    const { manager, disk, autosaves, state } = fakeEnv();
+    const doc = manager.newDocument();
+    const added = doc.session.images.add(PNG);
+    if (!added) throw new Error('not an image');
+    const space = getActiveSpace(doc.session.document);
+    const node = createImage(doc.session.ids, added.hash, 64, 32);
+    doc.session.run(placeImage(space.id, space.layers[0]!.id, node, { width: 64, height: 32, format: 'png' }));
+    await manager.flushAutosaves();
+    const [autosaveId] = [...autosaves.keys()];
+    const autosaved = autosaves.get(autosaveId!)!;
+    expect(autosaves.size).toBe(1);
+    expect(await manager.save()).toBe(true); // saving removes the autosave file…
+    autosaves.set(autosaveId!, autosaved); // …so put it back to test recovery on its own
+
+    state.nextPick = { path: 'C:\\other\\copy.vict', bytes: disk.get('C:\\docs\\a.vict')! };
+    const reopened = await manager.open();
+    expect(reopened?.session.images.get(added.hash)).toEqual(PNG);
+
+    const recovered = await manager.recover(autosaveId!);
+    expect(recovered?.session.images.get(added.hash)).toEqual(PNG);
+  });
+
   it('opens an EPS as a new unsaved document sized to its bounding box and reports what was skipped', async () => {
     const { manager, state, errors } = fakeEnv();
     const ps = '%!PS-Adobe-3.0 EPSF-3.0\n%%BoundingBox: 0 0 120 80\nnewpath 0 0 moveto 50 0 lineto 50 50 lineto fill /F findfont 12 scalefont setfont (x) show\n';

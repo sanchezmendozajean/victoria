@@ -650,6 +650,8 @@ export class CanvasController implements ToolHost, CanvasApi {
       activeArtboardId: input.activeArtboardId,
       theme: this.theme,
       isolatedId: input.isolation,
+      images: input.session.images,
+      onImageReady: () => this.invalidate('content'),
     });
     this.renderMs = this.renderMs === 0 ? performance.now() - start : this.renderMs * 0.6 + (performance.now() - start) * 0.4;
     // Diagnostics (read by the performance test): cost of the last full repaint and of the smoothed average.
@@ -770,6 +772,12 @@ export class CanvasController implements ToolHost, CanvasApi {
     const rect = this.el.overlay.getBoundingClientRect();
     const screen = { x: e.clientX - rect.left, y: e.clientY - rect.top };
     return { screen, doc: screenToDoc(this.viewValue, screen), button: e.button, shiftKey: e.shiftKey, altKey: e.altKey, ctrlKey: e.ctrlKey, metaKey: e.metaKey, clickCount: this.lastDown.count || 1 };
+  }
+
+  /** A window position (a drop) in Space coordinates. */
+  docAtClient(clientX: number, clientY: number): Vec2 {
+    const rect = this.el.overlay.getBoundingClientRect();
+    return screenToDoc(this.viewValue, { x: clientX - rect.left, y: clientY - rect.top });
   }
 
   private guidePosition(orientation: Guide['orientation'], e: PointerEvent): number {

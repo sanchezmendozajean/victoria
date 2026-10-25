@@ -69,6 +69,7 @@ test('the renderer is sandboxed and only sees the typed API', async () => {
     'onBeforeClose',
     'onWindowStateChange',
     'openFile',
+    'openImages',
     'readFont',
     'saveFile',
     'setOverlayColors',
