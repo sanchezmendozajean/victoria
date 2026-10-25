@@ -109,7 +109,8 @@ describe('tool registry', () => {
     expect(createTool('tool-pen').id).toBe('tool-pen');
     expect(createTool('tool-gradient').cursor(false)).toBe('crosshair');
     expect(createTool('tool-eyedropper').id).toBe('tool-eyedropper');
-    expect(createTool('tool-free-transform').cursor(false)).toBe('crosshair');
+    expect(createTool('tool-free-transform').id).toBe('tool-free-transform');
+    expect(createTool('tool-knife').cursor(false)).toBe('crosshair'); // still unbuilt (v2)
     expect(createTool('tool-type').cursor(false)).toBe('text');
   });
 });

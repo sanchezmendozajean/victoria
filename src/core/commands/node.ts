@@ -446,9 +446,10 @@ export const redrawShape = (spaceId: string, id: string, patch: Partial<ShapeNod
 });
 
 /** Scissors on several paths at once: each node is replaced by its pieces in the same place of the z-order. */
-export const replaceNodes = (spaceId: string, replacements: ReadonlyArray<{ id: string; nodes: readonly Node[] }>, label = 'node.replace'): Command => ({
+export const replaceNodes = (spaceId: string, replacements: ReadonlyArray<{ id: string; nodes: readonly Node[] }>, label = 'node.replace', mergeKey?: string): Command => ({
   label,
   spaceId,
+  ...(mergeKey ? { mergeKey: `${label}:${mergeKey}` } : {}),
   apply: (d) => {
     const space = findSpace(d, spaceId);
     if (!space) return;

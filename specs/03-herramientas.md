@@ -155,6 +155,15 @@ Clic sobre un segmento o nodo divide el trazado ahí (dos nodos superpuestos).
 
 Mismo cuadro que Selección más widget lateral con modos: restringir, transformación libre, distorsión de perspectiva, distorsión libre (estas dos últimas producen geometría real, no modificador).
 
+### Reglas añadidas en la Fase 11 (etapa 11.2)
+- **Widget**: columna de cuatro botones a la derecha de la caja (Restringir, Transformación libre, Distorsión de perspectiva, Distorsión libre). El modo se recuerda mientras la ventana siga abierta; empieza en Transformación libre. Los botones son glifos dibujados sobre el lienzo; al pasar el cursor, el nombre aparece en la etiqueta de medida.
+- **Mover, escalar y rotar** son los de Selección (la herramienta delega en ella). En *Restringir* cualquier asa escala en proporción, como si se mantuviera Mayús.
+- **Transformación libre**: Ctrl sobre un lado = **sesgo** (el lado opuesto no se mueve, el arrastrado se desliza a lo largo de sí mismo; es una transformación, la forma viva se conserva); Ctrl sobre una esquina = **distorsión libre** de esa esquina; Ctrl+Alt+Mayús sobre una esquina = **perspectiva**. La distorsión con Ctrl solo funciona con la caja sin girar.
+- **Distorsión libre**: una esquina sigue al puntero (Mayús = 45°); un lado arrastra sus dos esquinas. El mapa es bilineal.
+- **Distorsión de perspectiva**: solo las esquinas son asas; una esquina se mueve a lo largo de una arista (la dirección dominante del arrastre) y la vecina de esa arista se mueve al revés, de modo que queda un trapecio simétrico. El mapa es proyectivo (homografía); más allá de la línea de fuga los puntos se mantienen finitos.
+- **Resultado**: las formas vivas y las esquinas vivas pasan a trazados normales, los grupos y trazados compuestos se distorsionan por dentro con sus transformaciones, y los manejadores se mueven con las anclas (aproximación de las curvas; no se añaden anclas). **Texto e imágenes no se pueden distorsionar**: aviso y sin cambios.
+- Cada arrastre se calcula siempre desde los objetos tal como estaban al empezar (no se acumulan errores), es **un solo paso de deshacer** y Esc lo revierte.
+
 ## Cuentagotas (I)
 
 Clic sobre objeto: copia apariencia (relleno, trazo, opacidad, atributos de texto) al seleccionado. Alt+clic: aplica la apariencia del seleccionado al clicado. Mayús+clic: solo color de la parte clicada.

@@ -4,6 +4,7 @@ import { createCurvatureTool } from './curvatureTool';
 import { createPencilTool } from './pencilTool';
 import { createScissorsTool } from './scissorsTool';
 import { createEyedropperTool } from './eyedropperTool';
+import { createFreeTransformTool } from './freeTransformTool';
 import { createGradientTool } from './gradientTool';
 import { createDirectSelectionTool } from './directSelectionTool';
 import { createHandTool } from './handTool';
@@ -58,6 +59,8 @@ export function createTool(id: ToolId): Tool {
       return createScissorsTool();
     case 'tool-eyedropper':
       return createEyedropperTool();
+    case 'tool-free-transform':
+      return createFreeTransformTool();
     case 'tool-shape-builder':
       return createShapeBuilderTool();
     case 'tool-gradient':

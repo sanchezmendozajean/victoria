@@ -21,6 +21,7 @@ export * from './geometry/anchors';
 export * from './geometry/fit';
 export * from './geometry/marquee';
 export * from './geometry/booleans';
+export * from './geometry/distort';
 export * from './modifiers/types';
 export { getModifier, listModifiers, defaultParams, isStructural } from './modifiers/registry';
 export { evaluateNode, evaluatedGeometry, objectModifiers, itemModifiers, type Evaluated, type ItemEvaluated } from './modifiers/evaluate';

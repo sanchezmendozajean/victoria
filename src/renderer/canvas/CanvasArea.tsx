@@ -136,6 +136,7 @@ export function CanvasArea() {
       toolId,
       options: {
         outline: viewOptions.outline,
+        pixelPreview: viewOptions.pixelPreview,
         guides: viewOptions.guides,
         lockGuides: viewOptions.lockGuides,
         grid: viewOptions.grid,

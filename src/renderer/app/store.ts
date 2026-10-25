@@ -23,6 +23,8 @@ export type WorkspaceId = 'essentials' | 'icons' | 'print' | 'text';
 /** View menu toggles (specs/09 · Vista). Per window for now; Illustrator keeps them per document. */
 export interface ViewOptions {
   outline: boolean;
+  /** Previsualizar píxeles: the artwork as it looks rasterised at 72 ppi. */
+  pixelPreview: boolean;
   rulers: boolean;
   guides: boolean;
   lockGuides: boolean;
@@ -37,6 +39,7 @@ export interface ViewOptions {
 
 export const DEFAULT_VIEW_OPTIONS: ViewOptions = {
   outline: false,
+  pixelPreview: false,
   rulers: true,
   guides: true,
   lockGuides: false,

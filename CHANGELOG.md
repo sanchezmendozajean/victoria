@@ -9,9 +9,18 @@
 - Lectura de cabeceras sin decodificar (`sniffImage`): formato, tamaño, ppp y orientación EXIF.
 - Pruebas: 712 unitarias en total (la etapa añade 20) y 1 e2e (colocar, pintar, deshacer, rehacer). La prueba de la API expuesta incluye `openImages`.
 
+### 11.2 Portapapeles, Transformación libre y Previsualizar píxeles
+- **Portapapeles**: Edición › Copiar, Cortar y Pegar, Pegar por delante, por detrás, en el mismo lugar y en todas las mesas (Ctrl+C/X/V, Ctrl+F/B, Mayús+Ctrl+V, Alt+Mayús+Ctrl+V). Los objetos viajan en el portapapeles del sistema con su propio formato (`web application/x-victoria-clip`, un ZIP con `clip.json` e imágenes) junto con las muestras, degradados e imágenes que usan, así que también se pegan en otro documento. Una imagen copiada en otro programa se pega como imagen. Un paso de deshacer por pegado. Mientras se edita texto sigue mandando el portapapeles del campo de texto.
+- **Transformación libre (E)** con el widget de cuatro modos junto al cuadro: *Restringir* (escala proporcional), *Transformación libre* (como Selección; Ctrl en un lado = sesgo, Ctrl en una esquina = distorsión libre, Ctrl+Alt+Mayús en una esquina = perspectiva), *Distorsión de perspectiva* y *Distorsión libre*. Las dos distorsiones cambian la geometría de verdad (las formas vivas pasan a trazado; el texto y las imágenes se rechazan con un aviso) y se calculan siempre desde el original, un paso de deshacer por arrastre; Esc lo revierte.
+- **Previsualizar píxeles (Alt+Ctrl+Y)**: con zoom mayor del 100 % el dibujo se rasteriza a 72 ppp y se muestra con sus píxeles.
+- Dependencias: ninguna. Núcleo nuevo: `core/clipboard`, `core/geometry/distort.ts`.
+- Pruebas: 751 unitarias en total (la etapa añade 39) y 5 e2e nuevos (copiar/pegar con el portapapeles real del sistema, cortar y pegar en el lugar, imagen externa, distorsión desde el widget, píxeles).
+
 ### Pendiente
-- Colocar con clic o arrastre y cola de varias imágenes; pegar desde el portapapeles; Incrustar/Desincrustar y reubicar vínculos; miniaturas de Espacios con imágenes reales.
-- Etapas 11.2 a 11.7 (ver el plan). Sin verificar: Linux y el instalador de Windows.
+- Colocar con clic o arrastre y cola de varias imágenes; Incrustar/Desincrustar y reubicar vínculos; miniaturas de Espacios con imágenes reales.
+- Portapapeles: no se escriben todavía SVG ni PNG para otras aplicaciones (llegan con la exportación, 11.3); sin verificar en Wayland.
+- Transformación libre: los modos de distorsión usan la caja alineada con los ejes (con un objeto girado, Ctrl+esquina no distorsiona); las curvas se deforman moviendo anclas y manejadores (aproximación, como Illustrator); los botones del widget son glifos dibujados en el lienzo, sin tooltip propio (el nombre aparece en la etiqueta de medida).
+- Etapas 11.3 a 11.7 (ver el plan). Sin verificar: Linux y el instalador de Windows.
 - Ya fallaba antes de esta fase: el e2e «Ctrl+rueda hace zoom en el cursor» (canvas.spec.ts) no encuentra el píxel oscuro esperado tras el zoom.
 
 ## Fase 10 — Espacios, interfaz completa (en revisión)

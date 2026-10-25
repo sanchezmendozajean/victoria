@@ -63,6 +63,7 @@ const HANDLERS: Partial<Record<ShortcutAction, () => void | Promise<unknown>>> =
   'view.fitAll': () => canvasApi.current?.fitAll(),
   'view.actualSize': () => canvasApi.current?.actualSize(),
   'view.outline': toggle('outline'),
+  'view.pixelPreview': toggle('pixelPreview'),
   'view.rulers': toggle('rulers'),
   'view.guides': toggle('guides'),
   'view.lockGuides': toggle('lockGuides'),

@@ -53,6 +53,7 @@ export interface CanvasElements {
 
 export interface CanvasOptions {
   outline: boolean;
+  pixelPreview: boolean;
   guides: boolean;
   lockGuides: boolean;
   grid: boolean;
@@ -186,6 +187,7 @@ export class CanvasController implements ToolHost, CanvasApi {
     const sameOptions =
       !!previous &&
       previous.options.outline === input.options.outline &&
+      previous.options.pixelPreview === input.options.pixelPreview &&
       previous.options.guides === input.options.guides &&
       previous.options.lockGuides === input.options.lockGuides &&
       previous.options.grid === input.options.grid &&
@@ -649,6 +651,7 @@ export class CanvasController implements ToolHost, CanvasApi {
       height: this.height,
       dpr: this.dpr,
       outline: input.options.outline,
+      pixelPreview: input.options.pixelPreview,
       showArtboards: !input.options.hideArtboards,
       showGrid: input.options.grid,
       activeArtboardId: input.activeArtboardId,

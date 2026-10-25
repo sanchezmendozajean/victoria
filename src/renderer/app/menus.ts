@@ -202,7 +202,7 @@ export function buildMenus(ctx: MenuContext): MenuDef[] {
   const v = ctx.viewOptions;
   const view: MenuEntry[] = [
     item('outline', v.outline ? 'menu.view.outlineBack' : 'menu.view.outline', 'outline-mode', 'view.outline'),
-    item('pixel-preview', 'menu.view.pixelPreview', 'pixel-preview', 'view.pixelPreview'),
+    item('pixel-preview', 'menu.view.pixelPreview', 'pixel-preview', 'view.pixelPreview', { checked: v.pixelPreview }),
     sep('s1'),
     item('zoom-in', 'menu.view.zoomIn', 'zoom-in', 'view.zoomIn'),
     item('zoom-out', 'menu.view.zoomOut', 'zoom-out', 'view.zoomOut'),

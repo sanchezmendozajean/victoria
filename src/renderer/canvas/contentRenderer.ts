@@ -53,6 +53,8 @@ export interface RenderOptions {
   dpr: number;
   /** Ctrl+Y: only 1 px outlines in the layer colour. */
   outline: boolean;
+  /** Alt+Ctrl+Y: the artwork rasterised at 72 ppi (1 pt = 1 px) and shown with its pixels once zoomed past 100 %. */
+  pixelPreview?: boolean;
   showArtboards: boolean;
   showGrid: boolean;
   activeArtboardId: string | null;
@@ -615,14 +617,47 @@ export function renderContent(ctx: CanvasRenderingContext2D, o: RenderOptions): 
   if (o.showArtboards) for (const board of o.space.artboards) drawArtboard(ctx, board, o);
   if (o.showGrid) drawGrid(ctx, o);
 
-  // Artwork in document space, culled against the visible rectangle.
+  const raster = o.pixelPreview && !o.outline && view.zoom > 1 ? rasteriseArtwork(o) : null;
+  if (raster) {
+    ctx.save();
+    ctx.transform(view.zoom, 0, 0, view.zoom, view.panX, view.panY);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(raster.canvas, raster.x, raster.y);
+    ctx.restore();
+    return;
+  }
+  drawArtwork(ctx, o, view, o.width, o.height, dpr);
+}
+
+/** Artwork in document space, culled against the visible rectangle. */
+function drawArtwork(ctx: CanvasRenderingContext2D, o: RenderOptions, view: Viewport, width: number, height: number, dpr: number): void {
   ctx.save();
-  ctx.transform(view.zoom * 1, 0, 0, view.zoom * 1, view.panX, view.panY);
+  ctx.transform(view.zoom, 0, 0, view.zoom, view.panX, view.panY);
   const frame = o.isolatedId ? frameOf(o.space, o.isolatedId) : null;
   const isolation = frame ? { id: o.isolatedId as string, chain: new Set([...frame.ancestors.map((n) => n.id), o.isolatedId as string]) } : null;
   const env: Env = { ctx, resources: o.resources, outline: o.outline, dpr, isolation, images: o.images, onImageReady: o.onImageReady };
   for (const layer of o.space.layers) {
-    if (layer.visible) drawChildren(env, layer.children, visibleRect(view, o.width, o.height), layer, 1, false);
+    if (layer.visible) drawChildren(env, layer.children, visibleRect(view, width, height), layer, 1, false);
   }
   ctx.restore();
+}
+
+/** Largest raster Previsualizar píxeles builds; beyond it the artwork is drawn normally. */
+const MAX_PIXEL_PREVIEW = 16 * 1024 * 1024;
+
+/** The visible part of the artwork drawn at 1 px per pt, on whole points so its pixels line up with the document. */
+function rasteriseArtwork(o: RenderOptions): { canvas: HTMLCanvasElement; x: number; y: number } | null {
+  const area = visibleRect(o.view, o.width, o.height);
+  const x = Math.floor(area.minX);
+  const y = Math.floor(area.minY);
+  const w = Math.ceil(area.maxX) - x;
+  const h = Math.ceil(area.maxY) - y;
+  if (w <= 0 || h <= 0 || w * h > MAX_PIXEL_PREVIEW) return null;
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+  drawArtwork(ctx, o, { zoom: 1, panX: -x, panY: -y }, w, h, 1);
+  return { canvas, x, y };
 }
