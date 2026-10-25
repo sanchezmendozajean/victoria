@@ -41,6 +41,7 @@ export * from './io/imageStore';
 export * from './clipboard/clip';
 export * from './export/scene';
 export * from './export/svg';
+export * from './export/pdf';
 export { toBase64 } from './export/base64';
 export { sha256Hex } from './io/sha256';
 export { readEps, EpsFormatError } from './io/eps';

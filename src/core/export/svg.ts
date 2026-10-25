@@ -4,7 +4,7 @@ import { toBase64 } from './base64';
 import { outsideClipPath, segmentIsStraight, type RGB, type Scene, type SceneEffect, type SceneOp, type ScenePaint, type ScenePath } from './scene';
 
 export interface ExportWarning {
-  code: 'image-missing' | 'effects-unsupported' | 'gradient-alpha' | 'blend-unsupported';
+  code: 'image-missing' | 'image-format' | 'effects-unsupported' | 'gradient-alpha';
   detail?: string;
 }
 
