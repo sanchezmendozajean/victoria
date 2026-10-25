@@ -55,3 +55,14 @@ export const isDecoded = (hash: string): boolean => {
   const entry = entries.get(hash);
   return !!entry && typeof entry !== 'string';
 };
+
+/** Decodes an image and waits for it (exporting needs every picture ready before it draws). Null when missing or damaged. */
+export async function loadBitmap(store: ImageStore, hash: string): Promise<ImageBitmap | null> {
+  const ready = bitmapFor(store, hash);
+  if (ready) return ready;
+  if (entries.get(hash) === 'failed' || !store.has(hash)) return null;
+  await new Promise<void>((resolve) => {
+    if (bitmapFor(store, hash, resolve) || entries.get(hash) === 'failed') resolve();
+  });
+  return bitmapFor(store, hash);
+}

@@ -1,8 +1,8 @@
-import { app, dialog, type BrowserWindow } from 'electron';
+import { app, dialog, shell, type BrowserWindow } from 'electron';
 import { randomUUID } from 'node:crypto';
 import { mkdir, readdir, readFile, rename, stat, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import type { AutosaveEntry, DialogLabels, OpenedFile, SaveRequest, SaveResult } from '../shared/ipc';
+import type { AutosaveEntry, DialogLabels, ExportFile, ExportSaveRequest, ExportWriteResult, OpenedFile, SaveRequest, SaveResult } from '../shared/ipc';
 
 const EXTENSION = 'vict';
 const DOC_ID = /^[A-Za-z0-9_-]{1,64}$/;
@@ -85,6 +85,75 @@ export async function saveFile(win: BrowserWindow, request: SaveRequest): Promis
   }
   await writeFileAtomic(target, request.bytes);
   return { path: target };
+}
+
+// ── Export ──
+
+/** Folders the user picked for exporting; the renderer may only write into these. */
+const exportFolders = new Set<string>();
+const EXTENSION_NAME = /^[a-z0-9]{1,8}$/;
+const FORBIDDEN_IN_NAMES = '<>:"/\\|?*';
+/** A plain file name: no folders, no hidden files, nothing the file system treats specially. */
+const isPlainName = (name: unknown): name is string =>
+  typeof name === 'string' &&
+  name.length > 0 &&
+  name.length <= 255 &&
+  name === path.basename(name) &&
+  !name.startsWith('.') &&
+  ![...name].some((ch) => FORBIDDEN_IN_NAMES.includes(ch) || ch.charCodeAt(0) < 32);
+
+let lastExportDir: string | null = null;
+
+export async function exportSave(win: BrowserWindow, request: ExportSaveRequest): Promise<SaveResult | null> {
+  if (!request || typeof request.title !== "string" || typeof request.filterName !== "string" || !EXTENSION_NAME.test(request.extension) || !(request.bytes instanceof Uint8Array)) {
+    throw new Error("Invalid export request");
+  }
+  const safeName = path.basename(String(request.suggestedName)) || `Sin título.${request.extension}`;
+  const result = await dialog.showSaveDialog(win, {
+    title: request.title,
+    defaultPath: path.join(lastExportDir ?? app.getPath("documents"), safeName),
+    filters: [{ name: request.filterName, extensions: [request.extension] }],
+  });
+  if (result.canceled || !result.filePath) return null;
+  const target = path.extname(result.filePath).toLowerCase() === `.${request.extension}` ? result.filePath : `${result.filePath}.${request.extension}`;
+  lastExportDir = path.dirname(target);
+  await writeFileAtomic(target, request.bytes);
+  return { path: target };
+}
+
+export async function exportChooseFolder(win: BrowserWindow, title: unknown): Promise<string | null> {
+  if (typeof title !== "string") throw new Error("Invalid dialog title");
+  const result = await dialog.showOpenDialog(win, { title, defaultPath: lastExportDir ?? app.getPath("documents"), properties: ["openDirectory", "createDirectory"] });
+  const folder = result.filePaths[0];
+  if (result.canceled || !folder) return null;
+  exportFolders.add(folder);
+  lastExportDir = folder;
+  return folder;
+}
+
+export async function exportWrite(folder: unknown, files: unknown): Promise<ExportWriteResult> {
+  if (typeof folder !== "string" || !exportFolders.has(folder)) throw new Error("Folder not chosen by the user");
+  if (!Array.isArray(files)) throw new Error("Invalid export files");
+  const out: ExportWriteResult = { written: [], failed: [] };
+  for (const file of files as ExportFile[]) {
+    if (!file || !isPlainName(file.name) || !(file.bytes instanceof Uint8Array)) {
+      out.failed.push({ name: String(file?.name), reason: "invalid name" });
+      continue;
+    }
+    try {
+      const target = path.join(folder, file.name);
+      await writeFileAtomic(target, file.bytes);
+      out.written.push(target);
+    } catch (error) {
+      out.failed.push({ name: file.name, reason: error instanceof Error ? error.message : String(error) });
+    }
+  }
+  return out;
+}
+
+export async function exportOpenFolder(folder: unknown): Promise<void> {
+  if (typeof folder !== "string" || !exportFolders.has(folder)) throw new Error("Folder not chosen by the user");
+  await shell.openPath(folder);
 }
 
 // ── Autosave: <userData>/autosave/<docId>.vict ──

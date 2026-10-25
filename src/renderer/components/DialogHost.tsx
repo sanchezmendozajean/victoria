@@ -27,7 +27,7 @@ export function DialogHost() {
   const defaultButton = dialog.buttons.find((b) => b.variant === 'primary') ?? dialog.buttons[dialog.buttons.length - 1];
 
   return (
-    <div className="vc-dialog__backdrop" data-testid="dialog">
+    <div className="vc-dialog__backdrop vc-dialog__backdrop--alert" data-testid="dialog">
       <div className="vc-dialog" role="alertdialog" aria-modal="true" aria-label={dialog.title}>
         <h2 className="vc-dialog__title">{dialog.title}</h2>
         {dialog.message && <p className="vc-dialog__message">{dialog.message}</p>}

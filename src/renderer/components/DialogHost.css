@@ -7,6 +7,10 @@
   justify-content: center;
   background: rgba(0, 0, 0, 0.45);
 }
+.vc-dialog__backdrop--alert {
+  /* Messages (errors, results) must stay above whatever form dialog asked for them. */
+  z-index: 2100;
+}
 .vc-dialog {
   width: 420px;
   max-width: calc(100vw - 32px);

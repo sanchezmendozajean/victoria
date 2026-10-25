@@ -131,6 +131,21 @@ describe('DocumentManager', () => {
     expect(disk.size).toBe(1);
   });
 
+  it('saves a copy without touching the document: same path, still unsaved changes', async () => {
+    const { manager, disk, state } = fakeEnv();
+    manager.newDocument();
+    const doc = edit(manager);
+    expect(await manager.save()).toBe(true);
+    edit(manager, 'Changed after saving');
+    state.savePath = 'C:\\docs\\copy.vict';
+    expect(await manager.saveCopy()).toBe(true);
+    expect(disk.has('C:\\docs\\copy.vict')).toBe(true);
+    expect(doc.path).toBe('C:\\docs\\a.vict');
+    expect(doc.session.dirty).toBe(true);
+    state.savePath = null;
+    expect(await manager.saveCopy()).toBe(false); // cancelled dialog
+  });
+
   it('Save As always asks and can be cancelled', async () => {
     const { manager, state } = fakeEnv();
     manager.newDocument();

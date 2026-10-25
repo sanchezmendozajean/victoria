@@ -45,6 +45,15 @@ Panel y botón en Propiedades cuando hay una imagen seleccionada.
 **Exportar como…**: un archivo SVG/PNG/JPG/PDF con opciones.
 **Guardar copia como PDF**: todas las mesas como páginas.
 
+### Reglas añadidas en la Fase 11 (etapa 11.3 · exportar)
+- **Una sola escena**: `buildScene` convierte la geometría evaluada de un rectángulo del Espacio (una mesa, con su sangrado si se pide) en rellenos, trazos, imágenes y grupos; SVG y PDF la leen, así que no pueden discrepar. PNG y JPG se pintan con el código del lienzo (`renderContent`) a `ppp/72` de zoom, fuera de pantalla.
+- **Tamaño**: 1 pt = 1 unidad de SVG; el PNG mide `ancho·ppp/72` píxeles por lado (máximo 16 384); la resolución queda en el archivo (PNG `pHYs`, JPEG JFIF), de modo que reimportarlo da el mismo tamaño. JPG siempre con fondo (blanco o el de la mesa).
+- **Nombres**: `Documento-Mesa.png` (con el nombre del Espacio si hay varios), sufijo `@2x`, caracteres no válidos cambiados por `_`, repetidos con `-2`, `-3`…
+- **Texto**: siempre como contornos (en SVG y PDF), nunca como texto vivo; antes de exportar se cargan las fuentes y las imágenes que usa la mesa.
+- **SVG**: degradados `userSpaceOnUse` con `gradientTransform`; trazos interiores y exteriores = trazo al doble de ancho recortado por el contorno (o por su complemento); sombras y resplandores = `filter` que dibuja solo la sombra, antes del objeto; imágenes `data:` incrustadas una vez y reutilizadas con `<use>`.
+- **PDF**: una página por mesa, eje Y invertido una vez; degradados como patrones de sombreado (función de unión para varias paradas, las transparencias de las paradas no se conservan); opacidad y modo de fusión por forma (como en el lienzo); sin sombras, sin WebP.
+- **Diálogos**: «Exportar…» (un formato, alcance) y «Exportar para pantallas…» (mesas marcadas × formatos); un archivo → diálogo de guardar, varios → carpeta (el proceso principal solo escribe en carpetas elegidas por el usuario).
+
 ## Imprimir (Ctrl+P)
 
 Diálogo propio (no solo el nativo) con previsualización:

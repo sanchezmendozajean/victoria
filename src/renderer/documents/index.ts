@@ -38,6 +38,7 @@ export const manager = new DocumentManager({
     openFailed: (reason) => t('doc.openFailed', { reason }),
     epsSkipped: (items) => t('doc.epsSkipped', { items }),
     epsItem: (code) => t(`doc.epsItem.${code}` as TranslationKey),
+    copyOf: (name) => t('doc.copyOf', { name }),
     saveFailed: t('doc.saveFailed'),
     openLabels: { title: t('doc.openTitle'), filterName: t('doc.fileDialog'), importFilterName: t('doc.epsDialog') },
     saveLabels: { title: t('doc.saveTitle'), filterName: t('doc.fileDialog') },

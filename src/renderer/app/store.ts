@@ -109,6 +109,8 @@ interface UiState {
   /** The last modifier applied, with its parameters (Mayús+Ctrl+E repeats it). */
   lastModifier: { modifierId: string; params: Params } | null;
   shapeDialog: { kind: ShapeToolKind; at: Vec2 } | null;
+  /** Archivo › Exportar… ('as') or Exportar para pantallas… ('screens'). */
+  exportDialog: 'as' | 'screens' | null;
   /** Right click on the canvas: where the context menu opens (screen px). */
   canvasMenu: { x: number; y: number } | null;
   /** Properties dialog of a Space (grid and canvas colour), by id. */
@@ -137,6 +139,8 @@ interface UiState {
   setAlignPreviewBounds(on: boolean): void;
   setScaleStrokes(on: boolean): void;
   openShapeDialog(kind: ShapeToolKind, at: Vec2): void;
+  openExportDialog(mode: 'as' | 'screens'): void;
+  closeExportDialog(): void;
   closeShapeDialog(): void;
   openCanvasMenu(x: number, y: number): void;
   closeCanvasMenu(): void;
@@ -225,6 +229,7 @@ export const useUi = create<UiState>()((set, get) => ({
   modifierDialog: null,
   lastModifier: null,
   shapeDialog: null,
+  exportDialog: null,
   canvasMenu: null,
   spaceProps: null,
 
@@ -268,6 +273,8 @@ export const useUi = create<UiState>()((set, get) => ({
   setAlignPreviewBounds: (alignPreviewBounds) => set({ alignPreviewBounds }),
   setScaleStrokes: (scaleStrokes) => set({ scaleStrokes }),
   openShapeDialog: (kind, at) => set({ shapeDialog: { kind, at } }),
+  openExportDialog: (mode) => set({ exportDialog: mode }),
+  closeExportDialog: () => set({ exportDialog: null }),
   openModifierDialog: (modifierDialog) => set({ modifierDialog }),
   closeModifierDialog: () => set({ modifierDialog: null }),
   setLastModifier: (lastModifier) => set({ lastModifier }),

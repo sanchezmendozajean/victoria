@@ -63,6 +63,8 @@ export interface RenderOptions {
   isolatedId: string | null;
   /** Bytes of the document's images; without them (thumbnails of other documents) images draw as placeholders. */
   images?: ImageStore;
+  /** Paint this colour behind everything (an exported picture with a background); default none. */
+  background?: string;
   /** Called when an image finishes decoding, so the caller repaints. */
   onImageReady?: () => void;
 }
@@ -613,6 +615,10 @@ export function renderContent(ctx: CanvasRenderingContext2D, o: RenderOptions): 
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.globalAlpha = 1;
   ctx.globalCompositeOperation = 'source-over';
+  if (o.background) {
+    ctx.fillStyle = o.background;
+    ctx.fillRect(0, 0, o.width, o.height);
+  }
 
   if (o.showArtboards) for (const board of o.space.artboards) drawArtboard(ctx, board, o);
   if (o.showGrid) drawGrid(ctx, o);

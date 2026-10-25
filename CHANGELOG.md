@@ -16,9 +16,19 @@
 - Dependencias: ninguna. Núcleo nuevo: `core/clipboard`, `core/geometry/distort.ts`.
 - Pruebas: 751 unitarias en total (la etapa añade 39) y 5 e2e nuevos (copiar/pegar con el portapapeles real del sistema, cortar y pegar en el lugar, imagen externa, distorsión desde el widget, píxeles).
 
+### 11.3 Exportar
+- **Archivo › Exportar…** (PNG, JPG, SVG, PDF; mesa activa, mesas del Espacio o todos los Espacios; PNG a 72/150/300 ppp o a medida con fondo transparente, blanco o el de la mesa; JPG con calidad; SVG minificado; PDF de todas las mesas en un archivo; sangrado opcional) y **Exportar para pantallas…** (lista de mesas con filtro por Espacio, varios formatos a la vez con escala 1x/2x/3x y sufijo, carpeta de destino, abrir la carpeta al terminar). Un archivo pasa por el diálogo de guardar; varios, por la carpeta elegida. «Guardar copia como PDF» es Exportar… › PDF › todos los Espacios. **Archivo › Guardar una copia…** escribe un `.vict` aparte sin tocar el documento.
+- **Una sola escena** (`core/export/scene.ts`) con la geometría evaluada (modificadores, Contornear trazo, perfiles de ancho, puntas de flecha, guiones alineados, sombras y resplandores, grupos de recorte, imágenes, texto como contornos) que leen el escritor **SVG** (degradados en su espacio unitario, trazos dentro/fuera con recortes, efectos como filtros, imágenes incrustadas una vez) y el escritor **PDF** vectorial (`pdf-lib`: degradados como patrones de sombreado, opacidad y mezcla como estados gráficos, PNG y JPEG incrustados). PNG y JPG los pinta el mismo pintor del lienzo, con la resolución anotada en el archivo (`pHYs` / JFIF).
+- Avisos tras exportar: sombras y resplandores no existen en PDF, la transparencia de los degradados no se conserva en PDF, una imagen WebP no cabe en un PDF, falta el archivo de una imagen. Un PNG por encima de 16 384 px por lado se rechaza con un mensaje.
+- El proceso principal solo escribe en carpetas que el usuario eligió en un diálogo, con nombres de archivo simples; nombres seguros y únicos en Windows y Linux.
+- Corregido por el camino: los mensajes de error y resultado quedaban **debajo** de los diálogos de formulario (ahora van por encima).
+- Dependencia nueva: **pdf-lib 1.17.1** (MIT, JavaScript puro) para el PDF, como pide la spec 01.
+- Pruebas: 782 unitarias en total (la etapa añade 31) y 7 e2e nuevos con archivos reales: PNG con su tamaño y ppp, SVG, PDF, exportar para pantallas, texto como contornos, copia `.vict` y **paridad**: el SVG exportado, dibujado por Chromium, coincide con el PNG pintado por el lienzo.
+
 ### Pendiente
 - Colocar con clic o arrastre y cola de varias imágenes; Incrustar/Desincrustar y reubicar vínculos; miniaturas de Espacios con imágenes reales.
-- Portapapeles: no se escriben todavía SVG ni PNG para otras aplicaciones (llegan con la exportación, 11.3); sin verificar en Wayland.
+- Portapapeles: no se escriben todavía SVG ni PNG para otras aplicaciones; sin verificar en Wayland.
+- Exportación: el PDF no lleva sombras ni transparencia de degradados; la paridad lienzo/SVG está probada con el documento de demostración, no con texto en trazado (la paridad de texto en PDF queda por comprobar con un visor); opacidad de grupo aproximada como en el lienzo (por forma, no como grupo); sin barra de progreso cancelable; sin perfiles de color (RGB).
 - Transformación libre: los modos de distorsión usan la caja alineada con los ejes (con un objeto girado, Ctrl+esquina no distorsiona); las curvas se deforman moviendo anclas y manejadores (aproximación, como Illustrator); los botones del widget son glifos dibujados en el lienzo, sin tooltip propio (el nombre aparece en la etiqueta de medida).
 - Etapas 11.3 a 11.7 (ver el plan). Sin verificar: Linux y el instalador de Windows.
 - Ya fallaba antes de esta fase: el e2e «Ctrl+rueda hace zoom en el cursor» (canvas.spec.ts) no encuentra el píxel oscuro esperado tras el zoom.

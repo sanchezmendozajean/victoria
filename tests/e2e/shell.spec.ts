@@ -62,12 +62,15 @@ test('the renderer is sandboxed and only sees the typed API', async () => {
     'autosaveList',
     'autosaveRead',
     'autosaveWrite',
+    'chooseExportFolder',
     'closeWindow',
+    'exportSaveFile',
     'getPlatformInfo',
     'listFonts',
     'minimizeWindow',
     'onBeforeClose',
     'onWindowStateChange',
+    'openExportFolder',
     'openFile',
     'openImages',
     'readClipboard',
@@ -76,6 +79,7 @@ test('the renderer is sandboxed and only sees the typed API', async () => {
     'setOverlayColors',
     'toggleMaximizeWindow',
     'writeClipboard',
+    'writeExportFiles',
   ]);
 });
 

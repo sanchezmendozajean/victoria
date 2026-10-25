@@ -50,6 +50,7 @@ const HANDLERS: Partial<Record<ShortcutAction, () => void | Promise<unknown>>> =
   'file.place': placeImages,
   'file.save': () => manager.save(),
   'file.saveAs': () => manager.saveAs(),
+  'file.saveCopy': () => manager.saveCopy(),
   'file.close': () => manager.close(),
   'edit.undo': () => void manager.active?.session.undo(),
   'edit.redo': () => void manager.active?.session.redo(),

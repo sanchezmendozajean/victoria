@@ -42,6 +42,8 @@ export interface Names {
   /** Notice after opening an EPS: what was left out (already joined, e.g. "texto, imágenes"). */
   epsSkipped(items: string): string;
   epsItem(code: EpsWarning['code']): string;
+  /** Suggested file name of a copy ("Cartel copia"). */
+  copyOf?(name: string): string;
   saveFailed: string;
   openLabels: DialogLabels;
   saveLabels: DialogLabels;
@@ -257,6 +259,26 @@ export class DocumentManager {
       await this.dropAutosave(doc);
       this.changed();
       return true;
+    } catch (error) {
+      await this.deps.prompts.reportError(`${names.saveFailed} ${error instanceof Error ? error.message : ''}`.trim());
+      return false;
+    }
+  }
+
+  /** Archivo › Guardar una copia…: writes the document to another file and leaves this one exactly as it was (path, unsaved changes, autosave). */
+  async saveCopy(id = this.activeId_): Promise<boolean> {
+    const doc = this.docs_.find((d) => d.id === id);
+    if (!doc) return false;
+    const { files, names } = this.deps;
+    try {
+      const name = doc.session.document.meta.name;
+      const result = await files.saveFile({
+        path: null,
+        suggestedName: `${names.copyOf ? names.copyOf(name) : `${name} copy`}.vict`,
+        bytes: this.serialize(doc),
+        labels: names.saveLabels,
+      });
+      return result !== null;
     } catch (error) {
       await this.deps.prompts.reportError(`${names.saveFailed} ${error instanceof Error ? error.message : ''}`.trim());
       return false;

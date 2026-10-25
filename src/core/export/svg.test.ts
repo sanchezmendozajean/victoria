@@ -56,7 +56,7 @@ describe('SVG export', () => {
   it('writes a viewBox of the region and the contour of a filled rectangle with its transform', () => {
     const s = setup();
     const r = s.add(createRect(s.ids, 100, 50));
-    s.session.run({ label: 'move', apply: (d) => void (d.spaces[0]!.layers[0]!.children[0]!.transform = [1, 0, 0, 1, 10, 20] as never) });
+    s.session.run({ label: 'move', apply: (d) => void ((d.spaces[0]!.layers[0]!.children[0] as unknown as { transform: number[] }).transform = [1, 0, 0, 1, 10, 20]) });
     s.look(r.id, fillRed());
     const { svg } = s.svg({ minX: 0, minY: 0, maxX: 300, maxY: 200 });
     expect(svg).toContain('viewBox="0 0 300 200"');

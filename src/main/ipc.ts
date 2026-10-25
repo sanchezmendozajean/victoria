@@ -1,5 +1,5 @@
 import { clipboard, ClipboardItem, ipcMain, type BrowserWindow, type IpcMainEvent, type IpcMainInvokeEvent } from 'electron';
-import { IPC, type ClipboardContents, type OverlayColors, type PlatformInfo, type SaveRequest, type WindowState } from '../shared/ipc';
+import { IPC, type ClipboardContents, type ExportSaveRequest, type OverlayColors, type PlatformInfo, type SaveRequest, type WindowState } from '../shared/ipc';
 import * as files from './files';
 import { cachedFonts, readListedFont } from './fonts';
 import type { Platform } from './platform';
@@ -48,6 +48,18 @@ export function registerIpc(ctx: IpcContext): void {
   ipcMain.handle(IPC.openImages, async (event, labels: unknown) => {
     const win = fromAppWindow(event);
     return win ? files.openImages(win, labels) : [];
+  });
+  ipcMain.handle(IPC.exportSave, async (event, request: ExportSaveRequest) => {
+    const win = fromAppWindow(event);
+    return win ? files.exportSave(win, request) : null;
+  });
+  ipcMain.handle(IPC.exportChooseFolder, async (event, title: unknown) => {
+    const win = fromAppWindow(event);
+    return win ? files.exportChooseFolder(win, title) : null;
+  });
+  ipcMain.handle(IPC.exportWrite, async (event, folder: unknown, list: unknown) => (fromAppWindow(event) ? files.exportWrite(folder, list) : { written: [], failed: [] }));
+  ipcMain.handle(IPC.exportOpenFolder, async (event, folder: unknown) => {
+    if (fromAppWindow(event)) await files.exportOpenFolder(folder);
   });
   ipcMain.handle(IPC.clipboardWrite, async (event, clip: unknown) => {
     if (!fromAppWindow(event) || !(clip instanceof Uint8Array) || clip.length > MAX_CLIP_BYTES) return;

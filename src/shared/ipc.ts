@@ -59,6 +59,28 @@ export interface ClipboardContents {
   image: Uint8Array | null;
 }
 
+/** A file the user exports (Archivo › Exportar): one save dialog, or several files into a chosen folder. */
+export interface ExportSaveRequest {
+  title: string;
+  suggestedName: string;
+  /** Name of the file type in the dialog filter, e.g. "PDF". */
+  filterName: string;
+  /** Without the dot. */
+  extension: string;
+  bytes: Uint8Array;
+}
+
+export interface ExportFile {
+  /** A plain file name (no folders). */
+  name: string;
+  bytes: Uint8Array;
+}
+
+export interface ExportWriteResult {
+  written: string[];
+  failed: Array<{ name: string; reason: string }>;
+}
+
 export interface AutosaveEntry {
   docId: string;
   /** Last write, ms since epoch. */
@@ -81,6 +103,10 @@ export const IPC = {
   setOverlayColors: 'window:set-overlay-colors',
   openFile: 'file:open',
   openImages: 'file:open-images',
+  exportSave: 'export:save',
+  exportChooseFolder: 'export:choose-folder',
+  exportWrite: 'export:write',
+  exportOpenFolder: 'export:open-folder',
   clipboardWrite: 'clipboard:write',
   clipboardRead: 'clipboard:read',
   saveFile: 'file:save',
@@ -110,6 +136,15 @@ export interface VictoriaApi {
   openImages(labels: DialogLabels): Promise<OpenedFile[]>;
   /** Writes atomically (temp file + rename). null if the user cancels the Save As dialog. */
   saveFile(request: SaveRequest): Promise<SaveResult | null>;
+
+  /** Save dialog + write for one exported file. null if the user cancels. */
+  exportSaveFile(request: ExportSaveRequest): Promise<SaveResult | null>;
+  /** Folder picker for exporting several files. null if the user cancels. Only a folder returned here can be written to. */
+  chooseExportFolder(title: string): Promise<string | null>;
+  /** Writes the files into a folder returned by `chooseExportFolder`; existing files with the same name are replaced. */
+  writeExportFiles(folder: string, files: ExportFile[]): Promise<ExportWriteResult>;
+  /** Shows a folder returned by `chooseExportFolder` in the file manager. */
+  openExportFolder(folder: string): Promise<void>;
 
   /** Puts Victoria objects on the system clipboard (its own format; other applications ignore it). */
   writeClipboard(clip: Uint8Array): Promise<void>;
