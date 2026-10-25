@@ -11,11 +11,11 @@
 
 ### Reglas añadidas en la Fase 11 (etapa 11.1)
 
-- **Bytes fuera del documento**:  guarda solo ancho, alto y formato; los bytes viven en  (, indexado por **SHA-256 del contenido**, que es también el nombre del archivo en el ). Dos archivos idénticos comparten un recurso. Al guardar solo se escriben las imágenes que el documento aún lista, así que deshacer una colocación no deja basura en el archivo.
+- **Bytes fuera del documento**: `resources.images` guarda solo ancho, alto y formato; los bytes viven en `session.images` (`ImageStore`, indexado por **SHA-256 del contenido**, que es también el nombre del archivo en el `.vict`). Dos archivos idénticos comparten un recurso. Al guardar solo se escriben las imágenes que el documento aún lista, así que deshacer una colocación no deja basura en el archivo.
 - **Formatos**: PNG, JPEG y WebP. El tamaño se lee de la cabecera, sin decodificar (el core no tiene DOM). En JPEG se aplica la orientación EXIF (5–8 intercambian ancho y alto), como hace el navegador al dibujar.
-- **Tamaño natural**: la resolución que declara el archivo (PNG , JPEG JFIF) o 72 ppp si no declara ninguna; 1 px = 1 pt a 72 ppp.
+- **Tamaño natural**: la resolución que declara el archivo (PNG `pHYs`, JPEG JFIF) o 72 ppp si no declara ninguna; 1 px = 1 pt a 72 ppp.
 - **Colocar (Mayús+Ctrl+P) y soltar archivos**: cada imagen es un objeto incrustado, sin relleno ni trazo, en la capa de la selección (o la elegida en Capas, o la más alta libre), centrado en la mesa activa o en el punto donde se soltó. Varias imágenes a la vez se escalonan 24 pt. Un paso de deshacer por imagen; las colocadas quedan seleccionadas.
-- Las imágenes se decodifican de forma asíncrona () con una caché de 64 por contenido; mientras cargan, el lienzo dibuja el marcador gris con aspas.
+- Las imágenes se decodifican de forma asíncrona (`createImageBitmap`) con una caché de 64 por contenido; mientras cargan, el lienzo dibuja el marcador gris con aspas.
 - **Pendiente de esta etapa**: colocar con clic o arrastre y miniatura en el cursor, cola de varias imágenes, pegar desde el portapapeles, Incrustar/Desincrustar y reubicar vínculos (11.6).
 
 ## Acomodar para imprimir
