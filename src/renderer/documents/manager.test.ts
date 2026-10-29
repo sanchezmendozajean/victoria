@@ -7,7 +7,7 @@ function fakeEnv() {
   const disk = new Map<string, Uint8Array>(); // saved documents by path
   const autosaves = new Map<string, { bytes: Uint8Array; modified: number }>();
   const errors: string[] = [];
-  const state = { now: 1_000_000, nextPick: null as OpenedFile | null, savePath: 'C:\\docs\\a.vict' as string | null, close: 'discard' as CloseChoice };
+  const state = { now: 1_000_000, nextPick: null as OpenedFile | null, savePath: 'C:\\docs\\a.vict' as string | null, close: 'discard' as CloseChoice, pdfFails: false, pdfPages: 2 };
 
   const files: FilesPort = {
     openFile: async () => state.nextPick,
@@ -34,9 +34,18 @@ function fakeEnv() {
       openFailed: (r) => `open failed: ${r}`,
       epsSkipped: (items) => `eps skipped: ${items}`,
       epsItem: (code) => code,
+      importSkipped: (items) => `import skipped: ${items}`,
+      importItem: (code) => code,
       saveFailed: 'save failed',
       openLabels: { title: 'o', filterName: 'f' },
       saveLabels: { title: 's', filterName: 'f' },
+    },
+    pdf: {
+      read: async () => {
+        if (state.pdfFails) throw new Error('bad pdf');
+        const pages = [200, 50].map((w) => ({ width: w, height: 100, nodes: [], gradients: [], images: {}, warnings: [{ code: 'text' as const }] }));
+        return { pages, pageCount: state.pdfPages };
+      },
     },
     appVersion: '0.2.0',
     ids: sequentialIds('m'),
@@ -90,6 +99,46 @@ describe('DocumentManager', () => {
     expect([space.artboards[0]!.w, space.artboards[0]!.h]).toEqual([120, 80]);
     expect(space.layers[0]!.children).toHaveLength(1);
     expect(errors).toEqual(['eps skipped: text']);
+  });
+
+  it('opens an SVG as a new unsaved document with an artboard of its size, and reports what it left out', async () => {
+    const { manager, state, errors } = fakeEnv();
+    const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="120" height="80"><rect width="30" height="30" fill="red"/><rect width="9" height="9" filter="url(#f)"/></svg>';
+    state.nextPick = { path: 'C:/art/logo.svg', bytes: new TextEncoder().encode(svg) };
+    const doc = await manager.open();
+    expect(doc?.path).toBeNull();
+    expect(doc?.session.document.meta.name).toBe('logo');
+    const space = doc!.session.document.spaces[0]!;
+    expect([space.artboards[0]!.w, space.artboards[0]!.h]).toEqual([120, 80]);
+    expect(space.layers[0]!.children).toHaveLength(2);
+    expect(errors).toEqual(['import skipped: filter']);
+  });
+
+  it('refuses a damaged SVG with a message and opens nothing', async () => {
+    const { manager, state, errors } = fakeEnv();
+    state.nextPick = { path: 'C:/art/bad.svg', bytes: new TextEncoder().encode('<svg><g></svg>') };
+    expect(await manager.open()).toBeNull();
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toMatch(/^open failed:/);
+    expect(manager.documents).toHaveLength(0);
+  });
+
+  it('opens a PDF with a Space per page and says when pages were left out', async () => {
+    const { manager, state, errors } = fakeEnv();
+    state.pdfPages = 120;
+    state.nextPick = { path: 'C:/docs/manual.pdf', bytes: Uint8Array.from([37, 80, 68, 70]) };
+    const doc = await manager.open();
+    expect(doc?.session.document.meta.name).toBe('manual');
+    expect(doc!.session.document.spaces.map((sp) => [sp.name, sp.artboards[0]!.w])).toEqual([['Espacio 1', 200], ['Espacio 2', 50]]);
+    expect(errors).toEqual(['import skipped: text, pages']);
+  });
+
+  it('a PDF that cannot be read is reported, not opened', async () => {
+    const { manager, state, errors } = fakeEnv();
+    state.pdfFails = true;
+    state.nextPick = { path: 'C:/docs/x.pdf', bytes: new Uint8Array(4) };
+    expect(await manager.open()).toBeNull();
+    expect(errors).toEqual(['open failed: bad pdf']);
   });
 
   it('creates documents with unique untitled names and a Space, artboard and layer', () => {

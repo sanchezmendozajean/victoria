@@ -174,6 +174,16 @@ documento.vict
 - **EPS**: import de EPS simples ya implementado (`core/io/eps.ts`); export y EPS exóticos, pendientes. Detalle en `08-imagenes-vectorizar-imprimir.md`.
 - **PNG/JPG/WebP**: por mesa, ppp configurable (72/150/300/personalizado), fondo transparente o blanco.
 
+### Reglas añadidas en la Fase 11 (importar SVG y PDF)
+
+- **Tamaño**: en SVG, `width`/`height` sin unidad o en px valen 1 pt por unidad (como Illustrator); las unidades físicas (mm, cm, in, pt) se convierten a pt; sin `width`/`height` manda el `viewBox`, y si no hay ninguno el dibujo mide 100 × 100. Con `viewBox` de otra proporción, el dibujo se centra sin deformarse (`xMidYMid meet`).
+- **Qué se conserva como forma viva**: `rect` sin radios o con radios iguales, `circle` y `ellipse`. El resto son trazados (o compuestos, con la regla de relleno, si hay varios contornos). `transform` va en el objeto, no en los puntos.
+- **Estilo**: se resuelve la cascada atributos de presentación < `<style>` (selectores `etiqueta`, `.clase`, `#id` y sus combinaciones sin combinadores) < `style=""`, con herencia; un objeto sin relleno ni trazo se descarta. `opacity` y `mix-blend-mode` pasan al objeto; `fill-opacity`, `stroke-opacity` y el canal alfa del color, a la opacidad de cada elemento del aspecto.
+- **Degradados**: se importan como recursos, con su matriz calculada para el objeto (`objectBoundingBox` o `userSpaceOnUse`, más `gradientTransform`); un degradado de una sola parada es un color; el punto focal y `spreadMethod` distintos del valor por defecto se avisan.
+- **Recortes**: `clip-path` se convierte en un grupo de recorte que toma la transformación, la opacidad y el modo de fusión del elemento; el recorte es un trazado compuesto en el espacio del elemento. Máscaras, filtros y motivos se avisan y se omiten.
+- **PDF**: un Espacio por página con una mesa del tamaño de la página (hasta 50). Se leen trazados, rellenos y trazos, recortes, cajas de formularios, degradados axiales y radiales, opacidad, modos de fusión, imágenes y texto (como texto de punto sin su fuente original, con aviso). Las coordenadas se pasan al espacio de la página (Y hacia abajo) en el momento de leer, así que los objetos llegan con transformación identidad.
+- Todo lo que no se entiende se **avisa al terminar** (no falla); un archivo que no es SVG, o un PDF ilegible, se rechaza con un mensaje y no se abre nada.
+
 ## Esquinas vivas de trazados (Fase 5)
 
 `Anchor.cornerRadius` es un dato **vivo**: el contorno que se dibuja y mide es el trazado con las esquinas redondeadas (`applyCornerRadii`, en `core/geometry/anchors.ts`), pero las anclas guardadas no cambian. Solo se redondea un ancla de **esquina sin manejadores** cuyos dos segmentos vecinos son rectos (en un trazado abierto, no los extremos); las demás se ignoran sin error. El radio se limita a la mitad del segmento vecino más corto. Cada esquina redondeada produce dos anclas con un arco cúbico entre ellas. Quitar el radio (o arrastrar el widget a 0) devuelve la esquina viva sin pérdida.

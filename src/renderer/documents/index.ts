@@ -38,10 +38,18 @@ export const manager = new DocumentManager({
     openFailed: (reason) => t('doc.openFailed', { reason }),
     epsSkipped: (items) => t('doc.epsSkipped', { items }),
     epsItem: (code) => t(`doc.epsItem.${code}` as TranslationKey),
+    importSkipped: (items) => t('doc.importSkipped', { items }),
+    importItem: (code) => t(`import.warn.${code}` as TranslationKey),
     copyOf: (name) => t('doc.copyOf', { name }),
     saveFailed: t('doc.saveFailed'),
     openLabels: { title: t('doc.openTitle'), filterName: t('doc.fileDialog'), importFilterName: t('doc.epsDialog') },
     saveLabels: { title: t('doc.saveTitle'), filterName: t('doc.fileDialog') },
+  },
+  pdf: {
+    read: async (bytes, ids) => {
+      const { loadPdfJs, readPdf } = await import('../import/pdfjs');
+      return readPdf(bytes, ids, await loadPdfJs());
+    },
   },
   appVersion: typeof __APP_VERSION__ === 'string' ? __APP_VERSION__ : '0.0.0',
 });

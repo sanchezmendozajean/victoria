@@ -5,10 +5,14 @@ import {
   ImageStore,
   peekVict,
   randomIds,
+  documentFromDrawings,
+  importSvg,
   readEps,
   readVict,
   writeVict,
   type EpsWarning,
+  type ImportedDrawing,
+  type PdfPageImport,
   type IdGenerator,
   type Selection,
 } from '../../core';
@@ -22,6 +26,11 @@ export interface FilesPort {
   autosaveDiscard(docId: string): Promise<void>;
   autosaveList(): Promise<AutosaveEntry[]>;
   autosaveRead(docId: string): Promise<Uint8Array | null>;
+}
+
+/** What the manager needs to read a PDF: pdf.js lives outside it (it is large, and needs a browser). */
+export interface PdfReader {
+  read(bytes: Uint8Array, ids: IdGenerator): Promise<{ pages: PdfPageImport[]; pageCount: number }>;
 }
 
 export type CloseChoice = 'save' | 'discard' | 'cancel';
@@ -42,6 +51,9 @@ export interface Names {
   /** Notice after opening an EPS: what was left out (already joined, e.g. "texto, imágenes"). */
   epsSkipped(items: string): string;
   epsItem(code: EpsWarning['code']): string;
+  /** Notice after importing an SVG or PDF: what was left out (already joined). */
+  importSkipped?(items: string): string;
+  importItem?(code: string): string;
   /** Suggested file name of a copy ("Cartel copia"). */
   copyOf?(name: string): string;
   saveFailed: string;
@@ -54,6 +66,8 @@ export interface ManagerDeps {
   prompts: Prompts;
   names: Names;
   appVersion: string;
+  /** Opens PDF files; without it a PDF cannot be opened. */
+  pdf?: PdfReader;
   ids?: IdGenerator;
   /** ms clock; injectable for tests. */
   clock?: () => number;
@@ -178,6 +192,8 @@ export class DocumentManager {
     }
     try {
       if (/\.epsf?$/i.test(picked.path)) return await this.importEps(picked);
+      if (/\.svg$/i.test(picked.path)) return await this.importSvgFile(picked);
+      if (/\.pdf$/i.test(picked.path)) return await this.importPdfFile(picked);
       const { document, images } = readVict(picked.bytes);
       return this.adopt(new DocumentSession(document, { ids: this.ids, images: new ImageStore(images) }), picked.path);
     } catch (error) {
@@ -211,6 +227,40 @@ export class DocumentManager {
     const skipped = [...new Set(result.warnings.map((w) => names.epsItem(w.code)))];
     if (skipped.length > 0) await this.deps.prompts.reportError(names.epsSkipped(skipped.join(', ')));
     return opened;
+  }
+
+  private baseName(file: string): string {
+    return (file.split(/[\\/]/).pop() ?? file).replace(/\.[^.]+$/, '');
+  }
+
+  /** Imported drawings open as a new, unsaved document; what had to be left out is reported afterwards. */
+  private async adoptDrawings(picked: { path: string }, drawings: ImportedDrawing[], warningCodes: string[]): Promise<OpenDocument> {
+    const { names } = this.deps;
+    const { document, images } = documentFromDrawings(
+      drawings,
+      { name: this.baseName(picked.path), space: names.space, artboard: names.artboard, layer: names.layer },
+      this.ids,
+      new Date(this.clock()).toISOString(),
+    );
+    const opened = this.adopt(new DocumentSession(document, { ids: this.ids, images }), null);
+    const skipped = [...new Set(warningCodes.map((code) => names.importItem?.(code) ?? code))];
+    if (skipped.length > 0 && names.importSkipped) await this.deps.prompts.reportError(names.importSkipped(skipped.join(', ')));
+    return opened;
+  }
+
+  /** An SVG opens as a document with one artboard of the size of the drawing. */
+  private async importSvgFile(picked: { path: string; bytes: Uint8Array }): Promise<OpenDocument> {
+    const result = importSvg(picked.bytes, this.ids);
+    return this.adoptDrawings(picked, [result], result.warnings.map((w) => w.code));
+  }
+
+  /** A PDF opens as a document with a Space for every page (up to the limit of the reader). */
+  private async importPdfFile(picked: { path: string; bytes: Uint8Array }): Promise<OpenDocument> {
+    if (!this.deps.pdf) throw new Error('PDF import is not available');
+    const { pages, pageCount } = await this.deps.pdf.read(picked.bytes, this.ids);
+    const codes: string[] = pages.flatMap((p) => p.warnings.map((w) => w.code));
+    if (pageCount > pages.length) codes.push('pages');
+    return this.adoptDrawings(picked, pages, codes);
   }
 
   private async fail(message: string): Promise<null> {

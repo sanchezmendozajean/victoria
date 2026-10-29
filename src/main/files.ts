@@ -37,7 +37,7 @@ export async function openFile(win: BrowserWindow, labels: unknown): Promise<Ope
     title: labels.title,
     defaultPath: app.getPath('documents'),
     properties: ['openFile'],
-    filters: [{ name: labels.filterName, extensions: [EXTENSION] }, ...(labels.importFilterName ? [{ name: labels.importFilterName, extensions: ['eps', 'epsf'] }] : [])],
+    filters: [{ name: labels.filterName, extensions: [EXTENSION] }, ...(labels.importFilterName ? [{ name: labels.importFilterName, extensions: ['eps', 'epsf', 'svg', 'pdf'] }] : [])],
   });
   const file = result.filePaths[0];
   if (result.canceled || !file) return null;
@@ -46,7 +46,7 @@ export async function openFile(win: BrowserWindow, labels: unknown): Promise<Ope
   return { path: file, bytes: new Uint8Array(await readFile(file)) };
 }
 
-const IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'webp'];
+const IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'webp', 'svg', 'pdf'];
 const MAX_IMAGE_BYTES = 512 * 1024 * 1024;
 
 /** Several images at once; paths are not granted for saving (they are only read). */
