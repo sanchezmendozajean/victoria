@@ -13,6 +13,7 @@ import { SpacePropertiesDialog } from './SpacePropertiesDialog';
 import { ModifierDialog } from './ModifierDialog';
 import { PathTextDialog } from './PathTextDialog';
 import { ExportDialog } from './ExportDialog';
+import { PrintDialog } from './PrintDialog';
 import { ShapeDialog } from './ShapeDialog';
 import { TransformDialog } from './TransformDialog';
 import { Toolbar } from './Toolbar';
@@ -43,6 +44,7 @@ export function App() {
       <TransformDialog />
       <ShapeDialog />
       <ExportDialog />
+      <PrintDialog />
       <PathTextDialog />
       <ModifierDialog />
       <ColorPickerDialog />

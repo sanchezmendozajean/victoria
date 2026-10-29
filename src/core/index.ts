@@ -44,6 +44,7 @@ export * from './export/svg';
 export * from './export/pdf';
 export { toBase64, fromBase64 } from './export/base64';
 export * from './export/plan';
+export * from './export/print';
 export * from './io/imageMeta';
 export { sha256Hex } from './io/sha256';
 export { importSvg, SvgImportError } from './io/svg/svg';

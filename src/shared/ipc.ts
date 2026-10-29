@@ -81,6 +81,28 @@ export interface ExportWriteResult {
   failed: Array<{ name: string; reason: string }>;
 }
 
+/** A printer the system knows. */
+export interface PrinterEntry {
+  name: string;
+  displayName: string;
+  isDefault: boolean;
+}
+
+/** A print job (Archivo › Imprimir): one SVG per page at its real size, 1 unit = 1 pt, all pages of one size. */
+export interface PrintRequest {
+  pages: string[];
+  width: number;
+  height: number;
+  printer: string | null;
+  copies: number;
+  title: string;
+}
+
+export interface PrintOutcome {
+  ok: boolean;
+  error?: string;
+}
+
 export interface AutosaveEntry {
   docId: string;
   /** Last write, ms since epoch. */
@@ -107,6 +129,8 @@ export const IPC = {
   exportChooseFolder: 'export:choose-folder',
   exportWrite: 'export:write',
   exportOpenFolder: 'export:open-folder',
+  printList: 'print:list',
+  printRun: 'print:run',
   clipboardWrite: 'clipboard:write',
   clipboardRead: 'clipboard:read',
   saveFile: 'file:save',
@@ -145,6 +169,11 @@ export interface VictoriaApi {
   writeExportFiles(folder: string, files: ExportFile[]): Promise<ExportWriteResult>;
   /** Shows a folder returned by `chooseExportFolder` in the file manager. */
   openExportFolder(folder: string): Promise<void>;
+
+  /** The printers of the system, the default one marked. Empty when there are none. */
+  listPrinters(): Promise<PrinterEntry[]>;
+  /** Sends the pages to the printer at their real size. Never rejects: failures come back in `error`. */
+  print(job: PrintRequest): Promise<PrintOutcome>;
 
   /** Puts Victoria objects on the system clipboard (its own format; other applications ignore it). */
   writeClipboard(clip: Uint8Array): Promise<void>;

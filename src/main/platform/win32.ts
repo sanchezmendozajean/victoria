@@ -1,7 +1,8 @@
 import path from 'node:path';
 import { scanFontDirectories } from '../fonts';
 import type { Platform } from './types';
-import { listSystemPrinters, notImplemented } from './common';
+import { listSystemPrinters } from './common';
+import { printJob } from '../print';
 
 export const win32: Platform = {
   windowChrome: 'native-overlay',
@@ -12,8 +13,8 @@ export const win32: Platform = {
 
   listPrinters: listSystemPrinters,
 
-  // Phase 11: webContents.print from a hidden window loading the PDF.
-  print: async () => notImplemented('Printing', 11),
+  // webContents.print from a hidden window that shows the pages at their real size.
+  print: (job) => printJob(job),
 
   // The NSIS installer registers .vict (electron-builder fileAssociations); nothing to do at runtime.
   registerFileAssociation: () => undefined,

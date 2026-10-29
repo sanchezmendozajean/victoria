@@ -2,7 +2,7 @@ import type { Platform } from './types';
 import { linux } from './linux';
 import { win32 } from './win32';
 
-export type { Platform, FontInfo, PrinterInfo, PrintOptions } from './types';
+export type { Platform, FontInfo, PrinterInfo, PrintJob } from './types';
 
 /** macOS must compile but is not a supported target: it reuses the Linux behaviour. */
 export function getPlatform(): Platform {

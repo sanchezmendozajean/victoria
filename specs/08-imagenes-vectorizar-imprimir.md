@@ -61,10 +61,19 @@ Diálogo propio (no solo el nativo) con previsualización:
 - Tamaño de papel, orientación, **escala** (no escalar / ajustar a página / personalizado %), posición (cuadrícula 3×3).
 - **Marcas**: marcas de corte (Japonés / Occidental), grosor, desplazamiento; incluir sangrado.
 - Imprimir capas visibles e imprimibles / todas.
-- Implementación: generar PDF en memoria con pdf-lib y enviarlo a `platform.print()`:
-  - Windows: `webContents.print` desde una ventana oculta que carga el PDF (sin márgenes, escala 100 %).
-  - Linux: `webContents.print` sobre CUPS; fallback `lp -d <impresora> -o fit-to-page=false -o media=<papel>` con el PDF temporal.
-- Debe imprimir **a escala real** en ambos sistemas (verificación 100 mm = 100 mm en papel).
+- Implementación (decidida en la Fase 11, sustituye a «generar un PDF con pdf-lib»): cada página es un **SVG a tamaño real** (1 unidad = 1 pt) y `platform.print(job)` lo muestra en una ventana oculta de Chromium cuyo `@page` es el papel, sin márgenes (`<img>` con ancho y alto en pt), y lo envía con `webContents.print` (silencioso, `deviceName`, copias, márgenes `none`, `pageSize` en micras):
+  - Windows: tal cual.
+  - Linux: tal cual (CUPS); si falla, `lp -d <impresora> -n <copias> -o fit-to-page=false -o media=Custom.<ancho>x<alto>` con el PDF de las mismas páginas.
+  - Motivo: el visor de PDF de Chromium decide márgenes y escala y no se puede comprobar; con SVG el trabajo es vectorial (también sombras y efectos) y su tamaño se **verifica** leyendo el PDF que produce `printToPDF` de la misma ventana.
+- Debe imprimir **a escala real** en ambos sistemas (verificación 100 mm = 100 mm en papel). Lo automático comprueba el PDF de Chromium (`VICTORIA_PRINT_TO_PDF`); la comprobación con papel y regla es manual.
+
+### Reglas añadidas en la Fase 11 (etapa 11.5 · imprimir)
+- **Una página por mesa**, todas del mismo papel y orientación (la «automática» se decide con la primera mesa: más ancha que alta = horizontal). Las páginas son blancas y el dibujo se **recorta a la mesa** (con su sangrado si se pide).
+- **Escala**: 100 % (no escalar), ajustar (el mayor tamaño que cabe, sube o baja) o un porcentaje. Con marcas, el dibujo queda dentro de un margen de `desplazamiento + 18 pt`; si no cabe se avisa y lo que sobresale no se imprime.
+- **Posición**: una de las nueve celdas de la página (centro por defecto).
+- **Marcas de corte**: líneas de 18 pt que empiezan a `desplazamiento` (3 mm) del borde de la mesa (el recorte, sin sangrado). Occidentales: una por borde. Japonesas: además otra a la distancia del sangrado de la mesa (3 mm si no tiene).
+- El **rango** es una lista de números y rangos («1-3, 5», «4-», «-2») sobre las mesas del alcance elegido, en orden ascendente; un texto que no es un rango desactiva Imprimir.
+- Solo se imprime a una impresora que el sistema lista; el proceso principal limita el tamaño del trabajo.
 
 ## Formatos EPS y AI
 

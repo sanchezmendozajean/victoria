@@ -1,8 +1,9 @@
 import { clipboard, ClipboardItem, ipcMain, type BrowserWindow, type IpcMainEvent, type IpcMainInvokeEvent } from 'electron';
-import { IPC, type ClipboardContents, type ExportSaveRequest, type OverlayColors, type PlatformInfo, type SaveRequest, type WindowState } from '../shared/ipc';
+import { IPC, type ClipboardContents, type ExportSaveRequest, type PrintOutcome, type OverlayColors, type PlatformInfo, type SaveRequest, type WindowState } from '../shared/ipc';
 import * as files from './files';
 import { cachedFonts, readListedFont } from './fonts';
 import type { Platform } from './platform';
+import { validateJob } from './printJob';
 
 /** Clipboard format of Victoria objects: a Chromium web custom format, which behaves the same on Windows and Linux. */
 const CLIP_FORMAT = 'web application/x-victoria-clip';
@@ -60,6 +61,24 @@ export function registerIpc(ctx: IpcContext): void {
   ipcMain.handle(IPC.exportWrite, async (event, folder: unknown, list: unknown) => (fromAppWindow(event) ? files.exportWrite(folder, list) : { written: [], failed: [] }));
   ipcMain.handle(IPC.exportOpenFolder, async (event, folder: unknown) => {
     if (fromAppWindow(event)) await files.exportOpenFolder(folder);
+  });
+  /** The system printers; with VICTORIA_PRINT_TO_PDF set (tests, machines without a printer) a pseudo-printer that writes a PDF comes first. */
+  const printers = async () => {
+    const system = await ctx.platform.listPrinters().catch(() => []);
+    return process.env.VICTORIA_PRINT_TO_PDF ? [{ name: 'victoria-print-to-pdf', displayName: 'Archivo PDF (pruebas)', isDefault: true }, ...system.map((p) => ({ ...p, isDefault: false }))] : system;
+  };
+  ipcMain.handle(IPC.printList, async (event) => (fromAppWindow(event) ? printers() : []));
+  ipcMain.handle(IPC.printRun, async (event, job: unknown): Promise<PrintOutcome> => {
+    if (!fromAppWindow(event)) return { ok: false, error: "Unknown sender" };
+    try {
+      validateJob(job);
+      // Only a printer the system lists (or the default one) may receive a job.
+      if (job.printer !== null && !(await printers()).some((p) => p.name === job.printer)) throw new Error("Unknown printer");
+      await ctx.platform.print(job);
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, error: error instanceof Error ? error.message : String(error) };
+    }
   });
   ipcMain.handle(IPC.clipboardWrite, async (event, clip: unknown) => {
     if (!fromAppWindow(event) || !(clip instanceof Uint8Array) || clip.length > MAX_CLIP_BYTES) return;

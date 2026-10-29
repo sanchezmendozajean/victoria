@@ -103,7 +103,7 @@ function pathOfSegments(segments: readonly Segment[], closed: boolean, rule: Fil
   return { contours: segments.length > 0 ? [{ segments: [...segments], closed }] : [], rule };
 }
 
-function pathOfPolygons(polygons: readonly (readonly Vec2[])[], closed: boolean, rule: FillRule): ScenePath {
+export function pathOfPolygons(polygons: readonly (readonly Vec2[])[], closed: boolean, rule: FillRule): ScenePath {
   const contours: SceneContour[] = [];
   for (const points of polygons) {
     const segments: Segment[] = [];

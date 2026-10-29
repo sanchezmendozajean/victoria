@@ -1,7 +1,8 @@
 import path from 'node:path';
 import { fcList, scanFontDirectories } from '../fonts';
 import type { Platform } from './types';
-import { listSystemPrinters, notImplemented } from './common';
+import { listSystemPrinters } from './common';
+import { printJob } from '../print';
 
 export const linux: Platform = {
   windowChrome: 'custom',
@@ -16,8 +17,8 @@ export const linux: Platform = {
 
   listPrinters: listSystemPrinters,
 
-  // Phase 11: webContents.print (CUPS); fallback `lp -d <printer> -o fit-to-page=false file.pdf`.
-  print: async () => notImplemented('Printing', 11),
+  // webContents.print (CUPS); if it fails, `lp -d <printer> -o fit-to-page=false` with a PDF of the same pages.
+  print: (job) => printJob(job, { cupsFallback: true }),
 
   // .desktop + shared-mime-info XML ship with the .deb/.rpm/AppImage (electron-builder fileAssociations).
   registerFileAssociation: () => undefined,

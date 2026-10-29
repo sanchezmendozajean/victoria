@@ -9,18 +9,26 @@ export interface FontInfo {
 
 export interface PrinterInfo {
   name: string;
+  displayName: string;
   isDefault: boolean;
 }
 
-export interface PrintOptions {
-  printer?: string;
-  copies?: number;
+/** What is printed: one SVG document per page (1 unit = 1 pt), all of the size `width` × `height` pt. */
+export interface PrintJob {
+  pages: string[];
+  width: number;
+  height: number;
+  /** null = the default printer. */
+  printer: string | null;
+  copies: number;
+  title: string;
 }
 
 /** Everything that differs between operating systems lives behind this interface. */
 export interface Platform {
   listFonts(): Promise<FontInfo[]>;
-  print(pdf: Uint8Array, opts: PrintOptions): Promise<void>;
+  /** Prints the job; rejects with the reason when the printer or the system refuses it. */
+  print(job: PrintJob): Promise<void>;
   listPrinters(): Promise<PrinterInfo[]>;
   registerFileAssociation(): void; // .vict
   windowChrome: 'custom' | 'native-overlay';

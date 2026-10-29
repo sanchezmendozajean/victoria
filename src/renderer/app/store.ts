@@ -111,6 +111,8 @@ interface UiState {
   shapeDialog: { kind: ShapeToolKind; at: Vec2 } | null;
   /** Archivo › Exportar… ('as') or Exportar para pantallas… ('screens'). */
   exportDialog: 'as' | 'screens' | null;
+  /** Archivo › Imprimir… */
+  printDialog: boolean;
   /** Right click on the canvas: where the context menu opens (screen px). */
   canvasMenu: { x: number; y: number } | null;
   /** Properties dialog of a Space (grid and canvas colour), by id. */
@@ -140,6 +142,8 @@ interface UiState {
   setScaleStrokes(on: boolean): void;
   openShapeDialog(kind: ShapeToolKind, at: Vec2): void;
   openExportDialog(mode: 'as' | 'screens'): void;
+  openPrintDialog(): void;
+  closePrintDialog(): void;
   closeExportDialog(): void;
   closeShapeDialog(): void;
   openCanvasMenu(x: number, y: number): void;
@@ -230,6 +234,7 @@ export const useUi = create<UiState>()((set, get) => ({
   lastModifier: null,
   shapeDialog: null,
   exportDialog: null,
+  printDialog: false,
   canvasMenu: null,
   spaceProps: null,
 
@@ -274,6 +279,8 @@ export const useUi = create<UiState>()((set, get) => ({
   setScaleStrokes: (scaleStrokes) => set({ scaleStrokes }),
   openShapeDialog: (kind, at) => set({ shapeDialog: { kind, at } }),
   openExportDialog: (mode) => set({ exportDialog: mode }),
+  openPrintDialog: () => set({ printDialog: true }),
+  closePrintDialog: () => set({ printDialog: false }),
   closeExportDialog: () => set({ exportDialog: null }),
   openModifierDialog: (modifierDialog) => set({ modifierDialog }),
   closeModifierDialog: () => set({ modifierDialog: null }),
