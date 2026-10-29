@@ -12,6 +12,7 @@ import { FxButton } from './AppearancePanel';
 import { CheckRow, Choice, PaintChip, Row, Section } from './kit';
 import { usePanelContext, type PanelContext } from './context';
 import { usePaintLook } from './PaintWidget';
+import { ImageSection } from './ImageSection';
 import { ShapeParams } from './ShapeParams';
 import { TransformPanel } from './TransformPanel';
 
@@ -117,6 +118,7 @@ function ObjectProperties() {
         <TransformPanel compact />
       </Section>
       <ShapeParams />
+      {selectedNode && <ImageSection ctx={ctx} id={selectedNode.id} />}
       <Section title={t('properties.appearance')}>
         <Row>
           <Icon id="fill" size={14} className="vc-field__icon" />

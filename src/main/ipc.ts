@@ -50,6 +50,7 @@ export function registerIpc(ctx: IpcContext): void {
     const win = fromAppWindow(event);
     return win ? files.openImages(win, labels) : [];
   });
+  ipcMain.handle(IPC.readLinkedImage, async (event, file: unknown) => (fromAppWindow(event) ? files.readLinkedImage(file) : null));
   ipcMain.handle(IPC.exportSave, async (event, request: ExportSaveRequest) => {
     const win = fromAppWindow(event);
     return win ? files.exportSave(win, request) : null;

@@ -12,6 +12,7 @@ export const manager = new DocumentManager({
     autosaveDiscard: (id) => window.victoria.autosaveDiscard(id),
     autosaveList: () => window.victoria.autosaveList(),
     autosaveRead: (id) => window.victoria.autosaveRead(id),
+    readLinkedImage: (file) => window.victoria.readLinkedImage(file),
   },
   prompts: {
     askSaveBeforeClose: async (name) => {
@@ -39,6 +40,7 @@ export const manager = new DocumentManager({
     epsSkipped: (items) => t('doc.epsSkipped', { items }),
     epsItem: (code) => t(`doc.epsItem.${code}` as TranslationKey),
     importSkipped: (items) => t('doc.importSkipped', { items }),
+    brokenLinks: (count) => t('image.brokenLinks', { count }),
     importItem: (code) => t(`import.warn.${code}` as TranslationKey),
     copyOf: (name) => t('doc.copyOf', { name }),
     saveFailed: t('doc.saveFailed'),

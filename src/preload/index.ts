@@ -15,6 +15,7 @@ const api: VictoriaApi = {
   setOverlayColors: (colors) => ipcRenderer.send(IPC.setOverlayColors, colors),
   openFile: (labels) => ipcRenderer.invoke(IPC.openFile, labels),
   openImages: (labels) => ipcRenderer.invoke(IPC.openImages, labels),
+  readLinkedImage: (file) => ipcRenderer.invoke(IPC.readLinkedImage, file),
   exportSaveFile: (request) => ipcRenderer.invoke(IPC.exportSave, request),
   chooseExportFolder: (title) => ipcRenderer.invoke(IPC.exportChooseFolder, title),
   writeExportFiles: (folder, files) => ipcRenderer.invoke(IPC.exportWrite, folder, files),

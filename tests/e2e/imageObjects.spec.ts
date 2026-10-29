@@ -1,0 +1,74 @@
+import { expect, test } from '@playwright/test';
+import { existsSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { launchApp, type Launched } from './launch';
+import { redPng } from './png';
+
+test.describe('cropping and linking images (Phase 11)', () => {
+  let ctx: Launched;
+  let dir: string;
+  test.beforeAll(async () => {
+    dir = mkdtempSync(path.join(tmpdir(), 'victoria-imgobj-'));
+    const file = path.join(dir, 'rojo.png');
+    writeFileSync(file, redPng(200));
+    ctx = await launchApp();
+    await ctx.app.evaluate(({ dialog }, picked) => {
+      dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [picked] });
+    }, file);
+    await ctx.page.getByTestId('canvas-surface').click({ position: { x: 5, y: 5 } });
+    await ctx.page.keyboard.press('Control+Shift+p');
+    await ctx.page.getByTestId('panel-group').nth(0).locator('[data-panel="properties"]').click();
+  });
+  test.afterAll(async () => {
+    await ctx.app.close();
+  });
+
+  const redPixels = () =>
+    ctx.page.getByTestId('canvas-content').evaluate((el) => {
+      const canvas = el as HTMLCanvasElement;
+      const data = canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height).data;
+      let n = 0;
+      for (let i = 0; i < data.length; i += 4) if ((data[i] ?? 0) > 200 && (data[i + 1] ?? 255) < 40 && (data[i + 2] ?? 255) < 40) n++;
+      return n;
+    });
+
+  test('crop hides part of the picture, applying it keeps the cut and undo brings the group back', async () => {
+    const { page } = ctx;
+    await expect(page.getByTestId('image-link')).toHaveAttribute('data-state', 'embedded');
+    await expect(page.getByTestId('image-ppi')).toContainText('ppp');
+    await expect.poll(redPixels).toBeGreaterThan(500);
+    const whole = await redPixels();
+
+    await page.getByTestId('image-crop').click();
+    await expect(page.getByTestId('image-inset-left')).toBeVisible();
+    const field = page.getByTestId('image-inset-left');
+    await field.fill('35'); // mm: about half of the 200 pt picture
+    await field.press('Enter');
+    await expect.poll(async () => (await redPixels()) / whole).toBeGreaterThan(0.3);
+    await expect.poll(async () => (await redPixels()) / whole).toBeLessThan(0.7);
+    const cropped = await redPixels();
+
+    await page.getByTestId('image-crop-apply').click();
+    await expect(page.getByTestId('image-inset-left')).toHaveCount(0);
+    await expect.poll(async () => Math.abs((await redPixels()) - cropped) / cropped).toBeLessThan(0.05);
+
+    await page.keyboard.press('Control+z'); // back to the crop
+    await expect(page.getByTestId('image-inset-left')).toBeVisible();
+    await page.getByTestId('image-crop-remove').click();
+    await expect.poll(redPixels).toBeGreaterThan(whole * 0.95);
+  });
+
+  test('Desincrustar saves the picture and links to it; Incrustar brings it back inside', async () => {
+    const { app, page } = ctx;
+    const target = path.join(dir, 'vinculada.png');
+    await app.evaluate(({ dialog }, saved) => {
+      dialog.showSaveDialog = async () => ({ canceled: false, filePath: saved });
+    }, target);
+    await page.getByTestId('image-unembed').click();
+    await expect(page.getByTestId('image-link')).toHaveAttribute('data-state', 'linked');
+    expect(existsSync(target)).toBe(true);
+    await page.getByTestId('image-embed').click();
+    await expect(page.getByTestId('image-link')).toHaveAttribute('data-state', 'embedded');
+  });
+});

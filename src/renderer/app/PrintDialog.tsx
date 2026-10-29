@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { PAPER_SIZES, type ExportScope, type Orientation } from '../../core';
+import { LOW_PPI, PAPER_SIZES, lowResolutionImages, type ExportScope, type Orientation } from '../../core';
 import type { PrinterEntry } from '../../shared/ipc';
 import { Icon } from '../components/Icon';
 import { NumberInput } from '../components/NumberInput';
@@ -54,6 +54,14 @@ function PrintForm() {
   const pages = plan.pages;
   const index = pages ? Math.min(pageIndex, Math.max(0, pages.length - 1)) : 0;
   const current = pages?.[index] ?? null;
+  // Pictures that would come out soft at the chosen scale, over every page that will print.
+  const softImages = useMemo(() => {
+    const ids = new Set<string>();
+    for (const page of pages ?? []) {
+      for (const image of lowResolutionImages(doc, page.target.space.id, page.plan.region, page.plan.scale, (hash) => session.images.has(hash))) ids.add(image.id);
+    }
+    return ids.size;
+  }, [pages, doc, session]);
 
   // The preview is the page itself, drawn by the same code that will print it (rebuilt a moment after the last change).
   const token = useRef(0);
@@ -243,6 +251,11 @@ function PrintForm() {
                 <Icon id="chevron-right" size={12} />
               </button>
             </div>
+            {softImages > 0 && (
+              <p className="vc-print__error" data-testid="print-low-ppi">
+                {t('print.lowPpi', { count: softImages, ppi: LOW_PPI })}
+              </p>
+            )}
             {current?.plan.overflow && (
               <p className="vc-print__error" data-testid="print-overflow">
                 {t('print.overflow')}

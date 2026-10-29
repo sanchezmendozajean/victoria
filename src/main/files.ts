@@ -67,6 +67,23 @@ export async function openImages(win: BrowserWindow, labels: unknown): Promise<O
   return opened;
 }
 
+const LINKED_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.webp']);
+
+/**
+ * The file a linked image points at. A document can name any path, so only absolute paths of
+ * picture files of a sane size are read; the renderer still checks that the bytes are a picture.
+ */
+export async function readLinkedImage(file: unknown): Promise<Uint8Array | null> {
+  if (typeof file !== 'string' || !path.isAbsolute(file) || !LINKED_EXTENSIONS.has(path.extname(file).toLowerCase())) return null;
+  try {
+    const info = await stat(file);
+    if (!info.isFile() || info.size > MAX_IMAGE_BYTES) return null;
+    return new Uint8Array(await readFile(file));
+  } catch {
+    return null;
+  }
+}
+
 export async function saveFile(win: BrowserWindow, request: SaveRequest): Promise<SaveResult | null> {
   if (!request || !isLabels(request.labels) || typeof request.suggestedName !== 'string' || !(request.bytes instanceof Uint8Array)) {
     throw new Error('Invalid save request');

@@ -125,6 +125,7 @@ export const IPC = {
   setOverlayColors: 'window:set-overlay-colors',
   openFile: 'file:open',
   openImages: 'file:open-images',
+  readLinkedImage: 'file:read-linked-image',
   exportSave: 'export:save',
   exportChooseFolder: 'export:choose-folder',
   exportWrite: 'export:write',
@@ -158,6 +159,8 @@ export interface VictoriaApi {
   openFile(labels: DialogLabels): Promise<OpenedFile | null>;
   /** Dialog to pick one or more PNG, JPEG or WebP files (Archivo › Colocar). Empty if the user cancels. */
   openImages(labels: DialogLabels): Promise<OpenedFile[]>;
+  /** The bytes of the file a linked image points at; null when it is missing, too big or not a PNG, JPEG or WebP. */
+  readLinkedImage(path: string): Promise<Uint8Array | null>;
   /** Writes atomically (temp file + rename). null if the user cancels the Save As dialog. */
   saveFile(request: SaveRequest): Promise<SaveResult | null>;
 

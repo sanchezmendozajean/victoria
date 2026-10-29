@@ -9,6 +9,8 @@ export * from './layer';
 export * from './node';
 export * from './resources';
 export * from './image';
+export * from './crop';
+export * from './link';
 export * from './appearance';
 export * from './text';
 export * from './pathfinder';

@@ -6,10 +6,15 @@ import {
   peekVict,
   randomIds,
   documentFromDrawings,
+  brokenLinks,
+  hashesToEmbed,
+  imageNodes,
+  sniffImage,
   importSvg,
   readEps,
   readVict,
   writeVict,
+  type Document,
   type EpsWarning,
   type ImportedDrawing,
   type PdfPageImport,
@@ -26,6 +31,8 @@ export interface FilesPort {
   autosaveDiscard(docId: string): Promise<void>;
   autosaveList(): Promise<AutosaveEntry[]>;
   autosaveRead(docId: string): Promise<Uint8Array | null>;
+  /** The file a linked image points at (null when it cannot be read). */
+  readLinkedImage?(path: string): Promise<Uint8Array | null>;
 }
 
 /** What the manager needs to read a PDF: pdf.js lives outside it (it is large, and needs a browser). */
@@ -53,6 +60,7 @@ export interface Names {
   epsItem(code: EpsWarning['code']): string;
   /** Notice after importing an SVG or PDF: what was left out (already joined). */
   importSkipped?(items: string): string;
+  brokenLinks?(count: number): string;
   importItem?(code: string): string;
   /** Suggested file name of a copy ("Cartel copia"). */
   copyOf?(name: string): string;
@@ -195,11 +203,39 @@ export class DocumentManager {
       if (/\.svg$/i.test(picked.path)) return await this.importSvgFile(picked);
       if (/\.pdf$/i.test(picked.path)) return await this.importPdfFile(picked);
       const { document, images } = readVict(picked.bytes);
-      return this.adopt(new DocumentSession(document, { ids: this.ids, images: new ImageStore(images) }), picked.path);
+      await this.loadLinked(document, images);
+      const opened = this.adopt(new DocumentSession(document, { ids: this.ids, images: new ImageStore(images) }), picked.path);
+      await this.reportBrokenLinks(document, images);
+      return opened;
     } catch (error) {
       await this.deps.prompts.reportError(this.deps.names.openFailed(error instanceof Error ? error.message : String(error)));
       return null;
     }
+  }
+
+  /**
+   * Linked images are not inside the .vict: their files are read from disk now. A missing file leaves the
+   * image without bytes (a broken link, drawn as a placeholder); a changed one shows its current pixels.
+   */
+  private async loadLinked(document: Document, images: Record<string, Uint8Array>): Promise<void> {
+    const read = this.deps.files.readLinkedImage;
+    if (!read) return;
+    const tried = new Set<string>();
+    for (const { node } of imageNodes(document)) {
+      if (node.embedded || !node.linkedPath || images[node.resourceId] || tried.has(node.resourceId)) continue;
+      tried.add(node.resourceId);
+      const bytes = await read(node.linkedPath).catch(() => null);
+      const info = bytes ? sniffImage(bytes) : null;
+      if (!bytes || !info) continue;
+      images[node.resourceId] = bytes;
+      document.resources.images[node.resourceId] = { width: info.width, height: info.height, format: info.format };
+    }
+  }
+
+  /** Linked images that could not be read are drawn as placeholders; say so once, when the document opens. */
+  private async reportBrokenLinks(document: Document, images: Record<string, Uint8Array>): Promise<void> {
+    const broken = brokenLinks(document, (hash) => !!images[hash]);
+    if (broken.length > 0 && this.deps.names.brokenLinks) await this.deps.prompts.reportError(this.deps.names.brokenLinks(broken.length));
   }
 
   /** An EPS opens as a new, unsaved document with one artboard of the size of its bounding box. */
@@ -287,7 +323,7 @@ export class DocumentManager {
   /** The .vict of a document: its images travel inside, but only the ones it still lists as resources. */
   private serialize(doc: OpenDocument): Uint8Array {
     const { document, images } = doc.session;
-    return writeVict({ document, app: this.deps.appVersion, images: images.toRecord(Object.keys(document.resources.images)) });
+    return writeVict({ document, app: this.deps.appVersion, images: images.toRecord(hashesToEmbed(document)) });
   }
 
   private async write(id: string | null, forceDialog: boolean): Promise<boolean> {
@@ -415,6 +451,7 @@ export class DocumentManager {
     if (!bytes) return null;
     try {
       const { document, images } = readVict(bytes);
+      await this.loadLinked(document, images);
       const session = new DocumentSession(document, { ids: this.ids, images: new ImageStore(images) });
       session.markUnsaved();
       return this.adopt(session, null, docId, true);
