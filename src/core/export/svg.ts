@@ -107,6 +107,28 @@ export function writeSvg(scene: Scene, images: ImageStore, options: SvgOptions =
     return id;
   };
 
+  /** Stroke presentation attributes (everything but the path and the paint of the fill). */
+  const strokeAttrs = (op: Extract<SceneOp, { kind: 'stroke' }>, width: number): string => {
+    const dash = op.dash && op.dash.length > 0 ? ` stroke-dasharray="${op.dash.map(num).join(' ')}"` : '';
+    const join = op.join === 'miter' ? ` stroke-miterlimit="${num(op.miterLimit)}"` : '';
+    return `${paintAttr(op.paint, 'stroke', op.opacity)} stroke-width="${num(width)}" stroke-linecap="${op.cap}" stroke-linejoin="${op.join}"${join}${dash}`;
+  };
+
+  /** Writes a list of operations; a fill followed by a centred stroke of the same contour is one element, as in any editor. */
+  const writeAll = (ops: readonly SceneOp[], depth: number): void => {
+    for (let i = 0; i < ops.length; i++) {
+      const op = ops[i] as SceneOp;
+      const next = ops[i + 1];
+      if (op.kind === 'fill' && next && next.kind === 'stroke' && next.align === 'center' && next.path === op.path) {
+        const d = pathData(op.path);
+        if (d) emit(depth, `<path d="${d}" ${paintAttr(op.paint, 'fill', op.opacity)}${op.path.rule === 'evenodd' ? ' fill-rule="evenodd"' : ''} ${strokeAttrs(next, next.width)}/>`);
+        i++;
+        continue;
+      }
+      write(op, depth);
+    }
+  };
+
   const write = (op: SceneOp, depth: number): void => {
     switch (op.kind) {
       case 'fill': {
@@ -120,9 +142,7 @@ export function writeSvg(scene: Scene, images: ImageStore, options: SvgOptions =
         if (!d) return;
         const clipped = op.align !== 'center';
         const width = clipped ? op.width * 2 : op.width;
-        const dash = op.dash && op.dash.length > 0 ? ` stroke-dasharray="${op.dash.map(num).join(' ')}"` : '';
-        const join = op.join === 'miter' ? ` stroke-miterlimit="${num(op.miterLimit)}"` : '';
-        const attrs = `d="${d}" fill="none" ${paintAttr(op.paint, 'stroke', op.opacity)} stroke-width="${num(width)}" stroke-linecap="${op.cap}" stroke-linejoin="${op.join}"${join}${dash}`;
+        const attrs = `d="${d}" fill="none" ${strokeAttrs(op, width)}`;
         if (!clipped) {
           emit(depth, `<path ${attrs}/>`);
           return;
@@ -146,18 +166,18 @@ export function writeSvg(scene: Scene, images: ImageStore, options: SvgOptions =
         if (op.clip) attrs.push(`clip-path="url(#${clipDef(op.clip.path, op.clip.matrix, op.clip.path.rule)})"`);
         if (op.effect) attrs.push(`filter="url(#${filterDef(op.effect)})"`);
         if (attrs.length === 0) {
-          for (const child of op.children) write(child, depth);
+          writeAll(op.children, depth);
           return;
         }
         emit(depth, `<g ${attrs.join(' ')}>`);
-        for (const child of op.children) write(child, depth + 1);
+        writeAll(op.children, depth + 1);
         emit(depth, '</g>');
       }
     }
   };
 
   if (scene.background !== 'transparent') emit(1, `<rect width="${num(scene.width)}" height="${num(scene.height)}" fill="${hex(scene.background)}"/>`);
-  for (const op of scene.ops) write(op, 1);
+  writeAll(scene.ops, 1);
 
   const head = `<svg xmlns="http://www.w3.org/2000/svg" width="${num(scene.width)}" height="${num(scene.height)}" viewBox="0 0 ${num(scene.width)} ${num(scene.height)}">`;
   const defsBlock = defs.length > 0 ? `${options.minify ? '' : '  '}<defs>${sep}${defs.map((d) => (options.minify ? d : `    ${d}`)).join(sep)}${sep}${options.minify ? '' : '  '}</defs>${sep}` : '';

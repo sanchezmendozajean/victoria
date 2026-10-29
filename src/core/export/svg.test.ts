@@ -104,6 +104,18 @@ describe('SVG export', () => {
     expect(svg).toContain('fill="none"');
   });
 
+  it('a fill and a centred stroke of the same shape make one element, but an inside stroke stays apart', () => {
+    const s = setup();
+    const r = s.add(createRect(s.ids, 50, 50));
+    const both = (align: StrokeStyle['align']): Appearance => ({ items: [...fillRed().items, { kind: 'stroke', paint: { type: 'solid', color: black }, stroke: s.stroke({ width: 2, align }), opacity: 1, modifiers: [] }] });
+    s.look(r.id, both('center'));
+    const merged = s.svg().svg;
+    expect((merged.match(/<path /g) ?? []).length).toBe(1);
+    expect(merged).toMatch(/<path d="M0 0L50 0L50 50L0 50Z" fill="#ff0000" stroke="#000000" stroke-width="2"/);
+    s.look(r.id, both('inside'));
+    expect((s.svg().svg.match(/<path /g) ?? []).length).toBe(2);
+  });
+
   it('inside and outside strokes are drawn twice as wide inside a clip path', () => {
     const s = setup();
     const a = s.add(createRect(s.ids, 50, 50));
