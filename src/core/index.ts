@@ -47,6 +47,8 @@ export * from './export/plan';
 export * from './io/imageMeta';
 export { sha256Hex } from './io/sha256';
 export { importSvg, SvgImportError } from './io/svg/svg';
+export { importPdfPage } from './io/pdf/pdf';
+export type { PdfHost, PdfPageData, PdfPageImport, PdfTextItem, PdfWarning } from './io/pdf/pdf';
 export type { SvgImport, SvgWarning } from './io/svg/svg';
 export { readEps, EpsFormatError } from './io/eps';
 export type { EpsResult, EpsWarning } from './io/eps';

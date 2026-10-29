@@ -57,6 +57,7 @@
   "packageManager": "pnpm@12.11.2",
   "dependencies": {
     "opentype.js": "^2.0.0",
-    "pdf-lib": "^1.17.1"
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^6.4.299"
   }
 }

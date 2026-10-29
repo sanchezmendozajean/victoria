@@ -99,7 +99,7 @@ function arcToCubics(from: Vec2, rx: number, ry: number, rotationDeg: number, la
 }
 
 /** `smooth` when both handles exist and are collinear on opposite sides of the point, else `corner`. */
-function kindOf(a: Anchor): Anchor['kind'] {
+export function anchorKind(a: Anchor): Anchor['kind'] {
   if (!a.in || !a.out) return 'corner';
   const ix = a.in.x - a.p.x;
   const iy = a.in.y - a.p.y;
@@ -269,7 +269,7 @@ export function parsePathData(d: string): { contours: PathContour[]; error: bool
         c.anchors.pop();
       }
     }
-    for (const a of c.anchors) a.kind = kindOf(a);
+    for (const a of c.anchors) a.kind = anchorKind(a);
   }
   return { contours: contours.filter((c) => c.anchors.length > 1 || (c.anchors.length === 1 && c.closed)), error };
 }
