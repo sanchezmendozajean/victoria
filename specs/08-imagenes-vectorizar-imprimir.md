@@ -38,7 +38,8 @@ Panel y botón en Propiedades cuando hay una imagen seleccionada.
 - Avanzado: trazados (ajuste), esquinas, ruido (px), método (abutting/overlapping), rellenos/trazos, ignorar blanco, ajustar curvas a líneas.
 - Vista: Resultado, Resultado con contornos, Contornos, Contornos con imagen original, Imagen original.
 - Es un objeto **vivo** (`traceNode` con referencia a imagen + parámetros). **Expandir** lo convierte en grupo de trazados.
-- Implementación: cuantización de color (k-means en espacio Lab, o mediana de corte) → por cada color una máscara binaria → potrace (WASM) en Worker → trazados Bézier. Previsualización progresiva con barra de progreso y botón Cancelar.
+- Implementación: cuantización de color (k-means en espacio Lab, o mediana de corte) → por cada color una máscara binaria → contornos → trazados Bézier, en un Worker. Previsualización progresiva con barra de progreso y botón Cancelar.
+- **Decisión (etapa 11.7)**: no se usa potrace porque es GPL-2.0; el trazador es propio (`core/trace`, TypeScript puro): k-means en Lab, contornos de los bordes de los píxeles con agujeros, Ramer-Douglas-Peucker y curvas con esquinas. El objeto vivo es un `group` con `trace` (imagen de origen, tamaño y ajustes), no un tipo de nodo aparte; Expandir solo quita `trace`. Los colores se apilan de más a menos píxeles (superpuesto, sin huecos) o se dejan contiguos. Imágenes de más de 1 600 px se calcan reducidas.
 
 ## Exportar
 

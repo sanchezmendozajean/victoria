@@ -1,3 +1,4 @@
+import type { TraceParams } from '../trace/params';
 // Document model of specs/02-modelo-de-documento.md and specs/04-espacios-y-mesas.md.
 // Pure data (JSON-serialisable, no classes, no undefined-vs-missing games) so Immer patches and
 // the .vict format stay trivial. Coordinates are typographic points (pt), Y axis down.
@@ -149,9 +150,21 @@ export type ShapeNode = BaseNode & { type: 'shape' } & (
     | { shape: 'line'; params: LineParams }
   );
 
+/** A group that is the live result of Calco de imagen: where it came from and with what settings. */
+export interface TraceInfo {
+  /** Key into `resources.images` of the traced picture. */
+  resourceId: string;
+  /** Size of the picture on the page, in the group's units (the children are drawn in this box). */
+  width: number;
+  height: number;
+  params: TraceParams;
+}
+
 export interface GroupNode extends BaseNode {
   type: 'group';
   children: Node[];
+  /** Present while the group can still be traced again; Expandir removes it. */
+  trace?: TraceInfo;
 }
 
 /** The first child is the mask. */

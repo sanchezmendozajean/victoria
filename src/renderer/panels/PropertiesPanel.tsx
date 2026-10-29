@@ -14,6 +14,7 @@ import { usePanelContext, type PanelContext } from './context';
 import { usePaintLook } from './PaintWidget';
 import { ImageSection } from './ImageSection';
 import { ShapeParams } from './ShapeParams';
+import { TraceSection } from './TraceSection';
 import { TransformPanel } from './TransformPanel';
 
 /** Propiedades (specs/06): changes with the selection — document settings, or transform, appearance, align and quick actions. */
@@ -119,6 +120,7 @@ function ObjectProperties() {
       </Section>
       <ShapeParams />
       {selectedNode && <ImageSection ctx={ctx} id={selectedNode.id} />}
+      {selectedNode && <TraceSection ctx={ctx} id={selectedNode.id} />}
       <Section title={t('properties.appearance')}>
         <Row>
           <Icon id="fill" size={14} className="vc-field__icon" />

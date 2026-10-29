@@ -28,3 +28,19 @@ export function redPng(size: number): Buffer {
   const raw = Buffer.concat(Array.from({ length: size }, () => row));
   return Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), chunk('IHDR', header), chunk('IDAT', deflateSync(raw)), chunk('IEND', Buffer.alloc(0))]);
 }
+
+/** `size` × `size` PNG: a red square in the middle of a blue background. */
+export function squarePng(size: number): Buffer {
+  const header = Buffer.alloc(13);
+  header.writeUInt32BE(size, 0);
+  header.writeUInt32BE(size, 4);
+  header.set([8, 6, 0, 0, 0], 8);
+  const lo = size / 4;
+  const hi = (size * 3) / 4;
+  const rows = Array.from({ length: size }, (_, y) => {
+    const row = Buffer.alloc(1 + size * 4);
+    for (let x = 0; x < size; x++) row.set(x >= lo && x < hi && y >= lo && y < hi ? [255, 0, 0, 255] : [0, 0, 255, 255], 1 + x * 4);
+    return row;
+  });
+  return Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), chunk('IHDR', header), chunk('IDAT', deflateSync(Buffer.concat(rows))), chunk('IEND', Buffer.alloc(0))]);
+}

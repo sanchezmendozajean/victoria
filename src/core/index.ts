@@ -39,6 +39,7 @@ export type { VictContents, VictManifest, VictWriteInput } from './io/vict';
 export * from './io/imageInfo';
 export * from './io/imageStore';
 export * from './clipboard/clip';
+export * from './trace';
 export * from './export/scene';
 export * from './export/svg';
 export * from './export/pdf';

@@ -968,3 +968,15 @@
   font-size: var(--fs-micro);
   text-align: right;
 }
+
+.vc-trace__bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--vc-border, #444);
+  overflow: hidden;
+}
+.vc-trace__bar > div {
+  height: 100%;
+  background: var(--vc-accent, #4c8dff);
+}
