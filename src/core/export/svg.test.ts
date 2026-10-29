@@ -113,7 +113,9 @@ describe('SVG export', () => {
     expect((merged.match(/<path /g) ?? []).length).toBe(1);
     expect(merged).toMatch(/<path d="M0 0L50 0L50 50L0 50Z" fill="#ff0000" stroke="#000000" stroke-width="2"/);
     s.look(r.id, both('inside'));
-    expect((s.svg().svg.match(/<path /g) ?? []).length).toBe(2);
+    const apart = s.svg().svg;
+    expect((apart.match(/<path /g) ?? []).length).toBe(3); // the fill, the stroke, and the contour inside the clip path
+    expect(apart).toContain('<g clip-path=');
   });
 
   it('inside and outside strokes are drawn twice as wide inside a clip path', () => {
