@@ -1,0 +1,76 @@
+.vc-shortcuts {
+  width: min(560px, 92vw);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.vc-shortcuts__search {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  border: 1px solid var(--border, #3a3b3f);
+  border-radius: 6px;
+  background: var(--bg-input, transparent);
+  color: inherit;
+  font: inherit;
+}
+.vc-shortcuts__list {
+  flex: 1;
+  min-height: 160px;
+  overflow: auto;
+}
+.vc-shortcuts__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0;
+}
+.vc-shortcuts__name {
+  flex: 1;
+}
+.vc-shortcuts__keys {
+  min-width: 150px;
+  padding: 3px 8px;
+  border: 1px solid var(--border, #3a3b3f);
+  border-radius: 5px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-align: center;
+}
+.vc-shortcuts__keys.is-custom {
+  border-color: var(--accent, #4c8dff);
+}
+.vc-shortcuts__keys.is-capturing {
+  background: var(--accent, #4c8dff);
+  color: #fff;
+}
+.vc-shortcuts__reset {
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.vc-shortcuts__reset:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+.vc-shortcuts__clash {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 1px solid var(--danger, #d64545);
+  border-radius: 6px;
+}
+.vc-shortcuts__clash span {
+  flex: 1;
+}
+.vc-shortcuts__empty {
+  color: var(--text-muted, #9aa0a6);
+}

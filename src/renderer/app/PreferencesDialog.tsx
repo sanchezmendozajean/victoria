@@ -16,6 +16,7 @@ export function PreferencesDialog() {
 
 function PreferencesForm() {
   const close = useUi((s) => s.closePreferencesDialog);
+  const openShortcuts = useUi((s) => s.openShortcutsDialog);
   const { prefs, set, reset } = usePreferences();
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -48,6 +49,11 @@ function PreferencesForm() {
           t('prefs.autosave'),
           <NumberInput value={prefs.autosaveMinutes} onCommit={(v) => set({ autosaveMinutes: v })} min={AUTOSAVE_MINUTES.min} max={AUTOSAVE_MINUTES.max} step={1} decimals={0} suffix={t('prefs.minutes')} width={110} testId="pref-autosave" tooltip={t('prefs.autosave')} />,
         )}
+        <div className="vc-form__row">
+          <button type="button" className="vc-dialog__button" data-testid="prefs-shortcuts" onClick={openShortcuts}>
+            <Icon id="keyboard" size={12} /> {t('prefs.shortcuts')}
+          </button>
+        </div>
         <div className="vc-dialog__buttons">
           <button type="button" className="vc-dialog__button" data-testid="prefs-reset" disabled={JSON.stringify(prefs) === JSON.stringify(DEFAULT_PREFERENCES)} onClick={reset}>
             <Icon id="undo" size={12} /> {t('prefs.reset')}

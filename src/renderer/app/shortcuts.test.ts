@@ -1,5 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { findShortcutAction, formatAccelerator, matchesAccelerator, SHORTCUTS, type KeyEventLike } from './shortcuts';
+import {
+  acceleratorFromEvent,
+  DEFAULT_SHORTCUTS,
+  findConflict,
+  findShortcutAction,
+  formatAccelerator,
+  isValidAccelerator,
+  matchesAccelerator,
+  normalizeAccelerator,
+  setShortcutOverrides,
+  SHORTCUTS,
+  type KeyEventLike,
+} from './shortcuts';
 
 const key = (k: string, mods: Partial<KeyEventLike> = {}): KeyEventLike => ({
   key: k,
@@ -76,5 +88,55 @@ describe('shortcut map', () => {
     expect(findShortcutAction(key('F7', { shiftKey: true }))).toBe('panel.align');
     expect(findShortcutAction(key('t', { ctrlKey: true }))).toBe('type.character');
     expect(findShortcutAction(key('q', { ctrlKey: true }))).toBeNull();
+  });
+});
+
+describe('changing shortcuts', () => {
+  it('writes accelerators one canonical way, so spellings compare equal', () => {
+    expect(normalizeAccelerator('CmdOrCtrl+Shift+k')).toBe('Shift+CmdOrCtrl+K');
+    expect(normalizeAccelerator('Shift+CmdOrCtrl+K')).toBe('Shift+CmdOrCtrl+K');
+    expect(normalizeAccelerator('Shift+~')).toBe(normalizeAccelerator('~'));
+    expect(normalizeAccelerator('Alt+Shift+CmdOrCtrl+8')).toBe(normalizeAccelerator('CmdOrCtrl+Alt+Shift+8'));
+  });
+
+  it('only accepts modifiers followed by one key', () => {
+    expect(isValidAccelerator('CmdOrCtrl+Alt+K')).toBe(true);
+    expect(isValidAccelerator('F7')).toBe(true);
+    expect(isValidAccelerator('')).toBe(false);
+    expect(isValidAccelerator('Shift+')).toBe(false);
+    expect(isValidAccelerator('Super+K')).toBe(false);
+    expect(isValidAccelerator('Shift+Shift+K')).toBe(false);
+    expect(isValidAccelerator('Control')).toBe(false);
+  });
+
+  it('turns a key press into an accelerator, ignoring bare modifiers', () => {
+    expect(acceleratorFromEvent(key('Control', { ctrlKey: true }))).toBeNull();
+    expect(acceleratorFromEvent(key('k', { ctrlKey: true, shiftKey: true }))).toBe('Shift+CmdOrCtrl+K');
+    expect(acceleratorFromEvent(key('k', { metaKey: true }), 'darwin')).toBe('CmdOrCtrl+K');
+    expect(acceleratorFromEvent(key('F7', { shiftKey: true }))).toBe('Shift+F7');
+    expect(acceleratorFromEvent(key('PageUp', { ctrlKey: true, shiftKey: true }))).toBe('Shift+CmdOrCtrl+PageUp');
+    expect(acceleratorFromEvent(key('+', { ctrlKey: true, shiftKey: true }))).toBe('CmdOrCtrl+Plus');
+    expect(acceleratorFromEvent(key('~', { shiftKey: true }))).toBe('~');
+  });
+
+  it('finds the action that already has an accelerator', () => {
+    expect(findConflict('CmdOrCtrl+S')).toBe('file.save');
+    expect(findConflict('CmdOrCtrl+S', 'file.save')).toBeNull();
+    expect(findConflict('Shift+CmdOrCtrl+G')).toBe('object.ungroup');
+    expect(findConflict('CmdOrCtrl+Alt+Shift+F12')).toBeNull();
+  });
+
+  it('overrides replace the default everywhere the map is read, and can be undone', () => {
+    try {
+      setShortcutOverrides({ 'tool.tool-pen': 'Shift+P', 'file.save': 'not a key+', 'nope.action': 'K' });
+      expect(SHORTCUTS['tool.tool-pen']).toBe('Shift+P');
+      expect(SHORTCUTS['file.save']).toBe(DEFAULT_SHORTCUTS['file.save']); // invalid: ignored
+      expect(findShortcutAction(key('P', { shiftKey: true }))).toBe('tool.tool-pen');
+      expect(findShortcutAction(key('p'))).toBeNull(); // the old key no longer does it
+    } finally {
+      setShortcutOverrides({});
+    }
+    expect(SHORTCUTS['tool.tool-pen']).toBe('P');
+    expect(findShortcutAction(key('p'))).toBe('tool.tool-pen');
   });
 });

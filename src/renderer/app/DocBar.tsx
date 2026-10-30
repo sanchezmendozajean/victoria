@@ -1,3 +1,4 @@
+import { useShortcuts } from './useShortcuts';
 import { useEffect, useRef, useState } from 'react';
 import { reorderSpace, SPACE_COLORS, type Space } from '../../core';
 import { Icon } from '../components/Icon';
@@ -38,6 +39,7 @@ interface OpenSpaceMenu {
 }
 
 export function DocBar() {
+  useShortcuts();
   const os = useUi((s) => s.platform.os);
   const openPanel = useUi((s) => s.openPanel);
   const documents = useDocuments();

@@ -1,3 +1,4 @@
+import { useShortcuts } from './useShortcuts';
 import {
   commonStrokeField,
   getActiveSpace,
@@ -172,6 +173,7 @@ function findIn(children: readonly (Node | Space['layers'][number])[], id: strin
 }
 
 function NodeControls({ session, space }: { session: DocumentSession; space: Space }) {
+  useShortcuts();
   const os = useUi((s) => s.platform.os);
   const showHandles = useUi((s) => s.viewOptions.showHandles);
   const toggleView = useUi((s) => s.toggleViewOption);

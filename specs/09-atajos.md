@@ -1,6 +1,6 @@
 # 09 · Atajos de teclado
 
-Compatibles con Illustrator (Windows). Editables en **Edición › Atajos de teclado** (v2); en v1 se definen en `src/renderer/app/shortcuts.ts` como mapa único, con `CmdOrCtrl` en los aceleradores de Electron.
+Compatibles con Illustrator (Windows). Editables en **Edición › Atajos de teclado…** (hecho en la Fase 12: cada cambio se guarda por usuario, una tecla nunca tiene dos acciones y se puede intercambiar o restablecer). Los valores por defecto viven en `src/renderer/app/shortcuts.ts` (`DEFAULT_SHORTCUTS`), con `CmdOrCtrl` en los aceleradores.
 
 ## Conflictos en Linux
 

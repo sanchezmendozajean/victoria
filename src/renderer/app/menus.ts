@@ -115,6 +115,7 @@ export function buildMenus(ctx: MenuContext): MenuDef[] {
     item('delete', 'menu.edit.delete', 'delete', 'edit.delete'),
     sep('s3'),
     item('preferences', 'menu.edit.preferences', 'preferences', 'edit.preferences'),
+    item('shortcuts', 'menu.edit.shortcuts', 'keyboard', undefined, { onSelect: () => useUi.getState().openShortcutsDialog() }),
   ];
 
   const object: MenuEntry[] = [

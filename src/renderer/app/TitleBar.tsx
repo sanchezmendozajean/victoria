@@ -1,3 +1,4 @@
+import { useShortcuts } from './useShortcuts';
 import { useMemo, useRef, useState } from 'react';
 import { Logo } from '../components/Logo';
 import { Icon } from '../components/Icon';
@@ -21,6 +22,7 @@ interface OpenMenu {
 }
 
 export function TitleBar() {
+  const shortcuts = useShortcuts();
   const platform = useUi((s) => s.platform);
   const theme = useUi((s) => s.theme);
   const workspace = useUi((s) => s.workspace);
@@ -41,7 +43,7 @@ export function TitleBar() {
 
   const menus = useMemo(
     () => buildMenus({ os: platform.os, theme, workspace, setTheme, setWorkspace, openPanel, resetPanels, undoLabel, redoLabel, viewOptions, openTransformDialog: (kind) => openTransformDialog(kind, null) }),
-    [platform.os, theme, workspace, setTheme, setWorkspace, openPanel, resetPanels, undoLabel, redoLabel, viewOptions, openTransformDialog],
+    [platform.os, theme, workspace, setTheme, setWorkspace, openPanel, resetPanels, undoLabel, redoLabel, viewOptions, openTransformDialog, shortcuts],
   );
 
   const workspaceEntries: MenuEntry[] = WORKSPACES.map((id) => ({

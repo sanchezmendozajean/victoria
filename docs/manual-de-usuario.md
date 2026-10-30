@@ -51,6 +51,7 @@ Ctrl+Z / Mayús+Ctrl+Z deshacen y rehacen **todo** (el historial es exacto, tamb
 ## 7. Personalizar
 
 - **Espacios de trabajo** (selector de la barra de título): Esenciales, Íconos, Impresión y Texto cambian la disposición de los paneles; lo que muevas se recuerda para cada uno. **Ventana › Restablecer paneles** vuelve a la disposición original.
+- **Atajos de teclado** (Edición › Atajos de teclado…): busca una acción, pulsa **Cambiar** y escribe la combinación nueva; si ya la usa otra acción puedes intercambiarlas. Se puede restablecer una o todas.
 - **Preferencias** (Ctrl+K): puntos automáticos de la Pluma, fidelidad del Lápiz, intervalo de autoguardado, si se muestra la pantalla de inicio al abrir y si Colocar vincula las imágenes al archivo en vez de incrustarlas.
 
 ## 8. Si algo falla

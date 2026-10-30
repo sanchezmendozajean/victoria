@@ -1,3 +1,4 @@
+import { useShortcuts } from './useShortcuts';
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon } from '../components/Icon';
@@ -19,6 +20,7 @@ interface FlyoutState {
 }
 
 export function Toolbar() {
+  useShortcuts();
   const os = useUi((s) => s.platform.os);
   const activeTool = useUi((s) => s.activeTool);
   const slotTool = useUi((s) => s.slotTool);

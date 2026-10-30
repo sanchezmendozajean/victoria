@@ -1,3 +1,4 @@
+import { useShortcuts } from './useShortcuts';
 import { useMemo } from 'react';
 import { MenuPopup, type MenuEntry } from '../components/Menu';
 import { t } from '../i18n';
@@ -10,6 +11,7 @@ import { useUi } from './store';
 
 /** Right click on the canvas: the quick actions of the selection, with "Mover a Espacio" (specs/04 · regla 6). */
 export function CanvasContextMenu() {
+  useShortcuts();
   const menu = useUi((s) => s.canvasMenu);
   const close = useUi((s) => s.closeCanvasMenu);
   const os = useUi((s) => s.platform.os);

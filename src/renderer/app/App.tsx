@@ -14,6 +14,7 @@ import { ModifierDialog } from './ModifierDialog';
 import { PathTextDialog } from './PathTextDialog';
 import { ExportDialog } from './ExportDialog';
 import { PreferencesDialog } from './PreferencesDialog';
+import { ShortcutsDialog } from './ShortcutsDialog';
 import { StartScreen } from './StartScreen';
 import { useDocuments } from '../documents';
 import { PrintDialog } from './PrintDialog';
@@ -56,6 +57,7 @@ export function App() {
       <ExportDialog />
       <PrintDialog />
       <PreferencesDialog />
+      <ShortcutsDialog />
       <PathTextDialog />
       <ModifierDialog />
       <ColorPickerDialog />

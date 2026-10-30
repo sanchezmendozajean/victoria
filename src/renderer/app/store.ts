@@ -121,6 +121,7 @@ interface UiState {
   /** Archivo › Imprimir… */
   printDialog: boolean;
   preferencesDialog: boolean;
+  shortcutsDialog: boolean;
   /** Right click on the canvas: where the context menu opens (screen px). */
   canvasMenu: { x: number; y: number } | null;
   /** Properties dialog of a Space (grid and canvas colour), by id. */
@@ -152,6 +153,8 @@ interface UiState {
   openExportDialog(mode: 'as' | 'screens'): void;
   openPrintDialog(): void;
   openPreferencesDialog(): void;
+  openShortcutsDialog(): void;
+  closeShortcutsDialog(): void;
   closePreferencesDialog(): void;
   closePrintDialog(): void;
   closeExportDialog(): void;
@@ -272,6 +275,7 @@ export const useUi = create<UiState>()((set, get) => ({
   exportDialog: null,
   printDialog: false,
   preferencesDialog: false,
+  shortcutsDialog: false,
   canvasMenu: null,
   spaceProps: null,
 
@@ -318,6 +322,8 @@ export const useUi = create<UiState>()((set, get) => ({
   openExportDialog: (mode) => set({ exportDialog: mode }),
   openPrintDialog: () => set({ printDialog: true }),
   openPreferencesDialog: () => set({ preferencesDialog: true }),
+  openShortcutsDialog: () => set({ shortcutsDialog: true }),
+  closeShortcutsDialog: () => set({ shortcutsDialog: false }),
   closePreferencesDialog: () => set({ preferencesDialog: false }),
   closePrintDialog: () => set({ printDialog: false }),
   closeExportDialog: () => set({ exportDialog: null }),

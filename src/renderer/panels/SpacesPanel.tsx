@@ -1,3 +1,4 @@
+import { useShortcuts } from '../app/useShortcuts';
 import { useEffect, useRef, useState } from 'react';
 import { countObjects, fitRect, setSpaceExcluded, type Document, type Space } from '../../core';
 import { readCanvasTheme } from '../canvas/theme';
@@ -61,6 +62,7 @@ function SpaceThumb({ space, doc }: { space: Space; doc: Document }) {
 
 /** Espacios (specs/04 · Panel Espacios): thumbnails, artboard and object counts, export visibility and the Space buttons. */
 export function SpacesPanel() {
+  useShortcuts();
   const documents = useDocuments();
   const os = useUi((s) => s.platform.os);
   const [renaming, setRenaming] = useState<string | null>(null);

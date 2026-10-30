@@ -1,3 +1,4 @@
+import { useShortcuts } from './useShortcuts';
 import { useState } from 'react';
 import { getActiveSpace, MAX_ZOOM, MIN_ZOOM, ZOOM_STEPS } from '../../core';
 import { canvasApi } from '../canvas/api';
@@ -20,6 +21,7 @@ function anchorOf(el: HTMLElement): Anchor {
 }
 
 export function StatusBar() {
+  useShortcuts();
   const activeTool = useUi((s) => s.activeTool);
   const os = useUi((s) => s.platform.os);
   const zoom = useUi((s) => s.zoom);

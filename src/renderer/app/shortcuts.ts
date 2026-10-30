@@ -2,7 +2,8 @@
 // order the spec displays them. `Plus`/`Minus` are named so "+" never splits an accelerator.
 // Phase 1 only binds tools and panels; the rest exists so menus can display the shortcut.
 
-export const SHORTCUTS = {
+/** The shortcuts Victoria ships with. */
+export const DEFAULT_SHORTCUTS = {
   // Herramientas
   'tool.tool-select': 'V',
   'tool.tool-direct-select': 'A',
@@ -142,7 +143,15 @@ export const SHORTCUTS = {
   'panel.pathfinder': 'Shift+CmdOrCtrl+F9',
 } as const satisfies Record<string, string>;
 
-export type ShortcutAction = keyof typeof SHORTCUTS;
+export type ShortcutAction = keyof typeof DEFAULT_SHORTCUTS;
+
+/**
+ * The shortcuts in force: the defaults with the user's changes on top (Edición › Atajos de teclado). It is one live
+ * object that everything reads (menus, tooltips, the keyboard handler); `setShortcutOverrides` rewrites it in place.
+ */
+export const SHORTCUTS: Record<ShortcutAction, string> = { ...DEFAULT_SHORTCUTS };
+
+export const isShortcutAction = (key: string): key is ShortcutAction => key in DEFAULT_SHORTCUTS;
 
 export type OsFamily = 'win32' | 'linux' | 'darwin';
 
@@ -209,4 +218,62 @@ export function findShortcutAction(event: KeyEventLike, os: OsFamily = 'win32'):
     if (matchesAccelerator(event, SHORTCUTS[action], os)) return action;
   }
   return null;
+}
+
+// ── Changing shortcuts ──
+
+const MODIFIER_ORDER = ['Alt', 'Shift', 'CmdOrCtrl'];
+const NAMED_KEYS: Record<string, string> = { ' ': 'Space', '+': 'Plus', '-': 'Minus', '=': 'Plus', _: 'Minus', ArrowUp: 'Up', ArrowDown: 'Down', ArrowLeft: 'Left', ArrowRight: 'Right', Backspace: 'Backspace', Delete: 'Delete', Enter: 'Enter', Tab: 'Tab', Home: 'Home', End: 'End', PageUp: 'PageUp', PageDown: 'PageDown' };
+const MODIFIER_KEYS = new Set(['Control', 'Shift', 'Alt', 'Meta', 'AltGraph', 'CapsLock']);
+
+/** The same accelerator written one canonical way (Alt, Shift, CmdOrCtrl, key), so two spellings compare equal. */
+export function normalizeAccelerator(accelerator: string): string {
+  const tokens = accelerator.split('+').filter((t) => t !== '');
+  // A bare "+" key splits into nothing; it is spelled "Plus" in accelerators.
+  const key = tokens[tokens.length - 1] ?? '';
+  const mods = new Set(tokens.slice(0, -1));
+  // Symbols carry Shift inside the character, so "Shift+~" and "~" are the same shortcut.
+  if (isSymbolKey(key)) mods.delete('Shift');
+  const ordered = MODIFIER_ORDER.filter((m) => mods.has(m));
+  return [...ordered, key.length === 1 ? key.toUpperCase() : key].join('+');
+}
+
+/** A usable accelerator: known modifiers followed by exactly one key. */
+export function isValidAccelerator(accelerator: string): boolean {
+  if (typeof accelerator !== 'string' || accelerator === '' || accelerator.length > 40) return false;
+  const tokens = accelerator.split('+');
+  const key = tokens[tokens.length - 1] ?? '';
+  const mods = tokens.slice(0, -1);
+  return key !== '' && mods.every((m) => MODIFIER_ORDER.includes(m)) && new Set(mods).size === mods.length && !MODIFIER_KEYS.has(key);
+}
+
+/**
+ * The accelerator a key press stands for, or null while only modifiers are down. `Ctrl` is `CmdOrCtrl`
+ * (⌘ on macOS); symbols that need Shift keep it inside the character, as `matchesAccelerator` expects.
+ */
+export function acceleratorFromEvent(event: KeyEventLike, os: OsFamily = 'win32'): string | null {
+  if (MODIFIER_KEYS.has(event.key)) return null;
+  const key = NAMED_KEYS[event.key] ?? (event.key.length === 1 ? event.key.toUpperCase() : event.key);
+  const command = os === 'darwin' ? event.metaKey : event.ctrlKey;
+  const symbol = event.key.length === 1 && !/[a-z0-9]/i.test(event.key);
+  const mods = [event.altKey && 'Alt', event.shiftKey && !symbol && 'Shift', command && 'CmdOrCtrl'].filter((m): m is string => !!m);
+  // A plain symbol such as "+" or "~" that came with Shift is the symbol itself.
+  return [...mods, key].join('+');
+}
+
+/** The action that already uses this accelerator (other than `except`), if any. */
+export function findConflict(accelerator: string, except?: ShortcutAction): ShortcutAction | null {
+  const wanted = normalizeAccelerator(accelerator);
+  for (const action of Object.keys(SHORTCUTS) as ShortcutAction[]) {
+    if (action !== except && normalizeAccelerator(SHORTCUTS[action]) === wanted) return action;
+  }
+  return null;
+}
+
+/** Defaults plus `overrides` (action → accelerator); entries for unknown actions or with invalid accelerators are ignored. */
+export function setShortcutOverrides(overrides: Readonly<Record<string, string>>): void {
+  Object.assign(SHORTCUTS, DEFAULT_SHORTCUTS);
+  for (const [action, accelerator] of Object.entries(overrides)) {
+    if (isShortcutAction(action) && isValidAccelerator(accelerator)) SHORTCUTS[action] = accelerator;
+  }
 }

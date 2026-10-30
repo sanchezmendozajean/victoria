@@ -1,3 +1,4 @@
+import { useShortcuts } from '../app/useShortcuts';
 import { useUi } from '../app/store';
 import { defaultPaints, paintAsColor, paintAsGradient, paintAsNone, swapPaints } from '../app/paintActions';
 import { SHORTCUTS, formatAccelerator } from '../app/shortcuts';
@@ -27,6 +28,7 @@ const modeOf = (paint: Paint): 'color' | 'gradient' | 'none' => (paint.type === 
  * (Mayús+X) and the small icon restores the defaults (D).
  */
 export function PaintWidget({ size = 36, testId = 'paint-widget' }: { size?: number; testId?: string }) {
+  useShortcuts();
   const { look, resources } = usePaintLook();
   const active = useUi((s) => s.activePaint);
   const setActive = useUi((s) => s.setActivePaint);
