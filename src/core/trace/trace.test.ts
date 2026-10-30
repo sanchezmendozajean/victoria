@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Anchor } from '../model/types';
-import { paramsForPreset, traceImage, type Pixels, type TraceLayer } from '.';
+import { paramsForPreset, polygonToAnchors, traceImage, type Pixels, type TraceLayer } from '.';
 
 /** A picture built from a function giving the colour at the centre of each pixel. */
 function paint(width: number, height: number, colour: (x: number, y: number) => [number, number, number, number?]): Pixels {
@@ -131,5 +131,19 @@ describe('traceImage', () => {
     expect(seen[seen.length - 1]).toBeCloseTo(1, 9);
     expect(seen).toEqual([...seen].sort((a, b) => a - b));
     expect(() => traceImage(image, paramsForPreset('colors3'), { cancelled: () => true })).toThrow('cancelled');
+  });
+
+  it('"snap curves to lines" keeps almost-straight bends straight and leaves real curves alone', () => {
+    // A long side with a 5 degree bend in the middle, closed by a far point.
+    const polygon = [{ x: 0, y: 0 }, { x: 50, y: 0 }, { x: 100, y: 4.4 }, { x: 100, y: 60 }, { x: 0, y: 60 }];
+    const handles = (anchors: ReturnType<typeof polygonToAnchors>) => anchors.filter((a) => a.in !== null || a.out !== null).length;
+    expect(handles(polygonToAnchors(polygon, 0, false))).toBeGreaterThan(0);
+    const snapped = polygonToAnchors(polygon, 0, true);
+    // The vertex at (50, 0) turns about 5 degrees: it is a plain point now.
+    const bend = snapped.filter((a) => a.p.x === 50 && a.p.y === 0);
+    expect(bend).toHaveLength(1);
+    expect(bend[0]!.in).toBeNull();
+    expect(bend[0]!.out).toBeNull();
+    expect(handles(polygonToAnchors(polygon, 0, true))).toBeLessThan(handles(polygonToAnchors(polygon, 0, false)));
   });
 });

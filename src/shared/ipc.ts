@@ -15,6 +15,10 @@ export type Theme = 'dark' | 'light';
 export interface PlatformInfo {
   os: OsName;
   chrome: WindowChrome;
+  /** The desktop environment on Linux (XDG_CURRENT_DESKTOP), for notices about its reserved shortcuts. */
+  desktop?: string;
+  /** True under automated tests, which must not meet first-run notices. */
+  testing?: boolean;
 }
 
 export interface WindowState {

@@ -58,7 +58,7 @@ export function traceImage(image: Pixels, params: TraceParams, hooks: TraceHooks
     const paths: Anchor[][] = [];
     for (const loop of maskContours(mask, width, height, Math.max(1, params.noise))) {
       const polygon = simplifyLoop(loop, params.tolerance);
-      if (polygon.length >= 3) paths.push(polygonToAnchors(polygon, params.corners));
+      if (polygon.length >= 3) paths.push(polygonToAnchors(polygon, params.corners, params.snapLines === true));
     }
     if (paths.length > 0) layers.push({ color: palette[colour] as [number, number, number], paths });
     hooks.progress?.(0.15 + (0.85 * (k + 1)) / order.length);

@@ -50,6 +50,9 @@ export function simplifyLoop(points: readonly Vec2[], tolerance: number): Vec2[]
   return points.filter((_, i) => keep[i] === 1);
 }
 
+/** With `snapLines`, a bend of less than this (radians, 8°) stays straight. */
+const SNAP_TURN = (8 * Math.PI) / 180;
+
 /** How far from a corner a curve may start, in pixels: sharp features stay sharp, long sides stay straight. */
 const ROUNDING = 6;
 
@@ -57,7 +60,7 @@ const ROUNDING = 6;
  * A closed polygon as Bézier anchors: a vertex that turns more than the corner threshold stays a corner; the others
  * become curves that leave the sides a little before the vertex and meet in a smooth bend (the vertex pulls the curve).
  */
-export function polygonToAnchors(polygon: readonly Vec2[], corners: number): Anchor[] {
+export function polygonToAnchors(polygon: readonly Vec2[], corners: number, snapLines = false): Anchor[] {
   const n = polygon.length;
   const limit = ((105 - 0.75 * Math.max(0, Math.min(100, corners))) * Math.PI) / 180;
   const anchors: Anchor[] = [];
@@ -69,7 +72,7 @@ export function polygonToAnchors(polygon: readonly Vec2[], corners: number): Anc
     const lenIn = dist(prev, v);
     const lenOut = dist(v, next);
     const turn = Math.abs(Math.atan2((v.x - prev.x) * (next.y - v.y) - (v.y - prev.y) * (next.x - v.x), (v.x - prev.x) * (next.x - v.x) + (v.y - prev.y) * (next.y - v.y)));
-    if (turn > limit || lenIn === 0 || lenOut === 0) {
+    if (turn > limit || lenIn === 0 || lenOut === 0 || (snapLines && turn < SNAP_TURN)) {
       anchors.push(corner(v, null, null));
       continue;
     }

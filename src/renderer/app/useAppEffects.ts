@@ -1,5 +1,9 @@
 import { useEffect } from 'react';
+import type { PlatformInfo } from '../../shared/ipc';
 import { manager } from '../documents';
+import { t } from '../i18n';
+import { usePreferences } from '../prefs/preferences';
+import { askUser } from './dialogs';
 import { fontManager } from '../text/fontManager';
 import { adoptSelectionLook } from './paintActions';
 import { runAction } from './actions';
@@ -7,6 +11,18 @@ import { PANEL_BY_ACTION } from './menus';
 import { findShortcutAction } from './shortcuts';
 import { useUi } from './store';
 import { toolFromAction } from './tools';
+
+/** Once, on Linux: some window managers take Alt+drag for themselves, which Duplicar-while-dragging uses (specs/09). */
+async function linuxNotice(info: PlatformInfo): Promise<void> {
+  const prefs = usePreferences.getState();
+  if (info.os !== 'linux' || info.testing || prefs.prefs.linuxNoticeSeen) return;
+  prefs.set({ linuxNoticeSeen: true });
+  await askUser({
+    title: t('linuxNotice.title'),
+    message: t('linuxNotice.message', { desktop: info.desktop ?? 'Linux' }),
+    buttons: [{ id: 'ok', label: t('dialog.ok'), variant: 'primary' }],
+  });
+}
 
 const isEditable = (target: EventTarget | null) =>
   target instanceof HTMLElement && (target.isContentEditable || /^(input|textarea|select)$/i.test(target.tagName));
@@ -27,7 +43,9 @@ export function useAppEffects() {
     const api = window.victoria;
     let cancelled = false;
     void api.getPlatformInfo().then((info) => {
-      if (!cancelled && info) setPlatform(info);
+      if (cancelled || !info) return;
+      setPlatform(info);
+      void linuxNotice(info);
     });
     const unsubscribe = api.onWindowStateChange((state) => setMaximized(state.maximized));
     return () => {

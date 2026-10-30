@@ -91,4 +91,16 @@ describe('live trace', () => {
     session.undo();
     expect(group().trace?.view).toBeUndefined();
   });
+
+  it('"strokes instead of fills" gives the paths a stroke in the colour and no fill', () => {
+    const { ids, session, space, image, pixels } = setup();
+    const params = { ...paramsForPreset('bw'), strokes: true };
+    session.run(makeTrace(ids, space().id, image, params, traceImage(pixels, params)).command);
+    const group = space().layers[0]!.children[0] as GroupNode;
+    const items = group.children[0]!.appearance.items;
+    expect(items.map((i) => i.kind)).toEqual(['stroke']);
+    const filled = paramsForPreset('bw');
+    const other = makeTrace(ids, space().id, image, filled, traceImage(pixels, filled)).group;
+    expect(other.children[0]!.appearance.items.map((i) => i.kind)).toEqual(['fill']);
+  });
 });

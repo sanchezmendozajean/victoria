@@ -15,9 +15,11 @@ export interface Preferences {
   placeLinked: boolean;
   /** Shortcuts the user changed (action → accelerator); everything else keeps its default. */
   shortcuts: Record<string, string>;
+  /** The one-time notice about Alt+drag on Linux desktops has been shown. */
+  linuxNoticeSeen: boolean;
 }
 
-export const DEFAULT_PREFERENCES: Preferences = { autoAddDelete: true, pencilFidelity: 3, autosaveMinutes: 1, startScreen: false, placeLinked: false, shortcuts: {} };
+export const DEFAULT_PREFERENCES: Preferences = { autoAddDelete: true, pencilFidelity: 3, autosaveMinutes: 1, startScreen: false, placeLinked: false, shortcuts: {}, linuxNoticeSeen: false };
 
 export const AUTOSAVE_MINUTES = { min: 1, max: 30 } as const;
 const STORAGE_KEY = 'victoria.preferences';
@@ -38,6 +40,7 @@ export function sanitizePreferences(raw: unknown): Preferences {
     startScreen: typeof source.startScreen === 'boolean' ? source.startScreen : DEFAULT_PREFERENCES.startScreen,
     placeLinked: typeof source.placeLinked === 'boolean' ? source.placeLinked : DEFAULT_PREFERENCES.placeLinked,
     shortcuts: sanitizeShortcuts(source.shortcuts),
+    linuxNoticeSeen: source.linuxNoticeSeen === true,
   };
 }
 

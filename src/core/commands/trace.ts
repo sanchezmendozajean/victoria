@@ -1,4 +1,4 @@
-import { createCompound, createGroup, createPath } from '../model/factory';
+import { createCompound, createGroup, createPath, defaultStroke } from '../model/factory';
 import type { IdGenerator } from '../model/ids';
 import type { Anchor, CompoundNode, GroupNode, ImageNode, Node } from '../model/types';
 import type { TraceParams, TraceView } from '../trace/params';
@@ -15,7 +15,7 @@ const scaled = (anchors: readonly Anchor[], sx: number, sy: number): Anchor[] =>
   }));
 
 /** The traced colours as flat-filled compound paths, bottom to top, scaled from pixels to the box of the image. */
-export function traceChildren(ids: IdGenerator, result: TraceResult, width: number, height: number): CompoundNode[] {
+export function traceChildren(ids: IdGenerator, result: TraceResult, width: number, height: number, strokes = false): CompoundNode[] {
   const sx = width / result.width;
   const sy = height / result.height;
   return result.layers.map((layer) => {
@@ -24,14 +24,15 @@ export function traceChildren(ids: IdGenerator, result: TraceResult, width: numb
       layer.paths.map((anchors) => createPath(ids, scaled(anchors, sx, sy), true)),
       'evenodd',
     );
-    compound.appearance = { items: [{ kind: 'fill', paint: { type: 'solid', color: { model: 'rgb', values: [...layer.color] } }, opacity: 1, modifiers: [] }] };
+    const paint = { type: 'solid' as const, color: { model: 'rgb' as const, values: [...layer.color] } };
+    compound.appearance = { items: [strokes ? { kind: 'stroke', paint, stroke: { ...defaultStroke(), width: 1 }, opacity: 1, modifiers: [] } : { kind: 'fill', paint, opacity: 1, modifiers: [] }] };
     return compound;
   });
 }
 
 /** Calco de imagen: the image becomes a live group of flat-colour paths (same place, size and look). One undo step. */
 export function makeTrace(ids: IdGenerator, spaceId: string, image: ImageNode, params: TraceParams, result: TraceResult): { command: Command; group: GroupNode } {
-  const group = createGroup(ids, traceChildren(ids, result, image.width, image.height));
+  const group = createGroup(ids, traceChildren(ids, result, image.width, image.height, params.strokes === true));
   group.transform = image.transform;
   group.opacity = image.opacity;
   group.blendMode = image.blendMode;
@@ -44,7 +45,7 @@ export function makeTrace(ids: IdGenerator, spaceId: string, image: ImageNode, p
 export function retrace(ids: IdGenerator, spaceId: string, group: GroupNode, params: TraceParams, result: TraceResult): Command {
   const info = group.trace;
   if (!info) throw new Error('Not a live trace');
-  const children: Node[] = traceChildren(ids, result, info.width, info.height);
+  const children: Node[] = traceChildren(ids, result, info.width, info.height, params.strokes === true);
   return { ...patchNode<GroupNode>(spaceId, group.id, { children, trace: { ...info, params } }), label: 'trace.update' };
 }
 

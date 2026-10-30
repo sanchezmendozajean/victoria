@@ -118,6 +118,8 @@ export function TraceSection({ ctx, id }: { ctx: PanelContext; id: string }) {
           onChange={(method) => change({ method })}
         />
       </Row>
+      <CheckRow checked={params.snapLines === true} onChange={() => change({ snapLines: !params.snapLines })} label={t('trace.snapLines')} testId="trace-snap-lines" />
+      <CheckRow checked={params.strokes === true} onChange={() => change({ strokes: !params.strokes })} label={t('trace.strokes')} testId="trace-strokes" />
       <CheckRow checked={params.ignoreWhite} onChange={() => change({ ignoreWhite: !params.ignoreWhite })} label={t('trace.ignoreWhite')} testId="trace-ignore-white" />
       {progressRow}
       <Row>

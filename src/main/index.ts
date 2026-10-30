@@ -110,6 +110,8 @@ if (!app.requestSingleInstanceLock()) {
     const info: PlatformInfo = {
       os: process.platform === 'win32' ? 'win32' : process.platform === 'darwin' ? 'darwin' : 'linux',
       chrome: chrome === 'native-overlay' && process.platform !== 'win32' ? 'custom' : chrome,
+      ...(process.env.XDG_CURRENT_DESKTOP ? { desktop: process.env.XDG_CURRENT_DESKTOP } : {}),
+      testing: !app.isPackaged && !!process.env.VICTORIA_USER_DATA,
     };
     registerIpc({ platform, info, getWindow: () => mainWindow });
     mainWindow = createWindow();

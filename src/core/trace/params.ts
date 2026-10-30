@@ -15,6 +15,10 @@ export interface TraceParams {
   method: 'overlapping' | 'abutting';
   /** Do not trace white (the paper). */
   ignoreWhite: boolean;
+  /** Bends of less than a few degrees become straight lines instead of curves (line art, technical drawings). */
+  snapLines: boolean;
+  /** The outlines are drawn as strokes in the colour, with no fill. */
+  strokes: boolean;
 }
 
 export const DEFAULT_TRACE: TraceParams = {
@@ -26,6 +30,8 @@ export const DEFAULT_TRACE: TraceParams = {
   tolerance: 1,
   method: 'overlapping',
   ignoreWhite: true,
+  snapLines: false,
+  strokes: false,
 };
 
 /** What the canvas shows of a live trace; the file and the exports always use the result. */
@@ -43,8 +49,8 @@ export const TRACE_PRESETS: Record<TracePresetId, Partial<TraceParams>> = {
   grays: { mode: 'gray', colors: 8, noise: 6, tolerance: 1, ignoreWhite: false },
   bw: { mode: 'bw', threshold: 128, noise: 4, corners: 50, tolerance: 1, ignoreWhite: true },
   silhouette: { mode: 'bw', threshold: 160, noise: 30, corners: 30, tolerance: 2, ignoreWhite: true },
-  lineart: { mode: 'bw', threshold: 190, noise: 2, corners: 70, tolerance: 0.8, ignoreWhite: true },
-  technical: { mode: 'bw', threshold: 170, noise: 2, corners: 90, tolerance: 0.7, ignoreWhite: true },
+  lineart: { mode: 'bw', threshold: 190, noise: 2, corners: 70, tolerance: 0.8, ignoreWhite: true, snapLines: true },
+  technical: { mode: 'bw', threshold: 170, noise: 2, corners: 90, tolerance: 0.7, ignoreWhite: true, snapLines: true },
   logo: { mode: 'color', colors: 6, noise: 10, corners: 75, tolerance: 1, ignoreWhite: true },
 };
 

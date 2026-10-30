@@ -41,10 +41,13 @@
 - **Espacios de trabajo con nombre**: en el selector de la barra de título (y en Ventana › Espacio de trabajo) **Guardar espacio de trabajo…** pide un nombre y guarda el reparto actual de paneles; aparece junto a los cuatro de fábrica, se recuerda entre sesiones (hasta 20; el mismo nombre lo reemplaza) y **Eliminar «nombre»** lo borra (si estaba en uso vuelve a Esenciales). *Restablecer paneles* en uno propio vuelve a lo que se guardó. Lo guardado se valida panel por panel. Nueva utilidad `askText` (cuadro de una línea de texto).
 - **Tarjeta «Personalizado»** en la pantalla de inicio: un cuadro pide ancho, alto y unidades y crea un documento con una mesa de ese tamaño (sin preajuste) y esas unidades de trabajo. Pruebas: 1 del gestor y e2e de ambos (guardar, cambiar, recargar y eliminar un espacio; crear un documento personalizado).
 
+- **Calco: «Ajustar curvas a líneas» y «Trazos en lugar de rellenos»**: la primera deja rectos los giros de menos de 8° (los preajustes Arte lineal y Dibujo técnico la llevan activada); la segunda dibuja los contornos como trazos de 1 pt en el color, sin relleno. Ambas se cambian con el calco vivo (se vuelve a calcar). 2 pruebas unitarias.
+- **Aviso de Linux (una sola vez)**: al primer arranque en Linux se explica que algunos gestores de ventanas (XFCE, KDE antiguo, i3…) usan Alt+arrastrar para mover la ventana y cómo resolverlo (cambiarlo a Super, duplicar con Pegar en el mismo lugar, o reasignar atajos). Nunca sale bajo las pruebas automáticas.
+
 ### Pendiente
-- Calco: faltan ajustar curvas a líneas, trazos en lugar de rellenos y la lista de colores editable del panel; las curvas no son las óptimas de potrace.
+- Calco: falta la lista de colores editable del panel (hoy el número de colores lo decide el cuantificador); las curvas no son las óptimas de potrace.
 - Worker para booleanas: solo el panel Buscatrazos. El Buscatrazos *vivo* (modificador), «Desplazar trazado» y el Creador de formas siguen calculando en el hilo de la interfaz (se evalúan al dibujar y no se pueden esperar).
-- Atajos: no se ofrece todavía el aviso de primer arranque de Linux sobre Alt+arrastrar ni la detección de `XDG_CURRENT_DESKTOP` (spec 09); la reasignación ya permite resolver cualquier choque a mano.
+- Atajos en Linux: el aviso de Alt+arrastrar existe, pero **no se ha podido ver en una máquina Linux real**; las demás alternativas de la spec 09 (Ctrl+Alt+arrastrar para duplicar) no se implementaron: la reasignación permite resolver los choques a mano.
 - Verificar fuera de esta máquina: instalación y desinstalación interactivas en Windows; AppImage, deb, rpm, asociación de archivos y Wayland en Linux; firma de código cuando haya certificado.
 - Rendimiento: no se probó con muchas imágenes grandes ni con miles de textos; las booleanas de más de 500 segmentos en Worker (spec 01) siguen sin Worker.
 - Pantalla de inicio: abrir con la pantalla de inicio por defecto cuando haya un instalador.
