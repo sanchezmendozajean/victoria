@@ -40,13 +40,15 @@ export function PaintWidget({ size = 36, testId = 'paint-widget', stacked = fals
   const fillNone = !look.fill.mixed && look.fill.value.type === 'none';
   const strokeNone = !look.stroke.mixed && look.stroke.value.type === 'none';
 
+  // The free corners (top right, bottom left) are the free space beside the two squares: centre the controls in them.
+  const corner = { width: size - chip, height: size - chip, alignItems: 'center', justifyContent: 'center' } as const;
   const swap = (
-    <button type="button" className="vc-paintwidget__swap" data-testid={`${testId}-swap`} {...tip(t('toolbar.swap'), formatAccelerator(SHORTCUTS['paint.swap'], os))} onClick={swapPaints}>
+    <button type="button" className="vc-paintwidget__swap" style={stacked ? undefined : corner} data-testid={`${testId}-swap`} {...tip(t('toolbar.swap'), formatAccelerator(SHORTCUTS['paint.swap'], os))} onClick={swapPaints}>
       <Icon id="swap-fill-stroke" size={12} />
     </button>
   );
   const defaults = (
-    <button type="button" className="vc-paintwidget__defaults" data-testid={`${testId}-defaults`} {...tip(t('toolbar.defaults'), 'D')} onClick={defaultPaints}>
+    <button type="button" className="vc-paintwidget__defaults" style={stacked ? undefined : corner} data-testid={`${testId}-defaults`} {...tip(t('toolbar.defaults'), 'D')} onClick={defaultPaints}>
       <Icon id="default-colors" size={12} />
     </button>
   );

@@ -298,12 +298,12 @@
   color: var(--icon);
 }
 .vc-paintwidget__swap {
-  right: -4px;
-  top: -4px;
+  right: 0;
+  top: 0;
 }
 .vc-paintwidget__defaults {
-  left: -4px;
-  bottom: -4px;
+  left: 0;
+  bottom: 0;
 }
 
 /* Defaults and swap above the widget (one-column toolbar): in flow, not floating over its corners. */
