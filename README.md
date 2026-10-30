@@ -26,14 +26,16 @@ Las fases 1 a 12 del plan están construidas (ver [`CHANGELOG.md`](CHANGELOG.md)
 ## Desarrollo
 
 ```bash
-pnpm install
-pnpm dev          # la aplicación con recarga en caliente
-pnpm lint         # ESLint y tipos
-pnpm test         # pruebas unitarias (Vitest)
-pnpm test:e2e     # pruebas de extremo a extremo en Electron (Playwright)
-pnpm build:win    # instalador y versión portátil de Windows → release/
-pnpm build:linux  # AppImage, deb y rpm → release/
+npm install       # o pnpm install: los scripts funcionan con ambos
+npm run dev          # la aplicación con recarga en caliente
+npm run lint         # ESLint y tipos
+npm test             # pruebas unitarias (Vitest)
+npm run test:e2e     # pruebas de extremo a extremo en Electron (Playwright)
+npm run build:win    # instalador y versión portátil de Windows → release/
+npm run build:linux  # AppImage, deb y rpm → release/
 ```
+
+El proyecto usa un `pnpm-lock.yaml`, pero **no hace falta tener pnpm**: con `npm install` basta (si aparecen los dos archivos de bloqueo, el empaquetador usa npm).
 
 Los instaladores **no están firmados** todavía: Windows mostrará el aviso de SmartScreen. Para firmarlos hace falta un certificado de firma de código (ver `docs/instalador.md`).
 
@@ -55,18 +57,6 @@ Los instaladores **no están firmados** todavía: Windows mostrará el aviso de 
 | [`specs/11-iconografia.md`](specs/11-iconografia.md) | Catálogo de íconos (todo botón lleva ícono) |
 | [`specs/12-plan-de-construccion.md`](specs/12-plan-de-construccion.md) | Fases, entregables y criterios de aceptación |
 | [`specs/prompts.md`](specs/prompts.md) | Prompts listos para Claude Design y Claude Code |
-
-## Desarrollo (cuando exista código)
-
-```bash
-pnpm install
-pnpm dev        # Electron + Vite en modo desarrollo
-pnpm test       # Pruebas unitarias (Vitest)
-pnpm test:e2e   # Pruebas de interfaz (Playwright + Electron)
-pnpm build      # Paquetes para el sistema actual (electron-builder)
-pnpm build:win  # Instalador NSIS + portable (.exe)
-pnpm build:linux # AppImage + .deb + .rpm
-```
 
 ## Licencia
 

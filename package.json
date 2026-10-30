@@ -10,13 +10,13 @@
   "scripts": {
     "dev": "vite",
     "build:app": "vite build",
-    "build": "pnpm build:app && electron-builder",
-    "build:win": "pnpm build:app && electron-builder --win nsis portable",
-    "build:linux": "pnpm build:app && electron-builder --linux AppImage deb rpm",
+    "build": "npm run build:app && electron-builder",
+    "build:win": "npm run build:app && electron-builder --win nsis portable",
+    "build:linux": "npm run build:app && electron-builder --linux AppImage deb rpm",
     "typecheck": "tsc -p tsconfig.core.json --noEmit && tsc -p tsconfig.web.json --noEmit && tsc -p tsconfig.node.json --noEmit && tsc -p tsconfig.e2e.json --noEmit",
-    "lint": "eslint . && pnpm typecheck",
+    "lint": "eslint . && npm run typecheck",
     "test": "vitest run",
-    "test:e2e": "pnpm build:app && playwright test",
+    "test:e2e": "npm run build:app && playwright test",
     "icons:gen": "node scripts/gen-icons.mjs",
     "icon:app": "node scripts/make-app-icon.mjs",
     "samples:gen": "node scripts/gen-samples.mjs"
@@ -54,7 +54,6 @@
     "vitest": "^5.0.3",
     "zustand": "^5.0.15"
   },
-  "packageManager": "pnpm@12.11.2",
   "dependencies": {
     "opentype.js": "^2.0.0",
     "pdf-lib": "^1.17.1",

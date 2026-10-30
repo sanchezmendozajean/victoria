@@ -4,10 +4,10 @@ Los instaladores los genera **electron-builder** a partir de [`electron-builder.
 
 | Sistema | Comando | Resultado en `release/` |
 |---|---|---|
-| Windows | `pnpm build:win` | `Victoria-Setup-<versión>.exe` (NSIS, por usuario, con elección de carpeta) y `Victoria-<versión>-win-x64.exe` (portátil) |
-| Linux | `pnpm build:linux` | AppImage, `.deb` y `.rpm` (el `.rpm` necesita el paquete `rpm` instalado) |
+| Windows | `npm run build:win` | `Victoria-Setup-<versión>.exe` (NSIS, por usuario, con elección de carpeta) y `Victoria-<versión>-win-x64.exe` (portátil) |
+| Linux | `npm run build:linux` | AppImage, `.deb` y `.rpm` (el `.rpm` necesita el paquete `rpm` instalado) |
 
-Para construir en local hace falta `pnpm` en el PATH (electron-builder lo consulta para recoger las dependencias).
+Para construir en local basta con npm. (electron-builder elige el gestor de paquetes por el campo `packageManager` de `package.json`, por los archivos de bloqueo, o por quien lo lanza; el proyecto no declara `packageManager` para que `npm run build:win` funcione sin pnpm instalado. Si solo existe `pnpm-lock.yaml` y no `package-lock.json`, el empaquetador buscará pnpm.)
 
 Ambos asocian los archivos `.vict` con Victoria. La integración continua (`.github/workflows/ci.yml`) construye los dos en `windows-latest` y `ubuntu-latest` y, en Windows, arranca la aplicación **empaquetada** con `tests/e2e/packaged.spec.ts` (se ejecuta con `VICTORIA_PACKAGED_EXE=<ruta al ejecutable>`; sin esa variable se omite).
 
@@ -25,7 +25,7 @@ electron-builder firma solo si encuentra el certificado en variables de entorno;
 # certificado .pfx (EV u OV) en un secreto del repositorio
 CSC_LINK=<ruta o URL base64 del .pfx>
 CSC_KEY_PASSWORD=<contraseña>
-pnpm build:win
+npm run build:win
 ```
 
 En GitHub Actions: guardar `CSC_LINK` (el `.pfx` en base64) y `CSC_KEY_PASSWORD` como *secrets* y pasarlos como `env` al paso «Build Windows installer and portable». Un certificado OV (validación de organización) elimina el aviso con el tiempo; uno EV lo quita desde el primer día. Si el certificado vive en un token o en un servicio en la nube (Azure Trusted Signing, por ejemplo) se configura `win.signtoolOptions` / `win.azureSignOptions` en `electron-builder.yml`.
