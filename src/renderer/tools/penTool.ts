@@ -25,11 +25,12 @@ import { createConvertTool } from './anchorTools';
 import { penCursor, type PenBadge } from './cursors';
 import { createDirectSelectionTool } from './directSelectionTool';
 import { anchorAt, editableFrame, endpointAt, pickRadius, segmentAt, selectedFrames, toLocalPoint, toWorldPoint } from './pathHits';
+import { getPreferences } from '../prefs/preferences';
 import { dragged, snapTo, withLook } from './shared';
 import type { Tool, ToolHost } from './types';
 
-/** Pen: auto add/delete anchors on the selected path (specs/03 · Pluma · 9). "Preferencias" will make it optional. */
-const AUTO_ADD_DELETE = true;
+/** Pen: auto add/delete anchors on the selected path (specs/03 · Pluma · 9); optional in Preferencias. */
+const autoAddDelete = () => getPreferences().autoAddDelete;
 
 interface Drawing {
   id: string;
@@ -184,8 +185,8 @@ export function createPenTool(): Tool {
     const anchor = anchorAt(host, frames, p);
     overAnchor = !!anchor || !!anchorAt(host, selectedFrames(host), p);
     if (endpointAt(host, p)) return 'continue';
-    if (AUTO_ADD_DELETE && anchor) return 'delete';
-    if (AUTO_ADD_DELETE && segmentAt(host, frames, p)) return 'add';
+    if (autoAddDelete() && anchor) return 'delete';
+    if (autoAddDelete() && segmentAt(host, frames, p)) return 'add';
     return 'new';
   }
 
@@ -245,7 +246,7 @@ export function createPenTool(): Tool {
         continuePath(host, endpoint);
         return;
       }
-      if (AUTO_ADD_DELETE) {
+      if (autoAddDelete()) {
         const selected = selectedFrames(host).filter((x) => x.owner.type === 'path' || x.live);
         const anchor = anchorAt(host, selected, event.doc);
         const key = host.gestureKey();

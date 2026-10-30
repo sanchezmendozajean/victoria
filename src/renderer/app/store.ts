@@ -113,6 +113,7 @@ interface UiState {
   exportDialog: 'as' | 'screens' | null;
   /** Archivo › Imprimir… */
   printDialog: boolean;
+  preferencesDialog: boolean;
   /** Right click on the canvas: where the context menu opens (screen px). */
   canvasMenu: { x: number; y: number } | null;
   /** Properties dialog of a Space (grid and canvas colour), by id. */
@@ -143,6 +144,8 @@ interface UiState {
   openShapeDialog(kind: ShapeToolKind, at: Vec2): void;
   openExportDialog(mode: 'as' | 'screens'): void;
   openPrintDialog(): void;
+  openPreferencesDialog(): void;
+  closePreferencesDialog(): void;
   closePrintDialog(): void;
   closeExportDialog(): void;
   closeShapeDialog(): void;
@@ -235,6 +238,7 @@ export const useUi = create<UiState>()((set, get) => ({
   shapeDialog: null,
   exportDialog: null,
   printDialog: false,
+  preferencesDialog: false,
   canvasMenu: null,
   spaceProps: null,
 
@@ -280,6 +284,8 @@ export const useUi = create<UiState>()((set, get) => ({
   openShapeDialog: (kind, at) => set({ shapeDialog: { kind, at } }),
   openExportDialog: (mode) => set({ exportDialog: mode }),
   openPrintDialog: () => set({ printDialog: true }),
+  openPreferencesDialog: () => set({ preferencesDialog: true }),
+  closePreferencesDialog: () => set({ preferencesDialog: false }),
   closePrintDialog: () => set({ printDialog: false }),
   closeExportDialog: () => set({ exportDialog: null }),
   openModifierDialog: (modifierDialog) => set({ modifierDialog }),

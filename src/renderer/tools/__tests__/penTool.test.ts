@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { cornerAnchor, type Anchor, type PathNode } from '../../../core';
 import { penCursor } from '../cursors';
+import { DEFAULT_PREFERENCES, usePreferences } from '../../prefs/preferences';
 import { createPenTool } from '../penTool';
 import { click, createTestHost, drag, ev, selectedIds, type TestHost } from './fakeHost';
 
@@ -282,6 +283,19 @@ describe('Pen · auto add and delete on the selected path (9)', () => {
     expect(tool.cursor(false)).toBe(penCursor('delete'));
     click(tool, t, 50, 0);
     expect(only(t).anchors).toHaveLength(3);
+  });
+
+  it('is off when the preference says so: the cursor stays a plain pen and the segment no longer offers to add a point', () => {
+    const { t, tool } = setup();
+    const p = t.path([cornerAnchor({ x: 0, y: 0 }), cornerAnchor({ x: 100, y: 0 }), cornerAnchor({ x: 100, y: 100 })], false, false);
+    t.session.select({ spaceId: t.spaceId(), ids: [p.id] });
+    usePreferences.getState().set({ autoAddDelete: false });
+    try {
+      tool.onPointerMove(ev(50, 0), t.host);
+      expect(tool.cursor(false)).toBe(penCursor('new'));
+    } finally {
+      usePreferences.getState().set({ autoAddDelete: DEFAULT_PREFERENCES.autoAddDelete });
+    }
   });
 
   it('does nothing special over unselected paths', () => {

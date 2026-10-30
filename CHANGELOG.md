@@ -1,5 +1,16 @@
 # Changelog
 
+## Fase 12 — Pulido (en curso)
+
+### 12.1 Preferencias
+- **Edición › Preferencias…** (Ctrl+K): diálogo con efecto inmediato (sin Aceptar) y **Restablecer**. Primeras opciones: **añadir y eliminar puntos automáticamente con la Pluma** (antes una constante), **fidelidad del Lápiz 1–5** (de 5 px a 1 px de tolerancia; 3 es el 2,5 px de siempre) y **intervalo de autoguardado** (1–30 min; el manager lo lee en cada ciclo, así que el cambio vale para documentos ya abiertos).
+- Se guardan por usuario en el almacenamiento del navegador (no en el documento) y lo leído se valida: un valor desconocido o fuera de rango vuelve al predeterminado (`renderer/prefs/preferences.ts`, con su almacén de Zustand para la interfaz y `getPreferences()` para herramientas y gestor).
+- Pruebas: 3 unitarias de preferencias y autoguardado, 1 de la Pluma con la opción apagada y 1 e2e (abrir con Ctrl+K, cambiar, recargar y comprobar que se recuerda, Restablecer).
+
+### Pendiente
+- Preferencias: faltan **Atajos** (reasignar, y las alternativas para los atajos que Linux reserva, spec 09), «usar barra de título del sistema» (exige recrear la ventana), unidades de los documentos nuevos y tamaño de la interfaz.
+- Fase 12: espacios de trabajo de paneles y pantalla de inicio (12.2), rendimiento (12.3), instalador firmado y manual breve (12.4).
+
 ## Fase 11 — Imágenes, exportar, imprimir (en curso)
 
 ### 11.1 Colocar imágenes

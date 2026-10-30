@@ -70,6 +70,8 @@ export interface Names {
 }
 
 export interface ManagerDeps {
+  /** Milliseconds between autosaves; defaults to the policy's own interval. */
+  autosaveIntervalMs?(): number;
   files: FilesPort;
   prompts: Prompts;
   names: Names;
@@ -411,7 +413,7 @@ export class DocumentManager {
     for (const doc of this.docs_) {
       try {
         if (!doc.session.dirty) await this.dropAutosave(doc);
-        else if (doc.policy.shouldSave(doc.session.revision, this.clock())) await this.writeAutosave(doc);
+        else if (doc.policy.shouldSave(doc.session.revision, this.clock(), this.deps.autosaveIntervalMs?.())) await this.writeAutosave(doc);
       } catch {
         // A failed autosave is retried on the next tick; it must never interrupt the user.
       }

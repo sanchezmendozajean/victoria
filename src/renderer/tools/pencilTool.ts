@@ -9,13 +9,12 @@ import {
   type Anchor,
   type Vec2,
 } from '../../core';
+import { getPreferences, pencilTolerancePx } from '../prefs/preferences';
 import { endpointAt, toLocalPoint } from './pathHits';
 import type { EndpointHit } from './pathHits';
 import { dragged, withLook } from './shared';
 import type { Tool } from './types';
 
-/** Maximum deviation of the fitted curve from the freehand stroke, in screen pixels ("Fidelity" 2.5 px of Illustrator). */
-export const PENCIL_FIDELITY_PX = 2.5;
 /** The stroke closes when it ends this close (screen px) to where it started. */
 export const PENCIL_CLOSE_PX = 8;
 /** Raw samples closer than this (screen px) to the previous one are dropped. */
@@ -78,7 +77,7 @@ export function createPencilTool(): Tool {
         const endAnchor = (s.from.end === 'end' ? own[own.length - 1] : own[0]) as Anchor;
         const local = points.map((p) => toLocalPoint(f.world, p));
         local[0] = endAnchor.p;
-        const grown = fitCurve(local, PENCIL_FIDELITY_PX / zoom / (Math.sqrt(Math.abs(f.world[0] * f.world[3] - f.world[1] * f.world[2])) || 1));
+        const grown = fitCurve(local, pencilTolerancePx(getPreferences().pencilFidelity) / zoom / (Math.sqrt(Math.abs(f.world[0] * f.world[3] - f.world[1] * f.world[2])) || 1));
         if (grown.length < 2) return;
         let joined = joinPaths(own, s.from.end, grown, 'start');
         const removed: string[] = [];
@@ -92,7 +91,7 @@ export function createPencilTool(): Tool {
         return;
       }
 
-      let anchors: Anchor[] = fitCurve(points, PENCIL_FIDELITY_PX / zoom);
+      let anchors: Anchor[] = fitCurve(points, pencilTolerancePx(getPreferences().pencilFidelity) / zoom);
       if (anchors.length < 2) return;
       const layerId = host.activeLayerId;
       if (!layerId) return;

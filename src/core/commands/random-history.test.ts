@@ -82,7 +82,7 @@ describe('1000 random operations', () => {
       else if (session.undo()) depth--;
       expect(content(session.document)).toEqual(content(stateAtDepth[depth] as Document));
     }
-  });
+  }, 30_000); // heavy by design: replays 1000 operations step by step
 
   it('rejects nothing silently: failed or no-op commands never create history steps', () => {
     const { ids, session } = newSession(7);

@@ -49,6 +49,7 @@ const HANDLERS: Partial<Record<ShortcutAction, () => void | Promise<unknown>>> =
   'file.open': () => manager.open(),
   'file.place': placeImages,
   'file.print': () => useUi.getState().openPrintDialog(),
+  'edit.preferences': () => useUi.getState().openPreferencesDialog(),
   'file.save': () => manager.save(),
   'file.saveAs': () => manager.saveAs(),
   'file.saveCopy': () => manager.saveCopy(),

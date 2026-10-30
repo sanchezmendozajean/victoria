@@ -17,8 +17,9 @@ export class AutosavePolicy {
     this.lastAt = startAt;
   }
 
-  shouldSave(revision: number, now: number): boolean {
-    return revision !== this.lastRevision && now - this.lastAt >= this.intervalMs;
+  /** `intervalMs` overrides the interval the policy was made with (a setting that changed since). */
+  shouldSave(revision: number, now: number, intervalMs: number = this.intervalMs): boolean {
+    return revision !== this.lastRevision && now - this.lastAt >= intervalMs;
   }
 
   markSaved(revision: number, now: number): void {

@@ -209,7 +209,7 @@ Reglas de comportamiento que la spec no cubría y que se implementaron como lo h
 - **Cerrar**: clic sobre el primer ancla (cursor ○, con al menos 2 anclas) cierra y termina el trazado. Arrastrar al cerrar da al primer ancla manejadores simétricos (suave); con Alt solo gira el de salida. Cerrar es un solo paso de deshacer.
 - **Terminar abierto**: Esc, Intro, Ctrl+clic en vacío o cambiar de herramienta. Un trazado de un solo ancla se descarta al terminar.
 - **Continuar**: clic sobre el extremo de cualquier trazado abierto (visible y desbloqueado) lo continúa; si es su primer ancla, el trazado se invierte. Clic sobre el extremo de *otro* trazado abierto mientras se dibuja los **une** y termina.
-- **Añadir/eliminar automático**: solo actúa sobre trazados **seleccionados** (segmento: «+»; ancla: «−»). Sobre una forma viva la convierte en trazado en el mismo paso. Pendiente de hacerlo opcional en Preferencias (constante `AUTO_ADD_DELETE`).
+- **Añadir/eliminar automático**: solo actúa sobre trazados **seleccionados** (segmento: «+»; ancla: «−»). Sobre una forma viva la convierte en trazado en el mismo paso. Opcional en Preferencias (Ctrl+K).
 - **Ctrl** = Selección directa para ese clic; **Alt sobre un ancla** = Convertir punto de ancla para ese clic.
 - Cursores: pluma plana mientras se dibuja; «*» (nuevo), «/» (continuar), «○» (cerrar), «+», «−», «^» (convertir; también al pasar sobre el último ancla).
 
@@ -228,7 +228,7 @@ Reglas de comportamiento que la spec no cubría y que se implementaron como lo h
 
 ### Lápiz
 
-- Ajuste de Schneider con tolerancia **2,5 px de pantalla** (constante `PENCIL_FIDELITY_PX`; la fidelidad 1–5 de Preferencias llega con el panel de Preferencias). Cierra si termina a menos de 8 px del inicio, o con Alt.
+- Ajuste de Schneider con tolerancia **2,5 px de pantalla** (fidelidad 3 de Preferencias; 1–5 = 5, 3,5, 2,5, 1,75 y 1 px). Cierra si termina a menos de 8 px del inicio, o con Alt.
 - Si el trazo **empieza** en el extremo de un trazado abierto lo continúa; si **termina** en el extremo de otro, los une. **Pendiente**: editar/redibujar el tramo central de un trazado.
 
 ### Formas

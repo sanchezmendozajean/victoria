@@ -1,10 +1,12 @@
 import { useSyncExternalStore } from 'react';
 import { askUser } from '../app/dialogs';
 import { t, type TranslationKey } from '../i18n';
+import { getPreferences } from '../prefs/preferences';
 import { DocumentManager, type CloseChoice } from './manager';
 
 /** The one manager of the window; talks to the main process through the typed preload API. */
 export const manager = new DocumentManager({
+  autosaveIntervalMs: () => getPreferences().autosaveMinutes * 60_000,
   files: {
     openFile: (labels) => window.victoria.openFile(labels),
     saveFile: (request) => window.victoria.saveFile(request),
