@@ -49,7 +49,7 @@
 - Worker para booleanas: solo el panel Buscatrazos. El Buscatrazos *vivo* (modificador), «Desplazar trazado» y el Creador de formas siguen calculando en el hilo de la interfaz (se evalúan al dibujar y no se pueden esperar).
 - Atajos en Linux: el aviso de Alt+arrastrar existe, pero **no se ha podido ver en una máquina Linux real**; las demás alternativas de la spec 09 (Ctrl+Alt+arrastrar para duplicar) no se implementaron: la reasignación permite resolver los choques a mano.
 - Verificar fuera de esta máquina: instalación y desinstalación interactivas en Windows; AppImage, deb, rpm, asociación de archivos y Wayland en Linux; firma de código cuando haya certificado.
-- Rendimiento: no se probó con muchas imágenes grandes ni con miles de textos; las booleanas de más de 500 segmentos en Worker (spec 01) siguen sin Worker.
+- Rendimiento: no se probó con muchas imágenes grandes ni con miles de textos.
 - Pantalla de inicio: abrir con la pantalla de inicio por defecto cuando haya un instalador.
 - Preferencias: faltan **Atajos** (reasignar, y las alternativas para los atajos que Linux reserva, spec 09), «usar barra de título del sistema» (exige recrear la ventana), unidades de los documentos nuevos y tamaño de la interfaz.
 
