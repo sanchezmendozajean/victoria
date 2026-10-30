@@ -347,8 +347,8 @@
   color: var(--icon-active);
 }
 .vc-paintmodes.is-compact button {
-  width: 10px;
-  height: 16px;
+  width: var(--mode-w, 10px);
+  height: calc(var(--mode-w, 10px) + 6px);
   border-radius: 0;
 }
 .vc-paintmodes.is-compact button:hover {

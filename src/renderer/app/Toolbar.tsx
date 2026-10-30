@@ -125,11 +125,11 @@ export function Toolbar() {
         </div>
       ))}
 
-      <div className="vc-toolbar__paint">
-        <PaintWidget size={30} stacked={!twoColumns} />
+      <div className="vc-toolbar__paint" style={{ width: twoColumns ? 52 : 30 }}>
+        <PaintWidget size={twoColumns ? 52 : 30} stacked={!twoColumns} />
       </div>
       <div className="vc-toolbar__modes">
-        <PaintModes compact />
+        <PaintModes compact iconSize={twoColumns ? 17 : 10} />
       </div>
 
       <div className="vc-toolbar__section vc-toolbar__section--end">

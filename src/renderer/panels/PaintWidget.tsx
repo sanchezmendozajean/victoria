@@ -89,7 +89,7 @@ export function PaintWidget({ size = 36, testId = 'paint-widget', stacked = fals
 }
 
 /** Color / Gradient / None buttons for the active paint. */
-export function PaintModes({ compact = false }: { compact?: boolean }) {
+export function PaintModes({ compact = false, iconSize = compact ? 10 : 16 }: { compact?: boolean; iconSize?: number }) {
   const { look } = usePaintLook();
   const active = useUi((s) => s.activePaint);
   const paint = look[active];
@@ -100,10 +100,10 @@ export function PaintModes({ compact = false }: { compact?: boolean }) {
     { id: 'none', icon: 'paint-none', label: t('toolbar.paintNone'), key: '/', run: () => paintAsNone(active) },
   ] as const;
   return (
-    <div className={cx('vc-paintmodes', compact && 'is-compact')} role="group">
+    <div className={cx('vc-paintmodes', compact && 'is-compact')} style={compact ? { ['--mode-w' as string]: `${iconSize}px` } : undefined} role="group">
       {buttons.map((b) => (
         <button key={b.id} type="button" className={cx(mode === b.id && 'is-active')} aria-pressed={mode === b.id} data-testid={`paint-mode-${b.id}`} {...tip(b.label, b.key)} onClick={b.run}>
-          <Icon id={b.icon} size={compact ? 10 : 16} />
+          <Icon id={b.icon} size={iconSize} />
         </button>
       ))}
     </div>

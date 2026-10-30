@@ -141,8 +141,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 10px;
-  height: 16px;
+  width: var(--mode-w, 10px);
+  height: calc(var(--mode-w, 10px) + 6px);
   padding: 0;
   border: 0;
   background: transparent;
