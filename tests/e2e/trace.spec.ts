@@ -46,6 +46,15 @@ test.describe('Calco de imagen (Phase 11)', () => {
     await expect.poll(async () => Math.abs((await colours()).red - before.red) / before.red).toBeLessThan(0.05);
     expect(Math.abs((await colours()).blue - before.blue) / before.blue).toBeLessThan(0.05);
 
+    // Vista: outlines alone leave no red; the original picture and the result both show it.
+    const redNow = async () => (await colours()).red;
+    await page.getByTestId('trace-view').selectOption('outlines');
+    await expect.poll(redNow).toBeLessThan(before.red * 0.1);
+    await page.getByTestId('trace-view').selectOption('image');
+    await expect.poll(async () => Math.abs((await redNow()) - before.red) / before.red).toBeLessThan(0.05);
+    await page.getByTestId('trace-view').selectOption('result');
+    await expect.poll(async () => Math.abs((await redNow()) - before.red) / before.red).toBeLessThan(0.05);
+
     // Changing a setting traces again (one colour left: the red square disappears into the blue).
     await page.getByTestId('trace-colors').fill('2');
     await page.getByTestId('trace-colors').press('Enter');
@@ -57,9 +66,11 @@ test.describe('Calco de imagen (Phase 11)', () => {
     await expect(page.getByTestId('trace-preset')).toHaveCount(0);
     await page.keyboard.press('Control+z');
     await expect(page.getByTestId('trace-preset')).toBeVisible();
-    await page.keyboard.press('Control+z'); // back through the retraces
-    await page.keyboard.press('Control+z');
-    await page.keyboard.press('Control+z');
+    // Back through the retraces and view changes, one undo step each, to the plain picture.
+    for (let i = 0; i < 12 && (await page.getByTestId('trace-run').count()) === 0; i++) {
+      await page.keyboard.press('Control+z');
+      await page.waitForTimeout(100);
+    }
     await expect(page.getByTestId('trace-run')).toBeVisible();
     await expect.poll(async () => (await colours()).red).toBeGreaterThan(before.red * 0.95);
   });

@@ -1,7 +1,7 @@
 import { createCompound, createGroup, createPath } from '../model/factory';
 import type { IdGenerator } from '../model/ids';
 import type { Anchor, CompoundNode, GroupNode, ImageNode, Node } from '../model/types';
-import type { TraceParams } from '../trace/params';
+import type { TraceParams, TraceView } from '../trace/params';
 import type { TraceResult } from '../trace/trace';
 import { patchNode, replaceNode } from './node';
 import type { Command } from './command';
@@ -46,6 +46,13 @@ export function retrace(ids: IdGenerator, spaceId: string, group: GroupNode, par
   if (!info) throw new Error('Not a live trace');
   const children: Node[] = traceChildren(ids, result, info.width, info.height);
   return { ...patchNode<GroupNode>(spaceId, group.id, { children, trace: { ...info, params } }), label: 'trace.update' };
+}
+
+/** Vista of the live trace: what the canvas shows (result, outlines, the original image…). */
+export function setTraceView(spaceId: string, group: GroupNode, view: TraceView): Command {
+  const info = group.trace;
+  if (!info) throw new Error('Not a live trace');
+  return { ...patchNode<GroupNode>(spaceId, group.id, { trace: { ...info, view } }), label: 'trace.view' };
 }
 
 /** Expandir: the group keeps its paths and stops being live. */

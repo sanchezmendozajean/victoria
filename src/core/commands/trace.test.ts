@@ -8,7 +8,9 @@ import {
   makeTrace,
   paramsForPreset,
   placeImage,
+  buildScene,
   readVict,
+  setTraceView,
   retrace,
   sequentialIds,
   translation,
@@ -67,5 +69,26 @@ describe('live trace', () => {
     session.undo();
     const reopened = readVict(writeVict({ document: session.document, app: 'test' })).document;
     expect((getActiveSpace(reopened).layers[0]!.children[0] as GroupNode).trace?.resourceId).toBe('pic');
+  });
+
+  it('the view only changes what the canvas shows: it survives a new trace and never reaches the exports', () => {
+    const { ids, session, space, image, pixels } = setup();
+    const params = paramsForPreset('bw');
+    session.run(makeTrace(ids, space().id, image, params, traceImage(pixels, params)).command);
+    const group = () => space().layers[0]!.children[0] as GroupNode;
+    const region = { minX: 0, minY: 0, maxX: 400, maxY: 400 };
+    const exported = () => JSON.stringify(buildScene(space(), { resources: session.document.resources, region }));
+    const before = exported();
+
+    session.run(setTraceView(space().id, group(), 'image'));
+    expect(group().trace?.view).toBe('image');
+    expect(exported()).toBe(before); // exports always use the paths
+
+    const next = { ...params, noise: 2 };
+    session.run(retrace(ids, space().id, group(), next, traceImage(pixels, next)));
+    expect(group().trace?.view).toBe('image'); // tracing again keeps the view
+    session.undo();
+    session.undo();
+    expect(group().trace?.view).toBeUndefined();
   });
 });

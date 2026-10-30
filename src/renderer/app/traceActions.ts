@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { expandTrace, frameOf, makeTrace, paramsForPreset, retrace, selectOnly, type GroupNode, type ImageNode, type TraceParams, type TracePresetId } from '../../core';
+import { expandTrace, frameOf, makeTrace, paramsForPreset, retrace, selectOnly, setTraceView, type GroupNode, type ImageNode, type TraceParams, type TracePresetId, type TraceView } from '../../core';
 import { t } from '../i18n';
 import { decodePixels, runTrace, type TraceJob } from '../trace/tracer';
 import { askUser } from './dialogs';
@@ -75,6 +75,12 @@ export async function retraceSelected(params: TraceParams): Promise<void> {
   const still = result ? frameOf(c.space, group.id)?.node : undefined;
   if (!result || !still || still.type !== 'group' || !still.trace) return;
   c.session.run(retrace(c.session.ids, c.space.id, still, params, result));
+}
+
+/** Vista of the selected live trace: what the canvas shows (the result, outlines, the original picture…). */
+export function setSelectedTraceView(view: TraceView): void {
+  const s = selectedTrace();
+  if (s) s.c.session.run(setTraceView(s.c.space.id, s.group, view));
 }
 
 /** Expandir: the paths stay, the link with the picture ends. */

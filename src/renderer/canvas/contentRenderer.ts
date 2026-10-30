@@ -33,11 +33,13 @@ import {
   type Layer,
   type LayerChild,
   type Node,
+  type GroupNode,
   type Paint,
   type Rect,
   type Resources,
   type Space,
   type StrokeStyle,
+  type TraceInfo,
   type Viewport,
 } from '../../core';
 import { bitmapFor } from './imageCache';
@@ -468,7 +470,8 @@ function drawNode(env: Env, node: Node, cull: Rect, layer: Layer, alpha: number,
 
   switch (node.type) {
     case 'group':
-      if (isGroupShape(node)) paintGeometry(env, node, layer, a);
+      if (node.trace?.view && node.trace.view !== 'result') drawTraceView(env, node, node.trace, a, localCull, layer, inIsolation);
+      else if (isGroupShape(node)) paintGeometry(env, node, layer, a);
       else drawChildren(env, node.children, localCull, layer, a, inIsolation);
       break;
     case 'clipGroup': {
@@ -490,6 +493,29 @@ function drawNode(env: Env, node: Node, cull: Rect, layer: Layer, alpha: number,
       paintGeometry(env, node, layer, a);
   }
   ctx.restore();
+}
+
+/** Calco de imagen › Vista: the result, with its outlines, the outlines alone (over the picture or not), or the picture. */
+function drawTraceView(env: Env, node: GroupNode, trace: TraceInfo, alpha: number, cull: Rect, layer: Layer, inIsolation: boolean): void {
+  const view = trace.view;
+  const { ctx } = env;
+  if (view === 'image' || view === 'outlinesOverImage') {
+    const bitmap = env.images ? bitmapFor(env.images, trace.resourceId, env.onImageReady) : null;
+    if (!bitmap) drawPlaceholderImage(env, trace.width, trace.height);
+    else {
+      ctx.save();
+      ctx.globalAlpha = view === 'image' ? alpha : alpha * 0.5;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(bitmap, 0, 0, trace.width, trace.height);
+      ctx.restore();
+    }
+    if (view === 'image') return;
+  }
+  if (view === 'resultOutlines') drawChildren(env, node.children, cull, layer, alpha, inIsolation);
+  const before = env.outline;
+  env.outline = true;
+  drawChildren(env, node.children, cull, layer, alpha, inIsolation);
+  env.outline = before;
 }
 
 function drawChildren(env: Env, children: readonly LayerChild[], cull: Rect, layer: Layer, alpha: number, inIsolation: boolean): void {

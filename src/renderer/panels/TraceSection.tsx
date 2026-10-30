@@ -1,6 +1,6 @@
-import { TRACE_PRESETS, locateNode, paramsForPreset, type TraceParams, type TracePresetId } from '../../core';
+import { TRACE_PRESETS, TRACE_VIEWS, locateNode, paramsForPreset, type TraceParams, type TracePresetId } from '../../core';
 import { imageFactsOf } from '../app/imageObjectActions';
-import { cancelTrace, expandSelectedTrace, retraceSelected, traceSelectedImage, useTrace } from '../app/traceActions';
+import { cancelTrace, expandSelectedTrace, retraceSelected, setSelectedTraceView, traceSelectedImage, useTrace } from '../app/traceActions';
 import { Icon } from '../components/Icon';
 import { NumberInput } from '../components/NumberInput';
 import { t, type TranslationKey } from '../i18n';
@@ -80,6 +80,17 @@ export function TraceSection({ ctx, id }: { ctx: PanelContext; id: string }) {
       <Row>
         <span className="vc-plabel" style={{ width: 80 }}>{t('trace.preset')}</span>
         <Choice value={presetOf(params)} label={t('trace.preset')} testId="trace-preset" width={140} options={choices} onChange={(p) => p !== 'custom' && void retraceSelected(paramsForPreset(p))} />
+      </Row>
+      <Row>
+        <span className="vc-plabel" style={{ width: 80 }}>{t('trace.view')}</span>
+        <Choice
+          value={live.view ?? 'result'}
+          label={t('trace.view')}
+          testId="trace-view"
+          width={140}
+          options={TRACE_VIEWS.map((v) => ({ id: v, label: t(`trace.view.${v}` as TranslationKey) }))}
+          onChange={setSelectedTraceView}
+        />
       </Row>
       <Row>
         <span className="vc-plabel" style={{ width: 80 }}>{t('trace.mode')}</span>

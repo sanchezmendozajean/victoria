@@ -28,6 +28,10 @@ export const DEFAULT_TRACE: TraceParams = {
   ignoreWhite: true,
 };
 
+/** What the canvas shows of a live trace; the file and the exports always use the result. */
+export type TraceView = 'result' | 'resultOutlines' | 'outlines' | 'outlinesOverImage' | 'image';
+export const TRACE_VIEWS: readonly TraceView[] = ['result', 'resultOutlines', 'outlines', 'outlinesOverImage', 'image'];
+
 export type TracePresetId = 'high' | 'low' | 'colors3' | 'colors6' | 'colors16' | 'grays' | 'bw' | 'silhouette' | 'lineart' | 'technical' | 'logo';
 
 export const TRACE_PRESETS: Record<TracePresetId, Partial<TraceParams>> = {

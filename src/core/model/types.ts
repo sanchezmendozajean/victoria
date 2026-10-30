@@ -1,4 +1,4 @@
-import type { TraceParams } from '../trace/params';
+import type { TraceParams, TraceView } from '../trace/params';
 // Document model of specs/02-modelo-de-documento.md and specs/04-espacios-y-mesas.md.
 // Pure data (JSON-serialisable, no classes, no undefined-vs-missing games) so Immer patches and
 // the .vict format stay trivial. Coordinates are typographic points (pt), Y axis down.
@@ -158,6 +158,8 @@ export interface TraceInfo {
   width: number;
   height: number;
   params: TraceParams;
+  /** How the canvas shows it (default: the result). */
+  view?: TraceView;
 }
 
 export interface GroupNode extends BaseNode {
