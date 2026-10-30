@@ -22,12 +22,12 @@ export function usePaintLook() {
 
 const modeOf = (paint: Paint): 'color' | 'gradient' | 'none' => (paint.type === 'none' ? 'none' : paint.type === 'solid' || paint.type === 'swatch' ? 'color' : 'gradient');
 
-/** Drawn on a 14 px pixel grid (the catalogue icons are on 24 and blur when small): a hollow stroke behind, a black fill in front. */
+/** Drawn on a 14 px pixel grid (the catalogue icons are on 24 and blur when small): a hollow stroke behind, a white fill in front. */
 function DefaultColorsGlyph() {
   return (
     <svg width="14" height="14" viewBox="0 0 14 14" shapeRendering="crispEdges" aria-hidden="true">
       <path d="M5 5h9v9H5zM7 7v5h5V7z" fill="currentColor" fillRule="evenodd" />
-      <rect x="0.5" y="0.5" width="7" height="7" fill="#000" stroke="currentColor" />
+      <rect x="0.5" y="0.5" width="7" height="7" fill="#fff" stroke="currentColor" />
     </svg>
   );
 }
