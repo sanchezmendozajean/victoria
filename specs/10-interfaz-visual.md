@@ -103,7 +103,7 @@ Contextual, como la de Illustrator. Ejemplos a maquetar:
 - **Texto**: fuente (con vista previa) · estilo · tamaño · alineación de párrafo · color.
 - **Mesa de trabajo**: preset · orientación · nombre · X Y An Al · nueva · eliminar · opciones.
 
-### 3. Barra de herramientas (izquierda, 48 px, una columna; conmutable a dos columnas de 72 px)
+### 3. Barra de herramientas (izquierda, 30 px útiles + 1 px de borde, una columna sin márgenes laterales; conmutable a dos columnas de 60 px; botones cuadrados de 30 px con íconos de 18 px)
 Orden y separadores:
 1. Selección · Selección directa · Lazo
 2. Pluma (grupo: añadir/eliminar/convertir) · Curvatura · Lápiz (grupo)

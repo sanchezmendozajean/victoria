@@ -117,7 +117,7 @@ export function Toolbar() {
                   openFlyout(slot, event.currentTarget);
                 }}
               >
-                <Icon id={display} size={20} />
+                <Icon id={display} size={18} />
                 {isGroup && <span className="vc-toolbar__corner" />}
               </button>
             );
@@ -126,7 +126,7 @@ export function Toolbar() {
       ))}
 
       <div className="vc-toolbar__paint">
-        <PaintWidget size={36} />
+        <PaintWidget size={30} />
       </div>
       <div className="vc-toolbar__modes">
         <PaintModes compact />
@@ -134,10 +134,10 @@ export function Toolbar() {
 
       <div className="vc-toolbar__section vc-toolbar__section--end">
         <button type="button" className="vc-toolbar__tool" {...tip(t('toolbar.drawMode'), formatAccelerator('Shift+D', os))}>
-          <Icon id="draw-normal" size={20} />
+          <Icon id="draw-normal" size={18} />
         </button>
         <button type="button" className="vc-toolbar__tool" {...tip(t('toolbar.screenMode'), 'F')}>
-          <Icon id="screen-mode" size={20} />
+          <Icon id="screen-mode" size={18} />
         </button>
       </div>
 

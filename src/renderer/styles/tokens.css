@@ -49,7 +49,7 @@
   --shadow-artboard: 0 1px 3px rgba(0,0,0,.4);
   --h-titlebar: 32px; --h-control-bar: 36px; --h-doc-tabs: 30px; --h-spaces-bar: 28px;
   --h-status: 24px; --h-panel-tabs: 24px; --h-ruler: 18px; --h-space-pill: 22px;
-  --w-toolbar: 48px; --w-toolbar-2col: 72px; --w-panels: 280px; --w-panel-strip: 36px;
+  --w-toolbar: 31px; --w-toolbar-2col: 61px; --w-panels: 280px; --w-panel-strip: 36px;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
