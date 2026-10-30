@@ -64,6 +64,8 @@ interface UiState {
   /** Last tool used in each grouped slot, keyed by the slot's default tool. */
   slotTool: Partial<Record<ToolId, ToolId>>;
   toolbarTwoColumns: boolean;
+  /** Id of the crop group whose window can be pulled on the canvas ("Recortar imagen" is on), else null. */
+  cropMode: string | null;
 
   panels: PanelLayout;
   /** Layouts of the workspaces that are not the current one (the current one is `panels`). */
@@ -182,6 +184,7 @@ interface UiState {
   collapsePanel(panel: PanelId): void;
   resetPanels(): void;
   setStripOpen(panel: PanelId | null): void;
+  setCropMode(id: string | null): void;
 }
 
 /** Interface preference (not document data): the toolbar's column count survives restarts. */
@@ -233,6 +236,7 @@ export const useUi = create<UiState>()((set, get) => ({
   activeTool: 'tool-pen',
   slotTool: {},
   toolbarTwoColumns: loadToolbarColumns(),
+  cropMode: null,
 
   panels: stored.panels,
   savedLayouts: stored.saved,
@@ -370,6 +374,7 @@ export const useUi = create<UiState>()((set, get) => ({
   collapsePanel: (panel) => set((s) => ({ panels: movePanelToStrip(s.panels, panel), stripOpen: null })),
   resetPanels: () => set((s) => ({ panels: workspaceLayout(s.workspace), stripOpen: null })),
   setStripOpen: (stripOpen) => set({ stripOpen }),
+  setCropMode: (cropMode) => set({ cropMode }),
 }));
 
 /** Tool shown in a slot: the last one used, or its default. */

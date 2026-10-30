@@ -39,7 +39,7 @@ Ctrl+Z / Mayús+Ctrl+Z deshacen y rehacen **todo** (el historial es exacto, tamb
 ## 5. Imágenes y vectorización
 
 - **Colocar** (Mayús+Ctrl+P) o **soltar archivos** sobre el lienzo: PNG, JPEG, WebP, SVG y la primera página de un PDF.
-- Con una imagen seleccionada, **Propiedades › Imagen** muestra la resolución efectiva (en rojo por debajo de 150 ppp) y permite **Recortar imagen** (no destructivo; **Aplicar recorte** corta los píxeles), **Desincrustar** (guarda la imagen como archivo vinculado), **Incrustar** y **Reubicar** si un vínculo se rompió.
+- Con una imagen seleccionada, **Propiedades › Imagen** muestra la resolución efectiva (en rojo por debajo de 150 ppp) y permite **Recortar imagen** (no destructivo: arrastras los tiradores sobre el lienzo o escribes los márgenes; Enter termina; **Aplicar recorte** corta los píxeles), **Desincrustar** (guarda la imagen como archivo vinculado), **Incrustar** y **Reubicar** si un vínculo se rompió.
 - **Calco de imagen:** con una imagen seleccionada, **Propiedades › Calco de imagen › Calcar** la convierte en trazados de colores planos. Después puedes cambiar el ajuste (Logotipo, Arte lineal, Blanco y negro, 16 colores…), el número de colores, el ruido y las esquinas, y se recalcula; **Expandir** deja los trazados como un grupo normal.
 
 ## 6. Exportar e imprimir

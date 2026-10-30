@@ -7,8 +7,10 @@ import {
   relinkSelectedImage,
   removeSelectedCrop,
   setCropInsets,
+  toggleCropMode,
   unembedSelectedImage,
 } from '../app/imageObjectActions';
+import { useUi } from '../app/store';
 import { Icon } from '../components/Icon';
 import { NumberInput } from '../components/NumberInput';
 import { ptToUnit, unitToPt } from '../canvas/units';
@@ -20,6 +22,7 @@ const SIDES = ['left', 'top', 'right', 'bottom'] as const;
 
 /** Imagen (specs/08): crop, resolution and link of the selected picture, or of the picture under a crop. */
 export function ImageSection({ ctx, id }: { ctx: PanelContext; id: string }) {
+  const cropMode = useUi((s) => s.cropMode);
   const facts = imageFactsOf(ctx.session, ctx.space, id);
   if (!facts) return null;
   const units = ctx.session.document.meta.units;
@@ -52,9 +55,9 @@ export function ImageSection({ ctx, id }: { ctx: PanelContext; id: string }) {
         </span>
       </Row>
       <div className="vc-pgrid">
-        <button type="button" className="vc-pbutton" data-testid="image-crop" disabled={!!crop} onClick={cropSelectedImage}>
+        <button type="button" className="vc-pbutton" data-testid="image-crop" aria-pressed={!!crop && cropMode === crop.clip.id} onClick={crop ? toggleCropMode : cropSelectedImage}>
           <Icon id="crop-image" size={14} />
-          {t('image.crop')}
+          {crop ? t('image.cropEdit') : t('image.crop')}
         </button>
         <button type="button" className="vc-pbutton" data-testid="image-crop-apply" disabled={!crop || link === 'broken'} onClick={() => void applySelectedCrop()}>
           <Icon id="check" size={14} />

@@ -10,7 +10,7 @@ import { createDirectSelectionTool } from './directSelectionTool';
 import { createHandTool } from './handTool';
 import { createLassoTool } from './lassoTool';
 import { createPenTool } from './penTool';
-import { createSelectionTool } from './selectionTool';
+import { createCropAwareSelection } from './cropAwareSelection';
 import { createShapeBuilderTool } from './shapeBuilderTool';
 import { createShapeTool } from './shapeTools';
 import { createTextTool } from './textTool';
@@ -31,7 +31,7 @@ export function createTool(id: ToolId): Tool {
     case 'tool-zoom':
       return createZoomTool();
     case 'tool-select':
-      return createSelectionTool();
+      return createCropAwareSelection();
     case 'tool-direct-select':
     case 'tool-group-select':
       return createDirectSelectionTool(id);

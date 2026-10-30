@@ -17,7 +17,6 @@ test.describe('cropping and linking images (Phase 11)', () => {
     await ctx.app.evaluate(({ dialog }, picked) => {
       dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [picked] });
     }, file);
-    await ctx.page.getByTestId('canvas-surface').click({ position: { x: 5, y: 5 } });
     await ctx.page.keyboard.press('Control+Shift+p');
     await ctx.page.getByTestId('panel-group').nth(0).locator('[data-panel="properties"]').click();
   });
@@ -56,6 +55,55 @@ test.describe('cropping and linking images (Phase 11)', () => {
 
     await page.keyboard.press('Control+z'); // back to the crop
     await expect(page.getByTestId('image-inset-left')).toBeVisible();
+    await page.getByTestId('image-crop-remove').click();
+    await expect.poll(redPixels).toBeGreaterThan(whole * 0.95);
+  });
+
+  test('Recortar imagen puts handles on the canvas: pulling the east one cuts the picture; Enter ends the mode', async () => {
+    const { page } = ctx;
+    await page.keyboard.press('Control+1'); // 100 %: the red picture is easy to find on the canvas
+    await expect.poll(redPixels).toBeGreaterThan(500);
+    const whole = await redPixels();
+    // Bounding box of the red pixels, in CSS pixels of the drawing surface.
+    const bounds = () =>
+      page.getByTestId('canvas-content').evaluate((el) => {
+        const canvas = el as HTMLCanvasElement;
+        const dpr = canvas.width / canvas.getBoundingClientRect().width;
+        const data = canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height).data;
+        let minX = Infinity;
+        let maxX = -Infinity;
+        let minY = Infinity;
+        let maxY = -Infinity;
+        for (let y = 0; y < canvas.height; y++) {
+          for (let x = 0; x < canvas.width; x++) {
+            const i = (y * canvas.width + x) * 4;
+            if ((data[i] ?? 0) > 200 && (data[i + 1] ?? 255) < 40 && (data[i + 2] ?? 255) < 40) {
+              minX = Math.min(minX, x);
+              maxX = Math.max(maxX, x);
+              minY = Math.min(minY, y);
+              maxY = Math.max(maxY, y);
+            }
+          }
+        }
+        return { minX: minX / dpr, maxX: (maxX + 1) / dpr, minY: minY / dpr, maxY: (maxY + 1) / dpr };
+      });
+    const picture = await bounds();
+    const surface = (await page.getByTestId('canvas-surface').boundingBox())!;
+
+    await page.getByTestId('image-crop').click();
+    await expect(page.getByTestId('image-crop')).toHaveAttribute('aria-pressed', 'true');
+    const y = surface.y + (picture.minY + picture.maxY) / 2;
+    await page.mouse.move(surface.x + picture.maxX, y);
+    await page.mouse.down();
+    await page.mouse.move(surface.x + (picture.minX + picture.maxX) / 2, y, { steps: 6 });
+    await page.mouse.up();
+    await expect.poll(async () => (await redPixels()) / whole).toBeLessThan(0.7);
+    await expect.poll(async () => (await redPixels()) / whole).toBeGreaterThan(0.3);
+    // The number field agrees with what was pulled.
+    await expect(page.getByTestId('image-inset-right')).not.toHaveValue('0');
+
+    await page.keyboard.press('Enter');
+    await expect(page.getByTestId('image-crop')).toHaveAttribute('aria-pressed', 'false');
     await page.getByTestId('image-crop-remove').click();
     await expect.poll(redPixels).toBeGreaterThan(whole * 0.95);
   });

@@ -866,6 +866,7 @@
   "image.linked": "Vinculada a {name}",
   "image.broken": "Vínculo roto: falta {name}",
   "image.crop": "Recortar imagen",
+  "image.cropEdit": "Editar recorte en el lienzo",
   "image.cropApply": "Aplicar recorte",
   "image.cropRemove": "Quitar recorte",
   "image.cropFailed": "No se pudo recortar la imagen.",

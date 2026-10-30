@@ -24,6 +24,7 @@ import { cropPicture } from '../canvas/cropBitmap';
 import { t } from '../i18n';
 import { askUser } from './dialogs';
 import { actionContext } from './selectionActions';
+import { useUi } from './store';
 
 export type LinkState = 'embedded' | 'linked' | 'broken';
 
@@ -66,6 +67,23 @@ export function cropSelectedImage(): void {
   const { c, facts } = s;
   const { command, clip } = cropImage(c.session.ids, c.space.id, facts.image, { x: 0, y: 0, w: facts.image.width, h: facts.image.height });
   c.session.run(command, selectOnly(c.space.id, [clip.id]));
+  startCropMode(clip.id);
+}
+
+/** The handles live in the Selection tool, so it takes over. */
+function startCropMode(clipId: string): void {
+  const ui = useUi.getState();
+  ui.setActiveTool('tool-select');
+  ui.setCropMode(clipId);
+}
+
+/** Turns the on-canvas crop handles on or off for the selected crop. */
+export function toggleCropMode(): void {
+  const s = selectedFacts();
+  if (!s?.facts.crop) return;
+  const ui = useUi.getState();
+  if (ui.cropMode === s.facts.crop.clip.id) ui.setCropMode(null);
+  else startCropMode(s.facts.crop.clip.id);
 }
 
 /** Moves the edges of the crop; `insets` are distances from each side of the image, in image units. */
