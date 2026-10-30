@@ -55,7 +55,7 @@ export function PaintWidget({ size = 36, testId = 'paint-widget', stacked = fals
     <div className="vc-paintwidget" style={{ width: size, height: size }} data-testid={testId} {...tip(t('toolbar.fillStroke'))}>
       <div
         className={cx('vc-paintwidget__stroke', active === 'stroke' && 'is-active', strokeNone && 'is-none', look.stroke.mixed && 'is-mixed')}
-        style={{ width: chip, height: chip, left: size - chip - 2, top: size - chip - 2, ...(strokeCss ? { background: strokeCss } : {}) }}
+        style={{ width: chip, height: chip, left: size - chip, top: size - chip, ...(strokeCss ? { background: strokeCss } : {}) }}
         data-testid={`${testId}-stroke`}
         data-active={active === 'stroke'}
         onClick={() => setActive('stroke')}
@@ -64,7 +64,7 @@ export function PaintWidget({ size = 36, testId = 'paint-widget', stacked = fals
       />
       <div
         className={cx('vc-paintwidget__fill', active === 'fill' && 'is-active', fillNone && 'is-none', look.fill.mixed && 'is-mixed')}
-        style={{ width: chip, height: chip, left: 2, top: 2, ...(fillCss ? { background: fillCss } : {}) }}
+        style={{ width: chip, height: chip, left: 0, top: 0, ...(fillCss ? { background: fillCss } : {}) }}
         data-testid={`${testId}-fill`}
         data-active={active === 'fill'}
         onClick={() => setActive('fill')}
