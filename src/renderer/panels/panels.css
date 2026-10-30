@@ -306,6 +306,24 @@
   bottom: -4px;
 }
 
+/* Defaults and swap above the widget (one-column toolbar): in flow, not floating over its corners. */
+.vc-paintstack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.vc-paintstack__row {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 2px;
+}
+.vc-paintstack .vc-paintwidget__swap,
+.vc-paintstack .vc-paintwidget__defaults {
+  position: static;
+}
+
 .vc-paintmodes {
   display: flex;
 }

@@ -27,7 +27,7 @@ const modeOf = (paint: Paint): 'color' | 'gradient' | 'none' => (paint.type === 
  * bottom-right. A click makes one active, a double click opens the colour picker; the curved arrow swaps
  * (Mayús+X) and the small icon restores the defaults (D).
  */
-export function PaintWidget({ size = 36, testId = 'paint-widget' }: { size?: number; testId?: string }) {
+export function PaintWidget({ size = 36, testId = 'paint-widget', stacked = false }: { size?: number; testId?: string; stacked?: boolean }) {
   useShortcuts();
   const { look, resources } = usePaintLook();
   const active = useUi((s) => s.activePaint);
@@ -40,7 +40,18 @@ export function PaintWidget({ size = 36, testId = 'paint-widget' }: { size?: num
   const fillNone = !look.fill.mixed && look.fill.value.type === 'none';
   const strokeNone = !look.stroke.mixed && look.stroke.value.type === 'none';
 
-  return (
+  const swap = (
+    <button type="button" className="vc-paintwidget__swap" data-testid={`${testId}-swap`} {...tip(t('toolbar.swap'), formatAccelerator(SHORTCUTS['paint.swap'], os))} onClick={swapPaints}>
+      <Icon id="swap-fill-stroke" size={12} />
+    </button>
+  );
+  const defaults = (
+    <button type="button" className="vc-paintwidget__defaults" data-testid={`${testId}-defaults`} {...tip(t('toolbar.defaults'), 'D')} onClick={defaultPaints}>
+      <Icon id="default-colors" size={12} />
+    </button>
+  );
+
+  const widget = (
     <div className="vc-paintwidget" style={{ width: size, height: size }} data-testid={testId} {...tip(t('toolbar.fillStroke'))}>
       <div
         className={cx('vc-paintwidget__stroke', active === 'stroke' && 'is-active', strokeNone && 'is-none', look.stroke.mixed && 'is-mixed')}
@@ -60,12 +71,19 @@ export function PaintWidget({ size = 36, testId = 'paint-widget' }: { size?: num
         onDoubleClick={(e) => openPicker('fill', e.currentTarget)}
         {...tip(t('toolbar.fill'), 'X')}
       />
-      <button type="button" className="vc-paintwidget__swap" data-testid={`${testId}-swap`} {...tip(t('toolbar.swap'), formatAccelerator(SHORTCUTS['paint.swap'], os))} onClick={swapPaints}>
-        <Icon id="swap-fill-stroke" size={12} />
-      </button>
-      <button type="button" className="vc-paintwidget__defaults" data-testid={`${testId}-defaults`} {...tip(t('toolbar.defaults'), 'D')} onClick={defaultPaints}>
-        <Icon id="default-colors" size={12} />
-      </button>
+      {!stacked && swap}
+      {!stacked && defaults}
+    </div>
+  );
+  // One-column toolbar: defaults and swap sit in a row above the widget.
+  if (!stacked) return widget;
+  return (
+    <div className="vc-paintstack">
+      <div className="vc-paintstack__row">
+        {defaults}
+        {swap}
+      </div>
+      {widget}
     </div>
   );
 }

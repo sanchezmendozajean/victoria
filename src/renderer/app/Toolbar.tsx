@@ -126,7 +126,7 @@ export function Toolbar() {
       ))}
 
       <div className="vc-toolbar__paint">
-        <PaintWidget size={30} />
+        <PaintWidget size={30} stacked={!twoColumns} />
       </div>
       <div className="vc-toolbar__modes">
         <PaintModes compact />
