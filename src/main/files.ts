@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { mkdir, readdir, readFile, rename, stat, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { AutosaveEntry, DialogLabels, ExportFile, ExportSaveRequest, ExportWriteResult, OpenedFile, RecentFile, SaveRequest, SaveResult } from '../shared/ipc';
+import { unzipSync } from 'fflate';
 import { pushRecent, sanitizeRecent } from './recentList';
 
 const EXTENSION = 'vict';
@@ -46,6 +47,21 @@ export async function listRecent(): Promise<RecentFile[]> {
     }
   }
   return out;
+}
+
+const THUMBNAIL_ENTRY = 'thumbnail.png';
+
+/** The preview picture saved inside a recent document (null when it has none, or the path is not on the list). */
+export async function recentThumbnail(file: unknown): Promise<Uint8Array | null> {
+  if (typeof file !== 'string' || !(await readRecent()).includes(file)) return null;
+  try {
+    if ((await stat(file)).size > MAX_FILE_BYTES) return null;
+    // Only the preview is inflated; the rest of the archive is skipped.
+    const entries = unzipSync(new Uint8Array(await readFile(file)), { filter: (entry) => entry.name === THUMBNAIL_ENTRY });
+    return entries[THUMBNAIL_ENTRY] ?? null;
+  } catch {
+    return null;
+  }
 }
 
 /** Opens a document from the recent list; any other path is refused (the renderer cannot read arbitrary files). */

@@ -134,6 +134,7 @@ export const IPC = {
   openImages: 'file:open-images',
   recentList: 'file:recent-list',
   recentOpen: 'file:recent-open',
+  recentThumbnail: 'file:recent-thumbnail',
   readLinkedImage: 'file:read-linked-image',
   exportSave: 'export:save',
   exportChooseFolder: 'export:choose-folder',
@@ -172,6 +173,8 @@ export interface VictoriaApi {
   listRecentFiles(): Promise<RecentFile[]>;
   /** Opens one of the listed documents; null when it is not on the list any more or cannot be read. */
   openRecentFile(path: string): Promise<OpenedFile | null>;
+  /** The preview picture (PNG) saved inside a listed document, or null. */
+  recentThumbnail(path: string): Promise<Uint8Array | null>;
   /** The bytes of the file a linked image points at; null when it is missing, too big or not a PNG, JPEG or WebP. */
   readLinkedImage(path: string): Promise<Uint8Array | null>;
   /** Writes atomically (temp file + rename). null if the user cancels the Save As dialog. */

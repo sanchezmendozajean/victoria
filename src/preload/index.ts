@@ -17,6 +17,7 @@ const api: VictoriaApi = {
   openImages: (labels) => ipcRenderer.invoke(IPC.openImages, labels),
   listRecentFiles: () => ipcRenderer.invoke(IPC.recentList),
   openRecentFile: (file) => ipcRenderer.invoke(IPC.recentOpen, file),
+  recentThumbnail: (file) => ipcRenderer.invoke(IPC.recentThumbnail, file),
   readLinkedImage: (file) => ipcRenderer.invoke(IPC.readLinkedImage, file),
   exportSaveFile: (request) => ipcRenderer.invoke(IPC.exportSave, request),
   chooseExportFolder: (title) => ipcRenderer.invoke(IPC.exportChooseFolder, title),

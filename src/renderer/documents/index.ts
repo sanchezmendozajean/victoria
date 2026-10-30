@@ -1,11 +1,34 @@
 import { useSyncExternalStore } from 'react';
 import { askUser } from '../app/dialogs';
+import { getActiveSpace, type DocumentSession } from '../../core';
+import { prepareAssets, rasterize } from '../export/raster';
 import { t, type TranslationKey } from '../i18n';
 import { getPreferences } from '../prefs/preferences';
 import { DocumentManager, type CloseChoice } from './manager';
 
 /** The one manager of the window; talks to the main process through the typed preload API. */
+/** Longest side, in pixels, of the preview saved in a document. */
+const THUMBNAIL_SIDE = 256;
+
+async function thumbnailOf(session: DocumentSession): Promise<Uint8Array | null> {
+  const space = getActiveSpace(session.document);
+  const board = space.artboards[0];
+  if (!board || board.w <= 0 || board.h <= 0) return null;
+  await prepareAssets(space, session.images);
+  return rasterize({
+    space,
+    resources: session.document.resources,
+    images: session.images,
+    region: { minX: board.x, minY: board.y, maxX: board.x + board.w, maxY: board.y + board.h },
+    ppi: (72 * THUMBNAIL_SIDE) / Math.max(board.w, board.h),
+    background: '#ffffff',
+    format: 'png',
+    quality: 90,
+  });
+}
+
 export const manager = new DocumentManager({
+  thumbnail: thumbnailOf,
   autosaveIntervalMs: () => getPreferences().autosaveMinutes * 60_000,
   files: {
     openFile: (labels) => window.victoria.openFile(labels),

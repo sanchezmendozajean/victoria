@@ -43,6 +43,7 @@ function PreferencesForm() {
         )}
         <h3 className="vc-prefs__group">{t('prefs.files')}</h3>
         <CheckRow checked={prefs.startScreen} onChange={(startScreen) => set({ startScreen })} label={t('prefs.startScreen')} testId="pref-start-screen" />
+        <CheckRow checked={prefs.placeLinked} onChange={(placeLinked) => set({ placeLinked })} label={t('prefs.placeLinked')} testId="pref-place-linked" />
         {row(
           t('prefs.autosave'),
           <NumberInput value={prefs.autosaveMinutes} onCommit={(v) => set({ autosaveMinutes: v })} min={AUTOSAVE_MINUTES.min} max={AUTOSAVE_MINUTES.max} step={1} decimals={0} suffix={t('prefs.minutes')} width={110} testId="pref-autosave" tooltip={t('prefs.autosave')} />,

@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
-import { existsSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { unzipSync } from 'fflate';
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { launchApp, type Launched } from './launch';
@@ -70,5 +71,48 @@ test.describe('cropping and linking images (Phase 11)', () => {
     expect(existsSync(target)).toBe(true);
     await page.getByTestId('image-embed').click();
     await expect(page.getByTestId('image-link')).toHaveAttribute('data-state', 'embedded');
+  });
+});
+
+test.describe('placing linked images (Phase 11)', () => {
+  test('with the preference on, Colocar links the file; the .vict leaves the pixels out and reading it brings them back from disk', async () => {
+    const dir = mkdtempSync(path.join(tmpdir(), 'victoria-linked-'));
+    const picture = path.join(dir, 'rojo.png');
+    const doc = path.join(dir, 'doc.vict');
+    writeFileSync(picture, redPng(200));
+    const { app, page } = await launchApp();
+    try {
+      await app.evaluate(({ dialog }, files) => {
+        dialog.showOpenDialog = async (...args: unknown[]) => {
+          const options = (args[1] ?? args[0]) as { filters?: Array<{ extensions: string[] }> };
+          const isImages = options.filters?.some((f) => f.extensions.includes('png'));
+          return { canceled: false, filePaths: [isImages ? files.picture : files.doc] };
+        };
+        dialog.showSaveDialog = async () => ({ canceled: false, filePath: files.doc });
+      }, { picture, doc });
+
+      await page.keyboard.press('v'); // the Pen would add a point where we click
+      await page.keyboard.press('Control+k');
+      await page.getByTestId('pref-place-linked').check();
+      await page.keyboard.press('Escape');
+      await page.getByTestId('panel-group').nth(0).locator('[data-panel="properties"]').click();
+      await page.keyboard.press('Control+Shift+p');
+      await expect(page.getByTestId('image-link')).toHaveAttribute('data-state', 'linked');
+
+      await page.keyboard.press('Control+s');
+      await expect.poll(() => existsSync(doc)).toBe(true);
+      // The file does not carry the picture.
+      expect(Object.keys(unzipSync(readFileSync(doc))).filter((name) => name.startsWith('images/'))).toEqual([]);
+
+      await page.keyboard.press('Control+w');
+      await expect(page.getByTestId('start-screen')).toBeVisible();
+      await page.keyboard.press('Control+o');
+      await expect(page.getByTestId('canvas-surface')).toBeVisible();
+      await page.keyboard.press('v'); // the Pen would add a point where we click
+      await page.keyboard.press('Control+a');
+      await expect(page.getByTestId('image-link')).toHaveAttribute('data-state', 'linked');
+    } finally {
+      await app.close();
+    }
   });
 });

@@ -729,6 +729,7 @@
   "start.preset.Carta": "Carta",
   "start.preset.Icono 24": "Ícono 24 px",
   "start.preset.Instagram": "Instagram",
+  "prefs.placeLinked": "Colocar imágenes vinculadas al archivo (en vez de incrustarlas)",
   "prefs.reset": "Restablecer",
   "prefs.close": "Cerrar",
   "print.title": "Imprimir",

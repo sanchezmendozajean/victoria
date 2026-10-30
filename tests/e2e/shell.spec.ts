@@ -80,6 +80,7 @@ test('the renderer is sandboxed and only sees the typed API', async () => {
     'readClipboard',
     'readFont',
     'readLinkedImage',
+    'recentThumbnail',
     'saveFile',
     'setOverlayColors',
     'toggleMaximizeWindow',

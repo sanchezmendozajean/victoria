@@ -10,9 +10,11 @@ export interface Preferences {
   autosaveMinutes: number;
   /** Open with the start screen instead of an empty document. */
   startScreen: boolean;
+  /** Archivo › Colocar links the picture to its file instead of embedding it. */
+  placeLinked: boolean;
 }
 
-export const DEFAULT_PREFERENCES: Preferences = { autoAddDelete: true, pencilFidelity: 3, autosaveMinutes: 1, startScreen: false };
+export const DEFAULT_PREFERENCES: Preferences = { autoAddDelete: true, pencilFidelity: 3, autosaveMinutes: 1, startScreen: false, placeLinked: false };
 
 export const AUTOSAVE_MINUTES = { min: 1, max: 30 } as const;
 const STORAGE_KEY = 'victoria.preferences';
@@ -31,6 +33,7 @@ export function sanitizePreferences(raw: unknown): Preferences {
     pencilFidelity: Number.isInteger(fidelity) && fidelity >= 1 && fidelity <= 5 ? (fidelity as Preferences['pencilFidelity']) : DEFAULT_PREFERENCES.pencilFidelity,
     autosaveMinutes: Number.isFinite(minutes) && minutes >= AUTOSAVE_MINUTES.min && minutes <= AUTOSAVE_MINUTES.max ? Math.round(minutes) : DEFAULT_PREFERENCES.autosaveMinutes,
     startScreen: typeof source.startScreen === 'boolean' ? source.startScreen : DEFAULT_PREFERENCES.startScreen,
+    placeLinked: typeof source.placeLinked === 'boolean' ? source.placeLinked : DEFAULT_PREFERENCES.placeLinked,
   };
 }
 

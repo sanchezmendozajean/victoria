@@ -16,6 +16,7 @@ import {
 } from '../../core';
 import { manager } from '../documents';
 import { t, type TranslationKey } from '../i18n';
+import { getPreferences } from '../prefs/preferences';
 import { askUser } from './dialogs';
 import { actionContext } from './selectionActions';
 import { useUi } from './store';
@@ -26,6 +27,8 @@ const CASCADE = 24;
 export interface PickedImage {
   name: string;
   bytes: Uint8Array;
+  /** Absolute path of the file, when it came from the file dialog (dropped files have none and are always embedded). */
+  path?: string;
 }
 
 const baseName = (path: string) => path.split(/[\\/]/).pop() ?? path;
@@ -114,7 +117,9 @@ export async function placeImageFiles(files: readonly PickedImage[], at?: Vec2):
     }
     const size = naturalSize(added.info);
     const offset = placed.length * CASCADE;
-    const node = createImage(c.session.ids, added.hash, size.width, size.height, translation(centre.x - size.width / 2 + offset, centre.y - size.height / 2 + offset));
+    const bare = createImage(c.session.ids, added.hash, size.width, size.height, translation(centre.x - size.width / 2 + offset, centre.y - size.height / 2 + offset));
+    const linked = getPreferences().placeLinked && !!file.path;
+    const node = linked ? { ...bare, embedded: false, linkedPath: file.path } : bare;
     c.session.run(
       placeImage(c.space.id, layerId, node, { width: added.info.width, height: added.info.height, format: added.info.format }),
       selectOnly(c.space.id, [...placed, node.id]),
@@ -134,5 +139,5 @@ export async function placeImageFiles(files: readonly PickedImage[], at?: Vec2):
 export async function placeImages(): Promise<void> {
   if (!manager.active) return;
   const picked = await window.victoria.openImages({ title: t('image.pickTitle'), filterName: t('image.fileDialog') });
-  await placeImageFiles(picked.map((p) => ({ name: baseName(p.path), bytes: p.bytes })));
+  await placeImageFiles(picked.map((p) => ({ name: baseName(p.path), bytes: p.bytes, path: p.path })));
 }

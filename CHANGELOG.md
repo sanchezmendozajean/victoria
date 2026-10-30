@@ -26,10 +26,14 @@
 - **Manual breve de usuario** en español (`docs/manual-de-usuario.md`): conceptos, herramientas, imágenes y Calco, exportar e imprimir, espacios de trabajo y preferencias. README al día (estado, comandos de desarrollo, enlaces).
 - Nota para construir en local: electron-builder necesita `pnpm` en el PATH.
 
+### 12.5 Remates
+- **Vincular al colocar**: preferencia «Colocar imágenes vinculadas al archivo (en vez de incrustarlas)» (apagada por defecto). Con ella, Archivo › Colocar crea imágenes vinculadas a la ruta elegida: el `.vict` no lleva sus píxeles y se leen del disco al abrir. Los archivos soltados sobre el lienzo siguen entrando incrustados (el navegador no da su ruta). e2e: colocar vinculada, comprobar que el `.vict` no tiene `images/`, cerrar, reabrir y ver que sigue vinculada.
+- **Miniaturas en Recientes**: al guardar, el documento lleva una vista previa PNG de 256 px de la primera mesa (pintada con el mismo código que el lienzo; si no se puede dibujar, se guarda igual sin ella; el autoguardado no la escribe). La pantalla de inicio la lee del archivo por el proceso principal (solo de documentos de la lista) y la muestra junto al nombre.
+
 ### Pendiente
 - Verificar fuera de esta máquina: instalación y desinstalación interactivas en Windows; AppImage, deb, rpm, asociación de archivos y Wayland en Linux; firma de código cuando haya certificado.
 - Rendimiento: no se probó con muchas imágenes grandes ni con miles de textos; las booleanas de más de 500 segmentos en Worker (spec 01) siguen sin Worker.
-- Pantalla de inicio: miniaturas de los recientes (el `.vict` ya guarda `thumbnail.png`, falta escribirla y leerla), tarjeta «Personalizado», y abrir con la pantalla de inicio por defecto cuando haya un instalador.
+- Pantalla de inicio: tarjeta «Personalizado», y abrir con la pantalla de inicio por defecto cuando haya un instalador.
 - Espacios de trabajo: guardar espacios propios con nombre.
 - Preferencias: faltan **Atajos** (reasignar, y las alternativas para los atajos que Linux reserva, spec 09), «usar barra de título del sistema» (exige recrear la ventana), unidades de los documentos nuevos y tamaño de la interfaz.
 
@@ -89,7 +93,7 @@
 
 ### Pendiente
 - Calco de imagen: faltan las **vistas** (resultado con contornos, contornos, imagen original), ajustar curvas a líneas, trazos en lugar de rellenos y la lista de colores editable del panel; las curvas no son las óptimas de potrace.
-- Imprimir: **no hay verificación con una impresora física ni con el controlador del sistema** (solo con el PDF de Chromium): la regla «100 mm = 100 mm en papel» sigue siendo de comprobación manual en Windows y en Linux. Falta «Imprimir capas visibles e imprimibles / todas» (el modelo no tiene aún el atributo «imprimible» de las capas), «propiedades de la impresora» del sistema y fusionar varias mesas en un pliego. De 11.6 queda: tiradores de recorte directamente en el lienzo (hoy son campos numéricos o la herramienta de selección directa sobre la máscara) y vincular al colocar.
+- Imprimir: **no hay verificación con una impresora física ni con el controlador del sistema** (solo con el PDF de Chromium): la regla «100 mm = 100 mm en papel» sigue siendo de comprobación manual en Windows y en Linux. Falta «Imprimir capas visibles e imprimibles / todas» (el modelo no tiene aún el atributo «imprimible» de las capas), «propiedades de la impresora» del sistema y fusionar varias mesas en un pliego. De 11.6 queda: tiradores de recorte directamente en el lienzo (hoy son campos numéricos o la herramienta de selección directa sobre la máscara).
 - Colocar con clic o arrastre y cola de varias imágenes; Incrustar/Desincrustar y reubicar vínculos; miniaturas de Espacios con imágenes reales.
 - Importar: texto en trazado (`textPath`), máscaras, filtros y motivos de SVG; en PDF, texto con su fuente real, máscaras de transparencia, motivos de mosaico y el operador `sh`; el texto de PDF llega como texto de punto negro con la fuente por defecto; imágenes de PDF solo tras decodificar con canvas (no verificado con PDFs reales de otros programas).
 - Portapapeles: no se escriben todavía SVG ni PNG para otras aplicaciones; sin verificar en Wayland.

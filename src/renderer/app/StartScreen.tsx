@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { findPreset } from '../../core';
 import type { RecentFile } from '../../shared/ipc';
 import { Icon } from '../components/Icon';
+import { useThumbnail } from './useThumbnail';
 import { manager } from '../documents';
 import { t } from '../i18n';
 import './StartScreen.css';
@@ -20,6 +21,12 @@ const SIZE_UNIT = (preset: string): string => {
   // Presets in pt: paper sizes read in mm, screen sizes in px.
   return preset === 'A4' ? '210 × 297 mm' : preset === 'Carta' ? '8,5 × 11 in' : `${Math.round(p.w)} × ${Math.round(p.h)} px`;
 };
+
+/** The preview saved in the document, or a plain file icon while it loads or when it has none. */
+function RecentPreview({ path }: { path: string }) {
+  const url = useThumbnail(path);
+  return url ? <img className="vc-start__thumb" data-testid="start-thumb" src={url} alt="" /> : <Icon id="file" size={16} />;
+}
 
 /** Shown when no document is open (specs/10 · pantalla de inicio): new document from a preset, open, and the recent ones. */
 export function StartScreen() {
@@ -62,7 +69,7 @@ export function StartScreen() {
               {recent.map((file) => (
                 <li key={file.path}>
                   <button type="button" className="vc-start__file" data-testid="start-recent-item" title={file.path} onClick={() => void manager.openRecent(file.path)}>
-                    <Icon id="file" size={16} />
+                    <RecentPreview path={file.path} />
                     <span className="vc-start__file-name">{file.name}</span>
                     <span className="vc-start__file-date">{new Date(file.modified).toLocaleDateString('es')}</span>
                   </button>

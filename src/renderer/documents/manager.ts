@@ -72,6 +72,8 @@ export interface Names {
 }
 
 export interface ManagerDeps {
+  /** A small PNG of the document to store inside the file (the start screen shows it). */
+  thumbnail?(session: DocumentSession): Promise<Uint8Array | null>;
   /** Milliseconds between autosaves; defaults to the policy's own interval. */
   autosaveIntervalMs?(): number;
   files: FilesPort;
@@ -337,9 +339,9 @@ export class DocumentManager {
   }
 
   /** The .vict of a document: its images travel inside, but only the ones it still lists as resources. */
-  private serialize(doc: OpenDocument): Uint8Array {
+  private serialize(doc: OpenDocument, thumbnail?: Uint8Array | null): Uint8Array {
     const { document, images } = doc.session;
-    return writeVict({ document, app: this.deps.appVersion, images: images.toRecord(hashesToEmbed(document)) });
+    return writeVict({ document, app: this.deps.appVersion, images: images.toRecord(hashesToEmbed(document)), ...(thumbnail ? { thumbnail } : {}) });
   }
 
   private async write(id: string | null, forceDialog: boolean): Promise<boolean> {
@@ -347,7 +349,9 @@ export class DocumentManager {
     if (!doc) return false;
     const { files, names } = this.deps;
     try {
-      const bytes = this.serialize(doc);
+      // The preview is decoration: a document that cannot be drawn is still saved.
+      const thumbnail = await this.deps.thumbnail?.(doc.session).catch(() => null);
+      const bytes = this.serialize(doc, thumbnail);
       const result = await files.saveFile({
         path: forceDialog ? null : doc.path,
         suggestedName: displayName(doc),

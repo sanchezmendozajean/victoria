@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createImage, getActiveSpace, placeImage, renameSpace, sequentialIds } from '../../core';
+import { createImage, getActiveSpace, placeImage, readVict, renameSpace, sequentialIds } from '../../core';
 import type { AutosaveEntry, OpenedFile, SaveRequest } from '../../shared/ipc';
 import { DocumentManager, displayName, type CloseChoice, type FilesPort } from './manager';
 
@@ -7,7 +7,7 @@ function fakeEnv() {
   const disk = new Map<string, Uint8Array>(); // saved documents by path
   const autosaves = new Map<string, { bytes: Uint8Array; modified: number }>();
   const errors: string[] = [];
-  const state = { now: 1_000_000, nextPick: null as OpenedFile | null, savePath: 'C:\\docs\\a.vict' as string | null, close: 'discard' as CloseChoice, pdfFails: false, pdfPages: 2 };
+  const state = { now: 1_000_000, nextPick: null as OpenedFile | null, savePath: 'C:\\docs\\a.vict' as string | null, close: 'discard' as CloseChoice, pdfFails: false, pdfPages: 2, thumbnail: null as 'png' | 'fails' | null };
 
   const files: FilesPort = {
     openFile: async () => state.nextPick,
@@ -46,6 +46,10 @@ function fakeEnv() {
         const pages = [200, 50].map((w) => ({ width: w, height: 100, nodes: [], gradients: [], images: {}, warnings: [{ code: 'text' as const }] }));
         return { pages, pageCount: state.pdfPages };
       },
+    },
+    thumbnail: async () => {
+      if (state.thumbnail === 'fails') throw new Error('cannot draw');
+      return state.thumbnail === 'png' ? Uint8Array.from([137, 80, 78, 71]) : null;
     },
     appVersion: '0.2.0',
     ids: sequentialIds('m'),
@@ -263,6 +267,19 @@ describe('DocumentManager', () => {
     expect(manager.active).toBeNull();
     manager.newDocument();
     expect(manager.documents).toHaveLength(1);
+  });
+
+  it('saving stores a preview of the document, and a preview that cannot be drawn does not stop the save', async () => {
+    const { manager, disk, state } = fakeEnv();
+    manager.newDocument();
+    edit(manager);
+    state.thumbnail = 'png';
+    await manager.save();
+    expect(Array.from(readVict(disk.get(state.savePath!)!).thumbnail ?? [])).toEqual([137, 80, 78, 71]);
+    state.thumbnail = 'fails';
+    edit(manager, 'Again');
+    expect(await manager.save()).toBe(true);
+    expect(readVict(disk.get(state.savePath!)!).thumbnail).toBeUndefined();
   });
 
   it('a new document takes the artboard size of the preset asked for', () => {
