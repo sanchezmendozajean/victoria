@@ -52,7 +52,8 @@ function testItem(item: IndexItem, p: Vec2, tolerance: number): Hit | null {
   const flat = flattenGeometry(geometry, Math.max(tolLocal / 4, 1e-4));
   const base = { id: item.id, node: item.node, ancestors: item.ancestors, layer: item.layer, world: item.world };
 
-  const inside = hasFill(item.node.appearance) && pointInFill(flat, local.point, geometry.fillRule);
+  // A picture paints its whole frame even though its appearance has no fill (e.g. a pasted image).
+  const inside = (item.node.type === 'image' || hasFill(item.node.appearance)) && pointInFill(flat, local.point, geometry.fillRule);
   const strokes = strokesOf(item.node.appearance);
   if (strokes.length > 0) {
     const distance = distanceToOutline(flat, local.point);

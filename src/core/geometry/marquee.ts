@@ -61,7 +61,7 @@ function touches(item: IndexItem, rect: Rect, tolerance: number): boolean {
     }
   }
   // Fully inside a filled shape (the marquee is smaller than the shape and crosses no outline).
-  if (hasFill(item.node.appearance)) {
+  if (item.node.type === 'image' || hasFill(item.node.appearance)) {
     const inverse = invertSafe(world);
     if (inverse && pointInFill(lines, applyToPoint(inverse, { x: (rect.minX + rect.maxX) / 2, y: (rect.minY + rect.maxY) / 2 }), geometry.fillRule)) return true;
   }

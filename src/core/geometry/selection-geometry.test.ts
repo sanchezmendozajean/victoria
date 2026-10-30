@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { createImage } from '../commands/image';
 import { addNode, convertShapeToPath, duplicateNodes, groupNodes, setPathAnchors } from '../commands';
 import { DocumentSession } from '../commands/session';
 import { cloneNodes } from '../model/clone';
@@ -326,5 +327,15 @@ describe('orientedBounds', () => {
     // Axis-aligned it is bigger.
     const flat = orientedBounds(space, [r.id], 0)!;
     expect(flat.maxX - flat.minX).toBeGreaterThan(210);
+  });
+});
+
+describe('pictures', () => {
+  it('a picture without fill is hit anywhere inside its frame and by a marquee inside it', () => {
+    const picture = createImage(ids, 'hash', 100, 50, translation(10, 10));
+    const space = spaceWith(picture);
+    expect(hitTest(space, pt(60, 35), { tolerance: 1 })[0]?.id).toBe(picture.id);
+    expect(hitTest(space, pt(200, 35), { tolerance: 1 })).toEqual([]);
+    expect(marqueeTargets(space, { minX: 50, minY: 30, maxX: 60, maxY: 40 }).map((n) => n.id)).toEqual([picture.id]);
   });
 });
