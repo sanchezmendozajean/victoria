@@ -1,5 +1,5 @@
 import { sameColor } from './color';
-import { childrenOf, locateNode } from './queries';
+import { childrenOf, locateNodes } from './queries';
 import { defaultStroke } from './factory';
 import type { IdGenerator } from './ids';
 import type { Appearance, AppearanceItem, Node, Paint, Space, StrokeStyle } from './types';
@@ -27,9 +27,10 @@ export function paintTargets(space: Space, ids: readonly string[]): Node[] {
     if (inner) inner.forEach(visit);
     else out.push(node);
   };
+  const found = new Map(locateNodes(space, ids).map((l) => [l.node.id, l.node]));
   for (const id of ids) {
-    const found = locateNode(space, id);
-    if (found) visit(found.node);
+    const node = found.get(id);
+    if (node) visit(node);
   }
   return out;
 }

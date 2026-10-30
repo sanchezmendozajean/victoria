@@ -38,13 +38,51 @@ function search(children: readonly LayerChild[], id: string, parentWorld: Matrix
   return null;
 }
 
+/** Like `locateNode`: after a few searches, a frozen Space answers from a frame index built once per version. */
+const INDEX_AFTER = 8;
+const frameIndexes = new WeakMap<Space, { lookups: number; index: Map<string, NodeFrame> | null }>();
+
+function frameIndexFor(space: Space): Map<string, NodeFrame> | null {
+  if (!Object.isFrozen(space)) return null;
+  let entry = frameIndexes.get(space);
+  if (!entry) {
+    entry = { lookups: 0, index: null };
+    frameIndexes.set(space, entry);
+  }
+  if (!entry.index && ++entry.lookups > INDEX_AFTER) entry.index = framesOf(space, null);
+  return entry.index;
+}
+
 /** Position of any node (also inside groups and sublayers) in its Space. */
 export function frameOf(space: Space, id: string): NodeFrame | null {
+  const index = frameIndexFor(space);
+  if (index) return index.get(id) ?? null;
   for (const layer of space.layers) {
     const found = search(layer.children, id, IDENTITY, [], layer);
     if (found) return found;
   }
   return null;
+}
+
+function searchMany(children: readonly LayerChild[], wanted: ReadonlySet<string> | null, parentWorld: Matrix, ancestors: Node[], layer: Layer, out: Map<string, NodeFrame>): void {
+  for (const child of children) {
+    if (isLayer(child)) {
+      searchMany(child.children, wanted, parentWorld, ancestors, child, out);
+      continue;
+    }
+    const world = multiply(parentWorld, child.transform);
+    if (!wanted || wanted.has(child.id)) out.set(child.id, { node: child, world, parentWorld, ancestors, layer });
+    if (child.type === 'group' || child.type === 'clipGroup') searchMany(child.children, wanted, world, [...ancestors, child], layer, out);
+  }
+}
+
+/** The frames of several nodes from one walk of the Space (`frameOf` per id is quadratic with big selections). */
+export function framesOf(space: Space, ids: Iterable<string> | null): Map<string, NodeFrame> {
+  const out = new Map<string, NodeFrame>();
+  const wanted = ids ? new Set(ids) : null;
+  if (wanted && wanted.size === 0) return out;
+  for (const layer of space.layers) searchMany(layer.children, wanted, IDENTITY, [], layer, out);
+  return out;
 }
 
 const virtualPaths = new WeakMap<Node, PathNode | null>();
@@ -111,8 +149,9 @@ function searchCompound(children: readonly LayerChild[], id: string, parentWorld
 /** Path objects (and compound sub-paths) of the given objects, with the frame of their owner. */
 export function pathsOfNodes(space: Space, ids: readonly string[]): PathFrame[] {
   const out: PathFrame[] = [];
+  const frames = framesOf(space, ids);
   for (const id of ids) {
-    const frame = frameOf(space, id);
+    const frame = frames.get(id);
     if (!frame) continue;
     collectPaths(frame.node, frame.world, frame.layer, out);
   }
@@ -154,7 +193,13 @@ export function nodeWorldBounds(space: Space, id: string, options: BoundsOptions
 /** Union of the bounds of several nodes, in Space coordinates (the selection's bounding box). */
 export function selectionBounds(space: Space, ids: readonly string[], options: BoundsOptions = {}): Rect | null {
   let rect: Rect | null = null;
-  for (const id of ids) rect = unionRect(rect, nodeWorldBounds(space, id, options));
+  const frames = framesOf(space, ids);
+  for (const id of ids) {
+    const frame = frames.get(id);
+    if (!frame) continue;
+    const local = (options.stroke ? boundsInParent : geometricBoundsInParent)(frame.node);
+    if (local) rect = unionRect(rect, transformRect(frame.parentWorld, local));
+  }
   return rect;
 }
 

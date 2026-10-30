@@ -1,12 +1,10 @@
 import {
-  childrenOf,
+  locateNodes,
   invert,
-  locateNode,
   multiply,
   selectionBounds,
   snapPoint,
   snapRect,
-  walkNodes,
   type Matrix,
   type Rect,
   type Selection,
@@ -18,13 +16,8 @@ import type { ToolHost } from './types';
 
 /** Selected ids that are not inside another selected object (a group and its child are one unit). */
 export function topLevelIds(space: Space, ids: readonly string[]): string[] {
-  const inner = new Set<string>();
-  for (const id of ids) {
-    const found = locateNode(space, id);
-    const children = found ? childrenOf(found.node) : null;
-    if (children) for (const n of walkNodes(children)) inner.add(n.id);
-  }
-  return ids.filter((id) => !inner.has(id) && locateNode(space, id) !== null);
+  const tops = new Set(locateNodes(space, ids, true).map((l) => l.node.id));
+  return ids.filter((id) => tops.has(id));
 }
 
 /** The selection of this Space (selections of another Space do not apply). */

@@ -1,6 +1,6 @@
 import type { Draft } from 'immer';
 import { multiply } from '../model/matrix';
-import { childrenOf, locateLayer, locateNode, walkNodes } from '../model/queries';
+import { locateLayer, locateNode, locateNodes, walkNodes } from '../model/queries';
 import { pathFrameOf } from '../geometry/world';
 import { shapeSubPaths } from '../geometry/shapes';
 import { deepClone } from '../model/deepClone';
@@ -20,30 +20,20 @@ const findLayer = (d: Draft<Document>, spaceId: string, layerId: string) => {
 
 const findSpace = (d: Draft<Document>, id: string): DraftSpace | undefined => d.spaces.find((s) => s.id === id);
 
-/** Ids that are not inside another listed node, so a group and its children are never moved twice. */
-function topmostIds(space: DraftSpace, ids: readonly string[]): string[] {
-  const wanted = new Set(ids);
-  const inner = new Set<string>();
-  for (const id of ids) {
-    const found = locateNode(space, id);
-    const children = found ? childrenOf(found.node) : null;
-    if (children) for (const n of walkNodes(children)) inner.add(n.id);
-  }
-  return [...wanted].filter((id) => !inner.has(id));
-}
-
 /** Detaches nodes (topmost only) and returns them in their original z-order. */
 function detach(space: DraftSpace, ids: readonly string[]): DraftNode[] {
-  const located = topmostIds(space, ids)
-    .map((id) => locateNode(space, id))
-    .filter((l): l is NonNullable<typeof l> => l !== null);
-  const taken = new Set(located.map((l) => l.node.id));
-  // z-order = document order; walk to collect, then remove from their arrays.
-  const ordered: DraftNode[] = [];
-  for (const node of walkNodes(space.layers as LayerChild[])) if (taken.has(node.id)) ordered.push(node as DraftNode);
+  const located = locateNodes(space, ids, true);
+  // Each array is rebuilt once without its taken nodes (splicing one by one is quadratic).
+  const byArray = new Map<LayerChild[], Set<string>>();
   for (const l of located) {
-    const at = l.siblings.findIndex((n) => n.id === l.node.id);
-    if (at !== -1) l.siblings.splice(at, 1);
+    const set = byArray.get(l.siblings) ?? new Set<string>();
+    set.add(l.node.id);
+    byArray.set(l.siblings, set);
+  }
+  const ordered = located.map((l) => l.node as DraftNode);
+  for (const [siblings, taken] of byArray) {
+    const kept = siblings.filter((n) => !taken.has(n.id));
+    siblings.splice(0, siblings.length, ...kept);
   }
   return ordered;
 }
@@ -76,9 +66,7 @@ export const transformNodes = (spaceId: string, ids: readonly string[], matrix: 
   apply: (d) => {
     const space = findSpace(d, spaceId);
     if (!space) return;
-    for (const id of topmostIds(space, ids)) {
-      const found = locateNode(space, id);
-      if (!found) continue;
+    for (const found of locateNodes(space, ids, true)) {
       found.node.transform = multiply(matrix, found.node.transform);
       if (found.node.type === 'text' && (found.node.kind === 'point' || found.node.kind === 'area')) bakeTextScale(found.node as Draft<TextNode>);
     }
@@ -126,10 +114,7 @@ export const setNodeProps = (spaceId: string, ids: readonly string[], props: Nod
   apply: (d) => {
     const space = findSpace(d, spaceId);
     if (!space) return;
-    for (const id of ids) {
-      const found = locateNode(space, id);
-      if (found) Object.assign(found.node, props);
-    }
+    for (const found of locateNodes(space, ids)) Object.assign(found.node, props);
   },
 });
 
@@ -164,14 +149,11 @@ export const arrangeNodes = (spaceId: string, ids: readonly string[], direction:
   apply: (d) => {
     const space = findSpace(d, spaceId);
     if (!space) return;
-    const wanted = new Set(ids);
     // Each container (a layer, a group) is arranged on its own.
     const containers = new Map<DraftChild[], Set<string>>();
-    for (const id of wanted) {
-      const found = locateNode(space, id);
-      if (!found) continue;
+    for (const found of locateNodes(space, ids)) {
       const set = containers.get(found.siblings as DraftChild[]) ?? new Set<string>();
-      set.add(id);
+      set.add(found.node.id);
       containers.set(found.siblings as DraftChild[], set);
     }
     for (const [siblings, picked] of containers) {
@@ -209,14 +191,12 @@ export const groupNodes = (spaceId: string, ids: readonly string[], group: Group
   apply: (d) => {
     const space = findSpace(d, spaceId);
     if (!space) return;
-    const tops = topmostIds(space, ids)
-      .map((id) => locateNode(space, id))
-      .filter((l): l is NonNullable<typeof l> => l !== null);
+    const tops = locateNodes(space, ids, true);
     const first = tops[0];
     if (!first || tops.some((l) => l.siblings !== first.siblings)) return;
     const siblings = first.siblings as DraftChild[];
     const picked = new Set(tops.map((l) => l.node.id));
-    const insertAt = Math.max(...tops.map((l) => siblings.indexOf(l.node as DraftChild)));
+    const insertAt = tops.reduce((most, l) => Math.max(most, l.index), 0);
     let members = siblings.filter((n) => picked.has(n.id)) as DraftNode[];
     // A clipping mask: the topmost object is the mask and goes first (specs/02 · ClipGroup).
     if (group.type === 'clipGroup' && members.length > 1) members = [members[members.length - 1] as DraftNode, ...members.slice(0, -1)];
@@ -361,13 +341,22 @@ export const duplicateNodes = (spaceId: string, ids: readonly string[], clones: 
   apply: (d) => {
     const space = findSpace(d, spaceId);
     if (!space) return;
+    // Every array is rebuilt once with each copy right above its original (splicing one by one is quadratic).
+    const copyOf = new Map<string, Node>();
     ids.forEach((id, i) => {
       const clone = clones[i];
-      const found = locateNode(space, id);
-      if (!clone || !found) return;
-      const placed = matrix ? { ...clone, transform: multiply(matrix, clone.transform) } : clone;
-      found.siblings.splice(found.index + 1, 0, placed as DraftChild);
+      if (clone) copyOf.set(id, matrix ? { ...clone, transform: multiply(matrix, clone.transform) } : clone);
     });
+    const arrays = new Set(locateNodes(space, copyOf.keys()).map((l) => l.siblings));
+    for (const siblings of arrays) {
+      const next: DraftChild[] = [];
+      for (const child of siblings as DraftChild[]) {
+        next.push(child);
+        const copy = copyOf.get(child.id);
+        if (copy && child.type !== 'layer') next.push(copy as DraftChild);
+      }
+      siblings.splice(0, siblings.length, ...next);
+    }
   },
 });
 
@@ -467,9 +456,9 @@ export const translateNodes = (spaceId: string, deltas: ReadonlyMap<string, { x:
   apply: (d) => {
     const space = findSpace(d, spaceId);
     if (!space) return;
-    for (const [id, delta] of deltas) {
-      const found = locateNode(space, id);
-      if (found) found.node.transform = multiply([1, 0, 0, 1, delta.x, delta.y], found.node.transform);
+    for (const found of locateNodes(space, deltas.keys())) {
+      const delta = deltas.get(found.node.id);
+      if (delta) found.node.transform = multiply([1, 0, 0, 1, delta.x, delta.y], found.node.transform);
     }
   },
 });

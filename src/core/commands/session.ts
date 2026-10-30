@@ -1,4 +1,4 @@
-import { applyPatches, enablePatches, produce, produceWithPatches, type Patch } from 'immer';
+import { applyPatches, enablePatches, freeze, produce, produceWithPatches, type Patch } from 'immer';
 import { ImageStore } from '../io/imageStore';
 import { randomIds, type IdGenerator } from '../model/ids';
 import { getSpace } from '../model/queries';
@@ -58,7 +58,8 @@ export class DocumentSession {
   private readonly listeners = new Set<(change: SessionChange) => void>();
 
   constructor(document: Document, options: SessionOptions = {}) {
-    this.doc = document;
+    // Immutable from here on (every edit is a command): lookups can be indexed per version of a Space.
+    this.doc = freeze(document, true);
     this.limit = options.historyLimit ?? DEFAULT_HISTORY_LIMIT;
     this.ids = options.ids ?? randomIds;
     this.images = options.images ?? new ImageStore();
