@@ -1,3 +1,4 @@
+import { useBusy } from './busy';
 import { useShortcuts } from './useShortcuts';
 import { useState } from 'react';
 import { getActiveSpace, MAX_ZOOM, MIN_ZOOM, ZOOM_STEPS } from '../../core';
@@ -22,6 +23,7 @@ function anchorOf(el: HTMLElement): Anchor {
 
 export function StatusBar() {
   useShortcuts();
+  const busy = useBusy((s) => s.task);
   const activeTool = useUi((s) => s.activeTool);
   const os = useUi((s) => s.platform.os);
   const zoom = useUi((s) => s.zoom);
@@ -148,6 +150,15 @@ export function StatusBar() {
         </div>
       )}
       <div className="vc-statusbar__spacer" />
+      {busy && (
+        <div className="vc-statusbar__cell" data-testid="status-busy" role="status">
+          <Icon id="pf-unite" size={14} className="vc-statusbar__icon" />
+          <span>{busy.label}</span>
+          <button type="button" className="vc-statusbar__step" data-testid="busy-cancel" aria-label={t('busy.cancel')} title={t('busy.cancel')} onClick={busy.cancel}>
+            <Icon id="close" size={12} />
+          </button>
+        </div>
+      )}
       <div className="vc-statusbar__cell vc-statusbar__cell--last" data-testid="status-saved" {...tip(t('status.autosaveTip'))}>
         <Icon id="cloud-check" size={14} className={session?.dirty ? 'vc-statusbar__icon' : 'vc-statusbar__saved'} />
         {session?.dirty ? t('status.unsaved') : t('status.saved')}

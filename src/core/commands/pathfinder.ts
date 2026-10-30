@@ -23,7 +23,7 @@ export const PATHFINDERS: readonly PathfinderOp[] = ['divide', 'trim', 'merge', 
 /** Outlines are hairlines in the colour of the fill they came from. */
 export const OUTLINE_WIDTH = 0.25;
 
-interface Operand {
+export interface Operand {
   shape: BooleanShape;
   appearance: Appearance;
 }
@@ -100,7 +100,7 @@ function containerInverse(space: Space, id: string): Matrix {
   return invert(parentWorld) ?? [1, 0, 0, 1, 0, 0];
 }
 
-export function computePieces(op: PathfinderOp, operands: readonly Operand[]): { pieces: BooleanPiece[]; look: 'full' | 'fill' | 'outline'; grouped: boolean } {
+export function computePieces(op: PathfinderOp, operands: readonly Operand[]): ComputedPieces {
   const shapes = operands.map((o) => o.shape);
   switch (op) {
     case 'unite':
@@ -134,14 +134,45 @@ export const operandCount = (space: Space, ids: readonly string[]): number => ga
  * objects with contours, or the geometry engine failed). The result replaces the topmost object in the z-order.
  */
 export function pathfinder(space: Space, ids: readonly string[], op: PathfinderOp, newIds: IdGenerator): PathfinderResult | null {
-  const { operands, owners } = gather(space, new Set(ids));
-  if (operands.length < 2 || owners.length === 0) return null;
+  const plan = planPathfinder(space, ids, op);
+  if (!plan) return null;
   let computed;
   try {
-    computed = computePieces(op, operands);
+    computed = computePieces(op, plan.operands);
   } catch {
     return null;
   }
+  return finishPathfinder(space, plan, computed, newIds);
+}
+
+/** From this many segments on, the interface should not wait for the geometry engine: it runs in a Worker. */
+export const BOOLEAN_WORKER_SEGMENTS = 500;
+
+/** What a pathfinder operation works on, gathered from the document (cheap) before the geometry is computed (expensive). */
+export interface PathfinderPlan {
+  op: PathfinderOp;
+  operands: Operand[];
+  owners: string[];
+}
+
+export interface ComputedPieces {
+  pieces: BooleanPiece[];
+  look: 'full' | 'fill' | 'outline';
+  grouped: boolean;
+}
+
+/** The objects an operation would use, or null when it cannot apply (fewer than two objects with contours). */
+export function planPathfinder(space: Space, ids: readonly string[], op: PathfinderOp): PathfinderPlan | null {
+  const { operands, owners } = gather(space, new Set(ids));
+  return operands.length < 2 || owners.length === 0 ? null : { op, operands, owners };
+}
+
+/** Total segments of the contours of a plan: what decides whether the work goes to a Worker. */
+export const planSegments = (plan: PathfinderPlan): number => plan.operands.reduce((n, o) => n + o.shape.subpaths.reduce((m, sp) => m + sp.anchors.length, 0), 0);
+
+/** Turns computed pieces into the reversible command (the document must still be the one the plan was made from). */
+export function finishPathfinder(space: Space, plan: PathfinderPlan, computed: ComputedPieces, newIds: IdGenerator): PathfinderResult | null {
+  const { operands, owners, op } = plan;
   const topOwner = owners[owners.length - 1] as string;
   const toLocal = containerInverse(space, topOwner);
   const appearances = operands.map((o) => o.appearance);

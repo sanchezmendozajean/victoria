@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addNode, arrange, createDocument, createEllipse, createGroup, createRect, DocumentSession, getActiveSpace, pathfinder, sequentialIds, shapeBuilderEdit, translation, type GroupNode, type Node, type PathfinderOp } from '..';
+import { addNode, arrange, BOOLEAN_WORKER_SEGMENTS, computePieces, finishPathfinder, planPathfinder, planSegments, createDocument, createEllipse, createGroup, createRect, DocumentSession, getActiveSpace, pathfinder, sequentialIds, shapeBuilderEdit, translation, type GroupNode, type Node, type PathfinderOp } from '..';
 
 function setup() {
   const ids = sequentialIds('p');
@@ -129,5 +129,36 @@ describe('Shape Builder edit', () => {
     expect(t.children()).toHaveLength(1);
     t.session.undo();
     expect(t.children()).toHaveLength(2);
+  });
+});
+
+describe('Pathfinder in two steps (what the Worker path uses)', () => {
+  it('plan, compute and finish give the same document as pathfinder()', () => {
+    const run = (twoStep: boolean) => {
+      const t = setup();
+      const a = circle(t, 0, 0, [255, 0, 0]);
+      const b = circle(t, 60, 0, [0, 0, 255]);
+      const selected = [a.id, b.id];
+      if (twoStep) {
+        const plan = planPathfinder(t.space(), selected, 'unite')!;
+        const result = finishPathfinder(t.space(), plan, computePieces('unite', plan.operands), t.ids)!;
+        t.session.run(result.command);
+      } else {
+        t.session.run(pathfinder(t.space(), selected, 'unite', t.ids)!.command);
+      }
+      // Ids differ between runs only by the generator's counter: compare the geometry.
+      return JSON.stringify(t.children().map((n) => (n.type === 'path' ? n.anchors : n.type)));
+    };
+    expect(run(true)).toBe(run(false));
+  });
+
+  it('counts the segments that decide whether to use a Worker, and refuses a plan with fewer than two objects', () => {
+    const t = setup();
+    const a = circle(t, 0, 0, [255, 0, 0]);
+    expect(planPathfinder(t.space(), [a.id], 'unite')).toBeNull();
+    const b = circle(t, 60, 0, [0, 0, 255]);
+    const plan = planPathfinder(t.space(), [a.id, b.id], 'unite')!;
+    expect(planSegments(plan)).toBe(8); // two ellipses of four anchors
+    expect(BOOLEAN_WORKER_SEGMENTS).toBe(500);
   });
 });

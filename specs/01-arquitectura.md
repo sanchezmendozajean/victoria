@@ -92,7 +92,7 @@ victoria/
 
 - 60 fps en pan/zoom con 10 000 nodos visibles.
 - Hit-test < 2 ms (índice espacial R-tree por Espacio, `rbush`).
-- Booleanas de más de 500 segmentos → Worker.
+- Booleanas de más de 500 segmentos → Worker (hecho para el panel Buscatrazos; el Buscatrazos vivo, Desplazar trazado y el Creador de formas siguen en el hilo principal).
 - **Regla (Fase 12)**: ninguna operación sobre una selección puede buscar cada objeto por separado en el árbol; usar `locateNodes` / `framesOf` (un recorrido) o las consultas indexadas `locateNode` / `frameOf`. Vigilado por `core/perf/operations.test.ts`.
 
 ## Multiplataforma (Windows + Linux)

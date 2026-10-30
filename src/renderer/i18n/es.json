@@ -771,6 +771,8 @@
   "shortcut.space.go7": "Ir al Espacio 7",
   "shortcut.space.go8": "Ir al Espacio 8",
   "shortcut.space.go9": "Ir al Espacio 9",
+  "busy.pathfinder": "Calculando el Buscatrazos…",
+  "busy.cancel": "Cancelar",
   "prefs.reset": "Restablecer",
   "prefs.close": "Cerrar",
   "print.title": "Imprimir",

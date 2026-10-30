@@ -34,7 +34,7 @@ export function PathfinderPanel() {
       data-testid={`pf-${op}`}
       disabled={!enabled}
       {...tip(t(`pf.${op}` as TranslationKey))}
-      onClick={(event) => runPathfinder(op, event.altKey)}
+      onClick={(event) => void runPathfinder(op, event.altKey)}
     >
       <Icon id={ICONS[op]} size={18} />
     </button>
