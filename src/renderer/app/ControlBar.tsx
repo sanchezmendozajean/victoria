@@ -1,6 +1,11 @@
 import { useShortcuts } from './useShortcuts';
 import {
+  addArtboard,
   commonStrokeField,
+  createArtboard,
+  removeArtboard,
+  updateArtboard,
+  type Artboard,
   getActiveSpace,
   moveAnchors,
   nodeWorldBounds,
@@ -47,7 +52,8 @@ export function ControlBar() {
   const objectIds = space && selection ? topLevelIds(space, selection.ids) : [];
 
   let body;
-  if (session && space && NODE_TOOLS.includes(activeTool)) body = <NodeControls session={session} space={space} />;
+  if (session && space && activeTool === 'tool-artboard') body = <ArtboardControls session={session} space={space} />;
+  else if (session && space && NODE_TOOLS.includes(activeTool)) body = <NodeControls session={session} space={space} />;
   else if (session && space && objectIds.length > 0) body = <ObjectControls session={session} space={space} ids={objectIds} />;
   else
     body = (
@@ -63,6 +69,44 @@ export function ControlBar() {
       <div className="vc-controlbar__spacer" />
       <BarButton icon="panel-menu" tooltip={t('control.menu')} />
     </div>
+  );
+}
+
+/** Mesa de trabajo tool: position and size of the active artboard, plus New and Delete. */
+function ArtboardControls({ session, space }: { session: DocumentSession; space: Space }) {
+  const units = session.document.meta.units;
+  const active = useUi((s) => s.activeArtboard[space.id]);
+  const setActive = useUi((s) => s.setActiveArtboard);
+  const board = space.artboards.find((a) => a.id === active) ?? space.artboards[0];
+  if (!board) return null;
+  const set = (patch: Partial<Pick<Artboard, 'x' | 'y' | 'w' | 'h'>>) => session.run(updateArtboard(space.id, board.id, patch));
+  const length = (key: 'x' | 'y' | 'w' | 'h') => (value: number) => set({ [key]: unitToPt(value, units) });
+  const create = () => {
+    const last = space.artboards[space.artboards.length - 1] ?? board;
+    const next = createArtboard(session.ids, { name: t('doc.defaultArtboard', { n: space.artboards.length + 1 }), x: last.x + last.w + 40, y: last.y, w: board.w, h: board.h });
+    session.run(addArtboard(space.id, next));
+    setActive(space.id, next.id);
+  };
+  const remove = () => {
+    if (space.artboards.length <= 1) return;
+    session.run(removeArtboard(space.id, board.id));
+    setActive(space.id, space.artboards.find((a) => a.id !== board.id)?.id ?? '');
+  };
+  return (
+    <>
+      <div className="vc-controlbar__title">
+        <Icon id="tool-artboard" size={16} />
+        <span>{board.name}</span>
+      </div>
+      <BarSeparator />
+      <NumberInput label="X" suffix={units} lengthUnit={units} value={ptToUnit(board.x, units)} onCommit={length('x')} testId="artboard-x" tooltip="X" decimals={3} />
+      <NumberInput label="Y" suffix={units} lengthUnit={units} value={ptToUnit(board.y, units)} onCommit={length('y')} testId="artboard-y" tooltip="Y" decimals={3} />
+      <NumberInput label={t('measure.width')} suffix={units} lengthUnit={units} value={ptToUnit(board.w, units)} onCommit={length('w')} min={0.1} testId="artboard-w" tooltip={t('measure.width')} decimals={3} />
+      <NumberInput label={t('measure.height')} suffix={units} lengthUnit={units} value={ptToUnit(board.h, units)} onCommit={length('h')} min={0.1} testId="artboard-h" tooltip={t('measure.height')} decimals={3} />
+      <BarSeparator />
+      <BarButton icon="artboard-new" label={t('control.artboardNew')} tooltip={t('control.artboardNewTip')} onClick={create} />
+      <BarButton icon="artboard-delete" label={t('control.artboardDelete')} tooltip={t('control.artboardDeleteTip')} onClick={remove} />
+    </>
   );
 }
 

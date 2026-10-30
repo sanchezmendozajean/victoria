@@ -1,4 +1,5 @@
 import type { ToolId } from '../app/tools';
+import { createArtboardTool } from './artboardTool';
 import { createAnchorAddTool, createAnchorDeleteTool, createConvertTool } from './anchorTools';
 import { createCurvatureTool } from './curvatureTool';
 import { createPencilTool } from './pencilTool';
@@ -26,6 +27,8 @@ function createIdleTool(id: ToolId): Tool {
 
 export function createTool(id: ToolId): Tool {
   switch (id) {
+    case 'tool-artboard':
+      return createArtboardTool();
     case 'tool-hand':
       return createHandTool();
     case 'tool-zoom':
