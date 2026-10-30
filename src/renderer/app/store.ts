@@ -23,6 +23,15 @@ import { ALL_SLOTS, slotOf, type ToolId } from './tools';
 
 export type { WorkspaceId };
 
+/** A workspace the user saved: a name and the panel arrangement it brings back. */
+export interface CustomWorkspace {
+  id: string;
+  name: string;
+  layout: PanelLayout;
+}
+
+const MAX_CUSTOM_WORKSPACES = 20;
+
 /** View menu toggles (specs/09 · Vista). Per window for now; Illustrator keeps them per document. */
 export interface ViewOptions {
   outline: boolean;
@@ -58,7 +67,9 @@ interface UiState {
   platform: PlatformInfo;
   maximized: boolean;
   theme: Theme;
-  workspace: WorkspaceId;
+  /** A built-in workspace id or the id of a custom one. */
+  workspace: string;
+  customWorkspaces: CustomWorkspace[];
 
   activeTool: ToolId;
   /** Last tool used in each grouped slot, keyed by the slot's default tool. */
@@ -69,7 +80,7 @@ interface UiState {
 
   panels: PanelLayout;
   /** Layouts of the workspaces that are not the current one (the current one is `panels`). */
-  savedLayouts: Partial<Record<WorkspaceId, PanelLayout>>;
+  savedLayouts: Record<string, PanelLayout>;
   /** Strip panel whose floating window is open. */
   stripOpen: PanelId | null;
 
@@ -122,6 +133,7 @@ interface UiState {
   printDialog: boolean;
   preferencesDialog: boolean;
   shortcutsDialog: boolean;
+  customDocumentDialog: boolean;
   /** Right click on the canvas: where the context menu opens (screen px). */
   canvasMenu: { x: number; y: number } | null;
   /** Properties dialog of a Space (grid and canvas colour), by id. */
@@ -154,6 +166,8 @@ interface UiState {
   openPrintDialog(): void;
   openPreferencesDialog(): void;
   openShortcutsDialog(): void;
+  openCustomDocumentDialog(): void;
+  closeCustomDocumentDialog(): void;
   closeShortcutsDialog(): void;
   closePreferencesDialog(): void;
   closePrintDialog(): void;
@@ -176,7 +190,10 @@ interface UiState {
   setPlatform(platform: PlatformInfo): void;
   setMaximized(maximized: boolean): void;
   setTheme(theme: Theme): void;
-  setWorkspace(workspace: WorkspaceId): void;
+  setWorkspace(workspace: string): void;
+  /** Saves the panels as they are now under a name and switches to it (the same name replaces it). */
+  saveWorkspaceAs(name: string): void;
+  deleteWorkspace(id: string): void;
   setActiveTool(tool: ToolId): void;
   toggleToolbarColumns(): void;
   openPanel(panel: PanelId): void;
@@ -210,20 +227,36 @@ const saveToolbarColumns = (two: boolean): void => {
 /** Workspace and panel arrangements survive restarts. What comes back from storage is checked panel by panel. */
 const WORKSPACES_KEY = 'victoria.workspaces';
 interface StoredWorkspaces {
-  workspace: WorkspaceId;
+  workspace: string;
   panels: PanelLayout;
-  saved: Partial<Record<WorkspaceId, PanelLayout>>;
+  saved: Record<string, PanelLayout>;
+  custom: CustomWorkspace[];
+}
+
+/** The arrangement a workspace starts from: its preset, or what was saved under its name. */
+function startLayout(id: string, custom: readonly CustomWorkspace[]): PanelLayout {
+  const own = custom.find((c) => c.id === id);
+  if (own) return own.layout;
+  return (WORKSPACE_IDS as readonly string[]).includes(id) ? workspaceLayout(id as WorkspaceId) : workspaceLayout('essentials');
 }
 function loadWorkspaces(): StoredWorkspaces {
-  const fresh: StoredWorkspaces = { workspace: 'essentials', panels: workspaceLayout('essentials'), saved: {} };
+  const fresh: StoredWorkspaces = { workspace: 'essentials', panels: workspaceLayout('essentials'), saved: {}, custom: [] };
   try {
-    const raw = JSON.parse(localStorage.getItem(WORKSPACES_KEY) ?? 'null') as Partial<{ workspace: unknown; layouts: Record<string, unknown> }> | null;
+    const raw = JSON.parse(localStorage.getItem(WORKSPACES_KEY) ?? 'null') as Partial<{ workspace: unknown; layouts: Record<string, unknown>; custom: unknown }> | null;
     if (!raw || typeof raw.layouts !== 'object' || raw.layouts === null) return fresh;
-    const valid = (id: WorkspaceId) => (isValidLayout(raw.layouts?.[id], PANEL_ORDER) ? (raw.layouts?.[id] as PanelLayout) : undefined);
-    const workspace = WORKSPACE_IDS.find((id) => id === raw.workspace) ?? 'essentials';
+    const custom = (Array.isArray(raw.custom) ? raw.custom : [])
+      .filter((c): c is CustomWorkspace => typeof c === 'object' && c !== null && typeof (c as CustomWorkspace).id === 'string' && /^custom-[a-z0-9]+$/.test((c as CustomWorkspace).id) && typeof (c as CustomWorkspace).name === 'string' && (c as CustomWorkspace).name.trim() !== '' && isValidLayout((c as CustomWorkspace).layout, PANEL_ORDER))
+      .slice(0, MAX_CUSTOM_WORKSPACES)
+      .map((c) => ({ id: c.id, name: c.name.slice(0, 40), layout: c.layout }));
+    const known = [...WORKSPACE_IDS, ...custom.map((c) => c.id)] as string[];
+    const valid = (id: string) => (isValidLayout(raw.layouts?.[id], PANEL_ORDER) ? (raw.layouts?.[id] as PanelLayout) : undefined);
+    const workspace = known.find((id) => id === raw.workspace) ?? 'essentials';
     const saved: StoredWorkspaces['saved'] = {};
-    for (const id of WORKSPACE_IDS) if (id !== workspace) saved[id] = valid(id);
-    return { workspace, panels: valid(workspace) ?? workspaceLayout(workspace), saved };
+    for (const id of known) {
+      const layout = id !== workspace ? valid(id) : undefined;
+      if (layout) saved[id] = layout;
+    }
+    return { workspace, panels: valid(workspace) ?? startLayout(workspace, custom), saved, custom };
   } catch {
     return fresh;
   }
@@ -235,6 +268,7 @@ export const useUi = create<UiState>()((set, get) => ({
   maximized: false,
   theme: 'dark',
   workspace: stored.workspace,
+  customWorkspaces: stored.custom,
 
   activeTool: 'tool-pen',
   slotTool: {},
@@ -276,6 +310,7 @@ export const useUi = create<UiState>()((set, get) => ({
   printDialog: false,
   preferencesDialog: false,
   shortcutsDialog: false,
+  customDocumentDialog: false,
   canvasMenu: null,
   spaceProps: null,
 
@@ -323,6 +358,8 @@ export const useUi = create<UiState>()((set, get) => ({
   openPrintDialog: () => set({ printDialog: true }),
   openPreferencesDialog: () => set({ preferencesDialog: true }),
   openShortcutsDialog: () => set({ shortcutsDialog: true }),
+  openCustomDocumentDialog: () => set({ customDocumentDialog: true }),
+  closeCustomDocumentDialog: () => set({ customDocumentDialog: false }),
   closeShortcutsDialog: () => set({ shortcutsDialog: false }),
   closePreferencesDialog: () => set({ preferencesDialog: false }),
   closePrintDialog: () => set({ printDialog: false }),
@@ -350,7 +387,30 @@ export const useUi = create<UiState>()((set, get) => ({
       if (workspace === s.workspace) return s;
       // The panels you arranged stay with the workspace you leave; the new one comes back as you left it.
       const saved = { ...s.savedLayouts, [s.workspace]: s.panels };
-      return { workspace, panels: saved[workspace] ?? workspaceLayout(workspace), savedLayouts: saved, stripOpen: null };
+      return { workspace, panels: saved[workspace] ?? startLayout(workspace, s.customWorkspaces), savedLayouts: saved, stripOpen: null };
+    }),
+  saveWorkspaceAs: (name) =>
+    set((s) => {
+      const clean = name.trim().slice(0, 40);
+      if (clean === '') return s;
+      const same = s.customWorkspaces.find((c) => c.name.toLowerCase() === clean.toLowerCase());
+      if (!same && s.customWorkspaces.length >= MAX_CUSTOM_WORKSPACES) return s;
+      const entry: CustomWorkspace = { id: same?.id ?? `custom-${Date.now().toString(36)}`, name: same?.name ?? clean, layout: s.panels };
+      const customWorkspaces = same ? s.customWorkspaces.map((c) => (c.id === same.id ? entry : c)) : [...s.customWorkspaces, entry];
+      const savedLayouts = { ...s.savedLayouts, [s.workspace]: s.panels };
+      delete savedLayouts[entry.id];
+      return { customWorkspaces, workspace: entry.id, savedLayouts };
+    }),
+  deleteWorkspace: (id) =>
+    set((s) => {
+      if (!s.customWorkspaces.some((c) => c.id === id)) return s;
+      const customWorkspaces = s.customWorkspaces.filter((c) => c.id !== id);
+      const savedLayouts = { ...s.savedLayouts };
+      delete savedLayouts[id];
+      // Deleting the one in use falls back to Esenciales (as you left it).
+      return s.workspace === id
+        ? { customWorkspaces, savedLayouts, workspace: 'essentials', panels: savedLayouts['essentials'] ?? workspaceLayout('essentials'), stripOpen: null }
+        : { customWorkspaces, savedLayouts };
     }),
 
   setActiveTool: (tool) => {
@@ -378,7 +438,7 @@ export const useUi = create<UiState>()((set, get) => ({
   dockPanelAsGroup: (panel, index) =>
     set((s) => ({ panels: movePanelToNewGroup(s.panels, panel, index), stripOpen: null })),
   collapsePanel: (panel) => set((s) => ({ panels: movePanelToStrip(s.panels, panel), stripOpen: null })),
-  resetPanels: () => set((s) => ({ panels: workspaceLayout(s.workspace), stripOpen: null })),
+  resetPanels: () => set((s) => ({ panels: startLayout(s.workspace, s.customWorkspaces), stripOpen: null })),
   setStripOpen: (stripOpen) => set({ stripOpen }),
   setCropMode: (cropMode) => set({ cropMode }),
 }));
@@ -390,9 +450,9 @@ export function currentSlotTool(slotTool: UiState['slotTool'], slotId: ToolId): 
 
 // Remember the workspace and every arrangement as they change.
 useUi.subscribe((state, previous) => {
-  if (state.workspace === previous.workspace && state.panels === previous.panels && state.savedLayouts === previous.savedLayouts) return;
+  if (state.workspace === previous.workspace && state.panels === previous.panels && state.savedLayouts === previous.savedLayouts && state.customWorkspaces === previous.customWorkspaces) return;
   try {
-    localStorage.setItem(WORKSPACES_KEY, JSON.stringify({ workspace: state.workspace, layouts: { ...state.savedLayouts, [state.workspace]: state.panels } }));
+    localStorage.setItem(WORKSPACES_KEY, JSON.stringify({ workspace: state.workspace, layouts: { ...state.savedLayouts, [state.workspace]: state.panels }, custom: state.customWorkspaces }));
   } catch {
     // Storage unavailable: the arrangement lasts for the session only.
   }

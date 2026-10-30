@@ -6,7 +6,7 @@ import { PANEL_ORDER, PANELS, type PanelId } from '../panels/registry';
 import { commandLabel } from '../i18n';
 import { hasHandler, runAction } from './actions';
 import { formatAccelerator, SHORTCUTS, type OsFamily, type ShortcutAction } from './shortcuts';
-import { useUi, type ViewOptions, type WorkspaceId } from './store';
+import { useUi, type CustomWorkspace, type ViewOptions, type WorkspaceId } from './store';
 import { selectedPathText, selectedTextIds } from './textActions';
 import { MODIFIER_MENU } from './modifierCatalog';
 import { openModifier, selectionHasModifiers } from './modifierActions';
@@ -18,9 +18,12 @@ import { manager } from '../documents';
 export interface MenuContext {
   os: OsFamily;
   theme: Theme;
-  workspace: WorkspaceId;
+  workspace: string;
+  customWorkspaces: readonly CustomWorkspace[];
   setTheme(theme: Theme): void;
-  setWorkspace(workspace: WorkspaceId): void;
+  setWorkspace(workspace: string): void;
+  saveWorkspaceAs(): void;
+  deleteWorkspace(id: string): void;
   openPanel(panel: PanelId): void;
   resetPanels(): void;
   /** History state of the active document, for Edit › Undo/Redo. */
@@ -57,6 +60,25 @@ const PANEL_ACTION: Partial<Record<PanelId, ShortcutAction>> = {
 export const PANEL_BY_ACTION: Partial<Record<ShortcutAction, PanelId>> = Object.fromEntries(
   Object.entries(PANEL_ACTION).map(([panel, action]) => [action, panel]),
 ) as Partial<Record<ShortcutAction, PanelId>>;
+
+/** The name a workspace goes by: the built-in ones are translated, a saved one has the name the user gave it. */
+export const workspaceName = (id: string, custom: readonly CustomWorkspace[]): string =>
+  custom.find((c) => c.id === id)?.name ?? ((WORKSPACES as readonly string[]).includes(id) ? t(`workspace.${id as WorkspaceId}`) : id);
+
+/** Entries of the workspace selector and of Ventana › Espacio de trabajo: built-in, saved, and the save/delete actions. */
+export function workspaceEntries(ctx: Pick<MenuContext, 'workspace' | 'customWorkspaces' | 'setWorkspace' | 'saveWorkspaceAs' | 'deleteWorkspace'>): MenuEntry[] {
+  const pick = (id: string, label: string): MenuItem => ({ id: `ws-${id}`, label, icon: 'workspace', checked: ctx.workspace === id, onSelect: () => ctx.setWorkspace(id) });
+  const entries: MenuEntry[] = WORKSPACES.map((id) => pick(id, t(`workspace.${id}`)));
+  if (ctx.customWorkspaces.length > 0) {
+    entries.push({ type: 'separator', id: 'ws-sep-custom' });
+    for (const c of ctx.customWorkspaces) entries.push(pick(c.id, c.name));
+  }
+  entries.push({ type: 'separator', id: 'ws-sep-actions' });
+  entries.push({ id: 'ws-save', label: t('workspace.saveAs'), icon: 'save', onSelect: ctx.saveWorkspaceAs });
+  const current = ctx.customWorkspaces.find((c) => c.id === ctx.workspace);
+  if (current) entries.push({ id: 'ws-delete', label: t('workspace.delete', { name: current.name }), icon: 'delete', onSelect: () => ctx.deleteWorkspace(current.id) });
+  return entries;
+}
 
 export function buildMenus(ctx: MenuContext): MenuDef[] {
   const keys = (action: ShortcutAction) => formatAccelerator(SHORTCUTS[action], ctx.os);
@@ -227,9 +249,7 @@ export function buildMenus(ctx: MenuContext): MenuDef[] {
       'workspace',
       'menu.window.workspace',
       'workspace',
-      WORKSPACES.map((id) =>
-        item(`ws-${id}`, `workspace.${id}`, 'workspace', undefined, { checked: ctx.workspace === id, onSelect: () => ctx.setWorkspace(id) }),
-      ),
+      workspaceEntries(ctx),
     ),
     sub('theme', 'menu.window.theme', 'theme', [
       item('theme-dark', 'menu.window.themeDark', 'theme', undefined, { checked: ctx.theme === 'dark', onSelect: () => ctx.setTheme('dark') }),

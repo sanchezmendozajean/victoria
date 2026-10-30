@@ -14,8 +14,10 @@ import { ModifierDialog } from './ModifierDialog';
 import { PathTextDialog } from './PathTextDialog';
 import { ExportDialog } from './ExportDialog';
 import { PreferencesDialog } from './PreferencesDialog';
+import { CustomDocumentDialog } from './CustomDocumentDialog';
 import { ShortcutsDialog } from './ShortcutsDialog';
 import { StartScreen } from './StartScreen';
+import { TextPromptHost } from './TextPrompt';
 import { useDocuments } from '../documents';
 import { PrintDialog } from './PrintDialog';
 import { ShapeDialog } from './ShapeDialog';
@@ -58,6 +60,8 @@ export function App() {
       <PrintDialog />
       <PreferencesDialog />
       <ShortcutsDialog />
+      <CustomDocumentDialog />
+      <TextPromptHost />
       <PathTextDialog />
       <ModifierDialog />
       <ColorPickerDialog />

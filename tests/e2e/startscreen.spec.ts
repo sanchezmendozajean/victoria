@@ -43,5 +43,21 @@ test.describe('start screen (Phase 12)', () => {
     await expect(page.getByTestId('start-screen')).toBeVisible();
     await page.getByTestId('start-new-Instagram').click();
     await expect(page.getByTestId('canvas-surface')).toBeVisible();
+
+    // Personalizado asks for a size.
+    await page.keyboard.press('Control+w');
+    await expect(page.getByTestId('start-screen')).toBeVisible();
+    await page.getByTestId('start-new-custom').click();
+    await expect(page.getByTestId('custom-document-dialog')).toBeVisible();
+    await page.getByTestId('custom-w').fill('120');
+    await page.keyboard.press('Enter');
+    await page.getByTestId('custom-h').fill('80');
+    await page.keyboard.press('Enter');
+    await page.getByTestId('custom-ok').click();
+    await expect(page.getByTestId('custom-document-dialog')).toHaveCount(0);
+    await expect(page.getByTestId('canvas-surface')).toBeVisible();
+    await page.getByTestId('panel-group').nth(0).locator('[data-panel="properties"]').click();
+    await page.keyboard.press('Control+a');
+    await page.keyboard.press('Escape');
   });
 });

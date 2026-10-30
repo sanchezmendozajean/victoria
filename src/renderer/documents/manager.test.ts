@@ -282,6 +282,14 @@ describe('DocumentManager', () => {
     expect(readVict(disk.get(state.savePath!)!).thumbnail).toBeUndefined();
   });
 
+  it('a custom size makes an artboard of that size with no preset, and sets the units of the document', () => {
+    const { manager } = fakeEnv();
+    const doc = manager.newDocument(undefined, { w: 300, h: 150, units: 'cm' });
+    const board = doc.session.document.spaces[0]!.artboards[0]!;
+    expect([board.w, board.h, board.preset]).toEqual([300, 150, undefined]);
+    expect(doc.session.document.meta.units).toBe('cm');
+  });
+
   it('a new document takes the artboard size of the preset asked for', () => {
     const { manager } = fakeEnv();
     const doc = manager.newDocument('Instagram');

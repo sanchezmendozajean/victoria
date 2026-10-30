@@ -20,6 +20,7 @@ import {
   type PdfPageImport,
   type IdGenerator,
   type Selection,
+  type Units,
 } from '../../core';
 import type { AutosaveEntry, DialogLabels, OpenedFile, SaveRequest, SaveResult } from '../../shared/ipc';
 
@@ -181,8 +182,11 @@ export class DocumentManager {
     return n;
   }
 
-  /** A new document with one artboard of the given preset (A4 by default). */
-  newDocument(preset?: string): OpenDocument {
+  /**
+   * A new document with one artboard of the given preset (A4 by default), or of a custom size in points; a custom
+   * size also sets the units the document works in.
+   */
+  newDocument(preset?: string, custom?: { w: number; h: number; units: Units }): OpenDocument {
     const { names } = this.deps;
     const ids = this.ids;
     const document = createDocument({
@@ -194,6 +198,13 @@ export class DocumentManager {
       ids,
       now: new Date(this.clock()).toISOString(),
     });
+    const board = document.spaces[0]?.artboards[0];
+    if (custom && board) {
+      board.w = custom.w;
+      board.h = custom.h;
+      delete board.preset;
+      document.meta.units = custom.units;
+    }
     return this.adopt(new DocumentSession(document, { ids }), null);
   }
 

@@ -38,14 +38,16 @@
 
 - **Vistas del Calco** (spec 08): el selector «Vista» del calco vivo muestra en el lienzo el **resultado**, el **resultado con contornos**, solo los **contornos** (el modo contorno de la vista, con el color de la capa), los **contornos sobre la imagen original** (atenuada) o la **imagen original**. Es solo cómo se ve (`TraceInfo.view`, un paso de deshacer cada cambio): el archivo y las exportaciones siguen usando los trazados, un nuevo calco conserva la vista y Expandir la olvida. Pruebas: 1 unitaria (la vista no cambia la escena de exportación, sobrevive a un nuevo calco y se deshace) y la e2e del Calco cambia de vista comprobando los píxeles (los contornos no dejan rojo; imagen y resultado sí).
 
+- **Espacios de trabajo con nombre**: en el selector de la barra de título (y en Ventana › Espacio de trabajo) **Guardar espacio de trabajo…** pide un nombre y guarda el reparto actual de paneles; aparece junto a los cuatro de fábrica, se recuerda entre sesiones (hasta 20; el mismo nombre lo reemplaza) y **Eliminar «nombre»** lo borra (si estaba en uso vuelve a Esenciales). *Restablecer paneles* en uno propio vuelve a lo que se guardó. Lo guardado se valida panel por panel. Nueva utilidad `askText` (cuadro de una línea de texto).
+- **Tarjeta «Personalizado»** en la pantalla de inicio: un cuadro pide ancho, alto y unidades y crea un documento con una mesa de ese tamaño (sin preajuste) y esas unidades de trabajo. Pruebas: 1 del gestor y e2e de ambos (guardar, cambiar, recargar y eliminar un espacio; crear un documento personalizado).
+
 ### Pendiente
 - Calco: faltan ajustar curvas a líneas, trazos en lugar de rellenos y la lista de colores editable del panel; las curvas no son las óptimas de potrace.
 - Worker para booleanas: solo el panel Buscatrazos. El Buscatrazos *vivo* (modificador), «Desplazar trazado» y el Creador de formas siguen calculando en el hilo de la interfaz (se evalúan al dibujar y no se pueden esperar).
 - Atajos: no se ofrece todavía el aviso de primer arranque de Linux sobre Alt+arrastrar ni la detección de `XDG_CURRENT_DESKTOP` (spec 09); la reasignación ya permite resolver cualquier choque a mano.
 - Verificar fuera de esta máquina: instalación y desinstalación interactivas en Windows; AppImage, deb, rpm, asociación de archivos y Wayland en Linux; firma de código cuando haya certificado.
 - Rendimiento: no se probó con muchas imágenes grandes ni con miles de textos; las booleanas de más de 500 segmentos en Worker (spec 01) siguen sin Worker.
-- Pantalla de inicio: tarjeta «Personalizado», y abrir con la pantalla de inicio por defecto cuando haya un instalador.
-- Espacios de trabajo: guardar espacios propios con nombre.
+- Pantalla de inicio: abrir con la pantalla de inicio por defecto cuando haya un instalador.
 - Preferencias: faltan **Atajos** (reasignar, y las alternativas para los atajos que Linux reserva, spec 09), «usar barra de título del sistema» (exige recrear la ventana), unidades de los documentos nuevos y tamaño de la interfaz.
 
 ## Fase 11 — Imágenes, exportar, imprimir (en curso)

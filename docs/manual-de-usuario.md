@@ -5,7 +5,7 @@ Victoria es un editor de gráficos vectoriales para dibujar íconos, acomodar im
 ## 1. Empezar
 
 - **Instalar:** en Windows, ejecuta `Victoria-Setup-<versión>.exe` (instalador) o usa la versión portátil. En Linux hay AppImage, `.deb` y `.rpm`.
-- **Primer documento:** al abrir Victoria aparece un documento A4 vacío. Con **Archivo › Nuevo** (Ctrl+N) abres otro. Si cierras el último documento verás la **pantalla de inicio**, con tarjetas para crear (A4, Carta, Ícono 24 px, Instagram), el botón **Abrir…** y la lista de **Recientes**.
+- **Primer documento:** al abrir Victoria aparece un documento A4 vacío. Con **Archivo › Nuevo** (Ctrl+N) abres otro. Si cierras el último documento verás la **pantalla de inicio**, con tarjetas para crear (A4, Carta, Ícono 24 px, Instagram o Personalizado, con el tamaño que escribas), el botón **Abrir…** y la lista de **Recientes**.
 - **Guardar:** Ctrl+S guarda un archivo `.vict` (un documento con todo lo que hay en él, imágenes incluidas). Victoria **autoguarda** cada minuto lo que cambió; si se cierra de forma inesperada, al volver te ofrece recuperarlo.
 
 ## 2. Documentos, Espacios y mesas
@@ -50,7 +50,7 @@ Ctrl+Z / Mayús+Ctrl+Z deshacen y rehacen **todo** (el historial es exacto, tamb
 
 ## 7. Personalizar
 
-- **Espacios de trabajo** (selector de la barra de título): Esenciales, Íconos, Impresión y Texto cambian la disposición de los paneles; lo que muevas se recuerda para cada uno. **Ventana › Restablecer paneles** vuelve a la disposición original.
+- **Espacios de trabajo** (selector de la barra de título): Esenciales, Íconos, Impresión y Texto cambian la disposición de los paneles; lo que muevas se recuerda para cada uno. **Ventana › Restablecer paneles** vuelve a la disposición original. Con **Guardar espacio de trabajo…** (en el mismo selector) guardas la disposición actual con tu nombre.
 - **Atajos de teclado** (Edición › Atajos de teclado…): busca una acción, pulsa **Cambiar** y escribe la combinación nueva; si ya la usa otra acción puedes intercambiarlas. Se puede restablecer una o todas.
 - **Preferencias** (Ctrl+K): puntos automáticos de la Pluma, fidelidad del Lápiz, intervalo de autoguardado, si se muestra la pantalla de inicio al abrir y si Colocar vincula las imágenes al archivo en vez de incrustarlas.
 

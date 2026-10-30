@@ -4,6 +4,7 @@ import type { RecentFile } from '../../shared/ipc';
 import { Icon } from '../components/Icon';
 import { useThumbnail } from './useThumbnail';
 import { manager } from '../documents';
+import { useUi } from './store';
 import { t } from '../i18n';
 import './StartScreen.css';
 
@@ -53,6 +54,11 @@ export function StartScreen() {
                 <span className="vc-start__card-size">{SIZE_UNIT(card.id)}</span>
               </button>
             ))}
+            <button type="button" className="vc-start__card" data-testid="start-new-custom" onClick={() => useUi.getState().openCustomDocumentDialog()}>
+              <Icon id="document-setup" size={28} />
+              <span className="vc-start__card-name">{t('start.custom')}</span>
+              <span className="vc-start__card-size">{t('start.customHint')}</span>
+            </button>
           </div>
         </section>
         <section>

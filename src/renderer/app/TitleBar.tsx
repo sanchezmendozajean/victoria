@@ -1,5 +1,5 @@
 import { useShortcuts } from './useShortcuts';
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Logo } from '../components/Logo';
 import { Icon } from '../components/Icon';
 import { MenuPopup, type Anchor, type MenuEntry } from '../components/Menu';
@@ -7,7 +7,8 @@ import { cx } from '../components/cx';
 import { tip } from '../components/Tooltip';
 import { useDocuments } from '../documents';
 import { t } from '../i18n';
-import { buildMenus, WORKSPACES, type MenuId } from './menus';
+import { buildMenus, workspaceEntries, workspaceName, type MenuId } from './menus';
+import { askText } from './TextPrompt';
 import { useUi } from './store';
 import './TitleBar.css';
 
@@ -26,6 +27,13 @@ export function TitleBar() {
   const platform = useUi((s) => s.platform);
   const theme = useUi((s) => s.theme);
   const workspace = useUi((s) => s.workspace);
+  const customWorkspaces = useUi((s) => s.customWorkspaces);
+  const saveWorkspace = useUi((s) => s.saveWorkspaceAs);
+  const deleteWorkspace = useUi((s) => s.deleteWorkspace);
+  const saveWorkspaceAs = useCallback(async () => {
+    const name = await askText({ title: t('workspace.saveAs'), label: t('workspace.name') });
+    if (name) saveWorkspace(name);
+  }, [saveWorkspace]);
   const maximized = useUi((s) => s.maximized);
   const setTheme = useUi((s) => s.setTheme);
   const setWorkspace = useUi((s) => s.setWorkspace);
@@ -42,20 +50,14 @@ export function TitleBar() {
   const barRef = useRef<HTMLDivElement>(null);
 
   const menus = useMemo(
-    () => buildMenus({ os: platform.os, theme, workspace, setTheme, setWorkspace, openPanel, resetPanels, undoLabel, redoLabel, viewOptions, openTransformDialog: (kind) => openTransformDialog(kind, null) }),
-    [platform.os, theme, workspace, setTheme, setWorkspace, openPanel, resetPanels, undoLabel, redoLabel, viewOptions, openTransformDialog, shortcuts],
+    () => buildMenus({ os: platform.os, theme, workspace, customWorkspaces, setTheme, setWorkspace, saveWorkspaceAs, deleteWorkspace, openPanel, resetPanels, undoLabel, redoLabel, viewOptions, openTransformDialog: (kind) => openTransformDialog(kind, null) }),
+    [platform.os, theme, workspace, customWorkspaces, setTheme, setWorkspace, saveWorkspaceAs, deleteWorkspace, openPanel, resetPanels, undoLabel, redoLabel, viewOptions, openTransformDialog, shortcuts],
   );
 
-  const workspaceEntries: MenuEntry[] = WORKSPACES.map((id) => ({
-    id,
-    label: t(`workspace.${id}`),
-    icon: 'workspace',
-    checked: workspace === id,
-    onSelect: () => setWorkspace(id),
-  }));
+  const workspaceMenu: MenuEntry[] = workspaceEntries({ workspace, customWorkspaces, setWorkspace, saveWorkspaceAs, deleteWorkspace });
 
   const entriesFor = (menu: OpenMenu): MenuEntry[] =>
-    menu.id === 'workspace' ? workspaceEntries : (menus.find((m) => m.id === menu.id)?.entries ?? []);
+    menu.id === 'workspace' ? workspaceMenu : (menus.find((m) => m.id === menu.id)?.entries ?? []);
 
   const toggle = (id: OpenMenu['id'], el: HTMLElement, placement: Anchor['placement']) =>
     setOpen((current) => (current?.id === id ? null : { id, anchor: anchorOf(el, placement) }));
@@ -107,7 +109,7 @@ export function TitleBar() {
         onDoubleClick={(event) => event.stopPropagation()}
       >
         <Icon id="workspace" size={14} />
-        <span>{t(`workspace.${workspace}`)}</span>
+        <span>{workspaceName(workspace, customWorkspaces)}</span>
         <Icon id="chevron-down" size={12} className="vc-titlebar__chevron" />
       </button>
       {chrome === 'custom' && (
