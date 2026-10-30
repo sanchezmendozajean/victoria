@@ -14,6 +14,8 @@ import { ModifierDialog } from './ModifierDialog';
 import { PathTextDialog } from './PathTextDialog';
 import { ExportDialog } from './ExportDialog';
 import { PreferencesDialog } from './PreferencesDialog';
+import { StartScreen } from './StartScreen';
+import { useDocuments } from '../documents';
 import { PrintDialog } from './PrintDialog';
 import { ShapeDialog } from './ShapeDialog';
 import { TransformDialog } from './TransformDialog';
@@ -25,6 +27,7 @@ import './App.css';
 export function App() {
   useAppEffects();
   useDocumentLifecycle();
+  const hasDocuments = useDocuments().documents.length > 0;
 
   return (
     <div className="vc-app">
@@ -33,9 +36,15 @@ export function App() {
       <div className="vc-app__middle">
         <Toolbar />
         <div className="vc-app__work">
-          <DocBar />
-          <IsolationBar />
-          <CanvasArea />
+          {hasDocuments ? (
+            <>
+              <DocBar />
+              <IsolationBar />
+              <CanvasArea />
+            </>
+          ) : (
+            <StartScreen />
+          )}
         </div>
         <PanelDock />
       </div>

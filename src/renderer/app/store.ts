@@ -6,19 +6,22 @@ import type { TransformKind } from '../tools/types';
 import type { ShapeToolKind } from '../tools/shapeDrag';
 import {
   activatePanel,
-  defaultLayout,
+  WORKSPACE_IDS,
+  isValidLayout,
   locatePanel,
   movePanelToGroup,
   movePanelToNewGroup,
   movePanelToStrip,
   selectTab,
   toggleGroup,
+  workspaceLayout,
   type PanelLayout,
+  type WorkspaceId,
 } from '../panels/layout';
-import type { PanelId } from '../panels/registry';
+import { PANEL_ORDER, type PanelId } from '../panels/registry';
 import { ALL_SLOTS, slotOf, type ToolId } from './tools';
 
-export type WorkspaceId = 'essentials' | 'icons' | 'print' | 'text';
+export type { WorkspaceId };
 
 /** View menu toggles (specs/09 · Vista). Per window for now; Illustrator keeps them per document. */
 export interface ViewOptions {
@@ -63,6 +66,8 @@ interface UiState {
   toolbarTwoColumns: boolean;
 
   panels: PanelLayout;
+  /** Layouts of the workspaces that are not the current one (the current one is `panels`). */
+  savedLayouts: Partial<Record<WorkspaceId, PanelLayout>>;
   /** Strip panel whose floating window is open. */
   stripOpen: PanelId | null;
 
@@ -196,17 +201,41 @@ const saveToolbarColumns = (two: boolean): void => {
   }
 };
 
+/** Workspace and panel arrangements survive restarts. What comes back from storage is checked panel by panel. */
+const WORKSPACES_KEY = 'victoria.workspaces';
+interface StoredWorkspaces {
+  workspace: WorkspaceId;
+  panels: PanelLayout;
+  saved: Partial<Record<WorkspaceId, PanelLayout>>;
+}
+function loadWorkspaces(): StoredWorkspaces {
+  const fresh: StoredWorkspaces = { workspace: 'essentials', panels: workspaceLayout('essentials'), saved: {} };
+  try {
+    const raw = JSON.parse(localStorage.getItem(WORKSPACES_KEY) ?? 'null') as Partial<{ workspace: unknown; layouts: Record<string, unknown> }> | null;
+    if (!raw || typeof raw.layouts !== 'object' || raw.layouts === null) return fresh;
+    const valid = (id: WorkspaceId) => (isValidLayout(raw.layouts?.[id], PANEL_ORDER) ? (raw.layouts?.[id] as PanelLayout) : undefined);
+    const workspace = WORKSPACE_IDS.find((id) => id === raw.workspace) ?? 'essentials';
+    const saved: StoredWorkspaces['saved'] = {};
+    for (const id of WORKSPACE_IDS) if (id !== workspace) saved[id] = valid(id);
+    return { workspace, panels: valid(workspace) ?? workspaceLayout(workspace), saved };
+  } catch {
+    return fresh;
+  }
+}
+const stored = loadWorkspaces();
+
 export const useUi = create<UiState>()((set, get) => ({
   platform: { os: 'win32', chrome: 'native-overlay' },
   maximized: false,
   theme: 'dark',
-  workspace: 'essentials',
+  workspace: stored.workspace,
 
   activeTool: 'tool-pen',
   slotTool: {},
   toolbarTwoColumns: loadToolbarColumns(),
 
-  panels: defaultLayout(),
+  panels: stored.panels,
+  savedLayouts: stored.saved,
   stripOpen: null,
 
   viewOptions: DEFAULT_VIEW_OPTIONS,
@@ -306,7 +335,13 @@ export const useUi = create<UiState>()((set, get) => ({
   setPlatform: (platform) => set({ platform }),
   setMaximized: (maximized) => set({ maximized }),
   setTheme: (theme) => set({ theme }),
-  setWorkspace: (workspace) => set({ workspace }),
+  setWorkspace: (workspace) =>
+    set((s) => {
+      if (workspace === s.workspace) return s;
+      // The panels you arranged stay with the workspace you leave; the new one comes back as you left it.
+      const saved = { ...s.savedLayouts, [s.workspace]: s.panels };
+      return { workspace, panels: saved[workspace] ?? workspaceLayout(workspace), savedLayouts: saved, stripOpen: null };
+    }),
 
   setActiveTool: (tool) => {
     const slot = slotOf(tool);
@@ -333,7 +368,7 @@ export const useUi = create<UiState>()((set, get) => ({
   dockPanelAsGroup: (panel, index) =>
     set((s) => ({ panels: movePanelToNewGroup(s.panels, panel, index), stripOpen: null })),
   collapsePanel: (panel) => set((s) => ({ panels: movePanelToStrip(s.panels, panel), stripOpen: null })),
-  resetPanels: () => set({ panels: defaultLayout(), stripOpen: null }),
+  resetPanels: () => set((s) => ({ panels: workspaceLayout(s.workspace), stripOpen: null })),
   setStripOpen: (stripOpen) => set({ stripOpen }),
 }));
 
@@ -341,3 +376,13 @@ export const useUi = create<UiState>()((set, get) => ({
 export function currentSlotTool(slotTool: UiState['slotTool'], slotId: ToolId): ToolId {
   return slotTool[slotId] ?? ALL_SLOTS.find((s) => s.id === slotId)?.id ?? slotId;
 }
+
+// Remember the workspace and every arrangement as they change.
+useUi.subscribe((state, previous) => {
+  if (state.workspace === previous.workspace && state.panels === previous.panels && state.savedLayouts === previous.savedLayouts) return;
+  try {
+    localStorage.setItem(WORKSPACES_KEY, JSON.stringify({ workspace: state.workspace, layouts: { ...state.savedLayouts, [state.workspace]: state.panels } }));
+  } catch {
+    // Storage unavailable: the arrangement lasts for the session only.
+  }
+});

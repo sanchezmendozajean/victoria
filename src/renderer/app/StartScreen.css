@@ -1,0 +1,101 @@
+.vc-start {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  overflow: auto;
+  background: var(--bg-canvas, var(--bg-app));
+}
+.vc-start__inner {
+  width: min(720px, 100%);
+  padding: 48px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+.vc-start__title {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 600;
+}
+.vc-start__heading {
+  margin: 0 0 12px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted, #9aa0a6);
+}
+.vc-start__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+}
+.vc-start__card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 16px;
+  border: 1px solid var(--border, #3a3b3f);
+  border-radius: 8px;
+  background: var(--bg-panel, transparent);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.vc-start__card:hover,
+.vc-start__file:hover,
+.vc-start__open:hover {
+  border-color: var(--accent, #4c8dff);
+}
+.vc-start__card-name {
+  font-weight: 600;
+}
+.vc-start__card-size,
+.vc-start__file-date,
+.vc-start__empty {
+  font-size: 11px;
+  color: var(--text-muted, #9aa0a6);
+}
+.vc-start__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.vc-start__open {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid var(--border, #3a3b3f);
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.vc-start__recent {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.vc-start__file {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.vc-start__file-name {
+  flex: 1;
+}

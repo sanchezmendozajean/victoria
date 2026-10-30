@@ -42,6 +42,7 @@ function PreferencesForm() {
           <NumberInput value={prefs.pencilFidelity} onCommit={(v) => set({ pencilFidelity: Math.round(v) as 1 })} min={1} max={5} step={1} decimals={0} width={80} testId="pref-pencil-fidelity" tooltip={t('prefs.pencilFidelityHint')} />,
         )}
         <h3 className="vc-prefs__group">{t('prefs.files')}</h3>
+        <CheckRow checked={prefs.startScreen} onChange={(startScreen) => set({ startScreen })} label={t('prefs.startScreen')} testId="pref-start-screen" />
         {row(
           t('prefs.autosave'),
           <NumberInput value={prefs.autosaveMinutes} onCommit={(v) => set({ autosaveMinutes: v })} min={AUTOSAVE_MINUTES.min} max={AUTOSAVE_MINUTES.max} step={1} decimals={0} suffix={t('prefs.minutes')} width={110} testId="pref-autosave" tooltip={t('prefs.autosave')} />,

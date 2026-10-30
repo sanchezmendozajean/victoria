@@ -110,3 +110,62 @@ export function locatePanel(layout: PanelLayout, panel: PanelId): 'group' | 'str
   if (findGroup(layout, panel)) return 'group';
   return layout.strip.includes(panel) ? 'strip' : 'none';
 }
+
+// ── Workspaces ──
+
+export type WorkspaceId = 'essentials' | 'icons' | 'print' | 'text';
+export const WORKSPACE_IDS: readonly WorkspaceId[] = ['essentials', 'icons', 'print', 'text'];
+
+/** The panel arrangement each workspace starts from (specs/10 §1 and §7). Every panel appears exactly once. */
+export function workspaceLayout(id: WorkspaceId): PanelLayout {
+  switch (id) {
+    case 'essentials':
+      return defaultLayout();
+    case 'icons':
+      return {
+        groups: [
+          group('g1', ['layers', 'properties', 'spaces'], 'layers', true),
+          group('g2', ['fill', 'swatches', 'gradient'], 'fill', true),
+          group('g3', ['stroke', 'appearance'], 'stroke', true),
+          group('g4', ['align', 'transform', 'pathfinder', 'spacing'], 'align', true),
+          group('g5', ['character', 'paragraph']),
+        ],
+        strip: ['artboards', 'trace'],
+      };
+    case 'print':
+      return {
+        groups: [
+          group('g1', ['artboards', 'spaces', 'layers'], 'artboards', true),
+          group('g2', ['properties', 'transform', 'align'], 'properties', true),
+          group('g3', ['fill', 'swatches', 'gradient']),
+          group('g4', ['stroke', 'appearance']),
+          group('g5', ['character', 'paragraph', 'spacing', 'pathfinder']),
+        ],
+        strip: ['trace'],
+      };
+    case 'text':
+      return {
+        groups: [
+          group('g1', ['character', 'paragraph', 'spacing'], 'character', true),
+          group('g2', ['fill', 'swatches', 'gradient'], 'fill', true),
+          group('g3', ['properties', 'layers', 'spaces'], 'properties', true),
+          group('g4', ['stroke', 'appearance']),
+          group('g5', ['align', 'transform', 'pathfinder']),
+        ],
+        strip: ['artboards', 'trace'],
+      };
+  }
+}
+
+/** True when `value` has the shape of a layout and lists every panel of `all` exactly once (stored layouts are untrusted). */
+export function isValidLayout(value: unknown, all: readonly PanelId[]): value is PanelLayout {
+  if (typeof value !== 'object' || value === null) return false;
+  const { groups, strip } = value as Partial<PanelLayout>;
+  if (!Array.isArray(groups) || !Array.isArray(strip)) return false;
+  const seen: unknown[] = [...strip];
+  for (const g of groups) {
+    if (typeof g !== 'object' || g === null || typeof g.id !== 'string' || typeof g.open !== 'boolean' || !Array.isArray(g.tabs) || !g.tabs.includes(g.active)) return false;
+    seen.push(...g.tabs);
+  }
+  return seen.length === all.length && all.every((p) => seen.filter((s) => s === p).length === 1);
+}

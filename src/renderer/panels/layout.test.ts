@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
   activatePanel,
   defaultLayout,
+  isValidLayout,
+  WORKSPACE_IDS,
+  workspaceLayout,
   findGroup,
   locatePanel,
   movePanelToGroup,
@@ -97,5 +100,32 @@ describe('panel layout operations', () => {
     const solo = movePanelToNewGroup(defaultLayout(), 'trace', 5);
     const id = solo.groups[5]?.id as string;
     expect(movePanelToGroup(solo, 'trace', id)).toBe(solo);
+  });
+});
+
+describe('workspaces', () => {
+  it('every workspace shows every panel exactly once, and the ones that name their first group open it', () => {
+    for (const id of WORKSPACE_IDS) {
+      const layout = workspaceLayout(id);
+      expect(allPanels(layout)).toEqual([...PANEL_ORDER].sort());
+      expect(isValidLayout(layout, PANEL_ORDER)).toBe(true);
+      expect(layout.groups.some((g) => g.open)).toBe(true);
+    }
+    expect(workspaceLayout('essentials')).toEqual(defaultLayout());
+  });
+
+  it('the workspaces differ: Texto opens Carácter first, Impresión opens Mesas', () => {
+    expect(workspaceLayout('text').groups[0]?.active).toBe('character');
+    expect(workspaceLayout('print').groups[0]?.active).toBe('artboards');
+  });
+
+  it('a stored layout that lost, repeated or invented a panel is refused', () => {
+    const good = defaultLayout();
+    expect(isValidLayout(good, PANEL_ORDER)).toBe(true);
+    expect(isValidLayout({ ...good, strip: [] }, PANEL_ORDER)).toBe(false);
+    expect(isValidLayout({ ...good, strip: [...good.strip, 'layers'] }, PANEL_ORDER)).toBe(false);
+    expect(isValidLayout({ groups: [{ id: 'g1', tabs: ['nope'], active: 'nope', open: true }], strip: [] }, PANEL_ORDER)).toBe(false);
+    expect(isValidLayout(null, PANEL_ORDER)).toBe(false);
+    expect(isValidLayout({ groups: 1, strip: 2 }, PANEL_ORDER)).toBe(false);
   });
 });

@@ -2,7 +2,8 @@ import { app, dialog, shell, type BrowserWindow } from 'electron';
 import { randomUUID } from 'node:crypto';
 import { mkdir, readdir, readFile, rename, stat, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import type { AutosaveEntry, DialogLabels, ExportFile, ExportSaveRequest, ExportWriteResult, OpenedFile, SaveRequest, SaveResult } from '../shared/ipc';
+import type { AutosaveEntry, DialogLabels, ExportFile, ExportSaveRequest, ExportWriteResult, OpenedFile, RecentFile, SaveRequest, SaveResult } from '../shared/ipc';
+import { pushRecent, sanitizeRecent } from './recentList';
 
 const EXTENSION = 'vict';
 const DOC_ID = /^[A-Za-z0-9_-]{1,64}$/;
@@ -10,6 +11,56 @@ const MAX_FILE_BYTES = 2 * 1024 * 1024 * 1024;
 
 /** Paths the user picked in a native dialog; the renderer may only save to these without asking again. */
 const granted = new Set<string>();
+
+// ── Recent documents ──
+
+const recentFile = () => path.join(app.getPath('userData'), 'recent.json');
+
+async function readRecent(): Promise<string[]> {
+  try {
+    return sanitizeRecent(JSON.parse(await readFile(recentFile(), 'utf8')));
+  } catch {
+    return [];
+  }
+}
+
+/** Remembers a document the user opened or saved, so the start screen can offer it again. */
+async function rememberRecent(file: string): Promise<void> {
+  if (path.extname(file).toLowerCase() !== '.vict') return;
+  try {
+    await writeFileAtomic(recentFile(), new TextEncoder().encode(JSON.stringify(pushRecent(await readRecent(), file))));
+  } catch {
+    // The list is a convenience: failing to store it must not fail the open or the save.
+  }
+}
+
+/** The recent documents that still exist, newest first. */
+export async function listRecent(): Promise<RecentFile[]> {
+  const out: RecentFile[] = [];
+  for (const file of await readRecent()) {
+    try {
+      const info = await stat(file);
+      if (info.isFile()) out.push({ path: file, name: path.basename(file, path.extname(file)), modified: info.mtimeMs });
+    } catch {
+      // Moved or deleted since: not offered.
+    }
+  }
+  return out;
+}
+
+/** Opens a document from the recent list; any other path is refused (the renderer cannot read arbitrary files). */
+export async function openRecent(file: unknown): Promise<OpenedFile | null> {
+  if (typeof file !== 'string' || !(await readRecent()).includes(file)) return null;
+  try {
+    if ((await stat(file)).size > MAX_FILE_BYTES) return null;
+    const bytes = new Uint8Array(await readFile(file));
+    granted.add(file);
+    await rememberRecent(file);
+    return { path: file, bytes };
+  } catch {
+    return null;
+  }
+}
 
 /** Temp file + rename, so a crash never leaves a half-written document (specs/02). */
 export async function writeFileAtomic(target: string, bytes: Uint8Array): Promise<void> {
@@ -43,6 +94,7 @@ export async function openFile(win: BrowserWindow, labels: unknown): Promise<Ope
   if (result.canceled || !file) return null;
   if ((await stat(file)).size > MAX_FILE_BYTES) throw new Error('File too large');
   granted.add(file);
+  await rememberRecent(file);
   return { path: file, bytes: new Uint8Array(await readFile(file)) };
 }
 
@@ -101,6 +153,7 @@ export async function saveFile(win: BrowserWindow, request: SaveRequest): Promis
     granted.add(target);
   }
   await writeFileAtomic(target, request.bytes);
+  await rememberRecent(target);
   return { path: target };
 }
 

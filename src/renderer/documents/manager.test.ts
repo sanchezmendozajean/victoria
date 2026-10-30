@@ -255,12 +255,21 @@ describe('DocumentManager', () => {
     expect(disk.has('C:\\docs\\z.vict')).toBe(true);
   });
 
-  it('never leaves the app without a document', async () => {
+  it('closing the last document leaves none open (the start screen takes over), and a new one still works', async () => {
     const { manager } = fakeEnv();
     manager.newDocument();
     await manager.close();
+    expect(manager.documents).toHaveLength(0);
+    expect(manager.active).toBeNull();
+    manager.newDocument();
     expect(manager.documents).toHaveLength(1);
-    expect(displayName(manager.active!)).toBe('Sin título-1.vict');
+  });
+
+  it('a new document takes the artboard size of the preset asked for', () => {
+    const { manager } = fakeEnv();
+    const doc = manager.newDocument('Instagram');
+    const board = doc.session.document.spaces[0]!.artboards[0]!;
+    expect([board.w, board.h, board.preset]).toEqual([1080, 1080, 'Instagram']);
   });
 });
 

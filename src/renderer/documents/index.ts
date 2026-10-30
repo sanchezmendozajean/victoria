@@ -15,6 +15,7 @@ export const manager = new DocumentManager({
     autosaveList: () => window.victoria.autosaveList(),
     autosaveRead: (id) => window.victoria.autosaveRead(id),
     readLinkedImage: (file) => window.victoria.readLinkedImage(file),
+    openRecent: (file) => window.victoria.openRecentFile(file),
   },
   prompts: {
     askSaveBeforeClose: async (name) => {

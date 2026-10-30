@@ -33,6 +33,8 @@ export interface FilesPort {
   autosaveRead(docId: string): Promise<Uint8Array | null>;
   /** The file a linked image points at (null when it cannot be read). */
   readLinkedImage?(path: string): Promise<Uint8Array | null>;
+  /** A document of the recent list. */
+  openRecent?(path: string): Promise<OpenedFile | null>;
 }
 
 /** What the manager needs to read a PDF: pdf.js lives outside it (it is large, and needs a browser). */
@@ -177,7 +179,8 @@ export class DocumentManager {
     return n;
   }
 
-  newDocument(): OpenDocument {
+  /** A new document with one artboard of the given preset (A4 by default). */
+  newDocument(preset?: string): OpenDocument {
     const { names } = this.deps;
     const ids = this.ids;
     const document = createDocument({
@@ -185,6 +188,7 @@ export class DocumentManager {
       spaceName: names.space(1),
       artboardName: names.artboard(1),
       layerName: names.layer(1),
+      ...(preset ? { preset } : {}),
       ids,
       now: new Date(this.clock()).toISOString(),
     });
@@ -194,7 +198,17 @@ export class DocumentManager {
   /** Opens the dialog, reads and validates. Already-open files are just activated. */
   async open(): Promise<OpenDocument | null> {
     const picked = await this.deps.files.openFile(this.deps.names.openLabels).catch((e: unknown) => this.fail(this.deps.names.openFailed(String(e))));
-    if (!picked) return null;
+    return picked ? this.openPicked(picked) : null;
+  }
+
+  /** Opens a document from the recent list (the start screen). */
+  async openRecent(file: string): Promise<OpenDocument | null> {
+    const picked = await this.deps.files.openRecent?.(file).catch(() => null);
+    if (!picked) return this.fail(this.deps.names.openFailed(file));
+    return this.openPicked(picked);
+  }
+
+  private async openPicked(picked: { path: string; bytes: Uint8Array }): Promise<OpenDocument | null> {
     const existing = this.docs_.find((d) => d.path === picked.path);
     if (existing) {
       this.activate(existing.id);
@@ -388,8 +402,8 @@ export class DocumentManager {
     const index = this.docs_.findIndex((d) => d.id === doc.id);
     this.docs_ = this.docs_.filter((d) => d.id !== doc.id);
     if (this.activeId_ === doc.id) this.activeId_ = (this.docs_[Math.min(index, this.docs_.length - 1)] ?? null)?.id ?? null;
-    if (this.docs_.length === 0) this.newDocument();
-    else this.changed();
+    // Closing the last document leaves the start screen, not an empty page.
+    this.changed();
     return true;
   }
 

@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { manager } from '../documents';
 import { t } from '../i18n';
+import { getPreferences } from '../prefs/preferences';
 import { askUser } from './dialogs';
 
 const AUTOSAVE_TICK_MS = 5000;
@@ -24,7 +25,7 @@ async function start(): Promise<void> {
       else await manager.discardRecoverable(entry.docId);
     }
   }
-  if (manager.documents.length === 0) manager.newDocument();
+  if (manager.documents.length === 0 && !getPreferences().startScreen) manager.newDocument();
 }
 
 export function useDocumentLifecycle(): void {

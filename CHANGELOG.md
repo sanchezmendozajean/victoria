@@ -7,9 +7,17 @@
 - Se guardan por usuario en el almacenamiento del navegador (no en el documento) y lo leído se valida: un valor desconocido o fuera de rango vuelve al predeterminado (`renderer/prefs/preferences.ts`, con su almacén de Zustand para la interfaz y `getPreferences()` para herramientas y gestor).
 - Pruebas: 3 unitarias de preferencias y autoguardado, 1 de la Pluma con la opción apagada y 1 e2e (abrir con Ctrl+K, cambiar, recargar y comprobar que se recuerda, Restablecer).
 
+### 12.2 Espacios de trabajo y pantalla de inicio
+- **Espacios de trabajo** (Esenciales, Íconos, Impresión, Texto): el selector de la barra de título deja de ser decorativo. Cada uno parte de su propio reparto de paneles (Texto abre Carácter y Párrafo; Impresión abre Mesas y Espacios; Íconos abre Alinear y Buscatrazos…), todos con los 16 paneles exactamente una vez. Al cambiar de espacio se guarda cómo dejaste el que abandonas y el nuevo vuelve como lo dejaste; *Restablecer paneles* vuelve al reparto original del espacio actual. El espacio y los repartos se recuerdan entre sesiones (lo guardado se valida panel por panel).
+- **Pantalla de inicio**: cuando no hay ningún documento abierto (por ejemplo al cerrar el último, que ya no crea uno vacío) se ve «Nuevo documento» con tarjetas (A4, Carta, Ícono 24 px, Instagram) y la lista de **Recientes** con **Abrir…**. La lista la guarda el proceso principal (`recent.json` en la carpeta de datos, 12 como máximo, solo archivos `.vict` que siguen existiendo); el renderer solo puede abrir lo que está en esa lista. La recuperación del autoguardado sigue preguntándose al arrancar.
+- Preferencia nueva «Mostrar la pantalla de inicio al abrir Victoria» (desactivada por defecto: Victoria sigue abriendo con un documento vacío).
+- Pruebas: 3 de repartos (completos, distintos, almacenamiento corrupto rechazado), 2 de recientes en el proceso principal, 2 del gestor y 2 e2e (cambiar de espacio, conservar lo cambiado y recordarlo tras recargar; cerrar el último documento, abrir uno reciente y crear desde una tarjeta).
+
 ### Pendiente
+- Pantalla de inicio: miniaturas de los recientes (el `.vict` ya guarda `thumbnail.png`, falta escribirla y leerla), tarjeta «Personalizado», y abrir con la pantalla de inicio por defecto cuando haya un instalador.
+- Espacios de trabajo: guardar espacios propios con nombre.
 - Preferencias: faltan **Atajos** (reasignar, y las alternativas para los atajos que Linux reserva, spec 09), «usar barra de título del sistema» (exige recrear la ventana), unidades de los documentos nuevos y tamaño de la interfaz.
-- Fase 12: espacios de trabajo de paneles y pantalla de inicio (12.2), rendimiento (12.3), instalador firmado y manual breve (12.4).
+- Fase 12: rendimiento (12.3), instalador firmado y manual breve (12.4).
 
 ## Fase 11 — Imágenes, exportar, imprimir (en curso)
 

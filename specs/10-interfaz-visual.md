@@ -177,7 +177,7 @@ Decisión del usuario (Fase 1, revisión), tiene prioridad sobre la maqueta; las
 
 ## Pantallas a maquetar (entregables)
 
-1. **Pantalla de inicio**: logotipo, "Nuevo" con presets en tarjetas con ícono (A4, Carta, Ícono 24 px, Instagram, Personalizado), lista de recientes con miniatura, botón Abrir, recuperación de autoguardado si existe.
+1. **Pantalla de inicio** (se muestra cuando no hay documentos abiertos; al abrir Victoria solo si lo pide la preferencia): logotipo, "Nuevo" con presets en tarjetas con ícono (A4, Carta, Ícono 24 px, Instagram, Personalizado), lista de recientes con miniatura, botón Abrir, recuperación de autoguardado si existe.
 2. **Diálogo Nuevo documento**: presets por categorías (Imprimir, Íconos, Web, Redes), ancho/alto/unidades/orientación, número de mesas, sangrado, modo de color, nombre del primer Espacio.
 3. **Ventana principal — herramienta Pluma** dibujando un ícono (estado descrito en §6), tema oscuro.
 4. **Ventana principal — Selección + panel Apariencia** con un objeto que tiene 2 modificadores (uno estructural "Redondear esquinas", uno de apariencia "Sombra paralela").

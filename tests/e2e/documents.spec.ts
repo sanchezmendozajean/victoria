@@ -130,9 +130,12 @@ test.describe('documents, Spaces and history (Phase 2)', () => {
     await docTabs(page).nth(1).getByTestId('doc-close').click();
   });
 
-  test('closing the last document opens a fresh one', async () => {
+  test('closing the last document shows the start screen, which can make a fresh one', async () => {
     const { page } = ctx;
     await docTabs(page).first().getByTestId('doc-close').click();
+    await expect(page.getByTestId('start-screen')).toBeVisible();
+    await expect(docTabs(page)).toHaveCount(0);
+    await page.getByTestId('start-new-A4').click();
     await expect(docTabs(page)).toHaveCount(1);
     await expect(docTabs(page).first()).toContainText('Sin título-1.vict');
   });
@@ -166,12 +169,12 @@ test.describe('saving and opening', () => {
       await page.keyboard.press('Control+o');
       await expect(docTabs(page)).toHaveCount(1);
 
-      // Close it (the last document is replaced by a fresh one), then open it again from disk.
+      // Close it (the start screen takes over), then open it again from disk.
       await docTabs(page).first().getByTestId('doc-close').click();
-      await expect(docTabs(page).first()).toContainText('Sin título-1.vict');
+      await expect(page.getByTestId('start-screen')).toBeVisible();
       await page.keyboard.press('Control+o');
-      await expect(docTabs(page)).toHaveCount(2);
-      await expect(docTabs(page).nth(1)).toContainText('prueba.vict');
+      await expect(docTabs(page)).toHaveCount(1);
+      await expect(docTabs(page).first()).toContainText('prueba.vict');
       await expect(pills(page)).toHaveCount(2);
       await expect(pills(page).nth(1)).toContainText('Guardado');
     } finally {

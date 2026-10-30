@@ -42,6 +42,13 @@ export interface OpenedFile {
   bytes: Uint8Array;
 }
 
+/** A document of the recent list; `modified` is the file's time in ms. */
+export interface RecentFile {
+  path: string;
+  name: string;
+  modified: number;
+}
+
 export interface SaveRequest {
   /** Path from a previous open/save; null (or an unknown path) asks the user with a Save As dialog. */
   path: string | null;
@@ -125,6 +132,8 @@ export const IPC = {
   setOverlayColors: 'window:set-overlay-colors',
   openFile: 'file:open',
   openImages: 'file:open-images',
+  recentList: 'file:recent-list',
+  recentOpen: 'file:recent-open',
   readLinkedImage: 'file:read-linked-image',
   exportSave: 'export:save',
   exportChooseFolder: 'export:choose-folder',
@@ -159,6 +168,10 @@ export interface VictoriaApi {
   openFile(labels: DialogLabels): Promise<OpenedFile | null>;
   /** Dialog to pick one or more PNG, JPEG or WebP files (Archivo › Colocar). Empty if the user cancels. */
   openImages(labels: DialogLabels): Promise<OpenedFile[]>;
+  /** Documents opened or saved before that still exist, newest first. */
+  listRecentFiles(): Promise<RecentFile[]>;
+  /** Opens one of the listed documents; null when it is not on the list any more or cannot be read. */
+  openRecentFile(path: string): Promise<OpenedFile | null>;
   /** The bytes of the file a linked image points at; null when it is missing, too big or not a PNG, JPEG or WebP. */
   readLinkedImage(path: string): Promise<Uint8Array | null>;
   /** Writes atomically (temp file + rename). null if the user cancels the Save As dialog. */
