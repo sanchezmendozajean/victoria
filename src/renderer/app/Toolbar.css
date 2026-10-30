@@ -135,7 +135,7 @@
 
 .vc-toolbar__modes {
   display: flex;
-  margin-top: 8px;
+  margin-top: 4px;
 }
 .vc-toolbar__modes button {
   display: flex;

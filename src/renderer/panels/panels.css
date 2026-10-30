@@ -347,7 +347,7 @@
   color: var(--icon-active);
 }
 .vc-paintmodes.is-compact button {
-  width: 14px;
+  width: 10px;
   height: 16px;
   border-radius: 0;
 }

@@ -103,7 +103,7 @@ export function PaintModes({ compact = false }: { compact?: boolean }) {
     <div className={cx('vc-paintmodes', compact && 'is-compact')} role="group">
       {buttons.map((b) => (
         <button key={b.id} type="button" className={cx(mode === b.id && 'is-active')} aria-pressed={mode === b.id} data-testid={`paint-mode-${b.id}`} {...tip(b.label, b.key)} onClick={b.run}>
-          <Icon id={b.icon} size={compact ? 12 : 16} />
+          <Icon id={b.icon} size={compact ? 10 : 16} />
         </button>
       ))}
     </div>
