@@ -116,8 +116,8 @@ export const ICONS = {
   // Relleno y color
   "fill": "<rect x=\"4\" y=\"4\" width=\"16\" height=\"16\" rx=\"2\" fill=\"currentColor\"/>",
   "stroke": "<rect x=\"4\" y=\"4\" width=\"16\" height=\"16\" rx=\"2\" /><rect x=\"8\" y=\"8\" width=\"8\" height=\"8\" rx=\"1\" />",
-  "swap-fill-stroke": "<path d=\"M6 18v-7a5 5 0 0 1 5-5h7\"/><path d=\"m15 3 3 3-3 3\"/><path d=\"m3 15 3 3 3-3\"/>",
-  "default-colors": "<rect x=\"10\" y=\"10\" width=\"11\" height=\"11\" rx=\"1\" /><rect x=\"13\" y=\"13\" width=\"5\" height=\"5\" rx=\"0\" /><rect x=\"3\" y=\"3\" width=\"11\" height=\"11\" rx=\"1\" fill=\"currentColor\"/>",
+  "swap-fill-stroke": "<g transform=\"rotate(90 12 12)\"><path d=\"M6 18v-7a5 5 0 0 1 5-5h7\"/><path d=\"m15 3 3 3-3 3\"/><path d=\"m3 15 3 3 3-3\"/></g>",
+  "default-colors": "<rect x=\"11\" y=\"11\" width=\"10\" height=\"10\" rx=\"0\" /><rect x=\"3\" y=\"3\" width=\"10\" height=\"10\" rx=\"0\" fill=\"currentColor\"/>",
   "paint-color": "<rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"2\" fill=\"currentColor\"/>",
   "paint-gradient": "<rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"2\" /><path d=\"M7 3v18\" opacity=\".85\"/><path d=\"M11 3v18\" opacity=\".6\"/><path d=\"M15 3v18\" opacity=\".35\"/><path d=\"M18.5 3v18\" opacity=\".15\"/>",
   "paint-none": "<rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"2\" /><path d=\"M5 19 19 5\" stroke=\"#F0524F\"/>",

@@ -44,12 +44,12 @@ export function PaintWidget({ size = 36, testId = 'paint-widget', stacked = fals
   const corner = { width: size - chip, height: size - chip, alignItems: 'center', justifyContent: 'center' } as const;
   const swap = (
     <button type="button" className="vc-paintwidget__swap" style={stacked ? undefined : corner} data-testid={`${testId}-swap`} {...tip(t('toolbar.swap'), formatAccelerator(SHORTCUTS['paint.swap'], os))} onClick={swapPaints}>
-      <Icon id="swap-fill-stroke" size={12} />
+      <Icon id="swap-fill-stroke" size={14} />
     </button>
   );
   const defaults = (
     <button type="button" className="vc-paintwidget__defaults" style={stacked ? undefined : corner} data-testid={`${testId}-defaults`} {...tip(t('toolbar.defaults'), 'D')} onClick={defaultPaints}>
-      <Icon id="default-colors" size={12} />
+      <Icon id="default-colors" size={14} />
     </button>
   );
 
@@ -57,7 +57,7 @@ export function PaintWidget({ size = 36, testId = 'paint-widget', stacked = fals
     <div className="vc-paintwidget" style={{ width: size, height: size }} data-testid={testId} {...tip(t('toolbar.fillStroke'))}>
       <div
         className={cx('vc-paintwidget__stroke', active === 'stroke' && 'is-active', strokeNone && 'is-none', look.stroke.mixed && 'is-mixed')}
-        style={{ width: chip, height: chip, left: size - chip, top: size - chip, ...(strokeCss ? { background: strokeCss } : {}) }}
+        style={{ width: chip, height: chip, left: size - chip, top: size - chip, ['--ring' as string]: `${Math.max(6, Math.round(chip * 0.3))}px`, ...(strokeCss ? { background: strokeCss } : {}) }}
         data-testid={`${testId}-stroke`}
         data-active={active === 'stroke'}
         onClick={() => setActive('stroke')}

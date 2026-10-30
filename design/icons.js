@@ -158,8 +158,8 @@
     ['Relleno y color', [
       ['fill', 'custom', R(4, 4, 16, 16, 2, F)],
       ['stroke', 'custom', R(4, 4, 16, 16, 2) + R(8, 8, 8, 8, 1)],
-      ['swap-fill-stroke', 'lucide arrow-left-right (curva custom)', P('M6 18v-7a5 5 0 0 1 5-5h7', 'm15 3 3 3-3 3', 'm3 15 3 3 3-3')],
-      ['default-colors', 'custom', R(10, 10, 11, 11, 1) + R(13, 13, 5, 5) + R(3, 3, 11, 11, 1, F)],
+      ['swap-fill-stroke', 'lucide arrow-left-right (curva custom)', '<g transform="rotate(90 12 12)">' + P('M6 18v-7a5 5 0 0 1 5-5h7', 'm15 3 3 3-3 3', 'm3 15 3 3 3-3') + '</g>'],
+      ['default-colors', 'custom', R(11, 11, 10, 10, 0) + R(3, 3, 10, 10, 0, F)],
       ['paint-color', 'lucide square (relleno)', R(3, 3, 18, 18, 2, F)],
       ['paint-gradient', 'custom', R(3, 3, 18, 18, 2) + GRAD],
       ['paint-none', 'custom', R(3, 3, 18, 18, 2) + `<path d="M5 19 19 5" ${RED}/>`],
