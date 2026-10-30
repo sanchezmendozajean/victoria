@@ -70,7 +70,7 @@ Se construye por etapas, cada una con su commit y sus pruebas: **11.1** colocar 
 ## Fase 12 — Pulido
 
 - Preferencias, espacios de trabajo de paneles, pantalla de inicio, tooltips con atajos, rendimiento, instalador firmado (si aplica), manual breve de usuario.
-- Se construye por etapas: **12.1** Preferencias · **12.2** espacios de trabajo y pantalla de inicio · **12.3** rendimiento · **12.4** instalador y manual. Los tooltips con nombre y atajo ya existen (Fase 2).
+- Se construye por etapas: **12.1** Preferencias · **12.2** espacios de trabajo y pantalla de inicio · **12.3** rendimiento · **12.4** instalador y manual. Los tooltips con nombre y atajo ya existen (Fase 2). El instalador sale **sin firmar** hasta que haya un certificado (ver `docs/instalador.md`).
 
 ## Riesgos y mitigación
 

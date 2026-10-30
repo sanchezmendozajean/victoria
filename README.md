@@ -18,10 +18,24 @@ Editor de gráficos vectoriales de escritorio, construido con **Electron**, que 
 
 ## Estado
 
-Proyecto en fase de especificación. El orden de trabajo es:
+Las fases 1 a 12 del plan están construidas (ver [`CHANGELOG.md`](CHANGELOG.md) para lo hecho y lo pendiente de cada una). Lo que queda abierto es, sobre todo, **verificación fuera de esta máquina**: impresión en papel, Linux (Wayland, GNOME, KDE) y firma de código del instalador.
 
-1. **Maqueta visual** (Claude Design) — ver [`specs/10-interfaz-visual.md`](specs/10-interfaz-visual.md) y [`specs/11-iconografia.md`](specs/11-iconografia.md).
-2. **Construcción** (Claude Code) — siguiendo [`specs/12-plan-de-construccion.md`](specs/12-plan-de-construccion.md).
+- **Manual de usuario:** [`docs/manual-de-usuario.md`](docs/manual-de-usuario.md).
+- **Construcción:** [`specs/12-plan-de-construccion.md`](specs/12-plan-de-construccion.md).
+
+## Desarrollo
+
+```bash
+pnpm install
+pnpm dev          # la aplicación con recarga en caliente
+pnpm lint         # ESLint y tipos
+pnpm test         # pruebas unitarias (Vitest)
+pnpm test:e2e     # pruebas de extremo a extremo en Electron (Playwright)
+pnpm build:win    # instalador y versión portátil de Windows → release/
+pnpm build:linux  # AppImage, deb y rpm → release/
+```
+
+Los instaladores **no están firmados** todavía: Windows mostrará el aviso de SmartScreen. Para firmarlos hace falta un certificado de firma de código (ver `docs/instalador.md`).
 
 ## Especificaciones
 

@@ -1,6 +1,6 @@
 # Changelog
 
-## Fase 12 — Pulido (en curso)
+## Fase 12 — Pulido (en revisión)
 
 ### 12.1 Preferencias
 - **Edición › Preferencias…** (Ctrl+K): diálogo con efecto inmediato (sin Aceptar) y **Restablecer**. Primeras opciones: **añadir y eliminar puntos automáticamente con la Pluma** (antes una constante), **fidelidad del Lápiz 1–5** (de 5 px a 1 px de tolerancia; 3 es el 2,5 px de siempre) y **intervalo de autoguardado** (1–30 min; el manager lo lee en cada ciclo, así que el cambio vale para documentos ya abiertos).
@@ -19,12 +19,19 @@
 - **Resultado con 10 000 objetos** (esta máquina): mover todo 143 s → **0,3 s**; deshacer y rehacer ~0,12 s; Ctrl+A 9,4 s → **0,2 s**; ocultar, rellenar, alinear, organizar, agrupar, duplicar y eliminar entre 0,04 y 0,4 s; guardar 0,17 s (89 KB) y abrir 0,2 s; escena de exportación 0,18 s y SVG 0,06 s; arranque 1 s.
 - Pruebas que lo vigilan: `core/perf/operations.test.ts` (5 pruebas con presupuestos holgados que cazan un O(n²), no unos milisegundos) y un e2e con el documento de 10 000 objetos (seleccionar todo, mover, deshacer y agrupar responden en < 1,5 s) más el de arranque. Lo que ya existía (pan y zoom a 60 fps, repintado completo ~60 ms) sigue pasando.
 
+### 12.4 Instalador y manual
+- **Instalador de Windows verificado**: `electron-builder` genera `Victoria-Setup-0.1.0.exe` (NSIS) y la versión portátil, y la aplicación **empaquetada** arranca, dibuja un rectángulo y abre Preferencias sin errores de consola (`tests/e2e/packaged.spec.ts`, que solo corre con `VICTORIA_PACKAGED_EXE` y está en el paso de empaquetado de la CI de Windows). Confirmado que **sale sin firmar** (`NotSigned`).
+- **Firma de código**: sin certificado por ahora; `docs/instalador.md` explica cómo firmar cuando exista (variables `CSC_LINK` y `CSC_KEY_PASSWORD` como secretos de CI, o Azure Trusted Signing), sin cambiar `electron-builder.yml`.
+- **Linux**: la configuración (AppImage, deb, rpm, asociación de `.vict`) y el paso de humo en CI existen pero **no están verificados** en una máquina real; el paso de CI informa sin bloquear (`continue-on-error`) hasta que se verifiquen.
+- **Manual breve de usuario** en español (`docs/manual-de-usuario.md`): conceptos, herramientas, imágenes y Calco, exportar e imprimir, espacios de trabajo y preferencias. README al día (estado, comandos de desarrollo, enlaces).
+- Nota para construir en local: electron-builder necesita `pnpm` en el PATH.
+
 ### Pendiente
+- Verificar fuera de esta máquina: instalación y desinstalación interactivas en Windows; AppImage, deb, rpm, asociación de archivos y Wayland en Linux; firma de código cuando haya certificado.
 - Rendimiento: no se probó con muchas imágenes grandes ni con miles de textos; las booleanas de más de 500 segmentos en Worker (spec 01) siguen sin Worker.
 - Pantalla de inicio: miniaturas de los recientes (el `.vict` ya guarda `thumbnail.png`, falta escribirla y leerla), tarjeta «Personalizado», y abrir con la pantalla de inicio por defecto cuando haya un instalador.
 - Espacios de trabajo: guardar espacios propios con nombre.
 - Preferencias: faltan **Atajos** (reasignar, y las alternativas para los atajos que Linux reserva, spec 09), «usar barra de título del sistema» (exige recrear la ventana), unidades de los documentos nuevos y tamaño de la interfaz.
-- Fase 12: instalador firmado y manual breve (12.4).
 
 ## Fase 11 — Imágenes, exportar, imprimir (en curso)
 

@@ -62,6 +62,18 @@ jobs:
       - name: Build Linux AppImage, deb and rpm
         if: runner.os == 'Linux'
         run: pnpm build:linux
+      - name: Smoke test of the packaged app (Windows)
+        if: runner.os == 'Windows'
+        env:
+          VICTORIA_PACKAGED_EXE: release/win-unpacked/Victoria.exe
+        run: pnpm exec playwright test tests/e2e/packaged.spec.ts
+      # Not verified yet on a real Linux machine: reports without blocking the pipeline until it has been.
+      - name: Smoke test of the packaged app (Linux, X11 under xvfb)
+        if: runner.os == 'Linux'
+        continue-on-error: true
+        env:
+          VICTORIA_PACKAGED_EXE: release/linux-unpacked/victoria
+        run: xvfb-run --auto-servernum pnpm exec playwright test tests/e2e/packaged.spec.ts
       - uses: actions/upload-artifact@v4
         with:
           name: victoria-${{ matrix.os }}
