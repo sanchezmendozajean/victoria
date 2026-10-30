@@ -65,6 +65,15 @@ function createWindow(): BrowserWindow {
   });
   win.webContents.ipc.once(IPC.closeReady, approveClose);
   const notify = () => broadcastWindowState(win);
+  // F12 / Ctrl+Shift+I / Ctrl+Alt+I toggle the developer tools (the app has no native menu to carry the accelerator).
+  win.webContents.on('before-input-event', (event, input) => {
+    if (input.type !== 'keyDown') return;
+    const chord = input.control && (input.shift || input.alt) && input.key.toLowerCase() === 'i';
+    if (input.key === 'F12' || chord) {
+      event.preventDefault();
+      win.webContents.toggleDevTools();
+    }
+  });
   win.on('maximize', notify);
   win.on('unmaximize', notify);
   win.on('enter-full-screen', notify);
