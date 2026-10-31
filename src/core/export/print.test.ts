@@ -7,11 +7,12 @@ import {
   createRect,
   DocumentSession,
   getActiveSpace,
+  MARK_LENGTH,
   markLines,
   mmToPt,
   PAPER_SIZES,
   pageScene,
-  parseRange,
+  parseArtboardRange,
   planPage,
   resolveOrientation,
   sequentialIds,
@@ -26,6 +27,9 @@ const ids = sequentialIds('p');
 const board = (w: number, h: number, bleed = 0): Artboard => ({ ...createArtboard(ids, { name: 'A', x: 50, y: 60, w, h }), bleed: { top: bleed, right: bleed, bottom: bleed, left: bleed } });
 const layout = (extra: Partial<PrintLayout> = {}): PrintLayout => ({ paper: { w: A4.w, h: A4.h }, orientation: 'portrait', scale: { mode: 'none' }, anchor: { col: 1, row: 1 }, marks: null, includeBleed: false, ...extra });
 const near = (a: number, b: number, digits = 4) => expect(a).toBeCloseTo(b, digits);
+type Line = Array<{ x: number; y: number }>;
+const hasLine = (lines: Line[], [a, b]: [[number, number], [number, number]]) =>
+  lines.some((l) => Math.abs(l[0]!.x - a[0]) < 1e-6 && Math.abs(l[0]!.y - a[1]) < 1e-6 && Math.abs(l[1]!.x - b[0]) < 1e-6 && Math.abs(l[1]!.y - b[1]) < 1e-6);
 
 describe('planPage', () => {
   it('100 %: the artboard keeps its size and is centred on the paper', () => {
@@ -82,9 +86,10 @@ describe('planPage', () => {
   it('with marks the artwork stays inside a margin that fits them', () => {
     const marks = { style: 'western' as const, weight: 0.25, offset: 6 };
     const plan = planPage(board(100, 100), layout({ marks, anchor: { col: 0, row: 0 } }), 'portrait');
-    expect(plan.origin).toEqual({ x: 24, y: 24 }); // offset 6 + mark length 18
+    near(plan.origin.x, 6 + MARK_LENGTH); // offset + mark length
+    near(plan.origin.y, 6 + MARK_LENGTH);
     const fit = planPage(board(2000, 2000), layout({ marks, scale: { mode: 'fit' } }), 'portrait');
-    near(fit.scale, (A4.w - 48) / 2000);
+    near(fit.scale, (A4.w - 2 * (6 + MARK_LENGTH)) / 2000);
   });
 });
 
@@ -96,12 +101,13 @@ describe('crop marks', () => {
     const plan = planPage(b, layout({ marks, anchor: { col: 0, row: 0 } }), 'portrait');
     const lines = markLines(plan, marks, b);
     expect(lines).toHaveLength(8);
-    // Top-left corner of the trim is at (24, 24): a horizontal mark to its left and a vertical one above it.
-    expect(lines).toContainEqual([{ x: 18, y: 24 }, { x: 0, y: 24 }]);
-    expect(lines).toContainEqual([{ x: 24, y: 18 }, { x: 24, y: 0 }]);
-    // Bottom-right corner (124, 124): to the right and below.
-    expect(lines).toContainEqual([{ x: 130, y: 124 }, { x: 148, y: 124 }]);
-    expect(lines).toContainEqual([{ x: 124, y: 130 }, { x: 124, y: 148 }]);
+    const c = 6 + MARK_LENGTH;
+    // Top-left corner of the trim is at (c, c): a horizontal mark to its left and a vertical one above it.
+    expect(hasLine(lines, [[MARK_LENGTH, c], [0, c]])).toBe(true);
+    expect(hasLine(lines, [[c, MARK_LENGTH], [c, 0]])).toBe(true);
+    // Bottom-right corner (c + 100, c + 100): to the right and below.
+    expect(hasLine(lines, [[c + 106, c + 100], [c + 106 + MARK_LENGTH, c + 100]])).toBe(true);
+    expect(hasLine(lines, [[c + 100, c + 106], [c + 100, c + 106 + MARK_LENGTH]])).toBe(true);
   });
 
   it('Japanese marks add a second line at the bleed distance', () => {
@@ -110,8 +116,9 @@ describe('crop marks', () => {
     const plan = planPage(b, layout({ marks: jp, includeBleed: true, anchor: { col: 0, row: 0 } }), 'portrait');
     const lines = markLines(plan, jp, b);
     expect(lines).toHaveLength(16);
-    // The trim's top-left corner is at (34, 34): the extra horizontal mark sits 10 pt above it (the bleed).
-    expect(lines).toContainEqual([{ x: 28, y: 24 }, { x: 10, y: 24 }]);
+    // The trim's top-left corner is at (c, c), c = max(bleed, offset + length): the extra horizontal mark sits 10 pt above it (the bleed).
+    const c = 6 + MARK_LENGTH;
+    expect(hasLine(lines, [[c - 6, c - 10], [c - 6 - MARK_LENGTH, c - 10]])).toBe(true);
   });
 });
 
@@ -143,18 +150,41 @@ describe('pageScene', () => {
   });
 });
 
-describe('parseRange', () => {
-  it('reads lists and ranges, ascending and without repeats, clipped to the count', () => {
-    expect(parseRange('', 4)).toEqual([1, 2, 3, 4]);
-    expect(parseRange('1-3, 5', 6)).toEqual([1, 2, 3, 5]);
-    expect(parseRange('5,2,2,3-4', 6)).toEqual([2, 3, 4, 5]);
-    expect(parseRange('4-', 6)).toEqual([4, 5, 6]);
-    expect(parseRange('-2', 6)).toEqual([1, 2]);
-    expect(parseRange('3-99', 5)).toEqual([3, 4, 5]);
-    expect(parseRange('9', 5)).toEqual([]);
+describe('planPage · printable area', () => {
+  const margin = mmToPt(3.2);
+  it('reports what falls into the unprintable margin, the marks that do not fit and the room left', () => {
+    const full = planPage(board(A4.w, A4.h), layout({ unprintable: margin }), 'portrait');
+    near(full.clip, margin);
+    expect(full.overflow).toBe(true);
+    expect(full.slack.x).toBeLessThan(0);
+    const fits = planPage(board(200, 200), layout({ unprintable: margin }), 'portrait');
+    expect(fits.clip).toBe(0);
+    expect(fits.slack.x).toBeGreaterThan(0);
+    const marks = { style: 'western' as const, weight: 0.25, offset: mmToPt(3) };
+    const tight = planPage(board(A4.w - 2 * margin - 2, 300), layout({ marks, unprintable: margin }), 'portrait');
+    expect(tight.clip).toBe(0);
+    expect(tight.marksOut).toBe(true);
+  });
+  it('fit leaves the unprintable margin and the marks free', () => {
+    const plan = planPage(board(1000, 100), layout({ scale: { mode: 'fit' }, unprintable: margin }), 'portrait');
+    near(plan.scale, (A4.w - 2 * margin) / 1000);
+    expect(plan.overflow).toBe(false);
+  });
+});
+
+describe('parseArtboardRange', () => {
+  it('reads lists and ranges in the order written, without repeats', () => {
+    expect(parseArtboardRange('1-3, 5', 6)).toEqual({ pages: [1, 2, 3, 5] });
+    expect(parseArtboardRange('5,2,2,3-4', 6)).toEqual({ pages: [5, 2, 3, 4] });
+    expect(parseArtboardRange('3-1', 6)).toEqual({ pages: [1, 2, 3] });
   });
 
-  it('refuses what is not a range', () => {
-    for (const bad of ['a', '1--2', '3-1', '0', ',', '1,,2', '-', '1 2']) expect(parseRange(bad, 9)).toBeNull();
+  it('explains what is wrong', () => {
+    expect(parseArtboardRange('', 3)).toEqual({ error: { kind: 'empty' } });
+    expect(parseArtboardRange(' , ', 3)).toEqual({ error: { kind: 'empty' } });
+    expect(parseArtboardRange('1, x', 3)).toEqual({ error: { kind: 'token', token: 'x' } });
+    expect(parseArtboardRange('1 2', 3)).toEqual({ error: { kind: 'token', token: '1 2' } });
+    expect(parseArtboardRange('2-9', 3)).toEqual({ error: { kind: 'bounds', token: '2-9', count: 3 } });
+    expect(parseArtboardRange('0', 3)).toEqual({ error: { kind: 'bounds', token: '0', count: 3 } });
   });
 });

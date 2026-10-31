@@ -1,92 +1,502 @@
+/* Imprimir: preview on the left, settings on the right, footer with warnings and summary (design/rediseno-imprimir). */
 .vc-print {
-  width: 880px;
-  max-width: calc(100vw - 32px);
-}
-.vc-print__body {
   display: flex;
-  gap: 16px;
-  align-items: flex-start;
-}
-.vc-print__form {
-  flex: 0 0 380px;
-  max-height: calc(100vh - 200px);
-  padding-right: 6px;
-  overflow-y: auto;
-}
-.vc-print__section {
-  margin: 12px 0 6px;
-  padding-top: 8px;
-  border-top: 1px solid var(--border);
-  color: var(--text-muted);
+  flex-direction: column;
+  width: 1040px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 32px);
+  background: var(--bg-panel);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-float);
+  box-shadow: var(--shadow-float);
+  color: var(--text);
   font-size: var(--fs-label);
+  outline: none;
+}
+.vc-print__head {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 8px 0 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--icon);
+}
+.vc-print__head-title {
+  color: var(--text);
+  font-size: var(--fs-dialog);
   font-weight: 600;
 }
-.vc-print__section:first-child {
-  margin-top: 0;
-  border-top: 0;
-}
-.vc-print__pair {
-  display: flex;
-  gap: 6px;
-}
-.vc-print__hint {
+.vc-print__head-file {
   color: var(--text-muted);
-  font-size: var(--fs-label);
 }
-.vc-print__error {
-  margin: 0 0 8px;
-  color: var(--danger);
-  font-size: var(--fs-label);
+.vc-print__spacer {
+  flex: 1;
 }
-.vc-export__suffix.is-invalid {
-  border-color: var(--danger);
-}
-.vc-print__grid {
-  display: grid;
-  grid-template-columns: repeat(3, 18px);
-  gap: 3px;
-}
-.vc-print__grid button {
-  width: 18px;
-  height: 18px;
+.vc-print__iconbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 24px;
+  height: 24px;
   padding: 0;
-  background: var(--bg-input);
-  border: 1px solid var(--border-strong);
-  border-radius: 3px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--icon);
 }
-.vc-print__grid button:hover {
+.vc-print__iconbtn:hover:not(:disabled) {
   background: var(--bg-hover);
+  color: var(--icon-active);
 }
-.vc-print__grid button.is-active {
-  background: var(--accent);
-  border-color: var(--accent);
+.vc-print__iconbtn:disabled {
+  color: var(--text-disabled);
+}
+
+/* The body has a fixed height: showing or hiding a field never resizes the dialog. */
+.vc-print__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  height: 620px;
+  max-height: calc(100vh - 32px - 36px - 44px);
+  min-height: 0;
 }
 .vc-print__preview {
   display: flex;
-  flex: 1;
   flex-direction: column;
-  align-items: center;
-  gap: 8px;
+  gap: 10px;
   min-width: 0;
+  padding: 16px;
+  background: var(--canvas);
+  border-right: 1px solid var(--border);
 }
-.vc-print__sheet {
+.vc-print__stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+.vc-print__empty {
+  position: absolute;
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  max-width: 100%;
-  height: min(60vh, 520px);
-  max-height: 520px;
-  background: #fff;
-  border: 1px solid var(--border-strong);
-  box-shadow: var(--shadow-float);
 }
-.vc-print__sheet img {
+.vc-print__paper {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--artboard);
+  box-shadow: var(--shadow-artboard);
+  overflow: hidden;
+}
+.vc-print__paper img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
 }
+.vc-print__paper.is-gray img {
+  filter: grayscale(1);
+}
+.vc-print__printable,
+.vc-print__bleed,
+.vc-print__clip,
+.vc-print__mark {
+  position: absolute;
+  pointer-events: none;
+}
+.vc-print__printable {
+  border: 1px dashed rgba(76, 141, 255, 0.55);
+}
+.vc-print__bleed {
+  border: 1px solid var(--danger);
+}
+.vc-print__mark {
+  background: #000;
+}
+.vc-print__clip {
+  background: repeating-linear-gradient(135deg, rgba(240, 82, 79, 0.35) 0 4px, rgba(240, 82, 79, 0.12) 4px 8px);
+}
 .vc-print__nav {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-variant-numeric: tabular-nums;
+}
+.vc-print__legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  min-height: 12px;
+  font-size: var(--fs-micro);
+}
+.vc-print__legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.vc-print__sw {
+  display: inline-block;
+  width: 10px;
+  height: 0;
+  border-top: 1px solid;
+}
+.vc-print__sw.is-printable {
+  border-top-style: dashed;
+  border-color: #4c8dff;
+}
+.vc-print__sw.is-marks {
+  border-color: #000;
+  box-shadow: 0 0 0 0.5px #fff;
+}
+.vc-print__sw.is-bleed {
+  border-color: var(--danger);
+}
+.vc-print__sw.is-clip {
+  height: 8px;
+  border: 0;
+  background: repeating-linear-gradient(135deg, rgba(240, 82, 79, 0.7) 0 2px, transparent 2px 4px);
+}
+
+.vc-print__settings {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  padding: 16px 18px;
+  overflow-y: auto;
+}
+.vc-print__sec {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.vc-print__sec + .vc-print__sec {
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.vc-print__sec-title {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.vc-print__row {
+  display: grid;
+  grid-template-columns: 104px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  min-height: var(--h-control);
+}
+.vc-print__label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+}
+.vc-print__cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.vc-print__cell .vc-choice {
+  flex: 1;
+}
+.vc-print__inline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.vc-print__hint {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-label);
+}
+.vc-print__hint.is-error {
+  color: var(--danger);
+}
+.vc-print__range {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.vc-print__field {
+  box-sizing: border-box;
+  width: 100%;
+  height: var(--h-control);
+  padding: 0 6px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-menu);
+  outline: none;
+}
+.vc-print__field:focus {
+  border-color: var(--accent);
+}
+.vc-print__field.is-invalid {
+  border-color: var(--danger);
+}
+.vc-print__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-muted);
+}
+.vc-print__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+}
+.vc-print__dot.is-warn {
+  background: var(--warning);
+}
+.vc-print__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font-size: var(--fs-label);
+}
+.vc-print__link:hover {
+  text-decoration: underline;
+}
+
+.vc-print__seg {
+  display: flex;
+  min-width: 0;
+  height: var(--h-control);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+}
+.vc-print__seg.is-compact {
+  width: max-content;
+}
+.vc-print__seg button {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 0;
+  padding: 0 10px;
+  border: 0;
+  background: transparent;
+  color: var(--icon);
+  font-size: var(--fs-menu);
+  white-space: nowrap;
+}
+.vc-print__seg.is-compact button {
+  flex: none;
+}
+.vc-print__seg button.is-icon {
+  width: 28px;
+  padding: 0;
+}
+.vc-print__seg button + button {
+  border-left: 1px solid var(--border);
+}
+.vc-print__seg button:hover {
+  background: var(--bg-hover);
+}
+.vc-print__seg button[aria-pressed='true'] {
+  background: var(--bg-active);
+  color: var(--icon-active);
+}
+
+/* Position (reference point): 3 × 3 cells of 9 px. */
+.vc-print__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 9px);
+  grid-template-rows: repeat(3, 9px);
+  gap: 2px;
+}
+.vc-print__grid button {
+  width: 9px;
+  height: 9px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid var(--border-strong);
+}
+.vc-print__grid button:hover:not(:disabled) {
+  border-color: var(--icon);
+}
+.vc-print__grid button[aria-pressed='true'] {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.vc-print__grid.is-off {
+  opacity: 0.45;
+}
+
+/* System check boxes: 12 × 12, radius 2. */
+.vc-print .vc-pcheck {
+  font-size: var(--fs-menu);
+}
+.vc-print .vc-pcheck input {
+  appearance: none;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 12px;
+  height: 12px;
+  margin: 0;
+  background: var(--bg-input);
+  border: 1px solid var(--border-strong);
+  border-radius: 2px;
+}
+.vc-print .vc-pcheck input:checked {
+  background: var(--accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center / 10px no-repeat;
+  border-color: var(--accent);
+}
+.vc-print .vc-pcheck__icon {
+  color: var(--icon);
+}
+
+.vc-print__foot {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  font-size: var(--fs-label);
+  min-height: 44px;
+  padding: 6px 12px;
+  border-top: 1px solid var(--border);
+}
+.vc-print__summary {
+  color: var(--text-muted);
+  font-size: var(--fs-menu);
+  font-variant-numeric: tabular-nums;
+}
+.vc-print__summary b {
+  color: var(--text);
+  font-weight: 600;
+}
+.vc-print__button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 12px;
+  background: var(--bg-panel-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  color: var(--text);
+  font-size: var(--fs-menu);
+}
+.vc-print__button:hover:not(:disabled) {
+  background: var(--bg-hover);
+}
+.vc-print__button.is-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.vc-print__button.is-primary:hover:not(:disabled) {
+  background: var(--accent);
+  filter: brightness(1.08);
+}
+.vc-print__button:disabled {
+  opacity: 0.5;
+}
+
+.vc-print__warn {
+  position: relative;
+}
+.vc-print__warnbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 8px 0 6px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--text);
+  font-size: var(--fs-menu);
+}
+.vc-print__warnbtn svg {
+  color: var(--warning);
+}
+.vc-print__warnbtn:hover,
+.vc-print__warnbtn[aria-expanded='true'] {
+  background: var(--bg-hover);
+}
+.vc-print__popover {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  width: min(380px, calc(100vw - 48px));
+  padding: 4px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-float);
+  box-shadow: var(--shadow-float);
+  font-size: var(--fs-menu);
+}
+.vc-print__pop-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--h-menu-row);
+  padding-left: 8px;
+  color: var(--text-muted);
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.vc-print__alert {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  padding: 8px;
+  line-height: 1.45;
+}
+.vc-print__alert + .vc-print__alert {
+  border-top: 1px solid var(--border);
+}
+.vc-print__alert > svg {
+  margin-top: 1px;
+  color: var(--warning);
+}
+.vc-print__alert b {
+  font-weight: 600;
+}
+.vc-print__act {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  margin: 4px 0 0 -8px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--accent);
+  font-size: var(--fs-menu);
+}
+.vc-print__act:hover {
+  background: var(--bg-hover);
 }

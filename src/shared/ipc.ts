@@ -97,20 +97,34 @@ export interface PrinterEntry {
   name: string;
   displayName: string;
   isDefault: boolean;
+  /** The system reports it as ready to take a job. */
+  ready: boolean;
+  /** The system can show the printer's own preferences window (`openPrinterPreferences`). */
+  canConfigure: boolean;
 }
 
-/** A print job (Archivo › Imprimir): one SVG per page at its real size, 1 unit = 1 pt, all pages of one size. */
+/** A print job (Archivo › Imprimir): one SVG per page at its real size (1 unit = 1 pt); each page has its own size. */
 export interface PrintRequest {
   pages: string[];
-  width: number;
-  height: number;
+  sizes: Array<{ w: number; h: number }>;
+  /** null = the default printer. */
   printer: string | null;
+  /** Write a PDF (the main process asks where) instead of printing. */
+  toPdf: boolean;
+  /** Title of the "save as PDF" dialog. */
+  saveTitle: string;
   copies: number;
+  /** Whole copies in order (1 2 3, 1 2 3) rather than page by page (1 1, 2 2, 3 3). */
+  collate: boolean;
+  /** false = greyscale. */
+  color: boolean;
   title: string;
 }
 
 export interface PrintOutcome {
   ok: boolean;
+  /** The user dismissed the "save as PDF" dialog: nothing was done. */
+  canceled?: boolean;
   error?: string;
 }
 
@@ -146,6 +160,7 @@ export const IPC = {
   exportOpenFolder: 'export:open-folder',
   printList: 'print:list',
   printRun: 'print:run',
+  printPreferences: 'print:preferences',
   clipboardWrite: 'clipboard:write',
   clipboardRead: 'clipboard:read',
   saveFile: 'file:save',
@@ -197,6 +212,8 @@ export interface VictoriaApi {
   listPrinters(): Promise<PrinterEntry[]>;
   /** Sends the pages to the printer at their real size. Never rejects: failures come back in `error`. */
   print(job: PrintRequest): Promise<PrintOutcome>;
+  /** Opens the printer's own preferences window (only for printers with `canConfigure`). */
+  openPrinterPreferences(printer: string): Promise<void>;
 
   /** Puts Victoria objects on the system clipboard (its own format; other applications ignore it). */
   writeClipboard(clip: Uint8Array): Promise<void>;

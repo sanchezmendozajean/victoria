@@ -1,5 +1,16 @@
 # Changelog
 
+## Rediseño del diálogo Imprimir (design/rediseno-imprimir)
+- **Estructura**: modal de tamaño fijo (cuerpo de 620 px) con vista previa a la izquierda y ajustes en cinco secciones (Impresora · Qué imprimir · Papel · Tamaño y posición · Marcas y sangrado); pie con advertencias, resumen y Cancelar / Imprimir. Enter imprime y Esc cierra (primero el popover de advertencias).
+- **Impresora**: lista del sistema más «Guardar como PDF» (el proceso principal pregunta dónde y escribe el PDF; el renderer nunca elige la ruta), estado «Lista» según el sistema, «Preferencias…» (solo Windows, abre la ventana del controlador), copias con flechas, «Intercalar» solo con 2 o más copias y Color / Escala de grises.
+- **Qué imprimir**: Mesa activa · Todas (N) · Rango. El rango se valida con mensajes bajo el campo («Escribe al menos una mesa.», token inválido, fuera de rango) y respeta el orden escrito.
+- **Orientación Auto por mesa**: en un mismo trabajo una mesa apaisada sale en hoja horizontal y una vertical en vertical. El trabajo de impresión lleva ahora el tamaño de cada página; si hay varios tamaños se envían como trabajos consecutivos (y las copias intercaladas, copia a copia).
+- **Geometría** (`core/export/print.ts`, §3 del README): la escala «Ajustar» y la posición se calculan sobre la mesa dejando sitio al sangrado y a las marcas (`max(sangrado, desplazamiento + 5 mm)`); las marcas miden 5 mm y empiezan a sangrado + 3 mm. La posición se desactiva cuando la mesa llena la hoja. El sangrado es editable (0–20 mm; inicial: el de la mesa, o 3 mm).
+- **Advertencias** en un popover del pie: rango inválido, imágenes por debajo de 150 ppp (con el peor valor, recalculado con la escala; «Seleccionar imagen» cierra el diálogo y la selecciona), mesa que se sale del área imprimible y marcas que no caben (ambas con «Ajustar a la hoja»).
+- Se recuerdan por documento: impresora, papel, orientación, escala, posición, marcas, sangrado y color (no copias ni rango).
+- **Límites conocidos**: Electron no informa del margen no imprimible del controlador, así que se trata como 0 (la matemática y los avisos ya lo soportan: `UNPRINTABLE_MM`); todos los papeles se ofrecen siempre (no se filtran por impresora); «Escala de grises» la aplica el controlador al imprimir y la vista previa, pero un PDF guardado conserva el color.
+- Pruebas: geometría, rango y marcas en `core/export/print.test.ts`, trabajos y tandas en `main/printJob.test.ts`, plan y advertencias en `renderer/print/pages.test.ts` y 4 e2e del diálogo.
+
 ## Fase 12 — Pulido (en revisión)
 
 ### 12.1 Preferencias

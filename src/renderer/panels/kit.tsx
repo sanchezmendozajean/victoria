@@ -160,7 +160,7 @@ export function IconChoice<T extends string>({ value, options, onChange, testId 
   );
 }
 
-export function CheckRow({ checked, mixed, onChange, label, testId, disabled }: { checked: boolean; mixed?: boolean; onChange(checked: boolean): void; label: string; testId?: string; disabled?: boolean }) {
+export function CheckRow({ checked, mixed, onChange, label, testId, disabled, icon }: { checked: boolean; mixed?: boolean; onChange(checked: boolean): void; label: string; testId?: string; disabled?: boolean; icon?: IconId }) {
   return (
     <label className={cx('vc-pcheck', disabled && 'is-disabled')}>
       <input
@@ -173,6 +173,7 @@ export function CheckRow({ checked, mixed, onChange, label, testId, disabled }: 
         data-testid={testId}
         onChange={(event) => onChange(event.target.checked)}
       />
+      {icon && <Icon id={icon} size={16} className="vc-pcheck__icon" />}
       <span>{label}</span>
     </label>
   );

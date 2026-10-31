@@ -45,7 +45,7 @@ Ctrl+Z / Mayús+Ctrl+Z deshacen y rehacen **todo** (el historial es exacto, tamb
 ## 6. Exportar e imprimir
 
 - **Archivo › Exportar:** SVG, PDF, PNG y JPG de la mesa activa, del Espacio o de todos, con la resolución que elijas. **Exportar para pantallas** genera varios tamaños y formatos a la vez en una carpeta.
-- **Archivo › Imprimir** (Ctrl+P): vista previa de cada página, papel, orientación, escala (100 % es tamaño real), posición, **marcas de corte** y sangrado. Un cuadrado de 100 mm sale de 100 mm.
+- **Archivo › Imprimir** (Ctrl+P): vista previa de cada página, impresora (o **Guardar como PDF**), copias, color, qué mesas (activa, todas o un rango), papel, orientación (en «Auto» cada mesa usa la que le queda), escala (100 % es tamaño real), posición, **marcas de corte** y sangrado. Las advertencias (imágenes de baja resolución, mesa fuera del área imprimible) salen abajo a la izquierda. Un cuadrado de 100 mm sale de 100 mm.
 - **Abrir** también lee SVG, PDF y EPS sencillos como documentos nuevos.
 
 ## 7. Personalizar

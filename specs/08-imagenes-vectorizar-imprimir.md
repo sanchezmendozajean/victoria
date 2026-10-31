@@ -69,6 +69,8 @@ Diálogo propio (no solo el nativo) con previsualización:
   - Motivo: el visor de PDF de Chromium decide márgenes y escala y no se puede comprobar; con SVG el trabajo es vectorial (también sombras y efectos) y su tamaño se **verifica** leyendo el PDF que produce `printToPDF` de la misma ventana.
 - Debe imprimir **a escala real** en ambos sistemas (verificación 100 mm = 100 mm en papel). Lo automático comprueba el PDF de Chromium (`VICTORIA_PRINT_TO_PDF`); la comprobación con papel y regla es manual.
 
+> **Rediseño vigente**: el diálogo y sus reglas están en `design/rediseno-imprimir/README.md` (estructura, geometría en mm, validación del rango, advertencias, valores por defecto). Donde lo de abajo discrepa (una sola orientación por trabajo, marcas de 18 pt, «Japonés/Occidental», grosor y desplazamiento editables, rango con «4-»), manda el rediseño.
+
 ### Reglas añadidas en la Fase 11 (etapa 11.5 · imprimir)
 - **Una página por mesa**, todas del mismo papel y orientación (la «automática» se decide con la primera mesa: más ancha que alta = horizontal). Las páginas son blancas y el dibujo se **recorta a la mesa** (con su sangrado si se pide).
 - **Escala**: 100 % (no escalar), ajustar (el mayor tamaño que cabe, sube o baja) o un porcentaje. Con marcas, el dibujo queda dentro de un margen de `desplazamiento + 18 pt`; si no cabe se avisa y lo que sobresale no se imprime.

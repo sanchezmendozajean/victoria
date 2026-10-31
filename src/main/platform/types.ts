@@ -11,17 +11,22 @@ export interface PrinterInfo {
   name: string;
   displayName: string;
   isDefault: boolean;
+  ready: boolean;
 }
 
-/** What is printed: one SVG document per page (1 unit = 1 pt), all of the size `width` × `height` pt. */
+/** What is printed: one SVG document per page (1 unit = 1 pt), each of its own size in pt. */
 export interface PrintJob {
   pages: string[];
-  width: number;
-  height: number;
+  sizes: Array<{ w: number; h: number }>;
   /** null = the default printer. */
   printer: string | null;
   copies: number;
+  collate: boolean;
+  /** false = greyscale. */
+  color: boolean;
   title: string;
+  /** Where to write a PDF instead of printing; set by the main process, never taken from the renderer. */
+  pdfPath?: string;
 }
 
 /** Everything that differs between operating systems lives behind this interface. */
@@ -30,6 +35,8 @@ export interface Platform {
   /** Prints the job; rejects with the reason when the printer or the system refuses it. */
   print(job: PrintJob): Promise<void>;
   listPrinters(): Promise<PrinterInfo[]>;
+  /** Shows the printer's own preferences window; absent where the system has none to show. */
+  openPrinterPreferences?(printer: string): Promise<void>;
   registerFileAssociation(): void; // .vict
   windowChrome: 'custom' | 'native-overlay';
   /** BrowserWindow options for the requested frame style; unsupported styles fall back to `custom`. */

@@ -1,5 +1,5 @@
 import { clipboard, ClipboardItem, ipcMain, type BrowserWindow, type IpcMainEvent, type IpcMainInvokeEvent } from 'electron';
-import { IPC, type ClipboardContents, type ExportSaveRequest, type PrintOutcome, type OverlayColors, type PlatformInfo, type SaveRequest, type WindowState } from '../shared/ipc';
+import { IPC, type ClipboardContents, type ExportSaveRequest, type PrintOutcome, type PrintRequest, type OverlayColors, type PlatformInfo, type SaveRequest, type WindowState } from '../shared/ipc';
 import * as files from './files';
 import { cachedFonts, readListedFont } from './fonts';
 import type { Platform } from './platform';
@@ -68,16 +68,31 @@ export function registerIpc(ctx: IpcContext): void {
   });
   /** The system printers; with VICTORIA_PRINT_TO_PDF set (tests, machines without a printer) a pseudo-printer that writes a PDF comes first. */
   const printers = async () => {
-    const system = await ctx.platform.listPrinters().catch(() => []);
-    return process.env.VICTORIA_PRINT_TO_PDF ? [{ name: 'victoria-print-to-pdf', displayName: 'Archivo PDF (pruebas)', isDefault: true }, ...system.map((p) => ({ ...p, isDefault: false }))] : system;
+    const system = (await ctx.platform.listPrinters().catch(() => [])).map((p) => ({ ...p, canConfigure: ctx.platform.openPrinterPreferences !== undefined }));
+    return process.env.VICTORIA_PRINT_TO_PDF ? [{ name: 'victoria-print-to-pdf', displayName: 'Archivo PDF (pruebas)', isDefault: true, ready: true, canConfigure: false }, ...system.map((p) => ({ ...p, isDefault: false }))] : system;
   };
   ipcMain.handle(IPC.printList, async (event) => (fromAppWindow(event) ? printers() : []));
-  ipcMain.handle(IPC.printRun, async (event, job: unknown): Promise<PrintOutcome> => {
-    if (!fromAppWindow(event)) return { ok: false, error: "Unknown sender" };
+  ipcMain.handle(IPC.printPreferences, async (event, printer: unknown) => {
+    if (!fromAppWindow(event) || typeof printer !== 'string' || !ctx.platform.openPrinterPreferences) return;
+    // Only a printer the system lists.
+    if ((await printers()).some((p) => p.name === printer)) await ctx.platform.openPrinterPreferences(printer).catch(() => undefined);
+  });
+  ipcMain.handle(IPC.printRun, async (event, request: unknown): Promise<PrintOutcome> => {
+    const win = fromAppWindow(event);
+    if (!win) return { ok: false, error: "Unknown sender" };
     try {
+      const { toPdf, saveTitle, ...rest } = (request ?? {}) as Partial<PrintRequest>;
+      // The renderer never chooses where a file is written: the PDF goes where the user says in the dialog.
+      const job: unknown = { ...rest, pdfPath: undefined };
       validateJob(job);
       // Only a printer the system lists (or the default one) may receive a job.
-      if (job.printer !== null && !(await printers()).some((p) => p.name === job.printer)) throw new Error("Unknown printer");
+      if (!toPdf && job.printer !== null && !(await printers()).some((p) => p.name === job.printer)) throw new Error("Unknown printer");
+      if (toPdf) {
+        if (typeof saveTitle !== 'string') throw new Error("Invalid dialog title");
+        const pdfPath = await files.printPdfPath(win, saveTitle, job.title);
+        if (!pdfPath) return { ok: false, canceled: true };
+        job.pdfPath = pdfPath;
+      }
       await ctx.platform.print(job);
       return { ok: true };
     } catch (error) {

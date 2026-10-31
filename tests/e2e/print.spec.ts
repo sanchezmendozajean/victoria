@@ -88,37 +88,74 @@ test.describe('printing (Phase 11)', () => {
     const { page } = ctx;
     rmSync(out, { force: true });
     await openPrint(page);
+    // The artboard is the sheet: with nothing to spare the position grid does nothing (and says so).
     await page.getByTestId('print-marks').check();
+    await expect(page.getByTestId('print-anchor-00')).toBeDisabled();
+    await page.getByTestId('print-scale-custom').click();
+    await page.getByTestId('print-percent').fill('50');
+    await page.keyboard.press('Enter');
+    await expect(page.getByTestId('print-dialog')).toBeVisible();
     await page.getByTestId('print-anchor-00').click(); // top left
     await page.getByTestId('print-run').click();
     await expect(page.getByTestId('print-dialog')).toBeHidden({ timeout: 30_000 });
     const { pages } = await readPrinted(out);
     const boxes = walk(pages[0]!.nodes).map(boundsOf);
-    // Marks keep a margin of 3 mm + 18 pt: the artboard starts there (top left), so the square moves by that much.
-    const margin = 3 * MM + 18;
-    const square = boxes.find(([x0, , x1]) => Math.abs(x1 - x0 - 100 * MM) < 1.5)!;
-    expect((square[0] + square[2]) / 2).toBeCloseTo(margin + centreMm.x * MM, 0);
-    expect((square[1] + square[3]) / 2).toBeCloseTo(margin + centreMm.y * MM, 0);
-    // The marks are one stroked path of eight lines that starts at the page edge (a mark begins 3 mm before the trim, 18 pt long).
-    expect(boxes.some(([x0, y0, x1]) => x0 < 1 && y0 < 1 && x1 - x0 > 400)).toBe(true);
+    // Marks start 3 mm from the trim and are 5 mm long: the artboard starts 8 mm in (top left); the square is 50 mm now.
+    const margin = 8 * MM;
+    const square = boxes.find(([x0, , x1]) => Math.abs(x1 - x0 - 50 * MM) < 1.5)!;
+    expect((square[0] + square[2]) / 2).toBeCloseTo(margin + (centreMm.x * MM) / 2, 0);
+    expect((square[1] + square[3]) / 2).toBeCloseTo(margin + (centreMm.y * MM) / 2, 0);
+    // The marks are one stroked path of eight lines that starts at the page edge (a mark begins 3 mm before the trim, 5 mm long).
+    expect(boxes.some(([x0, y0, x1]) => x0 < 1 && y0 < 1 && x1 - x0 > 100)).toBe(true);
   });
 
-  test('the dialog checks the range, warns about artwork that does not fit, and remembers nothing it must not do', async () => {
+  test('the dialog checks the range, warns about artwork that does not fit, and the warning fixes it', async () => {
     const { page } = ctx;
     await openPrint(page);
+    await expect(page.getByTestId('print-warnings')).toHaveCount(0);
+    await page.getByTestId('print-scope-range').click();
     await page.getByTestId('print-range').fill('x');
-    await expect(page.getByText('El rango no es válido')).toBeVisible();
+    await expect(page.getByTestId('print-range-error')).toHaveText('«x» no es un número ni un rango válido.');
     await expect(page.getByTestId('print-run')).toBeDisabled();
-    await page.getByTestId('print-range').fill('');
+    await page.getByTestId('print-range').fill('5');
+    await expect(page.getByTestId('print-range-error')).toContainText('se sale de ese rango');
+    await page.getByTestId('print-range').fill('1');
+    await expect(page.getByTestId('print-range-error')).toHaveCount(0);
     await expect(page.getByTestId('print-run')).toBeEnabled();
+    await page.getByTestId('print-scope-active').click();
 
-    await page.getByTestId('print-paper').selectOption('a5'); // 148 mm wide: the 100 mm square fits, with the marks of the last test it does not
-    await page.getByTestId('print-scale').selectOption('custom');
-    await page.getByTestId('print-percent').fill('300');
+    await page.getByTestId('print-paper').selectOption('a5');
+    await page.getByTestId('print-scale-custom').click();
+    await page.getByTestId('print-percent').fill('300'); // an A4 artboard on A5 at 300 %
     await page.keyboard.press('Enter');
-    await expect(page.getByTestId('print-overflow')).toBeVisible();
-    await page.getByTestId('print-scale').selectOption('fit');
-    await expect(page.getByTestId('print-overflow')).toHaveCount(0);
+    await expect(page.getByTestId('print-dialog')).toBeVisible();
+    await expect(page.getByTestId('print-warnings')).toHaveText('1 advertencia');
+    await page.getByTestId('print-warnings').click();
+    await expect(page.getByTestId('print-warning-clip')).toContainText('se sale del área imprimible');
+    await page.getByTestId('print-warning-clip-action').click();
+    // Fitting the sheet solves it: no warnings left, the popover is gone and the scale shown is the real one.
+    await expect(page.getByTestId('print-warnings')).toHaveCount(0);
+    await expect(page.getByTestId('print-warnings-popover')).toHaveCount(0);
+    await expect(page.getByTestId('print-percent')).toBeDisabled();
+    await page.keyboard.press('Escape');
+    await expect(page.getByTestId('print-dialog')).toBeHidden();
+  });
+
+  test('the dialog keeps its size, remembers the paper per document, and Escape cancels', async () => {
+    const { page } = ctx;
+    await openPrint(page);
+    await expect(page.getByTestId('print-paper')).toHaveValue('a5');
+    const box = async () => (await page.getByRole('dialog', { name: 'Imprimir' }).boundingBox())!;
+    const before = await box();
+    await page.getByTestId('print-scope-range').click();
+    await page.getByTestId('print-copies').fill('2');
+    await page.keyboard.press('Enter');
+    await expect(page.getByTestId('print-collate')).toBeVisible();
+    await page.getByTestId('print-scope-all').click();
+    const after = await box();
+    expect(after.width).toBeCloseTo(before.width, 0);
+    expect(after.height).toBeCloseTo(before.height, 0);
+    await expect(page.getByTestId('print-summary')).toContainText('2 copias intercaladas');
     await page.getByTestId('print-cancel').click();
     await expect(page.getByTestId('print-dialog')).toBeHidden();
   });

@@ -65,12 +65,12 @@ export function setImageSource(targets: readonly ImageRef[], source: ImageSource
 
 /**
  * Images that touch `region` (Space coordinates) and would print below `LOW_PPI` once the page is scaled by `scale`
- * (page pt per Space pt). Images without their picture, or that are hidden, are not counted.
+ * (page pt per Space pt), with the resolution each would print at. Images without their picture, or that are hidden, are not counted.
  */
-export function lowResolutionImages(document: Document, spaceId: string, region: Rect, scale: number, hasBytes: (hash: string) => boolean): ImageNode[] {
+export function lowResolutionPpi(document: Document, spaceId: string, region: Rect, scale: number, hasBytes: (hash: string) => boolean): Array<{ node: ImageNode; ppi: number }> {
   const space = document.spaces.find((s) => s.id === spaceId);
   if (!space || scale <= 0) return [];
-  const low: ImageNode[] = [];
+  const low: Array<{ node: ImageNode; ppi: number }> = [];
   for (const node of walkSpaceNodes(space)) {
     if (node.type !== 'image' || !node.visible || !hasBytes(node.resourceId)) continue;
     const resource = document.resources.images[node.resourceId];
@@ -78,7 +78,13 @@ export function lowResolutionImages(document: Document, spaceId: string, region:
     const bounds = frame ? nodeWorldBounds(space, node.id) : null;
     if (!resource || !frame || !bounds) continue;
     const apart = bounds.maxX < region.minX || bounds.minX > region.maxX || bounds.maxY < region.minY || bounds.minY > region.maxY;
-    if (!apart && effectivePpi(frame.world, node, resource) / scale < LOW_PPI) low.push(node);
+    const ppi = effectivePpi(frame.world, node, resource) / scale;
+    if (!apart && ppi < LOW_PPI) low.push({ node, ppi });
   }
   return low;
+}
+
+/** The images of `lowResolutionPpi`, without the numbers. */
+export function lowResolutionImages(document: Document, spaceId: string, region: Rect, scale: number, hasBytes: (hash: string) => boolean): ImageNode[] {
+  return lowResolutionPpi(document, spaceId, region, scale, hasBytes).map((l) => l.node);
 }

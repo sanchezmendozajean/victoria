@@ -24,6 +24,8 @@ export interface NumberInputProps {
   icon?: IconId;
   tooltip?: string;
   disabled?: boolean;
+  /** Small up / down buttons at the right (9 px chevrons) that step the value. */
+  arrows?: boolean;
   testId?: string;
 }
 
@@ -40,7 +42,7 @@ export function formatNumber(value: number, decimals: number): string {
  * Numeric field of specs/10: the wheel changes the value, Enter (or leaving the field) evaluates
  * arithmetic such as `15 + 5` → `20`, invalid text restores the previous value.
  */
-export function NumberInput({ value, onCommit, suffix, lengthUnit, step = 1, min, max, decimals = 3, width = 78, label, icon, tooltip, disabled, testId }: NumberInputProps) {
+export function NumberInput({ value, onCommit, suffix, lengthUnit, step = 1, min, max, decimals = 3, width = 78, label, icon, tooltip, disabled, arrows, testId }: NumberInputProps) {
   const ref = useRef<HTMLInputElement>(null);
   const skipBlur = useRef(false);
   const [draft, setDraft] = useState<string | null>(null);
@@ -116,6 +118,22 @@ export function NumberInput({ value, onCommit, suffix, lengthUnit, step = 1, min
         }}
       />
       {suffix && <span className="vc-field__unit">{suffix}</span>}
+      {arrows && (
+        <span className="vc-field__arrows">
+          {([1, -1] as const).map((direction) => (
+            <button
+              key={direction}
+              type="button"
+              tabIndex={-1}
+              disabled={disabled}
+              aria-label={direction > 0 ? '+' : '−'}
+              onClick={() => onCommit(clampTo(Math.round(((value ?? 0) + step * direction) * 1e6) / 1e6, min, max))}
+            >
+              <Icon id={direction > 0 ? 'chevron-up' : 'chevron-down'} size={9} />
+            </button>
+          ))}
+        </span>
+      )}
     </div>
   );
 }

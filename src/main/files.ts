@@ -207,6 +207,16 @@ export async function exportSave(win: BrowserWindow, request: ExportSaveRequest)
   return { path: target };
 }
 
+/** Asks where to save the PDF of a print job; null when the user cancels. */
+export async function printPdfPath(win: BrowserWindow, title: string, suggestedName: string): Promise<string | null> {
+  const safeName = path.basename(suggestedName).replace(/.pdf$/i, '') || 'Sin título';
+  const result = await dialog.showSaveDialog(win, { title, defaultPath: path.join(lastExportDir ?? app.getPath('documents'), `${safeName}.pdf`), filters: [{ name: 'PDF', extensions: ['pdf'] }] });
+  if (result.canceled || !result.filePath) return null;
+  const target = path.extname(result.filePath).toLowerCase() === '.pdf' ? result.filePath : `${result.filePath}.pdf`;
+  lastExportDir = path.dirname(target);
+  return target;
+}
+
 export async function exportChooseFolder(win: BrowserWindow, title: unknown): Promise<string | null> {
   if (typeof title !== "string") throw new Error("Invalid dialog title");
   const result = await dialog.showOpenDialog(win, { title, defaultPath: lastExportDir ?? app.getPath("documents"), properties: ["openDirectory", "createDirectory"] });

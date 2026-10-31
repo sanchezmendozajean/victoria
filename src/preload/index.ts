@@ -25,6 +25,7 @@ const api: VictoriaApi = {
   openExportFolder: (folder) => ipcRenderer.invoke(IPC.exportOpenFolder, folder),
   listPrinters: () => ipcRenderer.invoke(IPC.printList),
   print: (job) => ipcRenderer.invoke(IPC.printRun, job),
+  openPrinterPreferences: (printer) => ipcRenderer.invoke(IPC.printPreferences, printer),
   writeClipboard: (clip) => ipcRenderer.invoke(IPC.clipboardWrite, clip),
   readClipboard: () => ipcRenderer.invoke(IPC.clipboardRead),
   saveFile: (request) => ipcRenderer.invoke(IPC.saveFile, request),

@@ -109,3 +109,24 @@
   text-align: right;
   user-select: text;
 }
+
+/* Up / down buttons of a numeric field (NumberInput `arrows`). */
+.vc-field__arrows {
+  display: flex;
+  flex-direction: column;
+  margin-right: -4px;
+}
+.vc-field__arrows button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 9px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--icon);
+}
+.vc-field__arrows button:hover:not(:disabled) {
+  color: var(--icon-active);
+}

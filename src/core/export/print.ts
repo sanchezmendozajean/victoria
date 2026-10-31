@@ -46,10 +46,12 @@ export interface PrintLayout {
   anchor: { col: 0 | 1 | 2; row: 0 | 1 | 2 };
   marks: PrintMarks | null;
   includeBleed: boolean;
+  /** Margin the printer cannot print on, pt (0 for a PDF). */
+  unprintable?: number;
 }
 
-/** How long each crop mark is, pt. */
-export const MARK_LENGTH = 18;
+/** How long each crop mark is, pt: 5 mm. */
+export const MARK_LENGTH = mmToPt(5);
 /** Distance of the bleed line of Japanese marks when the artboard has no bleed of its own: 3 mm. */
 export const DEFAULT_BLEED = mmToPt(3);
 
@@ -66,6 +68,12 @@ export interface PagePlan {
   trimOnPage: Rect;
   /** The artwork (plus its marks) does not fit on the page: the part outside is not printed. */
   overflow: boolean;
+  /** How far the artwork with its bleed reaches outside the printable area, pt (0 = it fits). */
+  clip: number;
+  /** The crop marks reach outside the printable area. */
+  marksOut: boolean;
+  /** Room left inside the printable area around the trim (bleed and marks included), pt; <= 0 on both axes = the position has no effect. */
+  slack: { x: number; y: number };
 }
 
 /** `auto` follows the shape of the artboard: wider than tall prints in landscape. */
@@ -74,29 +82,31 @@ export function resolveOrientation(artboard: Artboard, layout: PrintLayout): Ori
   return artboard.w > artboard.h ? 'landscape' : 'portrait';
 }
 
-/** Where one artboard goes on the page for this layout. */
+/** Where one artboard goes on the page for this layout (specs/08 · Imprimir). */
 export function planPage(artboard: Artboard, layout: PrintLayout, orientation: Orientation): PagePlan {
   const page = orientation === 'landscape' ? { w: layout.paper.h, h: layout.paper.w } : { w: layout.paper.w, h: layout.paper.h };
   const region = artboardRegion(artboard, layout.includeBleed);
   const trim = artboardRegion(artboard, false);
-  const rw = region.maxX - region.minX;
-  const rh = region.maxY - region.minY;
-  const margin = layout.marks ? layout.marks.offset + MARK_LENGTH : 0;
-  const availW = page.w - 2 * margin;
-  const availH = page.h - 2 * margin;
+  const m = layout.unprintable ?? 0;
+  const bleed = Math.max(trim.minX - region.minX, trim.minY - region.minY, region.maxX - trim.maxX, region.maxY - trim.maxY);
+  const marksReach = layout.marks ? layout.marks.offset + MARK_LENGTH : 0;
+  const pad = Math.max(bleed, marksReach);
+  const tw = trim.maxX - trim.minX;
+  const th = trim.maxY - trim.minY;
+  const availW = page.w - 2 * (m + pad);
+  const availH = page.h - 2 * (m + pad);
   let scale = 1;
   if (layout.scale.mode === 'custom') scale = Math.max(0.01, layout.scale.percent / 100);
-  else if (layout.scale.mode === 'fit') scale = Math.max(0.0001, Math.min(availW / rw, availH / rh));
-  const w = rw * scale;
-  const h = rh * scale;
-  const origin = { x: margin + ((availW - w) * layout.anchor.col) / 2, y: margin + ((availH - h) * layout.anchor.row) / 2 };
-  const trimOnPage: Rect = {
-    minX: origin.x + (trim.minX - region.minX) * scale,
-    minY: origin.y + (trim.minY - region.minY) * scale,
-    maxX: origin.x + (trim.maxX - region.minX) * scale,
-    maxY: origin.y + (trim.maxY - region.minY) * scale,
-  };
-  return { page, orientation, region, trim, scale, origin, trimOnPage, overflow: w > availW + 1e-6 || h > availH + 1e-6 };
+  else if (layout.scale.mode === 'fit') scale = Math.max(0.0001, Math.min(availW / tw, availH / th));
+  const w = tw * scale;
+  const h = th * scale;
+  const trimOrigin = { x: m + pad + ((availW - w) * layout.anchor.col) / 2, y: m + pad + ((availH - h) * layout.anchor.row) / 2 };
+  const origin = { x: trimOrigin.x - (trim.minX - region.minX) * scale, y: trimOrigin.y - (trim.minY - region.minY) * scale };
+  const trimOnPage: Rect = { minX: trimOrigin.x, minY: trimOrigin.y, maxX: trimOrigin.x + w, maxY: trimOrigin.y + h };
+  const bleedOnPage = bleed * scale;
+  const clip = Math.max(0, m - (trimOnPage.minX - bleedOnPage), m - (trimOnPage.minY - bleedOnPage), trimOnPage.maxX + bleedOnPage - (page.w - m), trimOnPage.maxY + bleedOnPage - (page.h - m));
+  const marksOut = layout.marks !== null && (trimOnPage.minX - marksReach < m - 0.01 || trimOnPage.minY - marksReach < m - 0.01 || trimOnPage.maxX + marksReach > page.w - m + 0.01 || trimOnPage.maxY + marksReach > page.h - m + 0.01);
+  return { page, orientation, region, trim, scale, origin, trimOnPage, overflow: clip > 1e-6 || marksOut, clip, marksOut, slack: { x: availW - w, y: availH - h } };
 }
 
 /** The crop marks as line segments in page coordinates (pt). */
@@ -145,22 +155,24 @@ export function pageScene(content: Scene, plan: PagePlan, layout: PrintLayout, a
   return { width: plan.page.w, height: plan.page.h, background: [255, 255, 255], ops };
 }
 
+export type RangeError = { kind: 'empty' } | { kind: 'token'; token: string } | { kind: 'bounds'; token: string; count: number };
+
 /**
- * "1-3, 5, 8-" → [1, 2, 3, 5, 8, …] (1-based, ascending, no repeats, clipped to `count`). Empty text means all.
- * Null when the text is not a range.
+ * "1-3, 5" → [1, 2, 3, 5] (1-based, in the order written, no repeats). A backwards range ("3-1") is turned around.
+ * Anything else comes back as the error the dialog shows under the field.
  */
-export function parseRange(text: string, count: number): number[] | null {
-  const clean = text.trim();
-  if (clean === '') return Array.from({ length: count }, (_, i) => i + 1);
-  const picked = new Set<number>();
-  for (const part of clean.split(',')) {
-    const m = /^\s*(\d*)\s*(-)?\s*(\d*)\s*$/.exec(part);
-    // Digits after the number need a dash between them: '1 2' is not a range.
-    if (!m || (m[1] === '' && m[3] === '') || (!m[2] && m[3] !== '')) return null;
-    const from = m[1] === '' ? 1 : Number(m[1]);
-    const to = m[2] ? (m[3] === '' ? count : Number(m[3])) : from;
-    if (from < 1 || to < from) return null;
-    for (let n = from; n <= Math.min(to, count); n++) picked.add(n);
+export function parseArtboardRange(text: string, count: number): { pages: number[] } | { error: RangeError } {
+  const picked: number[] = [];
+  for (const raw of text.split(',')) {
+    const token = raw.trim();
+    if (token === '') continue;
+    const m = /^(\d+)\s*(?:-\s*(\d+))?$/.exec(token);
+    if (!m) return { error: { kind: 'token', token } };
+    let from = Number(m[1]);
+    let to = m[2] === undefined ? from : Number(m[2]);
+    if (from > to) [from, to] = [to, from];
+    if (from < 1 || to > count) return { error: { kind: 'bounds', token, count } };
+    for (let n = from; n <= to; n++) if (!picked.includes(n)) picked.push(n);
   }
-  return [...picked].sort((a, b) => a - b);
+  return picked.length > 0 ? { pages: picked } : { error: { kind: 'empty' } };
 }
