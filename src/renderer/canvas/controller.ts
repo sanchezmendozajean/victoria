@@ -315,7 +315,15 @@ export class CanvasController implements ToolHost, CanvasApi {
   }
 
   setHover(hit: Hit | null): void {
-    const next: HoverTarget | null = hit ? { node: hit.node, world: hit.world, color: hit.layer.color } : null;
+    let next: HoverTarget | null = hit ? { node: hit.node, world: hit.world, color: hit.layer.color } : null;
+    // Under a clip group the outline is the clipping shape, not what it hides.
+    const clip = hit?.ancestors.find((a) => a.type === 'clipGroup');
+    const space = this.currentSpace();
+    if (hit && clip && clip.type === 'clipGroup' && space) {
+      const mask = clip.children[0];
+      const frame = frameOf(space, clip.id);
+      if (mask && frame) next = { node: mask, world: multiply(frame.world, mask.transform), color: hit.layer.color };
+    }
     if (next?.node === this.hover?.node && next?.world === this.hover?.world) return;
     this.hover = next;
     this.invalidate('overlay');
@@ -716,7 +724,11 @@ export class CanvasController implements ToolHost, CanvasApi {
     const out: HoverTarget[] = [];
     const visit = (node: Node, world: Matrix, color: string): void => {
       if (out.length > MAX_SELECTION_OUTLINES) return;
-      if (node.type === 'group' || node.type === 'clipGroup') {
+      if (node.type === 'clipGroup') {
+        // Only the clipping shape shows: what it hides (an image beyond its crop) is not part of the visible object.
+        const mask = node.children[0];
+        if (mask) visit(mask, multiply(world, mask.transform), color);
+      } else if (node.type === 'group') {
         for (const child of node.children) visit(child, multiply(world, child.transform), color);
       } else {
         out.push({ node, world, color });
