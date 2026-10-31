@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Victoria · Imprimir</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fredoka:wght@600&display=swap">
+<script src="../icons.js"></script>
+<style>
+/* Victoria · tokens de interfaz (design/tokens.css), oscuro por defecto como en el proyecto.
+   Layout: página de propuesta → diálogo interactivo (vista previa | ajustes) → lista de cambios numerada */
+:root {
+  --bg-app:#1E1F22; --bg-panel:#2B2D31; --bg-panel-alt:#33363B; --bg-input:#1A1B1E;
+  --bg-hover:#3A3D43; --bg-active:#45494F; --canvas:#535559; --artboard:#FFFFFF;
+  --border:#3E4147; --border-strong:#55595F;
+  --text:#E6E7E9; --text-muted:#A3A6AB; --text-disabled:#6B6F75;
+  --icon:#C9CBCE; --icon-active:#FFFFFF;
+  --accent:#4C8DFF; --accent-soft:#4C8DFF33;
+  --danger:#F0524F; --warning:#F2B33D; --success:#3FB97A; --space-5:#A77BFF;
+  --font-ui:"Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --fs-micro:10px; --fs-label:11px; --fs-menu:12px; --fs-dialog:13px;
+  --radius-control:3px; --radius-float:6px;
+  --h-control:22px; --h-row:28px; --h-menu-row:26px;
+  --shadow-float:0 8px 24px rgba(0,0,0,.35); --shadow-artboard:0 1px 3px rgba(0,0,0,.4);
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) {
+  --bg-app:#E4E5E7; --bg-panel:#F3F4F5; --bg-panel-alt:#E9EAEC; --bg-input:#FFFFFF;
+  --bg-hover:#E1E3E6; --bg-active:#D3D6DA; --canvas:#C9CBCF; --border:#D0D3D7; --border-strong:#B4B8BD;
+  --text:#1F2124; --text-muted:#5E636A; --text-disabled:#A1A5AB; --icon:#3B3F45; --icon-active:#000000;
+  --accent:#2F6FE8; --accent-soft:#2F6FE826; color-scheme: light; } }
+:root[data-theme="light"] {
+  --bg-app:#E4E5E7; --bg-panel:#F3F4F5; --bg-panel-alt:#E9EAEC; --bg-input:#FFFFFF;
+  --bg-hover:#E1E3E6; --bg-active:#D3D6DA; --canvas:#C9CBCF; --border:#D0D3D7; --border-strong:#B4B8BD;
+  --text:#1F2124; --text-muted:#5E636A; --text-disabled:#A1A5AB; --icon:#3B3F45; --icon-active:#000000;
+  --accent:#2F6FE8; --accent-soft:#2F6FE826; color-scheme: light; }
+
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg-app);color:var(--text);font-family:var(--font-ui);font-size:12px;-webkit-font-smoothing:antialiased}
+v-icon{display:inline-flex;flex:none;line-height:0}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+
+.page{max-width:1040px;margin:0 auto;padding-block:28px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:22px}
+.intro{display:flex;flex-direction:column;gap:6px;max-width:68ch}
+.eyebrow{font-size:var(--fs-micro);font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)}
+h1{margin:0;font-size:22px;font-weight:600;text-wrap:balance}
+.intro p{margin:0;color:var(--text-muted);font-size:13px;line-height:1.55}
+
+/* ---------- Casilla (12 px, radio 2, check 10) ---------- */
+.check{display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:var(--fs-menu);user-select:none}
+.check input{appearance:none;-webkit-appearance:none;margin:0;width:12px;height:12px;flex:none;border-radius:2px;border:1px solid var(--border-strong);background:var(--bg-input);cursor:pointer;display:grid;place-items:center}
+.check input:checked{background:var(--accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center/10px no-repeat;border-color:var(--accent)}
+.check v-icon{color:var(--icon)}
+
+/* ---------- Diálogo ---------- */
+.dialog{background:var(--bg-panel);border:1px solid var(--border-strong);border-radius:var(--radius-float);box-shadow:var(--shadow-float);overflow:hidden;display:flex;flex-direction:column;font-size:var(--fs-label)}
+.dlg-head{display:flex;align-items:center;gap:8px;height:36px;padding:0 8px 0 12px;border-bottom:1px solid var(--border)}
+.dlg-head .t{font-size:var(--fs-dialog);font-weight:600}
+.dlg-head .file{color:var(--text-muted)}
+.sp{flex:1}
+.iconbtn{width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;border:0;background:transparent;color:var(--icon);border-radius:var(--radius-control);cursor:pointer;padding:0}
+.iconbtn:hover{background:var(--bg-hover);color:var(--icon-active)}
+.iconbtn:disabled{color:var(--text-disabled);cursor:default;background:transparent}
+
+.dlg-body{display:grid;grid-template-columns:minmax(0,1fr) 380px;height:620px}
+.preview{background:var(--canvas);display:flex;flex-direction:column;gap:10px;padding:16px;border-right:1px solid var(--border);min-width:0}
+.stage{flex:1;position:relative;min-height:0}
+.paper{position:absolute;background:var(--artboard);box-shadow:var(--shadow-artboard);overflow:hidden}
+.printable{position:absolute;border:1px dashed rgba(76,141,255,.55);pointer-events:none}
+.board{position:absolute;outline:1px solid rgba(0,0,0,.08)}
+.board svg{display:block;width:100%;height:100%}
+.bleed{position:absolute;border:1px solid #F0524F;pointer-events:none}
+.mark{position:absolute;background:#000}
+.clip{position:absolute;background:repeating-linear-gradient(135deg,rgba(240,82,79,.35) 0 4px,rgba(240,82,79,.12) 4px 8px);pointer-events:none}
+.pv-bar{display:flex;align-items:center;justify-content:center;gap:8px;color:var(--text);font-variant-numeric:tabular-nums;flex-wrap:wrap}
+.pv-bar .meta{color:var(--text)}
+.legend{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;font-size:var(--fs-micro);color:var(--text)}
+.legend span{display:inline-flex;align-items:center;gap:4px}
+.sw{width:10px;height:0;border-top:1px solid}
+
+.settings{display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden}
+.scroll{flex:1;overflow:auto;padding:16px 18px;display:flex;flex-direction:column;gap:14px}
+.sec{display:flex;flex-direction:column;gap:8px}
+.sec+.sec{padding-top:12px;border-top:1px solid var(--border)}
+.sec-h{display:flex;align-items:center;gap:6px;font-size:var(--fs-micro);font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted)}
+.row{display:grid;grid-template-columns:104px minmax(0,1fr);gap:10px;align-items:center}
+.lbl{display:flex;align-items:center;gap:6px;color:var(--text-muted)}
+.hint{font-size:var(--fs-label);color:var(--text-muted)}
+.hint.err{color:var(--danger)}
+.inline{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0}
+
+/* dropdown: ícono de la opción a la izquierda, chevron 10 */
+.dd{position:relative;display:flex;align-items:center;height:var(--h-control);background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-control);min-width:0}
+.dd:focus-within{border-color:var(--accent)}
+.dd>v-icon:first-child{position:absolute;left:6px;color:var(--icon);pointer-events:none}
+.dd>v-icon:last-child{position:absolute;right:5px;color:var(--text-muted);pointer-events:none}
+.dd select{appearance:none;-webkit-appearance:none;width:100%;height:100%;background:transparent;border:0;color:var(--text);font:inherit;font-size:var(--fs-menu);padding:0 20px 0 26px;cursor:pointer;outline:none}
+.dd select option{background:var(--bg-panel);color:var(--text)}
+.field{height:var(--h-control);background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-control);color:var(--text);font:inherit;font-size:var(--fs-menu);padding:0 6px;width:100%;min-width:0;outline:none}
+.field:focus{border-color:var(--accent)}
+.field[aria-invalid="true"]{border-color:var(--danger)}
+
+/* number-field: ícono 14 · valor a la derecha · unidad 10 · flechas 9 */
+.nf{display:inline-flex;align-items:center;gap:4px;height:var(--h-control);padding:0 2px 0 6px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-control);font-variant-numeric:tabular-nums}
+.nf:focus-within{border-color:var(--accent)}
+.nf>v-icon{color:var(--text-muted)}
+.nf input{width:34px;border:0;background:transparent;color:var(--text);font:inherit;font-size:var(--fs-menu);text-align:right;padding:0;outline:none;font-variant-numeric:tabular-nums}
+.nf .u{font-size:var(--fs-micro);color:var(--text-muted);min-width:14px}
+.nf .arr{display:flex;flex-direction:column}
+.nf .arr button{height:9px;width:12px;border:0;background:transparent;color:var(--icon);padding:0;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.nf .arr button:hover{color:var(--icon-active)}
+.nf.off{opacity:.45}
+.nf.off button,.nf.off input{pointer-events:none}
+
+.status{display:inline-flex;align-items:center;gap:5px;font-size:var(--fs-label);color:var(--text-muted)}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--success)}
+.linkbtn{display:inline-flex;align-items:center;gap:4px;background:none;border:0;padding:0;color:var(--accent);font-size:var(--fs-label);cursor:pointer}
+.linkbtn:hover{text-decoration:underline}
+
+/* segmented */
+.seg{display:flex;border:1px solid var(--border);border-radius:var(--radius-control);overflow:hidden;height:var(--h-control);min-width:0}
+.seg button{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:5px;padding:0 10px;background:transparent;border:0;color:var(--icon);font-size:var(--fs-menu);cursor:pointer;white-space:nowrap}
+.seg button+button{border-left:1px solid var(--border)}
+.seg button:hover{background:var(--bg-hover)}
+.seg button[aria-pressed="true"]{background:var(--bg-active);color:var(--icon-active)}
+.seg.fit{width:max-content}
+.seg.fit button{flex:none;width:28px;padding:0}
+.scope-meta{font-size:var(--fs-label);color:var(--text-muted)}
+
+/* ref-point (posición): celdas cuadradas con borde, activa en acento */
+.posrow{display:flex;gap:12px;align-items:center}
+.posgrid{display:grid;grid-template-columns:repeat(3,9px);grid-template-rows:repeat(3,9px);gap:2px}
+.posgrid button{width:9px;height:9px;padding:0;border:1px solid var(--border-strong);background:transparent;cursor:pointer}
+.posgrid button:hover{border-color:var(--icon)}
+.posgrid button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent)}
+.posgrid[aria-disabled="true"]{opacity:.45}
+.posgrid[aria-disabled="true"] button{cursor:not-allowed}
+
+/* ---------- Pie ---------- */
+.dlg-foot{display:flex;align-items:center;gap:8px;min-height:44px;padding:6px 12px;border-top:1px solid var(--border);flex-wrap:wrap}
+.summary{color:var(--text-muted);font-variant-numeric:tabular-nums;font-size:var(--fs-menu)}
+.summary b{color:var(--text);font-weight:600}
+.btn{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 12px;border-radius:var(--radius-control);font-size:var(--fs-menu);cursor:pointer;border:1px solid var(--border);background:var(--bg-panel-alt);color:var(--text)}
+.btn:hover{background:var(--bg-hover)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#FFFFFF}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn:disabled{opacity:.5;cursor:default}
+
+.warn-wrap{position:relative}
+.warnbtn{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 8px 0 6px;border-radius:var(--radius-control);border:0;background:transparent;color:var(--text);font-size:var(--fs-menu);cursor:pointer}
+.warnbtn v-icon{color:var(--warning)}
+.warnbtn:hover,.warnbtn[aria-expanded="true"]{background:var(--bg-hover)}
+.popover{position:absolute;left:0;bottom:calc(100% + 8px);width:min(380px,calc(100vw - 48px));padding:4px;background:var(--bg-panel);border:1px solid var(--border-strong);border-radius:var(--radius-float);box-shadow:var(--shadow-float);z-index:5;display:flex;flex-direction:column;font-size:var(--fs-menu)}
+.pop-h{display:flex;align-items:center;justify-content:space-between;height:var(--h-menu-row);padding:0 0 0 8px;font-size:var(--fs-micro);font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted)}
+.alerts{display:flex;flex-direction:column}
+.alert{display:grid;grid-template-columns:16px minmax(0,1fr);gap:8px;align-items:start;padding:8px;border-radius:var(--radius-control);line-height:1.45}
+.alert+.alert{border-top:1px solid var(--border);border-radius:0}
+.alert>v-icon{color:var(--warning);margin-top:1px}
+.alert b{font-weight:600}
+.alert .act{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 8px;margin:4px 0 0 -8px;border:0;border-radius:var(--radius-control);background:transparent;color:var(--accent);font-size:var(--fs-menu);cursor:pointer}
+.alert .act:hover{background:var(--bg-hover)}
+
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);display:flex;align-items:center;gap:10px;min-height:36px;padding:6px 12px;border-radius:var(--radius-float);background:var(--bg-panel-alt);border:1px solid var(--border-strong);box-shadow:var(--shadow-float);font-size:var(--fs-menu);color:var(--text);max-width:calc(100vw - 32px)}
+.toast v-icon{color:var(--accent)}
+
+.pin{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:var(--space-5);color:#fff;font-size:9px;font-weight:700;letter-spacing:0;text-transform:none;flex:none}
+.hide-notes .pin{display:none}
+
+/* ---------- Cambios ---------- */
+.changes h2{margin:0 0 10px;font-size:15px;font-weight:600}
+.changes ol{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px 22px}
+.changes li{display:grid;grid-template-columns:15px minmax(0,1fr);gap:10px;font-size:12.5px;line-height:1.55;color:var(--text-muted)}
+.changes li b{color:var(--text);font-weight:600;display:block}
+
+@media (max-width:820px){
+  .dlg-body{grid-template-columns:1fr;grid-template-rows:420px 460px;height:auto}
+  .preview{border-right:0;border-bottom:1px solid var(--border)}
+}
+@media (max-width:420px){ .row{grid-template-columns:1fr;gap:4px} }
+@media (prefers-reduced-motion:no-preference){ .board,.bleed,.mark,.paper,.clip{transition:all .18s ease} }
+</style>
+</head>
+<body>
+
+
+<div class="page" id="page">
+  <header class="intro">
+    <span class="eyebrow">Victoria · Propuesta de rediseño</span>
+    <h1>Diálogo Imprimir</h1>
+    <p>Misma información que el diálogo actual, ordenada según cómo se decide una impresión: dónde, qué, en qué papel, a qué tamaño y con qué acabado. Usa los tokens, componentes e íconos del prototipo de Victoria. Todo es interactivo: cambia los ajustes y la vista previa se recalcula en milímetros reales.</p>
+    <label class="check"><input type="checkbox" id="notesToggle" checked> <span style="color:var(--text-muted)">Mostrar notas del rediseño</span></label>
+  </header>
+
+  <section class="dialog" aria-label="Imprimir">
+    <div class="dlg-head">
+      <v-icon i="print" s="16" style="color:var(--icon)"></v-icon>
+      <span class="t">Imprimir</span><span class="file">· noche-de-cafe.vict</span>
+      <span class="sp"></span>
+      <button class="iconbtn" title="Cerrar" aria-label="Cerrar" id="close"><v-icon i="close" s="14"></v-icon></button>
+    </div>
+
+    <div class="dlg-body">
+      <div class="preview">
+        <div class="stage" id="stage"></div>
+        <div class="pv-bar">
+          <button class="iconbtn" id="prev" aria-label="Página anterior"><v-icon i="chevron-left" s="14"></v-icon></button>
+          <span id="pageLbl">Página 1 de 1</span><span class="meta" id="pageMeta"></span>
+          <button class="iconbtn" id="next" aria-label="Página siguiente"><v-icon i="chevron-right" s="14"></v-icon></button>
+        </div>
+        <div class="legend">
+          <span><i class="sw" style="border-top:1px dashed #4C8DFF"></i>Área imprimible</span>
+          <span id="lgMarks"><i class="sw" style="border-color:#000;box-shadow:0 0 0 .5px #fff"></i>Marcas de corte</span>
+          <span id="lgBleed"><i class="sw" style="border-color:#F0524F"></i>Sangrado</span>
+          <span id="lgClip"><i style="width:10px;height:8px;background:repeating-linear-gradient(135deg,rgba(240,82,79,.7) 0 2px,transparent 2px 4px)"></i>Se recorta</span>
+        </div>
+      </div>
+
+      <div class="settings">
+        <div class="scroll">
+          <div class="sec">
+            <div class="sec-h"><span class="pin">1</span>Impresora</div>
+            <div class="row">
+              <label class="lbl" for="printer"><v-icon i="print" s="14"></v-icon>Destino</label>
+              <div class="dd"><v-icon i="print" s="14" id="printerIcon"></v-icon>
+                <select id="printer"><option value="hp">HP Ink Tank 310 series</option><option value="pdf">Guardar como PDF</option></select>
+                <v-icon i="chevron-down" s="10"></v-icon></div>
+            </div>
+            <div class="row">
+              <span></span>
+              <div class="inline"><span class="status"><i class="dot"></i><span id="pStatus">Lista · USB</span></span><button class="linkbtn" id="prefs" title="Preferencias de la impresora"><v-icon i="preferences" s="12"></v-icon>Preferencias…</button></div>
+            </div>
+            <div class="row">
+              <label class="lbl" for="copies"><v-icon i="copies" s="14"></v-icon>Copias</label>
+              <div class="inline">
+                <div class="nf"><input id="copies" inputmode="numeric" value="1" aria-label="Copias"><span class="arr"><button id="cPlus" aria-label="Más copias" tabindex="-1"><v-icon i="chevron-up" s="9"></v-icon></button><button id="cMinus" aria-label="Menos copias" tabindex="-1"><v-icon i="chevron-down" s="9"></v-icon></button></span></div>
+                <label class="check" id="collateWrap"><input type="checkbox" id="collate" checked>Intercalar</label>
+              </div>
+            </div>
+            <div class="row">
+              <label class="lbl" for="color"><v-icon i="color-model" s="14"></v-icon>Color</label>
+              <div class="dd"><v-icon i="paint-color" s="14"></v-icon>
+                <select id="color"><option value="color">Color</option><option value="gray">Escala de grises</option></select>
+                <v-icon i="chevron-down" s="10"></v-icon></div>
+            </div>
+          </div>
+
+          <div class="sec">
+            <div class="sec-h"><span class="pin">2</span>Qué imprimir</div>
+            <div class="seg" role="group" aria-label="Qué imprimir" id="scope">
+              <button data-v="active" aria-pressed="true"><v-icon i="tool-artboard" s="14"></v-icon>Mesa activa</button>
+              <button data-v="all" aria-pressed="false"><v-icon i="fit-all" s="14"></v-icon>Todas (3)</button>
+              <button data-v="range" aria-pressed="false">Rango</button>
+            </div>
+            <div id="rangeWrap" hidden style="display:flex;flex-direction:column;gap:4px">
+              <input class="field" id="range" placeholder="Ej.: 1-2, 3" value="1, 3" aria-label="Rango de mesas">
+              <div class="hint" id="rangeHint">Mesas 1 a 3, separadas por comas o guiones.</div>
+            </div>
+            <div class="scope-meta" id="scopeMeta"></div>
+          </div>
+
+          <div class="sec">
+            <div class="sec-h"><span class="pin">3</span>Papel</div>
+            <div class="row">
+              <label class="lbl" for="paper"><v-icon i="page" s="14"></v-icon>Tamaño</label>
+              <div class="dd"><v-icon i="page" s="14"></v-icon><select id="paper"></select><v-icon i="chevron-down" s="10"></v-icon></div>
+            </div>
+            <div class="row">
+              <span class="lbl"><v-icon i="orientation" s="14"></v-icon>Orientación</span>
+              <div class="seg" role="group" aria-label="Orientación" id="orient">
+                <button data-v="auto" aria-pressed="true" title="Según la forma de cada mesa">Auto</button>
+                <button data-v="portrait" aria-pressed="false" title="Vertical" aria-label="Vertical"><v-icon i="artboard-portrait" s="14"></v-icon></button>
+                <button data-v="landscape" aria-pressed="false" title="Horizontal" aria-label="Horizontal"><v-icon i="artboard-landscape" s="14"></v-icon></button>
+              </div>
+            </div>
+          </div>
+
+          <div class="sec">
+            <div class="sec-h"><span class="pin">4</span>Tamaño y posición</div>
+            <div class="seg" role="group" aria-label="Escala" id="scale">
+              <button data-v="none" aria-pressed="true"><v-icon i="actual-size" s="14"></v-icon>100 %</button>
+              <button data-v="fit" aria-pressed="false"><v-icon i="fit-artboard" s="14"></v-icon>Ajustar a la hoja</button>
+              <button data-v="custom" aria-pressed="false">Personalizada</button>
+            </div>
+            <div class="row">
+              <span class="lbl"><v-icon i="scale-fit" s="14"></v-icon>Escala</span>
+              <div class="inline">
+                <div class="nf off" id="pctNf"><input id="pct" value="100" inputmode="decimal" aria-label="Escala en porcentaje" disabled><span class="u">%</span><span class="arr"><button data-step="5" aria-label="Aumentar escala" tabindex="-1"><v-icon i="chevron-up" s="9"></v-icon></button><button data-step="-5" aria-label="Reducir escala" tabindex="-1"><v-icon i="chevron-down" s="9"></v-icon></button></span></div>
+                <span class="hint" id="effScale"></span>
+              </div>
+            </div>
+            <div class="row">
+              <span class="lbl"><v-icon i="tool-artboard" s="14"></v-icon>Posición</span>
+              <div class="posrow">
+                <div class="posgrid" id="pos" role="group" aria-label="Posición en la hoja"></div>
+                <span class="hint" id="posHint"></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="sec">
+            <div class="sec-h"><span class="pin">5</span>Marcas y sangrado</div>
+            <label class="check"><input type="checkbox" id="marks"><v-icon i="crop-marks" s="16"></v-icon>Marcas de corte</label>
+            <div class="inline">
+              <label class="check"><input type="checkbox" id="bleed"><v-icon i="bleed" s="16"></v-icon>Incluir sangrado</label>
+              <div class="nf off" id="bleedNf"><input id="bleedMm" value="3" inputmode="decimal" aria-label="Sangrado en milímetros" disabled><span class="u">mm</span><span class="arr"><button data-step="1" aria-label="Más sangrado" tabindex="-1"><v-icon i="chevron-up" s="9"></v-icon></button><button data-step="-1" aria-label="Menos sangrado" tabindex="-1"><v-icon i="chevron-down" s="9"></v-icon></button></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dlg-foot">
+      <div class="warn-wrap">
+        <button class="warnbtn" id="warnBtn" aria-expanded="false" aria-controls="warnPop" hidden><v-icon i="alert" s="16"></v-icon><span id="warnCount"></span></button>
+        <div class="popover" id="warnPop" role="dialog" aria-label="Advertencias" hidden>
+          <div class="pop-h"><span id="popTitle">Advertencias</span><button class="iconbtn" id="popClose" aria-label="Cerrar advertencias"><v-icon i="close" s="12"></v-icon></button></div>
+          <div class="alerts" id="alerts" aria-live="polite"></div>
+        </div>
+      </div>
+      <span class="pin">6</span>
+      <span class="summary" id="summary"></span>
+      <span class="sp"></span>
+      <button class="btn" id="cancel"><v-icon i="close" s="14"></v-icon>Cancelar</button>
+      <button class="btn primary" id="print"><v-icon i="print" s="14"></v-icon><span id="printLbl">Imprimir</span></button>
+    </div>
+  </section>
+
+  <section class="changes">
+    <h2>Qué cambia respecto al diálogo actual</h2>
+    <ol>
+      <li><span class="pin">1</span><span><b>La impresora muestra su estado</b>Se ve si está lista antes de enviar, con acceso directo a sus preferencias. Copias usa el campo numérico del sistema; Intercalar solo aparece con más de una copia. Se añade Color / Escala de grises.</span></li>
+      <li><span class="pin">2</span><span><b>«Qué imprimir» con grupo segmentado</b>Mesa activa, Todas o Rango. El campo de rango solo aparece cuando aplica (hoy está siempre visible) y valida lo que escribes.</span></li>
+      <li><span class="pin">3</span><span><b>Orientación con íconos de mesa</b>Auto, Vertical u Horizontal en un solo clic. En Auto cada mesa usa la orientación que mejor le queda, y la vista previa lo refleja página a página.</span></li>
+      <li><span class="pin">4</span><span><b>Escala y posición en un mismo grupo</b>La escala efectiva siempre se ve («Ajustar» → 113 %). El punto de referencia de posición se desactiva cuando la mesa llena la hoja y ya no tiene efecto.</span></li>
+      <li><span class="pin">5</span><span><b>Sangrado con medida editable</b>Las marcas y el sangrado se dibujan en la vista previa, y el diálogo avisa si no caben dentro del área imprimible.</span></li>
+      <li><span class="pin">6</span><span><b>Advertencias agrupadas en el pie</b>Si hay advertencias, aparece «N advertencias» abajo a la izquierda; al hacer clic se abre un popover con cada una, su detalle (p. ej. la resolución real, recalculada con la escala) y una acción para resolverla. El pie también resume hojas, papel y copias.</span></li>
+    </ol>
+  </section>
+</div>
+<div class="toast" id="toast" hidden><v-icon i="info" s="16"></v-icon><span id="toastTxt"></span></div>
+
+<script>
+(function(){
+const PAPERS={a4:{n:'A4',w:210,h:297},letter:{n:'Carta',w:215.9,h:279.4},legal:{n:'Oficio',w:216,h:330},a3:{n:'A3',w:297,h:420}};
+const PRINTERS={hp:{status:'Lista · USB',m:3.2,papers:['a4','letter','legal'],icon:'print'},pdf:{status:'Archivo PDF',m:0,papers:['a4','letter','legal','a3'],icon:'file'}};
+const MESAS=[{n:'Póster',w:180,h:240,img:{px:640,mm:132}},{n:'Etiqueta',w:90,h:50},{n:'Banner',w:280,h:100}];
+const S={printer:'hp',copies:1,collate:true,color:'color',scope:'active',range:'1, 3',paper:'a4',orient:'auto',scale:'none',pct:100,pos:4,marks:false,bleed:false,bleedMm:3,page:0};
+const $=id=>document.getElementById(id);
+const fmt=(n,d=0)=>n.toLocaleString('es-PE',{maximumFractionDigits:d,minimumFractionDigits:0});
+
+function art(i,gray){
+  const o=gray?'#8A8A8A':'#E0702A', o2=gray?'#6B6B6B':'#C4551A', ink='#1D1D1F';
+  if(i===0) return `<svg viewBox="0 0 180 240"><rect width="180" height="240" fill="#fff"/>
+    <text x="90" y="38" text-anchor="middle" font-family="Fredoka,Inter,sans-serif" font-weight="600" font-size="15" fill="${ink}">¿Qué nos da miedo?</text>
+    <path d="M58 182 C52 120 60 78 90 74 C120 78 128 120 122 182 L112 172 L102 184 L90 172 L78 184 L68 172 Z" fill="#F4F2EE" stroke="#BDBAB4" stroke-width="1"/>
+    <path d="M62 98 C64 72 116 72 118 98 Z" fill="${o}"/><rect x="60" y="94" width="60" height="9" rx="3" fill="${o2}"/><circle cx="90" cy="70" r="7" fill="${o}"/>
+    <ellipse cx="80" cy="118" rx="4" ry="5.5" fill="${ink}"/><ellipse cx="100" cy="118" rx="4" ry="5.5" fill="${ink}"/><ellipse cx="90" cy="130" rx="2.2" ry="3" fill="${ink}"/>
+    <path d="M112 136 h18 l-3 40 h-12 Z" fill="#3A3A3C"/><path d="M114 136 l7 -10 l7 10" fill="#2A2A2C"/><path d="M130 144 c8 0 8 16 0 18" fill="none" stroke="#3A3A3C" stroke-width="3"/>
+    <circle cx="140" cy="180" r="14" fill="${o}"/><path d="M134 176 l3 -3 l3 3 M142 176 l3 -3 l3 3 M133 185 q7 6 14 0" fill="none" stroke="${ink}" stroke-width="1.6"/><rect x="138.5" y="163" width="3" height="5" fill="#5B4B2A"/>
+    <path d="M30 70 q6 -6 12 0 q6 -6 12 0 q-6 -2 -12 4 q-6 -6 -12 -4z M132 60 q5 -5 10 0 q5 -5 10 0 q-5 -2 -10 3 q-5 -5 -10 -3z" fill="${ink}"/>
+    <text x="90" y="216" text-anchor="middle" font-family="Fredoka,Inter,sans-serif" font-weight="600" font-size="15" fill="${ink}">Que se acabe el café.</text></svg>`;
+  if(i===1) return `<svg viewBox="0 0 90 50"><rect width="90" height="50" fill="#fff"/><rect x="4" y="4" width="82" height="42" rx="4" fill="none" stroke="${o2}" stroke-width="1"/>
+    <text x="45" y="24" text-anchor="middle" font-family="Fredoka,Inter,sans-serif" font-weight="600" font-size="9" fill="${ink}">Café de olla</text>
+    <text x="45" y="34" text-anchor="middle" font-family="Inter,sans-serif" font-size="4.5" fill="#555">250 g · Molido medio</text></svg>`;
+  return `<svg viewBox="0 0 280 100"><rect width="280" height="100" fill="${gray?'#2E2E2E':'#2B1E3A'}"/>
+    <circle cx="252" cy="26" r="13" fill="${gray?'#CFCFCF':'#F2D27A'}"/>
+    <text x="22" y="52" font-family="Fredoka,Inter,sans-serif" font-weight="600" font-size="18" fill="#fff">Noche de café y terror</text>
+    <text x="22" y="70" font-family="Inter,sans-serif" font-size="8" fill="${gray?'#BBB':o}">Sábado 31 de octubre · 7:00 p. m.</text></svg>`;
+}
+
+function pages(){
+  if(S.scope==='active') return {list:[0],err:null};
+  if(S.scope==='all') return {list:[0,1,2],err:null};
+  const out=[];const raw=S.range.trim();
+  if(!raw) return {list:[],err:'Escribe al menos una mesa.'};
+  for(const part of raw.split(',')){
+    const p=part.trim(); if(!p) continue;
+    const m=p.match(/^(\d+)\s*(?:-\s*(\d+))?$/);
+    if(!m) return {list:out,err:`«${p}» no es un número ni un rango válido.`};
+    let a=+m[1],b=m[2]?+m[2]:a; if(a>b)[a,b]=[b,a];
+    if(a<1||b>3) return {list:out,err:`El documento tiene 3 mesas; «${p}» se sale de ese rango.`};
+    for(let k=a;k<=b;k++) if(!out.includes(k-1)) out.push(k-1);
+  }
+  return {list:out,err:out.length?null:'Escribe al menos una mesa.'};
+}
+function layout(i){
+  const ms=MESAS[i], pr=PRINTERS[S.printer], pp=PAPERS[S.paper];
+  const land = S.orient==='landscape' || (S.orient==='auto' && ms.w>ms.h);
+  const pw=land?pp.h:pp.w, ph=land?pp.w:pp.h, m=pr.m;
+  const b=S.bleed?S.bleedMm:0, k=S.marks?b+8:0, pad=Math.max(b,k);
+  let s=1;
+  if(S.scale==='fit') s=Math.min((pw-2*m-2*pad)/ms.w,(ph-2*m-2*pad)/ms.h);
+  else if(S.scale==='custom') s=S.pct/100;
+  const sw=ms.w*s, sh=ms.h*s, c=S.pos%3, r=Math.floor(S.pos/3), inset=m+pad;
+  const x=c===0?inset:c===1?(pw-sw)/2:pw-inset-sw;
+  const y=r===0?inset:r===1?(ph-sh)/2:ph-inset-sh;
+  const slackX=pw-2*inset-sw, slackY=ph-2*inset-sh;
+  const L=x-b,T=y-b,R=x+sw+b,B=y+sh+b;
+  const clipMax=Math.max(0,m-L,m-T,R-(pw-m),B-(ph-m));
+  const marksOut = S.marks && (x-k<m-0.01 || y-k<m-0.01 || x+sw+k>pw-m+0.01 || y+sh+k>ph-m+0.01);
+  const ppi = ms.img ? ms.img.px/((ms.img.mm*s)/25.4) : null;
+  return {pw,ph,m,b,s,sw,sh,x,y,clipMax,marksOut,ppi,land,slackX,slackY};
+}
+
+function renderStage(){
+  const st=$('stage'); const pg=pages(); const list=pg.list.length?pg.list:[0];
+  S.page=Math.min(S.page,list.length-1);
+  const i=list[S.page], L=layout(i);
+  const W=st.clientWidth, H=st.clientHeight, pad=10;
+  if(!W||!H) return;
+  const k=Math.min((W-2*pad)/L.pw,(H-2*pad)/L.ph);
+  const px=v=>(v*k).toFixed(2)+'px';
+  const ox=(W-L.pw*k)/2, oy=(H-L.ph*k)/2;
+  let h=`<div class="paper" style="left:${ox}px;top:${oy}px;width:${px(L.pw)};height:${px(L.ph)}">`;
+  if(L.m>0) h+=`<div class="printable" style="left:${px(L.m)};top:${px(L.m)};width:${px(L.pw-2*L.m)};height:${px(L.ph-2*L.m)}"></div>`;
+  h+=`<div class="board" style="left:${px(L.x)};top:${px(L.y)};width:${px(L.sw)};height:${px(L.sh)}">${art(i,S.color==='gray')}</div>`;
+  if(S.bleed) h+=`<div class="bleed" style="left:${px(L.x-L.b)};top:${px(L.y-L.b)};width:${px(L.sw+2*L.b)};height:${px(L.sh+2*L.b)}"></div>`;
+  if(S.marks){
+    const off=L.b+3, len=5, t=Math.max(1,0.25*k)+'px';
+    for(const X of [L.x,L.x+L.sw])for(const Y of [L.y,L.y+L.sh]){
+      const top=Y===L.y, left=X===L.x;
+      h+=`<span class="mark" style="left:${px(X)};top:${px(top?Y-off-len:Y+off)};width:${t};height:${px(len)}"></span>`;
+      h+=`<span class="mark" style="top:${px(Y)};left:${px(left?X-off-len:X+off)};height:${t};width:${px(len)}"></span>`;
+    }
+  }
+  const showClip=L.m>0&&L.clipMax>0.05;
+  if(showClip){
+    h+=`<div class="clip" style="left:0;top:0;width:100%;height:${px(L.m)}"></div><div class="clip" style="left:0;bottom:0;width:100%;height:${px(L.m)}"></div>`;
+    h+=`<div class="clip" style="left:0;top:${px(L.m)};width:${px(L.m)};height:${px(L.ph-2*L.m)}"></div><div class="clip" style="right:0;top:${px(L.m)};width:${px(L.m)};height:${px(L.ph-2*L.m)}"></div>`;
+  }
+  st.innerHTML=h+'</div>';
+  $('lgClip').hidden=!showClip; $('lgBleed').hidden=!S.bleed; $('lgMarks').hidden=!S.marks;
+  $('pageLbl').textContent=`Página ${S.page+1} de ${list.length}`;
+  $('pageMeta').textContent=`· ${MESAS[i].n} · Hoja ${PAPERS[S.paper].n} ${L.land?'horizontal':'vertical'}`;
+  $('prev').disabled=S.page===0; $('next').disabled=S.page>=list.length-1;
+}
+
+function render(){
+  const pr=PRINTERS[S.printer];
+  const ps=$('paper'); ps.innerHTML=pr.papers.map(k=>`<option value="${k}">${PAPERS[k].n} (${fmt(PAPERS[k].w,1)} × ${fmt(PAPERS[k].h,1)} mm)</option>`).join('');
+  if(!pr.papers.includes(S.paper)) S.paper='a4'; ps.value=S.paper;
+  $('printerIcon').setAttribute('i',pr.icon);
+  $('pStatus').textContent=pr.status;
+  $('prefs').hidden=S.printer==='pdf';
+  $('collateWrap').hidden=S.copies<2;
+  $('copies').value=S.copies;
+  for(const g of ['scope','orient','scale'])
+    $(g).querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===S[g]));
+  $('rangeWrap').hidden=S.scope!=='range';
+  const pg=pages();
+  $('range').setAttribute('aria-invalid',!!pg.err && S.scope==='range');
+  $('rangeHint').textContent=pg.err||'Mesas 1 a 3, separadas por comas o guiones.';
+  $('rangeHint').classList.toggle('err',!!pg.err);
+  $('scopeMeta').textContent = S.scope==='active' ? 'Mesa 1 (Póster)' : (pg.list.length?`Mesas ${pg.list.map(i=>`${i+1} (${MESAS[i].n})`).join(', ')}`:'');
+  $('pct').disabled=S.scale!=='custom'; $('pctNf').classList.toggle('off',S.scale!=='custom');
+  $('bleedMm').disabled=!S.bleed; $('bleedNf').classList.toggle('off',!S.bleed);
+
+  const list=pg.list.length?pg.list:[0];
+  const Ls=list.map(layout); const cur=Ls[Math.min(S.page,list.length-1)];
+  if(S.scale!=='custom' && document.activeElement!==$('pct')) $('pct').value=fmt(cur.s*100);
+  $('effScale').textContent = S.scale==='fit' && list.length>1 ? 'Varía por mesa' : '';
+  const noSlack=cur.slackX<=0.5 && cur.slackY<=0.5;
+  $('pos').setAttribute('aria-disabled',noSlack);
+  $('pos').querySelectorAll('button').forEach((b,ix)=>{b.setAttribute('aria-pressed',ix===S.pos);b.disabled=noSlack;});
+  $('posHint').textContent = noSlack ? 'La mesa ocupa toda la hoja.' : '';
+
+  const A=[];
+  if(pg.err && S.scope==='range') A.push({t:`<b>Revisa el rango.</b> ${pg.err}`});
+  const low=list.map((i,ix)=>Ls[ix].ppi).filter(p=>p && p<150);
+  if(low.length){
+    const n=low.length, worst=Math.min(...low);
+    A.push({t:`<b>${n===1?'1 imagen se imprimirá':n+' imágenes se imprimirán'} a ${fmt(worst)} ppp.</b> Para impresión se recomiendan 150 ppp o más; ${n===1?'puede':'pueden'} verse pixelada${n===1?'':'s'}.`,a:'Seleccionar imagen',ic:'image',fn:()=>toast('Imagen «fantasma-cafe.png» seleccionada en la mesa Póster.')});
+  }
+  const clipped=list.filter((i,ix)=>Ls[ix].clipMax>0.05);
+  if(clipped.length){
+    const w=Math.max(...list.map((i,ix)=>Ls[ix].clipMax));
+    A.push({t:`<b>${clipped.length===1?`La mesa ${MESAS[clipped[0]].n} se sale`:clipped.length+' mesas se salen'} del área imprimible</b> hasta ${fmt(w,1)} mm. Esa parte no se imprimirá.`,a:'Ajustar a la hoja',ic:'fit-artboard',fn:()=>{S.scale='fit';render();}});
+  } else if(list.some((i,ix)=>Ls[ix].marksOut)){
+    A.push({t:`<b>Las marcas de corte no caben</b> en el área imprimible con la escala actual.`,a:'Ajustar a la hoja',ic:'fit-artboard',fn:()=>{S.scale='fit';render();}});
+  }
+  const lbl=`${A.length} ${A.length===1?'advertencia':'advertencias'}`;
+  $('warnBtn').hidden=!A.length; $('warnCount').textContent=lbl; $('popTitle').textContent=lbl;
+  if(!A.length) setPop(false);
+  const al=$('alerts'); al.innerHTML='';
+  A.forEach(x=>{
+    const d=document.createElement('div'); d.className='alert';
+    d.innerHTML=`<v-icon i="alert" s="16"></v-icon><div>${x.t}</div>`;
+    if(x.a){const b=document.createElement('button');b.className='act';b.innerHTML=`<v-icon i="${x.ic}" s="14"></v-icon>${x.a}`;b.onclick=x.fn;d.lastChild.appendChild(document.createElement('br'));d.lastChild.appendChild(b);}
+    al.appendChild(d);
+  });
+
+  const sheets=pg.err&&S.scope==='range'?0:list.length*S.copies;
+  $('summary').innerHTML=`<b>${sheets} ${sheets===1?'hoja':'hojas'}</b> · ${PAPERS[S.paper].n} · ${S.copies} ${S.copies===1?'copia':'copias'}${S.copies>1&&S.collate?' intercaladas':''} · ${S.color==='color'?'Color':'Grises'}`;
+  $('printLbl').textContent=S.printer==='pdf'?'Guardar PDF':'Imprimir';
+  $('print').disabled=sheets===0;
+  renderStage();
+}
+
+function setPop(open){$('warnPop').hidden=!open;$('warnBtn').setAttribute('aria-expanded',open);}
+function seg(id){$(id).addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;S[id]=b.dataset.v;if(id==='scope')S.page=0;render();});}
+seg('scope'); seg('orient'); seg('scale');
+$('pos').innerHTML=['Arriba izquierda','Arriba centro','Arriba derecha','Centro izquierda','Centro','Centro derecha','Abajo izquierda','Abajo centro','Abajo derecha'].map((t,i)=>`<button aria-label="${t}" title="${t}" data-i="${i}"></button>`).join('');
+$('pos').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;S.pos=+b.dataset.i;render();});
+$('printer').onchange=e=>{S.printer=e.target.value;render();};
+$('paper').onchange=e=>{S.paper=e.target.value;render();};
+$('color').onchange=e=>{S.color=e.target.value;render();};
+$('collate').onchange=e=>{S.collate=e.target.checked;render();};
+$('marks').onchange=e=>{S.marks=e.target.checked;render();};
+$('bleed').onchange=e=>{S.bleed=e.target.checked;render();};
+const num=v=>parseFloat(String(v).replace(',','.'));
+const setBleed=v=>{if(v>=0&&v<=20){S.bleedMm=v;$('bleedMm').value=fmt(v,1);render();}};
+const setPct=v=>{if(v>=5&&v<=400){S.pct=v;render();}};
+$('bleedMm').oninput=e=>{const v=num(e.target.value);if(v>=0&&v<=20){S.bleedMm=v;render();}};
+$('pct').oninput=e=>setPct(num(e.target.value));
+$('bleedNf').querySelectorAll('button').forEach(b=>b.onclick=()=>setBleed(S.bleedMm+ +b.dataset.step));
+$('pctNf').querySelectorAll('button').forEach(b=>b.onclick=()=>{const v=S.pct+ +b.dataset.step;if(v>=5&&v<=400){S.pct=v;$('pct').value=v;render();}});
+$('range').oninput=e=>{S.range=e.target.value;S.page=0;render();};
+const setCopies=v=>{S.copies=Math.max(1,Math.min(99,v||1));render();};
+$('cMinus').onclick=()=>setCopies(S.copies-1);
+$('cPlus').onclick=()=>setCopies(S.copies+1);
+$('copies').onchange=e=>setCopies(parseInt(e.target.value,10));
+$('copies').onkeydown=e=>{if(e.key==='ArrowUp'){e.preventDefault();setCopies(S.copies+1);}if(e.key==='ArrowDown'){e.preventDefault();setCopies(S.copies-1);}};
+$('prev').onclick=()=>{S.page--;render();};
+$('next').onclick=()=>{S.page++;render();};
+$('prefs').onclick=()=>toast('Abriría las preferencias del controlador de la impresora.');
+$('cancel').onclick=$('close').onclick=()=>toast('Cerraría el diálogo sin imprimir.');
+$('print').onclick=()=>{const n=(pages().list.length||1)*S.copies;toast(S.printer==='pdf'?'Guardaría el PDF.':`Enviaría ${n} ${n===1?'hoja':'hojas'} a HP Ink Tank 310 series.`);};
+$('warnBtn').onclick=e=>{e.stopPropagation();setPop($('warnPop').hidden);};
+$('popClose').onclick=()=>{setPop(false);$('warnBtn').focus();};
+$('warnPop').addEventListener('click',e=>e.stopPropagation());
+document.addEventListener('click',()=>setPop(false));
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('warnPop').hidden){setPop(false);$('warnBtn').focus();}});
+$('notesToggle').onchange=e=>$('page').classList.toggle('hide-notes',!e.target.checked);
+let tt;function toast(m){$('toastTxt').textContent=m;$('toast').hidden=false;clearTimeout(tt);tt=setTimeout(()=>$('toast').hidden=true,2400);}
+new ResizeObserver(()=>renderStage()).observe($('stage'));
+render();
+})();
+</script>
+
+</body>
+</html>
