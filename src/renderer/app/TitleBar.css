@@ -10,7 +10,8 @@
 }
 /* Windows draws its own caption buttons over the right end; keep our content clear of them. */
 .vc-titlebar--native-overlay {
-  width: env(titlebar-area-width, 100%);
+  /* Full width, so the bottom border runs under the caption buttons; only the content stops before them. */
+  padding-right: calc(100% - env(titlebar-area-width, 100%));
 }
 .vc-titlebar__logo {
   display: flex;

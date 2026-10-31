@@ -1,3 +1,4 @@
+import { execFile } from 'node:child_process';
 import path from 'node:path';
 import { scanFontDirectories } from '../fonts';
 import type { Platform } from './types';
@@ -13,6 +14,12 @@ export const win32: Platform = {
 
   listPrinters: listSystemPrinters,
 
+  // The driver's own "Printing Preferences" window.
+  openPrinterPreferences: (printer) =>
+    new Promise((resolve, reject) => {
+      execFile('rundll32', ['printui.dll,PrintUIEntry', '/e', '/n', printer], (error) => (error ? reject(error) : resolve()));
+    }),
+
   // webContents.print from a hidden window that shows the pages at their real size.
   print: (job) => printJob(job),
 
@@ -24,11 +31,11 @@ export const win32: Platform = {
     if (chrome === 'custom') return { frame: false };
     return {
       titleBarStyle: 'hidden',
-      titleBarOverlay: { color: colors.background, symbolColor: colors.symbol, height: 32 },
+      titleBarOverlay: { color: colors.background, symbolColor: colors.symbol, height: 31 },
     };
   },
 
   applyOverlayColors(win, colors) {
-    win.setTitleBarOverlay({ color: colors.background, symbolColor: colors.symbol, height: 32 });
+    win.setTitleBarOverlay({ color: colors.background, symbolColor: colors.symbol, height: 31 });
   },
 };
