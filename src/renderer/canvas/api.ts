@@ -13,6 +13,11 @@ export interface CanvasApi {
   fitArtboardById(id: string): void;
   /** Centres the view on a Space rectangle when it is (partly) out of view; keeps the zoom (Layers › Localizar objeto). */
   revealRect(rect: { minX: number; minY: number; maxX: number; maxY: number }): void;
+  /**
+   * The colour (`#rrggbb`) the canvas shows under a window position, bitmaps included; null when the position
+   * is outside the drawing area. Transparent pixels are blended over the canvas colour.
+   */
+  sampleColorAt(clientX: number, clientY: number): string | null;
 }
 
 /** Set by the mounted canvas; null while no canvas exists. */

@@ -793,6 +793,27 @@ export class CanvasController implements ToolHost, CanvasApi {
     return { screen, doc: screenToDoc(this.viewValue, screen), button: e.button, shiftKey: e.shiftKey, altKey: e.altKey, ctrlKey: e.ctrlKey, metaKey: e.metaKey, clickCount: this.lastDown.count || 1 };
   }
 
+  /** Eyedropper in the colour picker: reads the rendered content layer (no overlay, so no handles or guides). */
+  sampleColorAt(clientX: number, clientY: number): string | null {
+    const canvas = this.el.content;
+    const rect = canvas.getBoundingClientRect();
+    if (clientX < rect.left || clientY < rect.top || clientX >= rect.right || clientY >= rect.bottom) return null;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+    const x = Math.min(canvas.width - 1, Math.floor((clientX - rect.left) * this.dpr));
+    const y = Math.min(canvas.height - 1, Math.floor((clientY - rect.top) * this.dpr));
+    const [r = 0, g = 0, b = 0, a = 255] = ctx.getImageData(x, y, 1, 1).data;
+    let out = [r, g, b];
+    if (a < 255) {
+      // Unpainted canvas shows the surface colour behind it.
+      const m = /rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(getComputedStyle(this.el.surface).backgroundColor);
+      const back = m ? [Number(m[1]), Number(m[2]), Number(m[3])] : [255, 255, 255];
+      const k = a / 255;
+      out = out.map((c, i) => Math.round(c * k + (back[i] ?? 255) * (1 - k)));
+    }
+    return `#${out.map((c) => c.toString(16).padStart(2, '0')).join('')}`;
+  }
+
   /** A window position (a drop) in Space coordinates. */
   docAtClient(clientX: number, clientY: number): Vec2 {
     const rect = this.el.overlay.getBoundingClientRect();

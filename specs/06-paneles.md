@@ -70,6 +70,7 @@ Grosor (con desplegable de valores), extremos (recto/redondeado/proyectado), esq
 - Rampa de color (espectro) en la parte inferior.
 - Cuentagotas de pantalla.
 - Selector de color completo (diálogo al hacer doble clic en la muestra): cuadro de saturación/brillo, barra de tono, campos, "Solo colores web", colores recientes.
+- Cuentagotas del selector de color: botón junto al campo HEX; al activarlo, un clic sobre el lienzo toma el color visible bajo el cursor (objetos **y mapas de bits**, sin superposición de selección/guías); Esc o clic fuera del lienzo lo desactiva.
 - Opacidad y modo de fusión del objeto en la misma sección.
 
 ## Muestras
