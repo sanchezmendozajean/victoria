@@ -82,8 +82,30 @@ export const manager = new DocumentManager({
   appVersion: typeof __APP_VERSION__ === 'string' ? __APP_VERSION__ : '0.0.0',
 });
 
+/**
+ * Drags run a command per pointer move; notifying React synchronously each time re-renders the whole app (every
+ * panel) at mouse-event rate and the canvas falls behind. Coalesce to at most one notification per frame.
+ */
+function subscribePerFrame(listener: () => void): () => void {
+  let handle = 0;
+  const hasRaf = typeof requestAnimationFrame === 'function';
+  const unsubscribe = manager.subscribe(() => {
+    if (handle) return;
+    const fire = () => {
+      handle = 0;
+      listener();
+    };
+    handle = hasRaf ? requestAnimationFrame(fire) : (setTimeout(fire, 0) as unknown as number);
+  });
+  return () => {
+    unsubscribe();
+    if (handle) (hasRaf ? cancelAnimationFrame : clearTimeout)(handle);
+    handle = 0;
+  };
+}
+
 /** Re-renders the component whenever any open document (or the set of documents) changes. */
 export function useDocuments(): DocumentManager {
-  useSyncExternalStore(manager.subscribe, manager.getVersion);
+  useSyncExternalStore(subscribePerFrame, manager.getVersion);
   return manager;
 }
