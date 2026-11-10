@@ -13,6 +13,7 @@ import { useUi } from './store';
 import '../components/DialogHost.css';
 import './TransformDialog.css';
 import './ExportDialog.css';
+import { DialogTitle } from '../components/DialogTitle';
 
 const FORMATS: ExportFormat[] = ['png', 'jpg', 'svg', 'pdf'];
 const formatOptions = FORMATS.map((id) => ({ id, label: t(`export.format.${id}` as TranslationKey) }));
@@ -148,7 +149,7 @@ function ExportForm({ mode }: { mode: 'as' | 'screens' }) {
           }
         }}
       >
-        <h2 className="vc-dialog__title">{t(mode === 'as' ? 'export.title.as' : 'export.title.screens')}</h2>
+        <DialogTitle icon={mode === 'as' ? 'export' : 'export-screens'} onClose={busy ? undefined : close}>{t(mode === 'as' ? 'export.title.as' : 'export.title.screens')}</DialogTitle>
 
         {mode === 'as' ? (
           <>
@@ -261,9 +262,11 @@ function ExportForm({ mode }: { mode: 'as' | 'screens' }) {
         <div className="vc-dialog__buttons">
           {busy && <span className="vc-export__progress" data-testid="export-progress">{busy}</span>}
           <button type="button" className="vc-dialog__button" data-testid="export-cancel" disabled={busy !== null} onClick={close}>
+            <Icon id="close" size={14} />
             {t('dialog.cancel')}
           </button>
           <button type="submit" className="vc-dialog__button vc-dialog__button--primary" data-testid="export-run" disabled={busy !== null || (mode === 'screens' && (!folder || checked.size === 0))}>
+            <Icon id="export" size={14} />
             {t('export.run')}
           </button>
         </div>

@@ -3,6 +3,8 @@ import { create } from 'zustand';
 import { t } from '../i18n';
 import '../components/DialogHost.css';
 import './TransformDialog.css';
+import { DialogTitle } from '../components/DialogTitle';
+import { Icon } from '../components/Icon';
 
 interface Pending {
   title: string;
@@ -45,16 +47,18 @@ function PromptForm({ pending }: { pending: Pending }) {
           }
         }}
       >
-        <h2 className="vc-dialog__title">{pending.title}</h2>
+        <DialogTitle icon="file-text" onClose={() => answer(null)}>{pending.title}</DialogTitle>
         <div className="vc-form__row">
           <label htmlFor="text-prompt-input">{pending.label}</label>
           <input id="text-prompt-input" data-testid="text-prompt-input" className="vc-form__input" value={value} maxLength={40} autoFocus onChange={(e) => setValue(e.target.value)} onFocus={(e) => e.currentTarget.select()} />
         </div>
         <div className="vc-dialog__buttons">
           <button type="button" className="vc-dialog__button" data-testid="text-prompt-cancel" onClick={() => answer(null)}>
+            <Icon id="close" size={14} />
             {t('dialog.cancel')}
           </button>
           <button type="submit" className="vc-dialog__button vc-dialog__button--primary" data-testid="text-prompt-ok" disabled={value.trim() === ''}>
+            <Icon id="check" size={14} />
             {t('dialog.ok')}
           </button>
         </div>

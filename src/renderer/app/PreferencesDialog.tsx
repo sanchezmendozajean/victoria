@@ -7,6 +7,7 @@ import { AUTOSAVE_MINUTES, DEFAULT_PREFERENCES, usePreferences } from '../prefs/
 import { useUi } from './store';
 import '../components/DialogHost.css';
 import './TransformDialog.css';
+import { DialogTitle } from '../components/DialogTitle';
 
 /** Edición › Preferencias… (Ctrl+K). Changes apply at once; there is nothing to confirm. */
 export function PreferencesDialog() {
@@ -35,7 +36,7 @@ function PreferencesForm() {
   return (
     <div className="vc-dialog__backdrop" data-testid="preferences-dialog">
       <div className="vc-dialog vc-transform" role="dialog" aria-label={t('prefs.title')}>
-        <h2 className="vc-dialog__title">{t('prefs.title')}</h2>
+        <DialogTitle icon="preferences" onClose={close}>{t('prefs.title')}</DialogTitle>
         <h3 className="vc-prefs__group">{t('prefs.tools')}</h3>
         <CheckRow checked={prefs.autoAddDelete} onChange={(autoAddDelete) => set({ autoAddDelete })} label={t('prefs.autoAddDelete')} testId="pref-auto-add-delete" />
         {row(
@@ -59,6 +60,7 @@ function PreferencesForm() {
             <Icon id="undo" size={12} /> {t('prefs.reset')}
           </button>
           <button type="button" className="vc-dialog__button vc-dialog__button--primary" data-testid="prefs-close" onClick={close}>
+            <Icon id="check" size={14} />
             {t('prefs.close')}
           </button>
         </div>

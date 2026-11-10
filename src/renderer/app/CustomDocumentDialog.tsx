@@ -7,6 +7,8 @@ import { t } from '../i18n';
 import { useUi } from './store';
 import '../components/DialogHost.css';
 import './TransformDialog.css';
+import { DialogTitle } from '../components/DialogTitle';
+import { Icon } from '../components/Icon';
 
 /** Largest side of a new artboard, in points (Illustrator's limit is about 5.7 m). */
 const MAX_PT = 16383;
@@ -53,7 +55,7 @@ function CustomForm() {
           }
         }}
       >
-        <h2 className="vc-dialog__title">{t('start.custom')}</h2>
+        <DialogTitle icon="custom-size" onClose={close}>{t('start.custom')}</DialogTitle>
         <div className="vc-form__row">
           <label>{t('measure.width')}</label>
           <NumberInput value={w} onCommit={setW} testId="custom-w" tooltip={t('measure.width')} {...lengthProps} />
@@ -74,9 +76,11 @@ function CustomForm() {
         </div>
         <div className="vc-dialog__buttons">
           <button type="button" className="vc-dialog__button" data-testid="custom-cancel" onClick={close}>
+            <Icon id="close" size={14} />
             {t('dialog.cancel')}
           </button>
           <button type="submit" className="vc-dialog__button vc-dialog__button--primary" data-testid="custom-ok">
+            <Icon id="check" size={14} />
             {t('dialog.ok')}
           </button>
         </div>

@@ -11,66 +11,217 @@
   /* Messages (errors, results) must stay above whatever form dialog asked for them. */
   z-index: 2100;
 }
+
+/*
+ * Every dialog shares the frame of Imprimir: a header bar (icon, title, close), a padded body and a footer bar
+ * with the buttons. Dialogs only write header + body + `.vc-dialog__buttons`; the spacing lives here.
+ */
 .vc-dialog {
+  display: flex;
+  flex-direction: column;
   width: 420px;
   max-width: calc(100vw - 32px);
-  padding: 16px;
+  max-height: calc(100vh - 32px);
+  padding: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
   background: var(--bg-panel);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-float);
   box-shadow: var(--shadow-float);
   color: var(--text);
   font-size: var(--fs-menu);
+  outline: none;
+}
+.vc-dialog__header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 8px 0 12px;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+  color: var(--icon);
 }
 .vc-dialog__title {
-  margin: 0 0 8px;
+  margin: 0;
+  color: var(--text);
   font-size: var(--fs-dialog);
   font-weight: 600;
 }
+.vc-dialog__spacer {
+  flex: 1;
+}
+.vc-dialog__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--icon);
+}
+.vc-dialog__close:hover:not(:disabled) {
+  background: var(--bg-hover);
+  color: var(--icon-active);
+}
+
+/* Body: whatever sits between the header and the footer gets the side gutters. */
+.vc-dialog > :not(.vc-dialog__header):not(.vc-dialog__buttons) {
+  margin-left: 16px;
+  margin-right: 16px;
+}
+.vc-dialog__header + * {
+  margin-top: 14px;
+}
 .vc-dialog__message,
 .vc-dialog__detail {
-  margin: 0 0 8px;
+  margin-bottom: 8px;
 }
 .vc-dialog__detail {
   color: var(--text-muted);
 }
 .vc-dialog__items {
-  margin: 0 0 12px;
+  margin-bottom: 12px;
   padding: 6px 8px 6px 24px;
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: var(--radius-control);
   font-size: var(--fs-label);
 }
+
+/* Footer bar. */
 .vc-dialog__buttons {
   display: flex;
+  flex: none;
+  align-items: center;
   justify-content: flex-end;
   gap: 8px;
-  margin-top: 12px;
+  min-height: 44px;
+  margin-top: 14px;
+  padding: 6px 12px;
+  border-top: 1px solid var(--border);
 }
 .vc-dialog__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   height: 24px;
-  padding: 0 14px;
-  border: 1px solid var(--border-strong);
+  padding: 0 12px;
+  border: 1px solid var(--border);
   border-radius: var(--radius-control);
   background: var(--bg-panel-alt);
   color: var(--text);
   font: inherit;
-  font-size: var(--fs-label);
+  font-size: var(--fs-menu);
 }
-.vc-dialog__button:hover {
+.vc-dialog__button:hover:not(:disabled) {
   background: var(--bg-hover);
+}
+.vc-dialog__button:disabled {
+  opacity: 0.5;
 }
 .vc-dialog__button--primary {
   background: var(--accent);
   border-color: var(--accent);
   color: #fff;
 }
-.vc-dialog__button--primary:hover {
+.vc-dialog__button--primary:hover:not(:disabled) {
   background: var(--accent);
-  filter: brightness(1.1);
+  filter: brightness(1.08);
 }
 .vc-dialog__button--danger {
   border-color: var(--danger);
   color: var(--danger);
+}
+
+/* Form rows: muted label on the left, controls filling the rest (as in Imprimir). */
+.vc-dialog .vc-form__row {
+  justify-content: flex-start;
+  gap: 10px;
+  min-height: var(--h-control);
+  margin-bottom: 8px;
+}
+.vc-dialog .vc-form__row > label:first-child {
+  flex: 0 0 auto;
+  min-width: 112px;
+  max-width: 60%;
+  color: var(--text-muted);
+}
+.vc-dialog .vc-form__row.vc-form__indent > label:first-child {
+  min-width: 90px;
+}
+.vc-dialog .vc-form__check,
+.vc-dialog .vc-form__radio {
+  margin-bottom: 8px;
+}
+/* Selects carry an inline width from the panels; in a dialog they fill the row. */
+.vc-dialog .vc-form__row .vc-choice {
+  flex: 1;
+  width: auto !important;
+  min-width: 0;
+}
+
+/* Section titles inside a dialog: small caps with a divider, like the sections of Imprimir. */
+.vc-dialog .vc-prefs__group {
+  margin-top: 14px;
+  margin-bottom: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: var(--fs-micro);
+  letter-spacing: 0.06em;
+}
+.vc-dialog .vc-prefs__group:first-of-type {
+  padding-top: 0;
+  border-top: 0;
+}
+
+/* Text fields. */
+.vc-dialog .vc-form__input {
+  height: var(--h-control);
+  padding: 0 6px;
+  border-radius: var(--radius-control);
+  font-size: var(--fs-menu);
+}
+.vc-dialog .vc-form__input:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+/* System check boxes: 12 × 12, radius 2. */
+.vc-dialog .vc-pcheck,
+.vc-dialog .vc-form__check {
+  font-size: var(--fs-menu);
+}
+.vc-dialog .vc-pcheck input,
+.vc-dialog .vc-form__check input[type='checkbox'] {
+  appearance: none;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 12px;
+  height: 12px;
+  margin: 0;
+  background: var(--bg-input);
+  border: 1px solid var(--border-strong);
+  border-radius: 2px;
+}
+.vc-dialog .vc-pcheck input:checked,
+.vc-dialog .vc-form__check input[type='checkbox']:checked {
+  background: var(--accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center / 10px no-repeat;
+  border-color: var(--accent);
+}
+.vc-dialog__buttons .vc-form__check,
+.vc-dialog__buttons .vc-pcheck {
+  margin-bottom: 0;
 }

@@ -8,6 +8,8 @@ import { CheckRow } from '../panels/kit';
 import { useUi } from './store';
 import '../components/DialogHost.css';
 import './TransformDialog.css';
+import { DialogTitle } from '../components/DialogTitle';
+import { Icon } from '../components/Icon';
 
 /** Space › Propiedades…: grid (size, subdivisions, visibility) and canvas colour of one Space (specs/04 · Menú de Espacio). */
 export function SpacePropertiesDialog() {
@@ -65,16 +67,18 @@ function PropertiesForm({ spaceId }: { spaceId: string }) {
           }
         }}
       >
-        <h2 className="vc-dialog__title">{t('space.propsTitle')} · {space.name}</h2>
+        <DialogTitle icon="space-properties" onClose={close}>{t('space.propsTitle')} · {space.name}</DialogTitle>
         {row(t('space.propsGridSize'), <NumberInput value={size} onCommit={setSize} min={0.001} suffix={units} lengthUnit={units} step={1} decimals={3} width={110} testId="space-grid-size" tooltip={t('space.propsGridSize')} />)}
         {row(t('space.propsSubdivisions'), <NumberInput value={subdivisions} onCommit={setSubdivisions} min={1} decimals={0} width={110} testId="space-grid-subdivisions" tooltip={t('space.propsSubdivisions')} />)}
         <CheckRow checked={themeColor} label={t('space.propsCanvasTheme')} testId="space-canvas-theme" onChange={setThemeColor} />
         {row(t('space.propsCanvasColor'), <input type="color" aria-label={t('space.propsCanvasColor')} data-testid="space-canvas-color" disabled={themeColor} value={color} onChange={(e) => setColor(e.target.value)} />)}
         <div className="vc-dialog__buttons">
           <button type="button" className="vc-dialog__button" data-testid="space-props-cancel" onClick={close}>
+            <Icon id="close" size={14} />
             {t('dialog.cancel')}
           </button>
           <button type="submit" className="vc-dialog__button vc-dialog__button--primary" data-testid="space-props-ok">
+            <Icon id="check" size={14} />
             {t('dialog.ok')}
           </button>
         </div>

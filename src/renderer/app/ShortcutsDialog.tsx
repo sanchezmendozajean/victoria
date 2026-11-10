@@ -7,6 +7,7 @@ import { acceleratorFromEvent, DEFAULT_SHORTCUTS, findConflict, formatAccelerato
 import { useUi } from './store';
 import '../components/DialogHost.css';
 import './ShortcutsDialog.css';
+import { DialogTitle } from '../components/DialogTitle';
 
 /** Edición › Atajos de teclado…: every shortcut, searchable, each one changeable by pressing the new keys. */
 export function ShortcutsDialog() {
@@ -91,7 +92,7 @@ function ShortcutsForm() {
   return (
     <div className="vc-dialog__backdrop" data-testid="shortcuts-dialog">
       <div className="vc-dialog vc-shortcuts" role="dialog" aria-label={t('shortcuts.title')}>
-        <h2 className="vc-dialog__title">{t('shortcuts.title')}</h2>
+        <DialogTitle icon="keyboard" onClose={close}>{t('shortcuts.title')}</DialogTitle>
         <input className="vc-shortcuts__search" data-testid="shortcuts-search" type="search" placeholder={t('shortcuts.search')} value={query} onChange={(e) => setQuery(e.target.value)} autoFocus />
         {clash && (
           <div className="vc-shortcuts__clash" role="alert" data-testid="shortcuts-clash">
@@ -148,6 +149,7 @@ function ShortcutsForm() {
             <Icon id="undo" size={12} /> {t('shortcuts.resetAll')}
           </button>
           <button type="button" className="vc-dialog__button vc-dialog__button--primary" data-testid="shortcuts-close" onClick={close}>
+            <Icon id="check" size={14} />
             {t('shortcuts.close')}
           </button>
         </div>

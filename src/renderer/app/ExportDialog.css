@@ -1,5 +1,5 @@
 .vc-export {
-  width: 460px;
+  width: 480px;
 }
 .vc-export__folder {
   flex: 1;
@@ -61,8 +61,4 @@
   align-self: center;
   color: var(--text-muted);
   font-size: var(--fs-label);
-}
-.vc-dialog__button .vc-icon {
-  margin-right: 4px;
-  vertical-align: -2px;
 }

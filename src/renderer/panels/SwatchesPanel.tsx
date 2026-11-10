@@ -23,6 +23,7 @@ import { solidColorOf } from './FillPanel';
 import { CheckRow, Choice, Row } from './kit';
 import { usePaintLook } from './PaintWidget';
 import '../components/DialogHost.css';
+import { DialogTitle } from '../components/DialogTitle';
 
 const ALL = '__all__';
 
@@ -212,7 +213,7 @@ function OptionsDialog({ swatch, onOk, onCancel }: { swatch: Swatch; onOk(patch:
         }}
         onKeyDown={(e) => e.key === 'Escape' && onCancel()}
       >
-        <h2 className="vc-dialog__title">{t('swatches.optionsTitle')}</h2>
+        <DialogTitle icon="swatches" onClose={onCancel}>{t('swatches.optionsTitle')}</DialogTitle>
         <Row>
           <span className="vc-plabel" style={{ width: 70 }}>{t('swatches.name')}</span>
           <div className="vc-field" style={{ flex: 1 }}>
@@ -227,8 +228,8 @@ function OptionsDialog({ swatch, onOk, onCancel }: { swatch: Swatch; onOk(patch:
         </Row>
         <CheckRow checked={global} onChange={setGlobal} label={t('swatches.global')} testId="swatch-global" />
         <div className="vc-dialog__buttons">
-          <button type="button" className="vc-dialog__button" onClick={onCancel}>{t('dialog.cancel')}</button>
-          <button type="submit" className="vc-dialog__button vc-dialog__button--primary" data-testid="swatch-ok" disabled={!valid}>{t('dialog.ok')}</button>
+          <button type="button" className="vc-dialog__button" onClick={onCancel}><Icon id="close" size={14} />{t('dialog.cancel')}</button>
+          <button type="submit" className="vc-dialog__button vc-dialog__button--primary" data-testid="swatch-ok" disabled={!valid}><Icon id="check" size={14} />{t('dialog.ok')}</button>
         </div>
       </form>
     </div>
@@ -249,7 +250,7 @@ function GroupDialog({ current, onOk, onCancel }: { current: string; onOk(name: 
         }}
         onKeyDown={(e) => e.key === 'Escape' && onCancel()}
       >
-        <h2 className="vc-dialog__title">{t('swatches.newGroup')}</h2>
+        <DialogTitle icon="swatch-group" onClose={onCancel}>{t('swatches.newGroup')}</DialogTitle>
         <Row>
           <span className="vc-plabel" style={{ width: 70 }}>{t('swatches.group')}</span>
           <div className="vc-field" style={{ flex: 1 }}>
@@ -257,8 +258,8 @@ function GroupDialog({ current, onOk, onCancel }: { current: string; onOk(name: 
           </div>
         </Row>
         <div className="vc-dialog__buttons">
-          <button type="button" className="vc-dialog__button" onClick={onCancel}>{t('dialog.cancel')}</button>
-          <button type="submit" className="vc-dialog__button vc-dialog__button--primary" data-testid="swatch-group-ok">{t('dialog.ok')}</button>
+          <button type="button" className="vc-dialog__button" onClick={onCancel}><Icon id="close" size={14} />{t('dialog.cancel')}</button>
+          <button type="submit" className="vc-dialog__button vc-dialog__button--primary" data-testid="swatch-group-ok"><Icon id="check" size={14} />{t('dialog.ok')}</button>
         </div>
       </form>
     </div>

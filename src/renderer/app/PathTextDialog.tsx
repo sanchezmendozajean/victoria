@@ -7,6 +7,8 @@ import { selectedPathText } from './textActions';
 import { useUi } from './store';
 import '../components/DialogHost.css';
 import './TransformDialog.css';
+import { DialogTitle } from '../components/DialogTitle';
+import { Icon } from '../components/Icon';
 
 const EFFECTS: PathTextEffect[] = ['rainbow', 'skew', 'ribbon', 'stair', 'gravity'];
 const ALIGNS: PathTextOptions['align'][] = ['ascender', 'descender', 'center', 'baseline'];
@@ -41,13 +43,14 @@ export function PathTextDialog() {
           }
         }}
       >
-        <h2 className="vc-dialog__title">{t('pathText.title')}</h2>
+        <DialogTitle icon="tool-type-on-path" onClose={() => close(false)}>{t('pathText.title')}</DialogTitle>
         {row(t('pathText.effect'), <Choice label={t('pathText.effect')} value={options.effect} testId="pathtext-effect" width={150} options={EFFECTS.map((e) => ({ id: e, label: t(`pathText.effect.${e}` as TranslationKey) }))} onChange={(effect) => apply({ effect })} />)}
         {row(t('pathText.align'), <Choice label={t('pathText.align')} value={options.align} testId="pathtext-align" width={150} options={ALIGNS.map((a) => ({ id: a, label: t(`pathText.align.${a}` as TranslationKey) }))} onChange={(align) => apply({ align })} />)}
         {row(t('pathText.spacing'), <NumberInput value={options.spacing} suffix="pt" decimals={2} step={1} width={110} testId="pathtext-spacing" tooltip={t('pathText.spacing')} onCommit={(spacing) => apply({ spacing })} />)}
         <CheckRow checked={options.flip} label={t('pathText.flip')} testId="pathtext-flip" onChange={(flip) => apply({ flip })} />
         <div className="vc-dialog__buttons">
           <button type="button" className="vc-dialog__button vc-dialog__button--primary" data-testid="pathtext-close" onClick={() => close(false)}>
+            <Icon id="check" size={14} />
             {t('pathText.close')}
           </button>
         </div>

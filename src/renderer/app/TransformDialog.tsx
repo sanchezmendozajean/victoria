@@ -22,6 +22,8 @@ import { applyTransform, nextTransformKey } from './selectionActions';
 import { useUi } from './store';
 import '../components/DialogHost.css';
 import './TransformDialog.css';
+import { DialogTitle } from '../components/DialogTitle';
+import { Icon } from '../components/Icon';
 
 /** Rotar…, Escala…, Reflejar… and Mover… with live preview, Copiar, Cancelar and Aceptar (specs/03 · Rotar, Reflejar, Escala). */
 export function TransformDialog() {
@@ -151,7 +153,7 @@ function TransformForm({ kind, origin, ids }: FormProps) {
           }
         }}
       >
-        <h2 className="vc-dialog__title">{t(`transform.${kind}`)}</h2>
+        <DialogTitle icon="transform" onClose={cancel}>{t(`transform.${kind}`)}</DialogTitle>
 
         {kind === 'rotate' && (
           <div className="vc-form__row">
@@ -261,12 +263,15 @@ function TransformForm({ kind, origin, ids }: FormProps) {
           </label>
           <span className="vc-transform__spacer" />
           <button type="button" className="vc-dialog__button" data-testid="transform-copy" onClick={copy}>
+            <Icon id="copy" size={14} />
             {t('transform.copy')}
           </button>
           <button type="button" className="vc-dialog__button" data-testid="transform-cancel" onClick={cancel}>
+            <Icon id="close" size={14} />
             {t('dialog.cancel')}
           </button>
           <button type="submit" className="vc-dialog__button vc-dialog__button--primary" data-testid="transform-ok">
+            <Icon id="check" size={14} />
             {t('dialog.ok')}
           </button>
         </div>

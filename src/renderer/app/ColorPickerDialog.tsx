@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { COLOR_CHANNELS, setPaintItem, colorToCss, colorToHex, convertColor, deepClone, hexToColor, toWebSafe, type Appearance, type Color, type Paint, type DocumentSession } from '../../core';
+import { canvasApi } from '../canvas/api';
+import { Icon } from '../components/Icon';
 import { NumberInput } from '../components/NumberInput';
+import { tip } from '../components/Tooltip';
 import { channelGradient, solidColorOf } from '../panels/FillPanel';
 import { CheckRow, Choice, Row, Slider } from '../panels/kit';
 import { usePaintLook } from '../panels/PaintWidget';
@@ -10,6 +13,7 @@ import { applyPaint as applyLookPaint, nextPaintKey } from './paintActions';
 import { useUi } from './store';
 import '../components/DialogHost.css';
 import './ColorPickerDialog.css';
+import { DialogTitle } from '../components/DialogTitle';
 
 /** Full colour picker (specs/06 · Selector de color completo): saturation/brightness square, hue bar, fields, web-only colours. */
 export function ColorPickerDialog() {
@@ -24,7 +28,7 @@ export function ColorPickerDialog() {
 
 type Anchor = { left: number; top: number; right: number; bottom: number };
 const POPOVER_W = 400;
-const POPOVER_H = 380;
+const POPOVER_H = 440;
 
 /** Beside the anchor when it fits (the panels live on the right, so usually to its left), kept inside the window. */
 function placeBeside(anchor: Anchor): { left: number; top: number } {
@@ -87,6 +91,7 @@ function PickerForm({ target, original, hasSelection, session, anchor, item }: {
     close();
   };
 
+  const samplingRef = useRef(false);
   const root = useRef<HTMLFormElement>(null);
   // A popover, not a modal: a click anywhere else keeps what was picked and closes it.
   const acceptRef = useRef(accept);
@@ -97,11 +102,12 @@ function PickerForm({ target, original, hasSelection, session, anchor, item }: {
   });
   useEffect(() => {
     const onDown = (event: PointerEvent) => {
+      if (samplingRef.current) return; // the eyedropper owns this click
       if (root.current && event.target instanceof Node && !root.current.contains(event.target)) acceptRef.current();
     };
     // Escape cancels wherever the focus is (the fields stop key events from bubbling).
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === 'Escape' && !samplingRef.current) {
         event.stopPropagation();
         cancelRef.current();
       }
@@ -113,6 +119,49 @@ function PickerForm({ target, original, hasSelection, session, anchor, item }: {
       document.removeEventListener('keydown', onKey, true);
     };
   }, []);
+
+  // Eyedropper: while on, a click over the canvas takes the colour it shows (objects and bitmaps); Esc or a click elsewhere ends it.
+  const [sampling, setSampling] = useState(false);
+  const [hover, setHover] = useState<string | null>(null);
+  const setFromColorRef = useRef(setFromColor);
+  useEffect(() => {
+    setFromColorRef.current = setFromColor;
+  });
+  useEffect(() => {
+    if (!sampling) return;
+    samplingRef.current = true;
+    const onCanvas = (e: PointerEvent) => e.target instanceof Element && !!e.target.closest('.vc-canvas__surface');
+    const onMove = (e: PointerEvent) => setHover(onCanvas(e) ? (canvasApi.current?.sampleColorAt(e.clientX, e.clientY) ?? null) : null);
+    const onDown = (e: PointerEvent) => {
+      // Keep the canvas tools and the popover's click-away from seeing this click.
+      e.preventDefault();
+      e.stopPropagation();
+      if (onCanvas(e)) {
+        const hex = canvasApi.current?.sampleColorAt(e.clientX, e.clientY);
+        const c = hex ? hexToColor(hex) : null;
+        if (c) setFromColorRef.current(c);
+      }
+      setSampling(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      setSampling(false);
+    };
+    document.addEventListener('pointermove', onMove, true);
+    document.addEventListener('pointerdown', onDown, true);
+    document.addEventListener('keydown', onKey, true);
+    document.body.style.cursor = 'crosshair';
+    return () => {
+      document.removeEventListener('pointermove', onMove, true);
+      document.removeEventListener('pointerdown', onDown, true);
+      document.removeEventListener('keydown', onKey, true);
+      document.body.style.cursor = '';
+      samplingRef.current = false;
+      setHover(null);
+    };
+  }, [sampling]);
 
   const square = useRef<HTMLDivElement>(null);
   const hueBar = useRef<HTMLDivElement>(null);
@@ -157,7 +206,7 @@ function PickerForm({ target, original, hasSelection, session, anchor, item }: {
           }
         }}
       >
-        <h2 className="vc-dialog__title">{t('picker.title')}</h2>
+        <DialogTitle icon="paint-color" onClose={cancel}>{t('picker.title')}</DialogTitle>
         <div className="vc-picker__body">
           <div
             ref={square}
@@ -216,6 +265,17 @@ function PickerForm({ target, original, hasSelection, session, anchor, item }: {
                 setTypedCmyk(null);
               }}
             />
+            <button
+              type="button"
+              className={`vc-pbutton vc-pbutton--icon${sampling ? ' is-active' : ''}`}
+              {...tip(t('picker.eyedropper'))}
+              aria-pressed={sampling}
+              data-testid="picker-eyedropper"
+              onClick={() => setSampling((on) => !on)}
+            >
+              <Icon id="eyedropper" size={16} />
+            </button>
+            {sampling && hover && <span className="vc-picker__swatch" style={{ background: hover, width: 24, height: 20 }} data-testid="picker-eyedropper-preview" />}
             <span style={{ flex: 1 }} />
             <HexInput value={colorToHex(color)} onCommit={(hex) => setFromColor(hex)} />
           </Row>
@@ -240,9 +300,11 @@ function PickerForm({ target, original, hasSelection, session, anchor, item }: {
         </div>
         <div className="vc-dialog__buttons">
           <button type="button" className="vc-dialog__button" data-testid="picker-cancel" onClick={cancel}>
+            <Icon id="close" size={14} />
             {t('dialog.cancel')}
           </button>
           <button type="submit" className="vc-dialog__button vc-dialog__button--primary" data-testid="picker-ok">
+            <Icon id="check" size={14} />
             {t('dialog.ok')}
           </button>
         </div>

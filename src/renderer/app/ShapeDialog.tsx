@@ -9,6 +9,8 @@ import { shapePrefs } from '../tools/shapeTools';
 import { useUi } from './store';
 import '../components/DialogHost.css';
 import './TransformDialog.css';
+import { DialogTitle } from '../components/DialogTitle';
+import { Icon } from '../components/Icon';
 
 /** Click with a shape tool: exact dimensions, as Illustrator's "Rectángulo…", "Elipse…", "Polígono…" dialogs. */
 export function ShapeDialog() {
@@ -96,7 +98,7 @@ function ShapeForm({ kind, at }: { kind: ShapeToolKind; at: Vec2 }) {
           }
         }}
       >
-        <h2 className="vc-dialog__title">{title}</h2>
+        <DialogTitle icon="shapes" onClose={close}>{title}</DialogTitle>
         {(kind === 'rect' || kind === 'rounded-rect' || kind === 'ellipse') && (
           <>
             {row(t('measure.width'), <NumberInput value={ptToUnit(unitToPt(w, units), units)} onCommit={setW} min={0.001} testId="shape-w" tooltip={t('measure.width')} {...lengthProps} />)}
@@ -125,9 +127,11 @@ function ShapeForm({ kind, at }: { kind: ShapeToolKind; at: Vec2 }) {
         )}
         <div className="vc-dialog__buttons">
           <button type="button" className="vc-dialog__button" data-testid="shape-cancel" onClick={close}>
+            <Icon id="close" size={14} />
             {t('dialog.cancel')}
           </button>
           <button type="submit" className="vc-dialog__button vc-dialog__button--primary" data-testid="shape-ok">
+            <Icon id="check" size={14} />
             {t('dialog.ok')}
           </button>
         </div>

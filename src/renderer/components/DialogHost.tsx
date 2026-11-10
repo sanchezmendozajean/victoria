@@ -1,7 +1,11 @@
 import { useEffect, useRef } from 'react';
 import { answerDialog, useDialogs } from '../app/dialogs';
 import { cx } from './cx';
+import { DialogTitle } from './DialogTitle';
+import { Icon, type IconId } from './Icon';
 import './DialogHost.css';
+
+const BUTTON_ICONS: Record<string, IconId> = { cancel: 'close', ok: 'check', save: 'save', delete: 'delete', discard: 'close' };
 
 /** Renders the first queued modal dialog (specs/10 · Diálogo: title 13 px, buttons at the right). */
 export function DialogHost() {
@@ -29,7 +33,7 @@ export function DialogHost() {
   return (
     <div className="vc-dialog__backdrop vc-dialog__backdrop--alert" data-testid="dialog">
       <div className="vc-dialog" role="alertdialog" aria-modal="true" aria-label={dialog.title}>
-        <h2 className="vc-dialog__title">{dialog.title}</h2>
+        <DialogTitle icon={dialog.buttons.some((b) => b.variant === 'danger') ? 'alert' : 'info'}>{dialog.title}</DialogTitle>
         {dialog.message && <p className="vc-dialog__message">{dialog.message}</p>}
         {dialog.items && (
           <ul className="vc-dialog__items">
@@ -49,6 +53,7 @@ export function DialogHost() {
               className={cx('vc-dialog__button', button.variant && `vc-dialog__button--${button.variant}`)}
               onClick={() => answerDialog(button.id)}
             >
+              {BUTTON_ICONS[button.id] && <Icon id={BUTTON_ICONS[button.id] as IconId} size={14} />}
               {button.label}
             </button>
           ))}

@@ -21,6 +21,8 @@ import { modifierLabelKey } from './modifierActions';
 import { useUi } from './store';
 import '../components/DialogHost.css';
 import './TransformDialog.css';
+import { DialogTitle } from '../components/DialogTitle';
+import { Icon } from '../components/Icon';
 
 /**
  * Dialog generated from a modifier's schema (specs/05 · UI): numeric fields with wheel and expressions, sliders,
@@ -180,15 +182,17 @@ function ModifierForm({ dialog, session }: { dialog: NonNullable<ReturnType<type
           }
         }}
       >
-        <h2 className="vc-dialog__title">{title}</h2>
+        <DialogTitle icon="fx" onClose={cancel}>{title}</DialogTitle>
         {def.schema.length === 0 ? <p className="vc-dialog__message">{t('modifier.noParams')}</p> : def.schema.map(renderField)}
         <div className="vc-dialog__buttons vc-transform__footer">
           <CheckRow checked={preview} label={t('modifier.preview')} testId="mod-preview" onChange={setPreview} />
           <span className="vc-transform__spacer" />
           <button type="button" className="vc-dialog__button" data-testid="mod-cancel" onClick={cancel}>
+            <Icon id="close" size={14} />
             {t('dialog.cancel')}
           </button>
           <button type="submit" className="vc-dialog__button vc-dialog__button--primary" data-testid="mod-ok">
+            <Icon id="check" size={14} />
             {t('dialog.ok')}
           </button>
         </div>
