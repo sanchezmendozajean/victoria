@@ -102,7 +102,7 @@ export function createTestHost(init: HostInit = {}) {
     scaleStrokes: false,
     keyObjectMode: false,
     keyObject: null,
-    setKeyObject: vi.fn<(id: string) => void>(),
+    setKeyObject: vi.fn<(id: string | null) => void>(),
     setNewAppearance: vi.fn<(appearance: Appearance) => void>(),
     get activeLayerId(): string | null {
       return getActiveSpace(session.document).layers[0]?.id ?? null;

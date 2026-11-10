@@ -19,7 +19,7 @@ export interface Preferences {
   linuxNoticeSeen: boolean;
 }
 
-export const DEFAULT_PREFERENCES: Preferences = { autoAddDelete: true, pencilFidelity: 3, autosaveMinutes: 1, startScreen: false, placeLinked: false, shortcuts: {}, linuxNoticeSeen: false };
+export const DEFAULT_PREFERENCES: Preferences = { autoAddDelete: true, pencilFidelity: 3, autosaveMinutes: 1, startScreen: true, placeLinked: false, shortcuts: {}, linuxNoticeSeen: false };
 
 export const AUTOSAVE_MINUTES = { min: 1, max: 30 } as const;
 const STORAGE_KEY = 'victoria.preferences';

@@ -18,14 +18,15 @@ const BADGES: Record<PenBadge, string> = {
   convert: "<path d='M16.5 12l3.5-7 3.5 7'/>",
 };
 
-const NIB = "<path d='M3 25l2-8 8-5 3 3-5 8z M5 17l4 4'/>";
+/** Nib drawn tip-down-left, turned 90° clockwise about the cursor centre: the tip ends up at the upper left. */
+const NIB = "<path transform='rotate(90 14 14)' d='M3 25l2-8 8-5 3 3-5 8z M5 17l4 4'/>";
 
-/** Pen-nib cursors of the Pen family (specs/03 · Pluma · 11): the badge says what a click will do. Tip at the lower left. */
+/** Pen-nib cursors of the Pen family (specs/03 · Pluma · 11): the badge says what a click will do. Tip at the upper left. */
 export function penCursor(badge: PenBadge): string {
   const layer = (stroke: string, width: number) =>
     `<g stroke='${stroke}' stroke-width='${width}' fill='none' stroke-linecap='round' stroke-linejoin='round'>${NIB}${BADGES[badge]}</g>`;
   const svg = "<svg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'>" + layer('white', 4) + layer('black', 1.5) + '</svg>';
-  return `url("data:image/svg+xml,${encodeURIComponent(svg)}") 3 25, crosshair`;
+  return `url("data:image/svg+xml,${encodeURIComponent(svg)}") 3 3, crosshair`;
 }
 
 /** Arrow with a badge: "+" merges regions (click or drag), "−" deletes them (Alt). Tip at the upper left. */

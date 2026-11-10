@@ -100,7 +100,7 @@ export interface CanvasCallbacks {
   keyObject(): { mode: boolean; id: string | null };
   activeLayer(spaceId: string): string | null;
   scaleStrokes(): boolean;
-  onKeyObject(id: string): void;
+  onKeyObject(id: string | null): void;
   setNewAppearance(appearance: Appearance): void;
   onRememberTransform(transform: { matrix: Matrix; copy: boolean } | null): void;
 }
@@ -455,7 +455,7 @@ export class CanvasController implements ToolHost, CanvasApi {
     return this.callbacks.keyObject().id;
   }
 
-  setKeyObject(id: string): void {
+  setKeyObject(id: string | null): void {
     this.callbacks.onKeyObject(id);
   }
 
@@ -906,13 +906,14 @@ export class CanvasController implements ToolHost, CanvasApi {
     e.preventDefault();
     const rect = this.el.overlay.getBoundingClientRect();
     const anchor = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-    if (e.ctrlKey || e.metaKey) {
-      // Zoom at the cursor (specs/03): also what a trackpad pinch sends.
+    if (e.altKey) {
+      // Alt+wheel zooms at the cursor (specs/03).
       this.setView(zoomAt(this.viewValue, this.viewValue.zoom * Math.exp(-e.deltaY * WHEEL_ZOOM_SENSITIVITY), anchor));
       return;
     }
     const unit = e.deltaMode === 1 ? 16 : 1; // lines → px
-    if (e.shiftKey) this.setView(panBy(this.viewValue, -(e.deltaY || e.deltaX) * unit, 0));
+    // Ctrl (or Shift) + wheel pans horizontally.
+    if (e.ctrlKey || e.metaKey || e.shiftKey) this.setView(panBy(this.viewValue, -(e.deltaY || e.deltaX) * unit, 0));
     else this.setView(panBy(this.viewValue, -e.deltaX * unit, -e.deltaY * unit));
   }
 
@@ -960,6 +961,9 @@ export class CanvasController implements ToolHost, CanvasApi {
       this.updateCursor();
     } else if (e.key === 'Alt') {
       this.altHeld = false;
+      this.updateCursor();
+    } else if (e.key === 'Control' || e.key === 'Meta') {
+      this.currentTool().onKeyUp?.(e.key, this);
       this.updateCursor();
     }
   }

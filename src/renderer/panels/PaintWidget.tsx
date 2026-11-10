@@ -47,7 +47,8 @@ export function PaintWidget({ size = 36, testId = 'paint-widget', stacked = fals
   const setActive = useUi((s) => s.setActivePaint);
   const openPicker = useUi((s) => s.openColorPicker);
   const os = useUi((s) => s.platform.os);
-  const chip = Math.round(size * 0.62);
+  const chip = Math.round(size * 0.66);
+  const fillChip = chip - 1; // the fill is a pixel smaller than the stroke frame
   const fillCss = look.fill.mixed ? null : paintCss(look.fill.value, resources);
   const strokeCss = look.stroke.mixed ? null : paintCss(look.stroke.value, resources);
   const fillNone = !look.fill.mixed && look.fill.value.type === 'none';
@@ -79,7 +80,7 @@ export function PaintWidget({ size = 36, testId = 'paint-widget', stacked = fals
       />
       <div
         className={cx('vc-paintwidget__fill', active === 'fill' && 'is-active', fillNone && 'is-none', look.fill.mixed && 'is-mixed')}
-        style={{ width: chip, height: chip, left: 0, top: 0, ...(fillCss ? { background: fillCss } : {}) }}
+        style={{ width: fillChip, height: fillChip, left: 0, top: 0, ...(fillCss ? { background: fillCss } : {}) }}
         data-testid={`${testId}-fill`}
         data-active={active === 'fill'}
         onClick={() => setActive('fill')}

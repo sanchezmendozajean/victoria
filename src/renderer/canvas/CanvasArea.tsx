@@ -110,7 +110,12 @@ export function CanvasArea() {
         },
         scaleStrokes: () => useUi.getState().scaleStrokes,
         keyObject: () => ({ mode: useUi.getState().alignTo === 'key', id: useUi.getState().keyObject }),
-        onKeyObject: (id) => useUi.getState().setKeyObject(id),
+        onKeyObject: (id) => {
+          // Clicking a selected object makes it the key object and aligns to it; clicking it again lets go.
+          const ui = useUi.getState();
+          ui.setKeyObject(id);
+          ui.setAlignTo(id ? 'key' : 'selection');
+        },
         setNewAppearance: (appearance) => useUi.getState().setNewLook(appearance),
         newAppearance: () => JSON.parse(JSON.stringify(useUi.getState().newLook)),
         onShapeDialog: (kind, at) => useUi.getState().openShapeDialog(kind, at),

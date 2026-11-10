@@ -59,6 +59,9 @@ export function createPenTool(): Tool {
   const direct = createDirectSelectionTool();
   const convert = createConvertTool();
 
+  /** The hover showed snap guides that must be cleared once the cursor is over something else. */
+  let snapShown = false;
+
   function frame(host: ToolHost): PathFrame | null {
     if (!drawing || !host.space) return null;
     const f = pathFrameOf(host.space, drawing.id);
@@ -72,6 +75,7 @@ export function createPenTool(): Tool {
     drawing = null;
     gesture = null;
     hover = null;
+    snapShown = false;
     host.setSnapLines(null);
     host.invalidateOverlay();
     const { session, space } = host;
@@ -279,7 +283,16 @@ export function createPenTool(): Tool {
       hover = event.doc;
       const g = gesture;
       if (!g) {
-        badge = computeBadge(host, event.doc, event.ctrlKey || event.metaKey);
+        const ctrl = event.ctrlKey || event.metaKey;
+        badge = computeBadge(host, event.doc, ctrl);
+        // Smart guides while hovering: they show where a click would land, for the first node and the next ones.
+        if (!ctrl && !overAnchor && (badge === 'new' || (drawing && badge === 'none'))) {
+          hover = snapTo(host, event.doc);
+          snapShown = true;
+        } else if (snapShown) {
+          host.setSnapLines(null);
+          snapShown = false;
+        }
         host.invalidateOverlay();
         return;
       }
@@ -359,8 +372,12 @@ export function createPenTool(): Tool {
       if (key === ' ') spaceDown = false;
     },
 
-    onLeave() {
+    onLeave(host) {
       hover = null;
+      if (snapShown) {
+        host.setSnapLines(null);
+        snapShown = false;
+      }
     },
 
     cancel(host) {

@@ -53,6 +53,8 @@ function createWindow(): BrowserWindow {
 
   // Closing waits for the renderer to flush its autosaves ("nunca perder trabajo"), with a safety timeout.
   let closeApproved = false;
+  let closeRequested = false;
+  let closeTimer: NodeJS.Timeout | undefined;
   const approveClose = () => {
     closeApproved = true;
     if (!win.isDestroyed()) win.close();
@@ -60,10 +62,17 @@ function createWindow(): BrowserWindow {
   win.on('close', (event) => {
     if (closeApproved || win.webContents.isLoading() || win.webContents.isCrashed()) return;
     event.preventDefault();
+    if (closeRequested) return;
+    closeRequested = true;
     win.webContents.send(IPC.beforeClose);
-    setTimeout(approveClose, 4000);
+    closeTimer = setTimeout(approveClose, 4000);
   });
-  win.webContents.ipc.once(IPC.closeReady, approveClose);
+  win.webContents.ipc.on(IPC.closeAck, () => clearTimeout(closeTimer));
+  win.webContents.ipc.on(IPC.closeReady, approveClose);
+  win.webContents.ipc.on(IPC.closeCancel, () => {
+    clearTimeout(closeTimer);
+    closeRequested = false;
+  });
   const notify = () => broadcastWindowState(win);
   // F12 / Ctrl+Shift+I / Ctrl+Alt+I toggle the developer tools (the app has no native menu to carry the accelerator).
   win.webContents.on('before-input-event', (event, input) => {

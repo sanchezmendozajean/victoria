@@ -167,8 +167,9 @@ describe('hit testing', () => {
     const space = spaceWith(r);
     expect(hitTest(space, pt(50, 50), { tolerance: 0.5 })).toEqual([]);
     expect(hitTest(space, pt(0, 50), { tolerance: 0.5 })[0]).toMatchObject({ part: 'stroke' });
-    expect(hitTest(space, pt(1.9, 50), { tolerance: 0.1 })[0]).toMatchObject({ part: 'stroke' });
-    expect(hitTest(space, pt(3, 50), { tolerance: 0.1 })).toEqual([]);
+    // The stroke is picked by its vector, not by its painted width.
+    expect(hitTest(space, pt(0.05, 50), { tolerance: 0.1 })[0]).toMatchObject({ part: 'stroke' });
+    expect(hitTest(space, pt(1.9, 50), { tolerance: 0.1 })).toEqual([]);
   });
 
   it('thin strokes are still easy to hit thanks to the pick tolerance', () => {
@@ -220,8 +221,8 @@ describe('hit testing', () => {
   it('scales the pick tolerance with the object scale', () => {
     const r = filled(createRect(ids, 10, 10), false, 1);
     r.transform = scaling(10, 10); // visually 100 × 100 with a 10 px stroke
-    expect(hitTest(spaceWith(r), pt(-4, 50), { tolerance: 0.1 })).toHaveLength(1);
-    expect(hitTest(spaceWith(r), pt(-6, 50), { tolerance: 0.1 })).toHaveLength(0);
+    expect(hitTest(spaceWith(r), pt(-0.5, 50), { tolerance: 1 })).toHaveLength(1);
+    expect(hitTest(spaceWith(r), pt(-2, 50), { tolerance: 1 })).toHaveLength(0);
   });
 
   it('returns hits topmost first and reports the containing groups', () => {
@@ -277,18 +278,15 @@ describe('hit testing', () => {
     expect(hitTest(space, pt(100, 100), { tolerance: 0.5 })).toEqual([]);
   });
 
-  it('stroke alignment: inside strokes are only hit inside, outside strokes only outside', () => {
-    const inside = filled(createRect(ids, 100, 100), false, 10);
-    for (const i of inside.appearance.items) if (i.kind === 'stroke') i.stroke.align = 'inside';
-    const space = spaceWith(inside);
-    expect(hitTest(space, pt(5, 50), { tolerance: 0.1 })).toHaveLength(1);
-    expect(hitTest(space, pt(-5, 50), { tolerance: 0.1 })).toHaveLength(0);
-
-    const outside = filled(createRect(ids, 100, 100), false, 10);
-    for (const i of outside.appearance.items) if (i.kind === 'stroke') i.stroke.align = 'outside';
-    const space2 = spaceWith(outside);
-    expect(hitTest(space2, pt(-5, 50), { tolerance: 0.1 })).toHaveLength(1);
-    expect(hitTest(space2, pt(5, 50), { tolerance: 0.1 })).toHaveLength(0);
+  it('stroke alignment does not change where the vector is picked', () => {
+    for (const align of ['inside', 'outside'] as const) {
+      const r = filled(createRect(ids, 100, 100), false, 10);
+      for (const i of r.appearance.items) if (i.kind === 'stroke') i.stroke.align = align;
+      const space = spaceWith(r);
+      expect(hitTest(space, pt(0.05, 50), { tolerance: 0.1 })).toHaveLength(1);
+      expect(hitTest(space, pt(5, 50), { tolerance: 0.1 })).toHaveLength(0);
+      expect(hitTest(space, pt(-5, 50), { tolerance: 0.1 })).toHaveLength(0);
+    }
   });
 
   it('an open path fills implicitly and its outline is hit along the stroke', () => {

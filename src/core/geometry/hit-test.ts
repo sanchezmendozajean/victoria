@@ -55,16 +55,8 @@ function testItem(item: IndexItem, p: Vec2, tolerance: number): Hit | null {
   // A picture paints its whole frame even though its appearance has no fill (e.g. a pasted image).
   const inside = (item.node.type === 'image' || hasFill(item.node.appearance)) && pointInFill(flat, local.point, geometry.fillRule);
   const strokes = strokesOf(item.node.appearance);
-  if (strokes.length > 0) {
-    const distance = distanceToOutline(flat, local.point);
-    const geometryInside = inside || pointInFill(flat, local.point, geometry.fillRule);
-    for (const stroke of strokes) {
-      const half = stroke.width / 2;
-      const reach = stroke.align === 'center' ? half : stroke.width;
-      const onSide = stroke.align === 'center' || (stroke.align === 'inside' ? geometryInside : !geometryInside);
-      if (onSide && distance <= reach + tolLocal) return { ...base, part: 'stroke' };
-    }
-  }
+  // Like Illustrator: a stroke is picked by its vector (the path itself), not by the painted width around it.
+  if (strokes.length > 0 && distanceToOutline(flat, local.point) <= tolLocal) return { ...base, part: 'stroke' };
   return inside ? { ...base, part: 'fill' } : null;
 }
 

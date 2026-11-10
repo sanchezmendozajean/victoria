@@ -422,6 +422,26 @@ export class DocumentManager {
     return true;
   }
 
+  /**
+   * The window is closing: asks about every document with unsaved changes (showing it first).
+   * Returns false when the user cancels, so the app stays open.
+   */
+  async confirmExit(): Promise<boolean> {
+    const discarded: OpenDocument[] = [];
+    for (const doc of [...this.docs_]) {
+      if (!doc.session.dirty) continue;
+      this.activate(doc.id);
+      const choice = await this.deps.prompts.askSaveBeforeClose(displayName(doc));
+      if (choice === 'cancel') return false;
+      if (choice === 'save' && !(await this.save(doc.id))) return false;
+      if (choice === 'discard') discarded.push(doc);
+    }
+    // Only now is the exit certain: discarded work leaves no autosave, and the final flush skips it.
+    for (const doc of discarded) await this.dropAutosave(doc);
+    this.docs_ = this.docs_.filter((d) => !discarded.includes(d));
+    return true;
+  }
+
   // ── Autosave and recovery ──
 
   private async dropAutosave(doc: OpenDocument): Promise<void> {

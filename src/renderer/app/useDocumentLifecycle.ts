@@ -3,6 +3,7 @@ import { manager } from '../documents';
 import { t } from '../i18n';
 import { getPreferences } from '../prefs/preferences';
 import { askUser } from './dialogs';
+import { useUi } from './store';
 
 const AUTOSAVE_TICK_MS = 5000;
 let started = false;
@@ -35,7 +36,12 @@ export function useDocumentLifecycle(): void {
       void start();
     }
     const timer = window.setInterval(() => void manager.tickAutosave(), AUTOSAVE_TICK_MS);
-    const offClose = window.victoria.onBeforeClose(() => manager.flushAutosaves());
+    const offClose = window.victoria.onBeforeClose(async () => {
+      // End-to-end runs close the app with unsaved documents and nobody to answer.
+      if (!useUi.getState().platform.testing && !(await manager.confirmExit())) return false;
+      await manager.flushAutosaves();
+      return true;
+    });
     return () => {
       window.clearInterval(timer);
       offClose();

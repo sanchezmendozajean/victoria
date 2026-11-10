@@ -128,14 +128,26 @@ describe('Selection tool · moving', () => {
     expect(nodeY(t, b.id)).toBe(40);
   });
 
-  it('a click without moving on one of several selected objects narrows the selection', () => {
+  it('a click without moving on one of several selected objects makes it the key object and keeps the selection', () => {
+    const { t, tool } = setup();
+    const a = t.rect(0, 0);
+    const b = t.rect(200, 0);
+    click(tool, t, 50, 50);
+    click(tool, t, 250, 50, { shiftKey: true });
+    click(tool, t, 50, 50);
+    expect(t.host.setKeyObject).toHaveBeenLastCalledWith(a.id);
+    expect(selectedIds(t)).toEqual([a.id, b.id]);
+  });
+
+  it('clicking the key object again lets go of it', () => {
     const { t, tool } = setup();
     const a = t.rect(0, 0);
     t.rect(200, 0);
     click(tool, t, 50, 50);
     click(tool, t, 250, 50, { shiftKey: true });
+    (t.host as { keyObject: string | null }).keyObject = a.id;
     click(tool, t, 50, 50);
-    expect(selectedIds(t)).toEqual([a.id]);
+    expect(t.host.setKeyObject).toHaveBeenLastCalledWith(null);
   });
 
   it('tiny movements below the drag threshold change nothing', () => {
@@ -164,6 +176,20 @@ describe('Selection tool · moving', () => {
     expect(t.session.historyLength).toBe(before + 1);
     t.session.undo();
     expect(t.space().layers[0]!.children).toHaveLength(1);
+  });
+
+  it('Alt pressed mid-drag leaves the original where it was pressed and the copy under the cursor', () => {
+    const { t, tool } = setup();
+    const a = t.rect(0, 0);
+    tool.onPointerDown(ev(50, 50), t.host);
+    tool.onPointerMove(ev(80, 50), t.host);
+    tool.onPointerMove(ev(120, 50), t.host);
+    tool.onPointerMove(ev(150, 50, { altKey: true }), t.host);
+    tool.onPointerUp(ev(150, 50, { altKey: true }), t.host);
+    const kids = t.space().layers[0]!.children;
+    expect(kids).toHaveLength(2);
+    expect(nodeX(t, a.id)).toBe(0);
+    expect(nodeX(t, kids[1]!.id)).toBe(100);
   });
 
   it('Escape during a drag puts everything back', () => {

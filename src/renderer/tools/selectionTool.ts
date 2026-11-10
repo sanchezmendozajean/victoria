@@ -41,6 +41,7 @@ import { boxOf, currentSelection, dragged, selectedTopLevel, snapDelta, stepBetw
 import type { CanvasPointerEvent, Tool, ToolHost, ToolKeyEvent } from './types';
 import { ROTATE_CURSOR } from './cursors';
 import { createWidgetDrag } from './widgetDrag';
+import { createDirectSelectionTool } from './directSelectionTool';
 import { createTextWidgets } from './textWidgets';
 import { boxScreenRect, cursorForTurnedHandle, fromBoxSpace, orientedBoxOf, rotatePoint, toBoxScreen, toBoxSpace, type OrientedBox } from './orientedBox';
 import type { ToolId } from '../app/tools';
@@ -48,7 +49,7 @@ import type { ToolId } from '../app/tools';
 type State =
   | { kind: 'idle' }
   | { kind: 'press'; screen: Vec2; doc: Vec2; target: Node | null; wasSelected: boolean; shift: boolean; alt: boolean }
-  | { kind: 'move'; doc: Vec2; ids: string[]; bounds: Rect; key: string; applied: Vec2; alt: boolean; duplicated: boolean }
+  | { kind: 'move'; doc: Vec2; ids: string[]; bounds: Rect; key: string; applied: Vec2; originals: string[]; duplicated: boolean }
   | { kind: 'scale'; handle: HandleId; box: OrientedBox; start: Vec2; ids: string[]; key: string; applied: Matrix }
   | { kind: 'rotate'; center: Vec2; start: Vec2; ids: string[]; key: string; applied: Matrix; angle: number; baseTheta: number }
   | { kind: 'marquee'; screen: Vec2; doc: Vec2; current: Vec2; shift: boolean };
@@ -60,6 +61,12 @@ const ARROW_STEP_SHIFT = 10;
 /** Selection (V): click, Shift+click, marquee, move (Alt duplicates, Shift constrains), box scale/rotate, arrows, isolation. */
 export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
   let state: State = { kind: 'idle' };
+  // Ctrl turns this tool into Direct Selection for as long as it is held (as in Illustrator).
+  const direct = createDirectSelectionTool();
+  let forwarded: Tool | null = null;
+  let ctrlHeld = false;
+  const ctrlDown = (e: { ctrlKey: boolean; metaKey: boolean }) => e.ctrlKey || e.metaKey;
+  const asDirect = () => forwarded !== null || (ctrlHeld && state.kind === 'idle');
   const widgets = createWidgetDrag(false);
   const textWidgets = createTextWidgets();
   let hoverCursor = 'default';
@@ -85,19 +92,31 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
       state = { kind: 'idle' };
       return;
     }
-    state = { kind: 'move', doc: press.doc, ids, bounds, key: host.gestureKey(), applied: { x: 0, y: 0 }, alt: press.alt, duplicated: false };
+    state = { kind: 'move', doc: press.doc, ids, bounds, key: host.gestureKey(), applied: { x: 0, y: 0 }, originals: ids, duplicated: false };
   }
 
   function move(event: CanvasPointerEvent, host: ToolHost, s: Extract<State, { kind: 'move' }>): void {
-    const { session, space } = host;
-    if (!session || !space) return;
+    const { session } = host;
+    if (!session || !host.space) return;
+    // Alt is read on every move, so it can be pressed or released mid-drag (as in Illustrator).
+    const copy = event.altKey;
+    if (copy !== s.duplicated && (s.duplicated || s.applied.x !== 0 || s.applied.y !== 0)) {
+      // The gesture so far is undone: the originals go back to where they were pressed.
+      session.rollback();
+      session.select(selectOnly(host.space.id, s.originals));
+      s.ids = s.originals;
+      s.duplicated = false;
+      s.applied = { x: 0, y: 0 };
+    }
+    const space = host.space; // read again: the rollback may have replaced the document
+    if (!space) return;
     let delta: Vec2 = { x: event.doc.x - s.doc.x, y: event.doc.y - s.doc.y };
     if (event.shiftKey) delta = constrainTo45(delta);
     delta = snapDelta(host, s.bounds, delta, new Set(s.ids));
     const step = { x: delta.x - s.applied.x, y: delta.y - s.applied.y };
-    if (step.x === 0 && step.y === 0 && s.duplicated === s.alt) return;
+    if (step.x === 0 && step.y === 0 && s.duplicated === copy) return;
 
-    if (s.alt && !s.duplicated) {
+    if (copy && !s.duplicated) {
       // Alt+drag: copies stay above their originals and take the move; the originals stay put.
       const nodes = s.ids.map((id) => locateNode(space, id)?.node).filter((n): n is Node => !!n);
       const clones = cloneNodes(nodes, session.ids);
@@ -190,11 +209,17 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
 
   return {
     id,
-    cursor: () => (state.kind === 'move' ? 'move' : state.kind === 'rotate' ? ROTATE_CURSOR : state.kind === 'scale' ? cursorForHandle(state.handle) : hoverCursor),
+    cursor: (altKey) => (asDirect() ? (forwarded ?? direct).cursor(altKey) : state.kind === 'move' ? 'move' : state.kind === 'rotate' ? ROTATE_CURSOR : state.kind === 'scale' ? cursorForHandle(state.handle) : hoverCursor),
 
     onPointerDown(event, host) {
       const { session, space } = host;
       if (!session || !space) return;
+      if (event.button === 0 && ctrlDown(event) && state.kind === 'idle') {
+        host.setHover(null);
+        forwarded = direct;
+        direct.onPointerDown(event, host);
+        return;
+      }
       const selection = currentSelection(host) ?? emptySelection(space.id);
 
       // 0. Corner and pie widgets of live shapes.
@@ -229,12 +254,6 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
       // 2. An object: select it (Shift toggles) and prepare to move.
       const hit = host.hitTest(event.doc)[0];
       const target = hit ? selectionTarget(hit, host.isolation) : null;
-      // Align › objeto clave: a click on one of several selected objects marks it as the key object.
-      if (target && host.keyObjectMode && !event.shiftKey && isSelected(selection, target.id) && selection.ids.length > 1) {
-        host.setKeyObject(target.id);
-        host.invalidateOverlay();
-        return;
-      }
       if (target) {
         if (event.shiftKey) {
           const next = toggleInSelection(selection, target.id);
@@ -255,6 +274,17 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
     },
 
     onPointerMove(event, host) {
+      if (forwarded) {
+        forwarded.onPointerMove(event, host);
+        return;
+      }
+      const wasCtrl = ctrlHeld;
+      ctrlHeld = ctrlDown(event);
+      if (ctrlHeld && state.kind === 'idle') {
+        direct.onPointerMove(event, host);
+        return;
+      }
+      if (wasCtrl && !ctrlHeld) host.invalidateOverlay();
       if (widgets.move(event, host) || textWidgets.move(event, host)) return;
       switch (state.kind) {
         case 'idle':
@@ -288,6 +318,12 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
     },
 
     onPointerUp(event, host) {
+      if (forwarded) {
+        const tool = forwarded;
+        forwarded = null;
+        tool.onPointerUp(event, host);
+        return;
+      }
       if (widgets.release(event, host) || textWidgets.release(event, host)) return;
       const { session, space } = host;
       const finished = state;
@@ -297,10 +333,11 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
       if (!session || !space) return;
 
       if (finished.kind === 'press') {
-        // A plain click on one of several selected objects narrows the selection to it.
+        // A plain click on one of several selected objects makes it the key object (again: lets go of it).
         const selection = currentSelection(host);
         if (finished.wasSelected && !finished.shift && finished.target && selection && selection.ids.length > 1) {
-          session.select(selectOnly(space.id, [finished.target.id]));
+          host.setKeyObject(host.keyObject === finished.target.id ? null : finished.target.id);
+          host.invalidateOverlay();
         }
       } else if (finished.kind === 'move') {
         host.rememberTransform({ matrix: translation(finished.applied.x, finished.applied.y), copy: finished.duplicated });
@@ -346,6 +383,11 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
     },
 
     onKeyDown(event: ToolKeyEvent, host) {
+      if (event.key === 'Control' || event.key === 'Meta') {
+        ctrlHeld = true;
+        host.invalidateOverlay();
+        return false;
+      }
       const { session, space } = host;
       const arrows: Record<string, Vec2> = { ArrowLeft: { x: -1, y: 0 }, ArrowRight: { x: 1, y: 0 }, ArrowUp: { x: 0, y: -1 }, ArrowDown: { x: 0, y: 1 } };
       const dir = arrows[event.key];
@@ -357,11 +399,23 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
       return true;
     },
 
+    onKeyUp(key, host) {
+      if (key === 'Control' || key === 'Meta') {
+        ctrlHeld = false;
+        host.setHover(null);
+        host.invalidateOverlay();
+      }
+    },
+
     onLeave(host) {
       if (state.kind === 'idle') host.setHover(null);
+      direct.onLeave?.(host);
     },
 
     cancel(host) {
+      forwarded?.cancel?.(host);
+      forwarded = null;
+      ctrlHeld = false;
       widgets.cancel(host);
       textWidgets.cancel(host);
       if (state.kind === 'move' || state.kind === 'scale' || state.kind === 'rotate') host.session?.rollback();
@@ -372,9 +426,13 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
     },
 
     drawOverlay(ctx, host, theme) {
+      if (asDirect()) {
+        (forwarded ?? direct).drawOverlay?.(ctx, host, theme);
+        return;
+      }
       widgets.draw(ctx, host, theme);
       textWidgets.draw(ctx, host, theme);
-      if (host.keyObjectMode && host.keyObject && host.space) {
+      if (host.keyObject && host.space && selectedTopLevel(host).includes(host.keyObject)) {
         const rect = nodeWorldBounds(host.space, host.keyObject);
         if (rect) {
           const s = toScreenRect(rect, host.view.zoom, host.view.panX, host.view.panY);

@@ -15,6 +15,20 @@ const only = (t: TestHost): PathNode => {
 const hasHandles = (a: Anchor) => a.in !== null || a.out !== null;
 const key = (k: string, extra: object = {}) => ({ key: k, shiftKey: false, altKey: false, ctrlKey: false, metaKey: false, ...extra });
 
+describe('Pen · smart guides before the first anchor', () => {
+  it('hovering near an object edge shows the guides, and a click lands where they point', () => {
+    const t = createTestHost({ options: { smartGuides: true } });
+    const tool = createPenTool();
+    const r = t.rect(0, 0); // 100 × 100 at the origin
+    expect(r).toBeTruthy();
+    tool.onPointerMove(ev(102, 300), t.host); // 2 px off the right edge of the rectangle
+    const calls = (t.host.setSnapLines as unknown as { mock: { calls: unknown[][] } }).mock.calls;
+    expect(calls.some((c) => Array.isArray(c[0]) && c[0].length > 0)).toBe(true);
+    click(tool, t, 102, 300);
+    expect(paths(t)[0]!.anchors[0]!.p.x).toBe(100);
+  });
+});
+
 describe('Pen · placing anchors (specs/03 · Pluma 1–2)', () => {
   it('1 · a click places a corner anchor without handles; the next click makes a straight segment', () => {
     const { t, tool } = setup();

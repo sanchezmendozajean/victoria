@@ -75,7 +75,7 @@ export interface ToolHost {
   /** Align panel "objeto clave" mode: a click on a selected object marks it instead of narrowing the selection. */
   readonly keyObjectMode: boolean;
   readonly keyObject: string | null;
-  setKeyObject(id: string): void;
+  setKeyObject(id: string | null): void;
   /** "Escalar trazos y efectos": scaling changes stroke weights too. */
   readonly scaleStrokes: boolean;
   /** Character attributes of the next text typed (Character panel with nothing selected). */

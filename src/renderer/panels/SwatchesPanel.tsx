@@ -52,7 +52,6 @@ export function SwatchesPanel() {
     const swatch: Swatch = { id: session.ids(), name: t('swatches.newName', { n: swatches.length + 1 }), color, global: false, ...(group !== ALL && group !== '' ? { group } : {}) };
     run(addSwatch(swatch));
     setSelected(swatch.id);
-    setEditing(swatch.id);
   };
 
   const importFile = async (files: FileList | null) => {

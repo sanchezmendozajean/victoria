@@ -37,7 +37,11 @@ const api: VictoriaApi = {
   readFont: (path) => ipcRenderer.invoke(IPC.readFont, path),
   onBeforeClose: (handler) => {
     const listener = () => {
-      void Promise.resolve(handler()).finally(() => ipcRenderer.send(IPC.closeReady));
+      ipcRenderer.send(IPC.closeAck); // the renderer is alive: the main process stops its safety timer while a dialog is open
+      void Promise.resolve(handler()).then(
+        (proceed) => ipcRenderer.send(proceed === false ? IPC.closeCancel : IPC.closeReady),
+        () => ipcRenderer.send(IPC.closeReady),
+      );
     };
     ipcRenderer.on(IPC.beforeClose, listener);
     return () => ipcRenderer.removeListener(IPC.beforeClose, listener);

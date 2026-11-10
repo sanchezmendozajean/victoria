@@ -171,7 +171,9 @@ export const IPC = {
   listFonts: 'fonts:list',
   readFont: 'fonts:read',
   beforeClose: 'app:before-close',
+  closeAck: 'app:close-ack',
   closeReady: 'app:close-ready',
+  closeCancel: 'app:close-cancel',
 } as const;
 
 /** API exposed to the renderer as `window.victoria`. */
@@ -231,8 +233,8 @@ export interface VictoriaApi {
   readFont(path: string): Promise<Uint8Array | null>;
 
   /**
-   * Called when the user closes the window. The handler must finish its autosaves; the window closes
-   * when it resolves (or after a few seconds). Returns an unsubscribe function.
+   * Called when the user closes the window. The handler asks about unsaved work and finishes the autosaves;
+   * the window closes when it resolves, unless it resolves to false (the user cancelled). Returns an unsubscribe function.
    */
-  onBeforeClose(handler: () => Promise<void> | void): () => void;
+  onBeforeClose(handler: () => Promise<boolean | void> | boolean | void): () => void;
 }

@@ -17,5 +17,9 @@ export async function launchApp(env: Record<string, string> = {}): Promise<Launc
   const app = await electron.launch({ args: [path.join(__dirname, '../..')], env: childEnv });
   const page = await app.firstWindow();
   await page.waitForSelector('[data-testid="titlebar"]');
+  // Fresh profiles open on the start screen; most specs want an empty document instead.
+  await page.evaluate(() => localStorage.setItem('victoria.preferences', JSON.stringify({ startScreen: false })));
+  await page.reload();
+  await page.waitForSelector('[data-testid="titlebar"]');
   return { app, page };
 }

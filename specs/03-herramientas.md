@@ -179,7 +179,7 @@ Ver `04-espacios-y-mesas.md`.
 ## Mano (H / Espacio) y Zoom (Z)
 
 - Espacio mantenido en cualquier herramienta (salvo editando texto) = mano.
-- Zoom: clic acerca, Alt+clic aleja, arrastrar = zoom animado (scrubby) o marco. Ctrl+rueda = zoom en cursor; rueda = desplazamiento vertical; Mayús+rueda = horizontal. Rango 3 %–64 000 %.
+- Zoom: clic acerca, Alt+clic aleja, arrastrar = zoom animado (scrubby) o marco. Alt+rueda = zoom en cursor; rueda = desplazamiento vertical; Ctrl+rueda (o Mayús+rueda) = horizontal. Rango 3 %–64 000 %.
 - Ctrl+0 ajustar mesa, Alt+Ctrl+0 ajustar todo, Ctrl+1 100 %.
 
 ## Guías inteligentes (Ctrl+U)
