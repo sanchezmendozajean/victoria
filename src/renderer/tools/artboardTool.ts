@@ -19,6 +19,7 @@ import { useUi } from '../app/store';
 import { getPreferences } from '../prefs/preferences';
 import { t } from '../i18n';
 import { HANDLE_IDS, type HandleId } from './boxGeometry';
+import { snapDraggedEdges } from './shared';
 import type { Tool, ToolHost } from './types';
 
 const GRAB = 7; // screen px
@@ -169,7 +170,10 @@ export function createArtboardTool(): Tool {
         return;
       }
       if (state.kind === 'resize') {
-        const next = resizeRect(state.start, state.handle, event.doc, event.shiftKey);
+        // The edge the handle drags snaps to guides, the grid, other artboards and the artwork (not to this artboard's own old edges).
+        const axes = { x: state.handle.includes('e') || state.handle.includes('w'), y: state.handle.includes('n') || state.handle.includes('s') };
+        const to = snapDraggedEdges(host, event.doc, axes, new Set(), state.id);
+        const next = resizeRect(state.start, state.handle, to, event.shiftKey);
         session.run(updateArtboard(space.id, state.id, next, state.key));
       } else if (state.kind === 'move') {
         const dx = event.doc.x - state.from.x;

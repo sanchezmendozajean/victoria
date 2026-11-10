@@ -56,6 +56,25 @@ export function snapDelta(host: ToolHost, bounds: Rect, delta: Vec2, exclude: Re
   return { x: delta.x + result.dx, y: delta.y + result.dy };
 }
 
+/**
+ * Smart guides while resizing: the point a handle drags (an edge, or a corner) snaps to guides, the grid, artboards and the
+ * edges and centres of other objects, on the axes it moves along. Returns the corrected point and shows the guides.
+ * `skipBoard` leaves one artboard out (the one being resized would otherwise snap to its own old edges).
+ */
+export function snapDraggedEdges(host: ToolHost, point: Vec2, axes: { x: boolean; y: boolean }, exclude: ReadonlySet<string> = new Set(), skipBoard: string | null = null): Vec2 {
+  const all = host.snapSources(exclude);
+  const sources = skipBoard && all.artboards ? { ...all, artboards: all.artboards.filter((a) => a.id !== skipBoard) } : all;
+  const hasSources = !!(sources.guides?.length || sources.grid || sources.artboards?.length || sources.objects || sources.anchors?.length);
+  if (!hasSources) {
+    host.setSnapLines(null);
+    return point;
+  }
+  const result = snapPoint(point, sources, host.pickTolerance);
+  const lines = result.lines.filter((l) => (l.axis === 'x' ? axes.x : axes.y));
+  host.setSnapLines(lines.length > 0 ? (lines as SnapLine[]) : null);
+  return { x: point.x + (axes.x ? result.dx : 0), y: point.y + (axes.y ? result.dy : 0) };
+}
+
 /** Drag distance (screen px) before a press becomes a drag. */
 export const DRAG_THRESHOLD = 3;
 

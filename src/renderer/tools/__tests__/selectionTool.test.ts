@@ -8,6 +8,8 @@ const setup = (init?: Parameters<typeof createTestHost>[0]) => {
   return { t, tool: createSelectionTool() };
 };
 const bounds = (t: ReturnType<typeof createTestHost>, id: string) => selectionBounds(t.space(), [id])!;
+/** Bounds rounded to 6 decimals (scaling goes through a matrix, so exact floats are not guaranteed). */
+const rounded = (r: { minX: number; minY: number; maxX: number; maxY: number }) => ({ minX: +r.minX.toFixed(6), minY: +r.minY.toFixed(6), maxX: +r.maxX.toFixed(6), maxY: +r.maxY.toFixed(6) });
 
 describe('Selection tool · picking (specs/03 · Selección)', () => {
   it('a click on the fill selects the object; a click on empty space deselects', () => {
@@ -401,6 +403,47 @@ describe('Selection tool · snapping', () => {
     expect(nodeY(t, a.id)).toBe(0);
     expect(t.host.setSnapLines).toHaveBeenCalledWith(expect.arrayContaining([expect.objectContaining({ axis: 'x', value: 1000 })]));
     expect(t.host.setSnapLines).toHaveBeenLastCalledWith(null); // cleared on release
+  });
+
+  it('smart guides also react while resizing: the dragged edge snaps to the edge of another object', () => {
+    const { t, tool } = setup({ options: { smartGuides: true } });
+    const a = t.rect(0, 0);
+    t.rect(1000, 0, 100, 100); // far from the artboard lines, so only this object attracts
+    click(tool, t, 50, 50);
+    drag(tool, t, { x: 100, y: 50 }, { x: 997, y: 50 }); // the east edge reaches 997 → snaps to 1000
+    expect(rounded(bounds(t, a.id))).toEqual({ minX: 0, minY: 0, maxX: 1000, maxY: 100 });
+    expect(t.host.setSnapLines).toHaveBeenCalledWith(expect.arrayContaining([expect.objectContaining({ axis: 'x', value: 1000 })]));
+    expect(t.host.setSnapLines).toHaveBeenLastCalledWith(null); // cleared on release
+  });
+
+  it('resizing snaps only the axes the handle moves along', () => {
+    const { t, tool } = setup({ options: { smartGuides: true } });
+    const a = t.rect(0, 0);
+    t.rect(1000, 0, 100, 100);
+    click(tool, t, 50, 50);
+    // y = 52 would line up with the other object's top (0)... but an east handle does not move the top or the bottom.
+    drag(tool, t, { x: 100, y: 50 }, { x: 997, y: 52 });
+    expect(rounded(bounds(t, a.id))).toEqual({ minX: 0, minY: 0, maxX: 1000, maxY: 100 });
+    const allLines = (t.host.setSnapLines as ReturnType<typeof vi.fn>).mock.calls.flatMap((c) => (c[0] ?? []) as Array<{ axis: string }>);
+    expect(allLines.every((l) => l.axis === 'x')).toBe(true);
+  });
+
+  it('a corner handle snaps both of its edges', () => {
+    const { t, tool } = setup({ options: { smartGuides: true } });
+    const a = t.rect(0, 0);
+    t.rect(1000, 700, 100, 100);
+    click(tool, t, 50, 50);
+    drag(tool, t, { x: 100, y: 100 }, { x: 997, y: 698 });
+    expect(rounded(bounds(t, a.id))).toEqual({ minX: 0, minY: 0, maxX: 1000, maxY: 700 });
+  });
+
+  it('resizing does not snap when smart guides are off', () => {
+    const { t, tool } = setup();
+    const a = t.rect(0, 0);
+    t.rect(1000, 0, 100, 100);
+    click(tool, t, 50, 50);
+    drag(tool, t, { x: 100, y: 50 }, { x: 997, y: 50 });
+    expect(bounds(t, a.id).maxX).toBeCloseTo(997, 6);
   });
 
   it('does not snap when smart guides are off', () => {

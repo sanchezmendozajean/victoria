@@ -98,3 +98,28 @@ describe('Alt+drag on an artboard', () => {
     expect(space.layers[0]!.children).toHaveLength(1);
   });
 });
+
+describe('resizing an artboard with smart guides', () => {
+  const resize = async (smartGuides: boolean) => {
+    const { createTestHost, drag } = await import('./fakeHost');
+    const { createArtboardTool } = await import('../artboardTool');
+    const t = createTestHost({ options: { smartGuides } });
+    const board = getActiveSpace(t.session.document).artboards[0]!;
+    const edge = board.x + board.w;
+    const y = board.y + board.h / 2;
+    t.rect(edge + 300, board.y + 10, 50, 50);
+    drag(createArtboardTool(), t, { x: edge, y }, { x: edge + 297, y });
+    return { width: getActiveSpace(t.session.document).artboards[0]!.w, board, t };
+  };
+
+  it('snaps the dragged edge to the artwork', async () => {
+    const { width, board, t } = await resize(true);
+    expect(width).toBeCloseTo(board.w + 300, 6);
+    expect(t.host.setSnapLines).toHaveBeenCalledWith(expect.arrayContaining([expect.objectContaining({ axis: 'x' })]));
+  });
+
+  it('does not snap when smart guides are off', async () => {
+    const { width, board } = await resize(false);
+    expect(width).toBeCloseTo(board.w + 297, 6);
+  });
+});

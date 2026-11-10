@@ -37,7 +37,7 @@ import {
   toScreenRect,
   type HandleId,
 } from './boxGeometry';
-import { boxOf, currentSelection, dragged, selectedTopLevel, snapDelta, stepBetween } from './shared';
+import { boxOf, currentSelection, dragged, selectedTopLevel, snapDelta, snapDraggedEdges, stepBetween } from './shared';
 import type { CanvasPointerEvent, Tool, ToolHost, ToolKeyEvent } from './types';
 import { ROTATE_CURSOR } from './cursors';
 import { createWidgetDrag } from './widgetDrag';
@@ -138,7 +138,20 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
 
   function scale(event: CanvasPointerEvent, host: ToolHost, s: Extract<State, { kind: 'scale' }>): void {
     // Everything is computed in the box's own (turned) space, then turned back.
-    const { sx, sy, pivot } = scaleFromHandle(s.box.rect, s.handle, toBoxSpace(s.box, s.start), toBoxSpace(s.box, event.doc), { proportional: event.shiftKey, fromCenter: event.altKey });
+    let start = toBoxSpace(s.box, s.start);
+    let current = toBoxSpace(s.box, event.doc);
+    // Smart guides react to the edge being dragged. Only for an upright box: a turned one has no edge along the guides' axes.
+    if (Math.abs(Math.atan2(Math.sin(s.box.theta), Math.cos(s.box.theta))) < 1e-9) {
+      const grab = handlePoints(s.box.rect)[s.handle];
+      const raw = { x: grab.x + current.x - start.x, y: grab.y + current.y - start.y };
+      const axes = { x: s.handle.includes('e') || s.handle.includes('w'), y: s.handle.includes('n') || s.handle.includes('s') };
+      // The handle follows the pointer by the distance it travelled, so the edge lands exactly on what it snapped to.
+      current = snapDraggedEdges(host, raw, axes, new Set(s.ids));
+      start = grab;
+    } else {
+      host.setSnapLines(null);
+    }
+    const { sx, sy, pivot } = scaleFromHandle(s.box.rect, s.handle, start, current, { proportional: event.shiftKey, fromCenter: event.altKey });
     const clamp = (v: number) => (Math.abs(v) < 0.001 ? (v < 0 ? -0.001 : 0.001) : v);
     const next = multiply(rotation(s.box.theta), multiply(scaleAbout(clamp(sx), clamp(sy), pivot), rotation(-s.box.theta)));
     transformStep(host, s.ids, s.key, next, s.applied);

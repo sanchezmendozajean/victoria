@@ -188,6 +188,7 @@ Imprescindibles para la sensación Illustrator:
 - Etiquetas magenta: "ancla", "trazado", "centro", "intersección", "alinear".
 - Líneas de alineación con otros objetos (bordes y centros), guías de ángulo (0, 45, 90…), etiquetas de medida (Δx, Δy, ancho, alto, ángulo) junto al cursor.
 - Ajuste a punto (snap) con tolerancia de 4 px de pantalla.
+- **También al redimensionar**: al arrastrar un tirador de la caja de selección (o de una mesa de trabajo), el borde o la esquina arrastrados se ajustan a guías, cuadrícula, mesas y a bordes y centros de otros objetos, solo en los ejes que mueve ese tirador, y se dibujan las líneas y etiquetas. Con la caja girada no hay ajuste. Una mesa no se ajusta a sus propios bordes anteriores.
 - Indicadores de espaciado igual entre objetos (flechas rosas) — v2.
 
 ## Otros ajustes
