@@ -773,12 +773,9 @@
   white-space: nowrap;
 }
 .vc-fontpicker__popup {
-  position: absolute;
-  z-index: 40;
-  top: calc(100% + 2px);
-  left: 0;
-  right: 0;
-  min-width: 220px;
+  /* Drawn in the body over every panel and floating window; FontPicker.tsx sets left, width and top or bottom. */
+  position: fixed;
+  z-index: 1000;
   border: 1px solid var(--border);
   border-radius: var(--radius-control);
   background: var(--bg-panel);

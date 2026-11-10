@@ -1,5 +1,8 @@
 # Changelog
 
+## Lista de fuentes sobre los paneles
+- La lista del selector de fuentes (panel Carácter) se cortaba por el borde del panel que la contenía. Ahora se dibuja en el `body` con posición fija, por encima de todos los paneles y ventanas flotantes: se abre bajo el botón si cabe, si no hacia arriba, con la altura ajustada al espacio libre y dentro de la ventana; se cierra al desplazar el panel o al hacer clic fuera. En una ventana flotante ya no la cierra su propio clic fuera.
+
 ## Calcar con ajustes
 - El botón **Calcar** del panel Propiedades es ahora un botón dividido: la flecha abre un menú con los 11 ajustes (Alta y Baja fidelidad, 3, 6 y 16 colores, Tonos de gris, Blanco y negro, Logotipo, Silueta, Arte lineal, Dibujo técnico). Elegir uno calca de inmediato con ese ajuste y lo deja como el que usa el botón (`tracePreset` en las preferencias, por defecto 16 colores); el ajuste sigue pudiéndose cambiar después en el selector «Ajuste» del calco vivo. Los menús abiertos desde un panel flotante ya no lo cierran.
 
