@@ -11,6 +11,19 @@ Para construir en local basta con npm. (electron-builder elige el gestor de paqu
 
 Ambos asocian los archivos `.vict` con Victoria. La integración continua (`.github/workflows/ci.yml`) construye los dos en `windows-latest` y `ubuntu-latest` y, en Windows, arranca la aplicación **empaquetada** con `tests/e2e/packaged.spec.ts` (se ejecuta con `VICTORIA_PACKAGED_EXE=<ruta al ejecutable>`; sin esa variable se omite).
 
+## Iconos
+
+Los archivos originales están en [`design/Icono para la app/`](../design/Icono%20para%20la%20app/) (`Icono.vict` es el documento de Victoria del que salen). Se usan así:
+
+| Archivo | Dónde se usa |
+|---|---|
+| `build/icon.ico` (de `Icono.ico`: 16, 32, 48 y 256 px) | Ejecutable de Windows, instalador y desinstalador NSIS, y archivos `.vict` |
+| `build/icon.png` (de `Icono_5.png`, 512 px) | AppImage, `.deb` y `.rpm` (Linux exige 512 px o más) e icono de la ventana: se copia a `resources/icon.png` con `extraResources` |
+| `Logo.tsx` | El logotipo de la barra de título, dibujado en vectores con el color de acento |
+| `site/assets/` | Favicon, icono de la web y vistas previas |
+
+Para cambiar el icono, sustituye `build/icon.png` y `build/icon.ico` y vuelve a construir.
+
 ## Estado de la verificación
 
 - **Windows:** el instalador NSIS se genera y la aplicación empaquetada arranca, dibuja y abre Preferencias sin errores en consola. No se ha probado la instalación interactiva ni la desinstalación.

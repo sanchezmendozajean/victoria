@@ -29,6 +29,11 @@ const chrome = resolveChrome();
 
 let mainWindow: BrowserWindow | null = null;
 
+/** Window and taskbar icon: next to the app when packaged (extraResources), in build/ while developing. */
+function appIconPath(): string {
+  return app.isPackaged ? path.join(process.resourcesPath, 'icon.png') : path.join(app.getAppPath(), 'build', 'icon.png');
+}
+
 function createWindow(): BrowserWindow {
   const work = screen.getPrimaryDisplay().workAreaSize;
   const win = new BrowserWindow({
@@ -38,6 +43,7 @@ function createWindow(): BrowserWindow {
     minHeight: 600,
     show: false,
     title: 'Victoria',
+    icon: appIconPath(),
     backgroundColor: INITIAL_COLORS.background,
     ...platform.frameOptions(chrome, INITIAL_COLORS),
     webPreferences: {

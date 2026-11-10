@@ -7,7 +7,7 @@
 - Nombre: **Victoria**. Editor vectorial de escritorio.
 - Familiar para quien viene de Illustrator (mismas zonas y densidad), pero con **identidad propia**: no usar logotipos, colores de marca, íconos ni nombres de Adobe.
 - Personalidad: precisa, tranquila, profesional, densa pero aireada. El lienzo es el protagonista; la interfaz se recoge.
-- Logotipo provisional: una "V" formada por dos segmentos con un nodo cuadrado en el vértice y un manejador saliendo de él. Color de acento.
+- Logotipo e ícono de la app (`design/Icono para la app/`): una "V" de dos segmentos cuyos extremos y vértice son nodos cuadrados, con un manejador hacia la derecha; azul sobre cuadrado negro de esquinas redondeadas. En la barra de título se dibuja con el color de acento (`Logo.tsx`). El instalador, el ejecutable, la asociación de `.vict`, la ventana y la web usan esos mismos archivos (`build/icon.png`, `build/icon.ico`).
 
 ## Temas
 
