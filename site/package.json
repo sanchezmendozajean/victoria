@@ -1,0 +1,12 @@
+{
+  "name": "victoria-site",
+  "private": true,
+  "type": "module",
+  "description": "Sitio de documentación de Victoria para GitHub Pages (se genera desde docs/ y specs/).",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "devDependencies": {
+    "marked": "^15.0.12"
+  }
+}

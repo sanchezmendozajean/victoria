@@ -1,3 +1,5 @@
+<p align="center"><img src="build/icon.png" alt="Icono de Victoria" width="96" height="96" /></p>
+
 # Victoria
 
 Editor de gráficos vectoriales de escritorio, construido con **Electron**, que replica la forma de dibujar de Adobe Illustrator (nodos, manejadores, pluma, textos, texto sobre trazado, formas, mesas de trabajo, Creador de formas) y añade un concepto nuevo: **Espacios**.
@@ -20,6 +22,7 @@ Editor de gráficos vectoriales de escritorio, construido con **Electron**, que 
 
 Las fases 1 a 12 del plan están construidas (ver [`CHANGELOG.md`](CHANGELOG.md) para lo hecho y lo pendiente de cada una). Lo que queda abierto es, sobre todo, **verificación fuera de esta máquina**: impresión en papel, Linux (Wayland, GNOME, KDE) y firma de código del instalador.
 
+- **Sitio web y documentación:** <https://sanchezmendozajean.github.io/victoria/> (se publica desde [`site/`](site/README.md) con GitHub Pages).
 - **Manual de usuario:** [`docs/manual-de-usuario.md`](docs/manual-de-usuario.md).
 - **Construcción:** [`specs/12-plan-de-construccion.md`](specs/12-plan-de-construccion.md).
 

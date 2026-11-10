@@ -1,6 +1,6 @@
 # Victoria · Manual breve
 
-Victoria es un editor de gráficos vectoriales para dibujar íconos, acomodar imágenes para imprimir y vectorizar imágenes. Si conoces Illustrator, casi todo funciona igual: los atajos son los mismos (lista completa en [`specs/09-atajos.md`](../specs/09-atajos.md)).
+Victoria es un editor de gráficos vectoriales para dibujar íconos, acomodar imágenes para imprimir y vectorizar imágenes. Si conoces Illustrator, casi todo funciona igual: los atajos son los mismos (lista completa en [Atajos de teclado](../specs/09-atajos.md)).
 
 ## 1. Empezar
 

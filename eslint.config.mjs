@@ -11,6 +11,8 @@ export default tseslint.config(
       'release/**',
       'node_modules/**',
       'design/**',
+      'site/**',
+      'site-dist/**',
       'test-results/**',
       'src/renderer/icons/catalog.generated.ts',
     ],
