@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { ArrangeDirection } from '../../core';
+import type { ArtboardArrangeDirection } from '../../core';
 import { DEFAULT_SHORTCUTS, isShortcutAction, isValidAccelerator, normalizeAccelerator, setShortcutOverrides } from '../app/shortcuts';
 
 /** What the user can set in Edición › Preferencias (Ctrl+K). Kept per user, outside any document. */
@@ -27,11 +27,11 @@ export interface Preferences {
 export interface ArrangeSettings {
   columns: number;
   spacing: number;
-  direction: ArrangeDirection;
+  direction: ArtboardArrangeDirection;
   moveArtwork: boolean;
 }
 
-const ARRANGE_DIRECTIONS: readonly ArrangeDirection[] = ['row', 'row-rtl', 'column'];
+const ARRANGE_DIRECTIONS: readonly ArtboardArrangeDirection[] = ['row', 'row-rtl', 'column'];
 export const DEFAULT_ARRANGE: ArrangeSettings = { columns: 0, spacing: (20 * 72) / 25.4, direction: 'row', moveArtwork: true };
 
 export const DEFAULT_PREFERENCES: Preferences = { autoAddDelete: true, pencilFidelity: 3, autosaveMinutes: 1, startScreen: true, placeLinked: false, shortcuts: {}, linuxNoticeSeen: false, moveArtworkWithArtboard: true, arrange: DEFAULT_ARRANGE };

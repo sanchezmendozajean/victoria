@@ -201,8 +201,9 @@ export function createArtboardTool(): Tool {
     onPointerUp(_event, host) {
       // A plain click on an object (no drag) makes an artboard that fits it.
       const { session, space } = host;
-      if (state && session && space && state.fit && ((state.kind === 'create' && !state.id) || (state.kind === 'move' && state.applied.x === 0 && state.applied.y === 0))) {
-        const board = createArtboard(session.ids, { name: nextName(space), ...state.fit });
+      const clicked = state && state.kind !== 'resize' && state.fit && ((state.kind === 'create' && !state.id) || (state.kind === 'move' && state.applied.x === 0 && state.applied.y === 0)) ? state.fit : null;
+      if (session && space && clicked) {
+        const board = createArtboard(session.ids, { name: nextName(space), ...clicked });
         session.run(addArtboard(space.id, board));
         useUi.getState().setActiveArtboard(space.id, board.id);
       }

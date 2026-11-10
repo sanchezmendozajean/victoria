@@ -60,7 +60,7 @@ export function artworkOnBoard(space: Space, board: Pick<Artboard, 'x' | 'y' | '
   return ids;
 }
 
-export type ArrangeDirection = 'row' | 'row-rtl' | 'column';
+export type ArtboardArrangeDirection = 'row' | 'row-rtl' | 'column';
 
 export interface ArrangeOptions {
   /** Boards per row (row directions) or number of columns (column direction). */
@@ -68,7 +68,7 @@ export interface ArrangeOptions {
   /** Gap between boards, in pt. */
   spacing: number;
   /** `row`: left to right, row by row · `row-rtl`: right to left · `column`: top to bottom, column by column. */
-  direction: ArrangeDirection;
+  direction: ArtboardArrangeDirection;
 }
 
 /**

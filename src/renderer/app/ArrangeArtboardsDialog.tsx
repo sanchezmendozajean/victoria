@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { getActiveSpace, type ArrangeDirection } from '../../core';
+import { getActiveSpace, type ArtboardArrangeDirection } from '../../core';
 import { ptToUnit, unitToPt } from '../canvas/units';
 import { DialogTitle } from '../components/DialogTitle';
 import { Icon } from '../components/Icon';
@@ -31,7 +31,7 @@ function ArrangeForm() {
   const last = getPreferences().arrange;
   const [columns, setColumns] = useState(last.columns > 0 ? Math.min(last.columns, count) : Math.ceil(Math.sqrt(count)));
   const [spacing, setSpacing] = useState(ptToUnit(last.spacing, units));
-  const [direction, setDirection] = useState<ArrangeDirection>(last.direction);
+  const [direction, setDirection] = useState<ArtboardArrangeDirection>(last.direction);
   const [moveArtwork, setMoveArtwork] = useState(last.moveArtwork);
 
   const accept = () => {
@@ -61,7 +61,7 @@ function ArrangeForm() {
         <DialogTitle icon="artboard-rearrange" onClose={close}>{t('arrange.title')}</DialogTitle>
         <div className="vc-form__row">
           <label>{t('arrange.direction')}</label>
-          <Choice<ArrangeDirection>
+          <Choice<ArtboardArrangeDirection>
             value={direction}
             onChange={setDirection}
             label={t('arrange.direction')}
