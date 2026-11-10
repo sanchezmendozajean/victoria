@@ -182,6 +182,7 @@ documento.vict
 - **Degradados**: se importan como recursos, con su matriz calculada para el objeto (`objectBoundingBox` o `userSpaceOnUse`, más `gradientTransform`); un degradado de una sola parada es un color; el punto focal y `spreadMethod` distintos del valor por defecto se avisan.
 - **Recortes**: `clip-path` se convierte en un grupo de recorte que toma la transformación, la opacidad y el modo de fusión del elemento; el recorte es un trazado compuesto en el espacio del elemento. Máscaras, filtros y motivos se avisan y se omiten.
 - **PDF**: un Espacio por página con una mesa del tamaño de la página (hasta 50). Se leen trazados, rellenos y trazos, recortes, cajas de formularios, degradados axiales y radiales, opacidad, modos de fusión, imágenes y texto (como texto de punto sin su fuente original, con aviso). Las coordenadas se pasan al espacio de la página (Y hacia abajo) en el momento de leer, así que los objetos llegan con transformación identidad.
+- Las formas **sin relleno ni trazo** (típico de las guías y máscaras que exporta Illustrator con `fill:none`) se importan como trazados sin pintura, como los abre Illustrator: invisibles salvo en modo contorno o al seleccionarlas. Solo se descarta lo `display:none`.
 - Todo lo que no se entiende se **avisa al terminar** (no falla); un archivo que no es SVG, o un PDF ilegible, se rechaza con un mensaje y no se abre nada.
 
 ## Esquinas vivas de trazados (Fase 5)

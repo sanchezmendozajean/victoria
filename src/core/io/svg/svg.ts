@@ -560,8 +560,9 @@ function convert(el: XmlElement, parentStyle: Style, ctx: Context): Node[] {
     // With a clip path the shape's own transform belongs to the clip group, so the shape is built in the user space.
     const node = geometryNode(el, ctx, style, clipId ? IDENTITY : attrTransform);
     if (!node) return [];
+    // A shape with neither fill nor stroke (Illustrator exports guides and masks as `fill:none`) is kept as an
+    // unpainted outline, as Illustrator opens it: invisible until outline view, but there to select and use.
     node.appearance = appearanceOf(style, geometryBoundsOf(node), ctx);
-    if (node.appearance.items.length === 0) return [];
     return wrap(node);
   }
 

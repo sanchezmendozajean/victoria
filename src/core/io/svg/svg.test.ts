@@ -235,11 +235,20 @@ describe('importSvg · style', () => {
     expect(strokeOf(rects[3]!)).toMatchObject({ stroke: { width: 3 } });
   });
 
-  it('defaults to a black fill without stroke, and drops objects that paint nothing or are display:none', () => {
+  it('defaults to a black fill without stroke, drops display:none and keeps shapes that paint nothing as unpainted outlines', () => {
     const r = importSvg(svg('<rect width="1" height="1"/><rect width="1" height="1" fill="none"/><rect width="1" height="1" style="display:none"/><rect width="1" height="1" fill="none" stroke="red" stroke-width="0"/>'), ids());
-    expect(r.nodes).toHaveLength(1);
+    expect(r.nodes).toHaveLength(3);
     expect(solidRgb(r.nodes[0]!)).toEqual([0, 0, 0]);
     expect(strokeOf(r.nodes[0]!)).toBeUndefined();
+    expect(r.nodes[1]!.appearance.items).toEqual([]);
+    expect(r.nodes[2]!.appearance.items).toEqual([]);
+  });
+
+  it('keeps the paths of an Illustrator export whose class says fill:none, so the document is not empty', () => {
+    const r = importSvg(svg('<style type="text/css">.st0{fill:none;}</style><path class="st0" d="M0 0L10 0L10 10Z"/><path class="st0" d="M20 0L30 0L30 10Z"/>'), ids());
+    expect(r.nodes).toHaveLength(2);
+    expect(r.nodes.every((n) => n.appearance.items.length === 0)).toBe(true);
+    expect(r.warnings.map((w) => w.code)).not.toContain('size');
   });
 
   it('reads stroke caps, joins, miter limit and dashes (odd lists repeat)', () => {
@@ -294,7 +303,8 @@ describe('importSvg · gradients, clipping, use, images and text', () => {
   it('a gradient with one stop is a plain colour and a missing one is dropped with a warning', () => {
     const r = importSvg(svg('<defs><linearGradient id="one"><stop offset="0" stop-color="#0f0"/></linearGradient></defs><rect width="9" height="9" fill="url(#one)"/><rect width="9" height="9" fill="url(#nope)"/>'), ids());
     expect(solidRgb(r.nodes[0]!)).toEqual([0, 255, 0]);
-    expect(r.nodes).toHaveLength(1);
+    expect(r.nodes).toHaveLength(2);
+    expect(r.nodes[1]!.appearance.items).toEqual([]); // the missing gradient paints nothing: the shape stays unpainted
     expect(r.warnings.map((w) => w.code)).toContain('gradient');
   });
 
