@@ -1,5 +1,19 @@
 # Changelog
 
+## Diálogos con el estilo de Imprimir
+- Marco común para todos los modales (Exportar, Transformar, Formas, Preferencias, Atajos, Modificadores, Espacio, Muestras, Documento personalizado, Texto en trazado, selector de color y avisos): cabecera de 36 px con icono, título y botón de cerrar (`DialogTitle`), cuerpo con márgenes laterales, filas con etiqueta atenuada alineada, casillas de 12 px, títulos de sección en versalitas con separador, y pie con borde superior y botones con icono (Cancelar ✕ / Aceptar ✓). Los estilos viven en `components/DialogHost.css`.
+- Nuevo icono de cerrar en cada diálogo (`dialog.close`). Los avisos (`DialogHost`) llevan icono de alerta o info según el tipo y icono en Cancelar, Guardar y Eliminar.
+
+## Paneles flotantes redimensionables
+- La ventana flotante de un panel de la franja se redimensiona arrastrando su borde izquierdo, el inferior o la esquina inferior izquierda (mínimo 220 × 120 px, limitada a la ventana). El tamaño se recuerda mientras la app siga abierta.
+
+## Herramienta Mesa de trabajo
+- **Clic sobre un objeto** (sin arrastrar) crea una mesa del tamaño de sus límites visibles: contorno + la mitad del ancho del trazo según su alineación (sin picos de inglete, así un rectángulo con borde encaja exacto). Los grupos se miden completos; en grupos de recorte, solo la máscara. Arrastrar en vacío o sobre una mesa sigue moviendo/dibujando.
+- **Mover/copiar ilustración con la mesa**: botón de alternancia en la barra de control; desactivado, arrastrar una mesa la mueve sin su contenido (activo por defecto, no se recuerda entre sesiones).
+
+## Cuentagotas en el selector de color
+- Botón de cuentagotas junto al campo HEX del selector de color completo: un clic sobre el lienzo toma el color visible bajo el cursor, **incluidos mapas de bits** (lee la capa de contenido, sin selección ni guías; los píxeles transparentes se mezclan con el color del lienzo). Muestra una vista previa mientras se mueve; Esc o un clic fuera del lienzo lo desactivan. `CanvasApi.sampleColorAt`.
+
 ## Rediseño del diálogo Imprimir (design/rediseno-imprimir)
 - **Estructura**: modal de tamaño fijo (cuerpo de 620 px) con vista previa a la izquierda y ajustes en cinco secciones (Impresora · Qué imprimir · Papel · Tamaño y posición · Marcas y sangrado); pie con advertencias, resumen y Cancelar / Imprimir. Enter imprime y Esc cierra (primero el popover de advertencias).
 - **Impresora**: lista del sistema más «Guardar como PDF» (el proceso principal pregunta dónde y escribe el PDF; el renderer nunca elige la ruta), estado «Lista» según el sistema, «Preferencias…» (solo Windows, abre la ventana del controlador), copias con flechas, «Intercalar» solo con 2 o más copias y Color / Escala de grises.
