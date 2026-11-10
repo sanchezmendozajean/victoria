@@ -43,6 +43,8 @@ function PreferencesForm() {
           t('prefs.pencilFidelity'),
           <NumberInput value={prefs.pencilFidelity} onCommit={(v) => set({ pencilFidelity: Math.round(v) as 1 })} min={1} max={5} step={1} decimals={0} width={80} testId="pref-pencil-fidelity" tooltip={t('prefs.pencilFidelityHint')} />,
         )}
+        <h3 className="vc-prefs__group">{t('prefs.artboards')}</h3>
+        <CheckRow checked={prefs.moveArtworkWithArtboard} onChange={(moveArtworkWithArtboard) => set({ moveArtworkWithArtboard })} label={t('prefs.moveArtwork')} testId="pref-move-artwork" />
         <h3 className="vc-prefs__group">{t('prefs.files')}</h3>
         <CheckRow checked={prefs.startScreen} onChange={(startScreen) => set({ startScreen })} label={t('prefs.startScreen')} testId="pref-start-screen" />
         <CheckRow checked={prefs.placeLinked} onChange={(placeLinked) => set({ placeLinked })} label={t('prefs.placeLinked')} testId="pref-place-linked" />

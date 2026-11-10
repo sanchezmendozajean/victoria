@@ -84,5 +84,15 @@ test.describe('Panel Mesas de trabajo', () => {
     await page.getByTestId('artboards-arrange').click();
     await expect(page.getByTestId('arrange-direction')).toHaveValue('column');
     await expect(page.getByTestId('arrange-artwork')).not.toBeChecked();
+    await page.keyboard.press('Escape');
+
+    // Preferencias shows the same setting and can change it.
+    await page.keyboard.press('Control+k');
+    const pref = page.getByTestId('pref-move-artwork');
+    await expect(pref).not.toBeChecked();
+    await pref.check();
+    await page.keyboard.press('Escape');
+    await page.keyboard.press('Shift+O');
+    await expect(page.getByTestId('artboard-move-art')).toHaveAttribute('aria-pressed', 'true');
   });
 });

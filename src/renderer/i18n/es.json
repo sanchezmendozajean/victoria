@@ -742,6 +742,8 @@
   "prefs.autoAddDelete": "Añadir y eliminar puntos automáticamente con la Pluma",
   "prefs.pencilFidelity": "Fidelidad del Lápiz (1–5)",
   "prefs.pencilFidelityHint": "1 = pocos puntos, 5 = sigue el trazo al detalle",
+  "prefs.artboards": "Mesas de trabajo",
+  "prefs.moveArtwork": "Mover/copiar la ilustración con la mesa",
   "prefs.files": "Archivos",
   "prefs.autosave": "Autoguardar cada",
   "prefs.minutes": "min",
