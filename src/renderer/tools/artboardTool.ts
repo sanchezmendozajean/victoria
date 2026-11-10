@@ -2,17 +2,14 @@ import {
   addArtboard,
   combineCommands,
   createArtboard,
-  nodeWorldBounds,
-  inflateRect,
-  strokesOf,
-  unionRect,
+  artworkOnBoard,
+  artworkRect,
   removeArtboard,
   transformNodes,
   translation,
   updateArtboard,
   type Artboard,
   type Command,
-  type Node,
   type Space,
   type Vec2,
 } from '../../core';
@@ -95,53 +92,18 @@ function boardAt(space: Space, p: Vec2): Artboard | null {
   return null;
 }
 
-/** Top-level objects whose centre lies on the artboard: they travel with it. */
-function contentOf(space: Space, board: Rect): string[] {
-  const ids: string[] = [];
-  for (const layer of space.layers) {
-    if (layer.locked || !layer.visible) continue;
-    for (const node of layer.children) {
-      const b = nodeWorldBounds(space, node.id);
-      if (!b) continue;
-      const cx = (b.minX + b.maxX) / 2;
-      const cy = (b.minY + b.maxY) / 2;
-      if (cx >= board.x && cx <= board.x + board.w && cy >= board.y && cy <= board.y + board.h) ids.push(node.id);
-    }
-  }
-  return ids;
-}
-
 type State =
   | { kind: 'move'; id: string; start: Rect; from: Vec2; content: string[]; applied: Vec2; key: string; fit: Rect | null }
   | { kind: 'resize'; id: string; handle: HandleId; start: Rect; key: string }
   | { kind: 'create'; id: string; from: Vec2; fromScreen: Vec2; key: string; fit: Rect | null }
   | null;
 
-/** Room a node's own strokes need around its outline (miter spikes ignored: a rectangle fits exactly). */
-function strokeReach(node: Node): number {
-  let d = 0;
-  for (const st of strokesOf(node.appearance)) d = Math.max(d, st.align === 'inside' ? 0 : st.align === 'outside' ? st.width : st.width / 2);
-  return d;
-}
-
-/** Geometric bounds of a node (and what it holds) plus the half width of its strokes, in Space coordinates. */
-function fitBounds(space: Space, node: Node): Rect | null {
-  let out: Rect | null = null;
-  if (node.type === 'group' || node.type === 'clipGroup') {
-    // A clip group shows only what its mask (first child) covers.
-    for (const child of node.type === 'clipGroup' ? node.children.slice(0, 1) : node.children) out = unionRect(out, fitBounds(space, child));
-    return out;
-  }
-  const b = nodeWorldBounds(space, node.id);
-  return b ? inflateRect(b, strokeReach(node)) : null;
-}
-
 /** Visual bounds (stroke included) of the top-level object under the cursor, as Illustrator fits an artboard to it. */
 function objectBoundsAt(host: ToolHost, p: Vec2): Rect | null {
   const space = host.space;
   const hit = host.hitTest(p)[0];
   if (!space || !hit) return null;
-  const b = fitBounds(space, hit.ancestors[0] ?? hit.node);
+  const b = artworkRect(space, hit.ancestors[0] ?? hit.node);
   return b ? { x: b.minX, y: b.minY, w: Math.max(MIN_SIZE, b.maxX - b.minX), h: Math.max(MIN_SIZE, b.maxY - b.minY) } : null;
 }
 
@@ -182,7 +144,7 @@ export function createArtboardTool(): Tool {
         }
         const start = { x: target.x, y: target.y, w: target.w, h: target.h };
         // The copy leaves the artwork where it is; a plain move carries it unless the option is off.
-        state = { kind: 'move', id: target.id, start, from: event.doc, content: event.altKey || !ui.moveArtworkWithArtboard ? [] : contentOf(space, start), applied: { x: 0, y: 0 }, key: host.gestureKey(), fit: event.altKey ? null : objectBoundsAt(host, event.doc) };
+        state = { kind: 'move', id: target.id, start, from: event.doc, content: event.altKey || !ui.moveArtworkWithArtboard ? [] : artworkOnBoard(space, start), applied: { x: 0, y: 0 }, key: host.gestureKey(), fit: event.altKey ? null : objectBoundsAt(host, event.doc) };
         host.invalidateOverlay();
         return;
       }

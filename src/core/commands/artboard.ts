@@ -1,6 +1,9 @@
 import type { Draft } from 'immer';
-import type { Artboard, Document } from '../model/types';
-import type { Command } from './command';
+import { arrangeBoards, artworkBounds, artworkOnBoard, topLevelNodes, type ArrangeOptions } from '../model/artboardLayout';
+import { translation } from '../model/matrix';
+import type { Artboard, Document, Node, Space } from '../model/types';
+import { combineCommands, type Command } from './command';
+import { transformNodes } from './node';
 
 const findSpace = (d: Draft<Document>, id: string) => d.spaces.find((s) => s.id === id);
 
@@ -53,3 +56,33 @@ export const reorderArtboard = (spaceId: string, artboardId: string, toIndex: nu
     space.artboards.splice(target, 0, moved as Draft<Artboard>);
   },
 });
+
+/**
+ * Lays the artboards of a Space out in a grid (list order). With `moveArtwork` each board carries the objects
+ * on it, as the Artboard tool does. Null when nothing would move.
+ */
+export const arrangeArtboards = (space: Space, options: ArrangeOptions, moveArtwork: boolean): Command | null => {
+  const targets = arrangeBoards(space.artboards, options);
+  // Decide who owns each object before anything moves, so overlapping boards never move it twice.
+  const taken = new Set<string>();
+  const commands: Command[] = [];
+  for (const board of space.artboards) {
+    const to = targets.get(board.id);
+    if (!to || (to.x === board.x && to.y === board.y)) continue;
+    commands.push(updateArtboard(space.id, board.id, { x: to.x, y: to.y }));
+    if (!moveArtwork) continue;
+    const ids = artworkOnBoard(space, board).filter((id) => !taken.has(id));
+    for (const id of ids) taken.add(id);
+    if (ids.length > 0) commands.push(transformNodes(space.id, ids, translation(to.x - board.x, to.y - board.y)));
+  }
+  return commands.length > 0 ? combineCommands('artboard.arrange', commands) : null;
+};
+
+/** Resizes an artboard to the visual bounds of the given objects (all visible artwork when `nodes` is null). */
+export const fitArtboardToArtwork = (space: Space, artboardId: string, nodes: readonly Node[] | null): Command | null => {
+  const b = artworkBounds(space, nodes ?? topLevelNodes(space));
+  if (!b) return null;
+  const w = Math.max(1, b.maxX - b.minX);
+  const h = Math.max(1, b.maxY - b.minY);
+  return combineCommands('artboard.fit', [updateArtboard(space.id, artboardId, { x: b.minX, y: b.minY, w, h })]);
+};
