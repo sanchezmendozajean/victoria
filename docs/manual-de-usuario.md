@@ -58,4 +58,5 @@ Ctrl+Z / Mayús+Ctrl+Z deshacen y rehacen **todo** (el historial es exacto, tamb
 
 - Un documento que no abre muestra el motivo en un cuadro de error; el archivo no se modifica.
 - Una imagen vinculada cuyo archivo falta se ve como un marcador gris: selecciónala y pulsa **Reubicar…**.
+- Un SVG cuyas formas no tienen relleno ni trazo (por ejemplo, una plantilla de patronaje exportada con `fill:none`) se abre con esas formas como contornos sin pintura: no se ven hasta que las seleccionas o activas el modo contorno (Ctrl+Y); dales un trazo para verlas.
 - Los avisos de importación (por ejemplo, un SVG con filtros) indican qué se omitió; el resto se importa.

@@ -1,5 +1,9 @@
 # Changelog
 
+## Carpeta recordada y SVG sin pintura
+- **Última carpeta**: todos los diálogos de archivo (Abrir, Colocar imágenes, Guardar, Exportar, Exportar para pantallas y el PDF de impresión) empiezan donde terminó el anterior, también tras reiniciar (`last-folder.json` en la carpeta de datos). Guardar como de un documento que ya tiene archivo empieza en su propia carpeta. Si la carpeta ya no existe, vuelve a Documentos (Imágenes para colocar). Lógica en `main/lastDir.ts`.
+- **SVG con formas sin pintura**: el importador descartaba las formas sin relleno ni trazo y un archivo de Illustrator con solo `fill:none` (clase CSS) se abría vacío con el aviso «dibujo vacío». Ahora se importan como trazados sin pintura (como hace Illustrator); solo se descarta `display:none`.
+
 ## Iconos de la aplicación y sitio web
 - **Iconos**: `build/icon.png` (512 px) y `build/icon.ico` salen de `design/Icono para la app/` y se usan en el ejecutable y el instalador de Windows (NSIS: instalador, desinstalador y cabecera), en la asociación de archivos `.vict`, en los paquetes de Linux y en la ventana (`BrowserWindow.icon`, con `extraResources` en producción). El logotipo de la barra de título pasa a la forma del icono nuevo. Se elimina el icono provisional (`build/icon.svg`) y el script que lo generaba (`npm run icon:app`).
 - **Sitio web** en `site/` para GitHub Pages: portada con capturas y descargas, y documentación generada desde `docs/` y `specs/` (manual, instalación, herramientas, Espacios y mesas, modificadores, paneles, texto, imágenes e impresión, atajos y novedades), con navegación lateral, índice de cada página, tema claro/oscuro y vista móvil. Tiene su propio `package.json` (solo `marked`, dependencia de desarrollo del sitio) para no tocar las dependencias de la aplicación. El flujo `pages.yml` lo publica; hay que activar *Settings › Pages › Source: GitHub Actions* una vez.

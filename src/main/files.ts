@@ -4,6 +4,7 @@ import { mkdir, readdir, readFile, rename, stat, unlink, writeFile } from 'node:
 import path from 'node:path';
 import type { AutosaveEntry, DialogLabels, ExportFile, ExportSaveRequest, ExportWriteResult, OpenedFile, RecentFile, SaveRequest, SaveResult } from '../shared/ipc';
 import { unzipSync } from 'fflate';
+import { existingDir, loadLastDir, saveLastDir } from './lastDir';
 import { pushRecent, sanitizeRecent } from './recentList';
 
 const EXTENSION = 'vict';
@@ -49,6 +50,25 @@ export async function listRecent(): Promise<RecentFile[]> {
   return out;
 }
 
+// ── Last folder: every file dialog opens where the previous one ended, also after restarting ──
+
+const lastDirFile = () => path.join(app.getPath('userData'), 'last-folder.json');
+/** undefined = not read from disk yet. */
+let lastDir: string | null | undefined;
+
+/** Where a file dialog should start: the last folder used, or `fallback` when there is none or it no longer exists. */
+async function startDir(fallback: string): Promise<string> {
+  if (lastDir === undefined) lastDir = await loadLastDir(lastDirFile());
+  return existingDir(lastDir, fallback);
+}
+
+/** Remembers the folder of a file or folder the user just picked or saved. */
+async function rememberDir(dir: string): Promise<void> {
+  if (!path.isAbsolute(dir) || dir === lastDir) return;
+  lastDir = dir;
+  await saveLastDir(lastDirFile(), dir);
+}
+
 const THUMBNAIL_ENTRY = 'thumbnail.png';
 
 /** The preview picture saved inside a recent document (null when it has none, or the path is not on the list). */
@@ -72,6 +92,7 @@ export async function openRecent(file: unknown): Promise<OpenedFile | null> {
     const bytes = new Uint8Array(await readFile(file));
     granted.add(file);
     await rememberRecent(file);
+    await rememberDir(path.dirname(file));
     return { path: file, bytes };
   } catch {
     return null;
@@ -102,7 +123,7 @@ export async function openFile(win: BrowserWindow, labels: unknown): Promise<Ope
   if (!isLabels(labels)) throw new Error('Invalid dialog labels');
   const result = await dialog.showOpenDialog(win, {
     title: labels.title,
-    defaultPath: app.getPath('documents'),
+    defaultPath: await startDir(app.getPath('documents')),
     properties: ['openFile'],
     filters: [{ name: labels.filterName, extensions: [EXTENSION] }, ...(labels.importFilterName ? [{ name: labels.importFilterName, extensions: ['eps', 'epsf', 'svg', 'pdf'] }] : [])],
   });
@@ -111,6 +132,7 @@ export async function openFile(win: BrowserWindow, labels: unknown): Promise<Ope
   if ((await stat(file)).size > MAX_FILE_BYTES) throw new Error('File too large');
   granted.add(file);
   await rememberRecent(file);
+  await rememberDir(path.dirname(file));
   return { path: file, bytes: new Uint8Array(await readFile(file)) };
 }
 
@@ -122,11 +144,12 @@ export async function openImages(win: BrowserWindow, labels: unknown): Promise<O
   if (!isLabels(labels)) throw new Error('Invalid dialog labels');
   const result = await dialog.showOpenDialog(win, {
     title: labels.title,
-    defaultPath: app.getPath('pictures'),
+    defaultPath: await startDir(app.getPath('pictures')),
     properties: ['openFile', 'multiSelections'],
     filters: [{ name: labels.filterName, extensions: IMAGE_EXTENSIONS }],
   });
   if (result.canceled) return [];
+  if (result.filePaths[0]) await rememberDir(path.dirname(result.filePaths[0]));
   const opened: OpenedFile[] = [];
   for (const file of result.filePaths) {
     if ((await stat(file)).size > MAX_IMAGE_BYTES) continue;
@@ -159,9 +182,11 @@ export async function saveFile(win: BrowserWindow, request: SaveRequest): Promis
   let target = request.path !== null && granted.has(request.path) ? request.path : null;
   if (!target) {
     const safeName = path.basename(request.suggestedName) || `Documento.${EXTENSION}`;
+    // A document that already has a file starts in its own folder; a new one in the last folder used.
+    const own = request.path && path.isAbsolute(request.path) ? await existingDir(path.dirname(request.path), '') : '';
     const result = await dialog.showSaveDialog(win, {
       title: request.labels.title,
-      defaultPath: path.join(app.getPath('documents'), withExtension(safeName)),
+      defaultPath: path.join(own || (await startDir(app.getPath('documents'))), withExtension(safeName)),
       filters: [{ name: request.labels.filterName, extensions: [EXTENSION] }],
     });
     if (result.canceled || !result.filePath) return null;
@@ -170,6 +195,7 @@ export async function saveFile(win: BrowserWindow, request: SaveRequest): Promis
   }
   await writeFileAtomic(target, request.bytes);
   await rememberRecent(target);
+  await rememberDir(path.dirname(target));
   return { path: target };
 }
 
@@ -188,7 +214,6 @@ const isPlainName = (name: unknown): name is string =>
   !name.startsWith('.') &&
   ![...name].some((ch) => FORBIDDEN_IN_NAMES.includes(ch) || ch.charCodeAt(0) < 32);
 
-let lastExportDir: string | null = null;
 
 export async function exportSave(win: BrowserWindow, request: ExportSaveRequest): Promise<SaveResult | null> {
   if (!request || typeof request.title !== "string" || typeof request.filterName !== "string" || !EXTENSION_NAME.test(request.extension) || !(request.bytes instanceof Uint8Array)) {
@@ -197,12 +222,12 @@ export async function exportSave(win: BrowserWindow, request: ExportSaveRequest)
   const safeName = path.basename(String(request.suggestedName)) || `Sin título.${request.extension}`;
   const result = await dialog.showSaveDialog(win, {
     title: request.title,
-    defaultPath: path.join(lastExportDir ?? app.getPath("documents"), safeName),
+    defaultPath: path.join(await startDir(app.getPath("documents")), safeName),
     filters: [{ name: request.filterName, extensions: [request.extension] }],
   });
   if (result.canceled || !result.filePath) return null;
   const target = path.extname(result.filePath).toLowerCase() === `.${request.extension}` ? result.filePath : `${result.filePath}.${request.extension}`;
-  lastExportDir = path.dirname(target);
+  await rememberDir(path.dirname(target));
   await writeFileAtomic(target, request.bytes);
   return { path: target };
 }
@@ -210,20 +235,20 @@ export async function exportSave(win: BrowserWindow, request: ExportSaveRequest)
 /** Asks where to save the PDF of a print job; null when the user cancels. */
 export async function printPdfPath(win: BrowserWindow, title: string, suggestedName: string): Promise<string | null> {
   const safeName = path.basename(suggestedName).replace(/.pdf$/i, '') || 'Sin título';
-  const result = await dialog.showSaveDialog(win, { title, defaultPath: path.join(lastExportDir ?? app.getPath('documents'), `${safeName}.pdf`), filters: [{ name: 'PDF', extensions: ['pdf'] }] });
+  const result = await dialog.showSaveDialog(win, { title, defaultPath: path.join(await startDir(app.getPath('documents')), `${safeName}.pdf`), filters: [{ name: 'PDF', extensions: ['pdf'] }] });
   if (result.canceled || !result.filePath) return null;
   const target = path.extname(result.filePath).toLowerCase() === '.pdf' ? result.filePath : `${result.filePath}.pdf`;
-  lastExportDir = path.dirname(target);
+  await rememberDir(path.dirname(target));
   return target;
 }
 
 export async function exportChooseFolder(win: BrowserWindow, title: unknown): Promise<string | null> {
   if (typeof title !== "string") throw new Error("Invalid dialog title");
-  const result = await dialog.showOpenDialog(win, { title, defaultPath: lastExportDir ?? app.getPath("documents"), properties: ["openDirectory", "createDirectory"] });
+  const result = await dialog.showOpenDialog(win, { title, defaultPath: await startDir(app.getPath("documents")), properties: ["openDirectory", "createDirectory"] });
   const folder = result.filePaths[0];
   if (result.canceled || !folder) return null;
   exportFolders.add(folder);
-  lastExportDir = folder;
+  await rememberDir(folder);
   return folder;
 }
 
