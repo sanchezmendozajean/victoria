@@ -44,13 +44,13 @@ export function ImageSection({ ctx, id }: { ctx: PanelContext; id: string }) {
     <Section title={t('image.section')}>
       <Row>
         <Icon id={low ? 'alert' : 'image'} size={14} className="vc-field__icon" />
-        <span className="vc-plabel" data-testid="image-ppi" data-low={low ? 'true' : 'false'} style={low ? { color: 'var(--vc-danger, #d64545)' } : undefined}>
+        <span className="vc-plabel vc-plabel--fill" data-testid="image-ppi" data-low={low ? 'true' : 'false'} style={low ? { color: 'var(--vc-danger, #d64545)' } : undefined}>
           {ppi === null ? '—' : t(low ? 'image.ppiLow' : 'image.ppi', { ppi })}
         </span>
       </Row>
       <Row>
         <Icon id={link === 'embedded' ? 'link' : 'unlink'} size={14} className="vc-field__icon" />
-        <span className="vc-plabel" data-testid="image-link" data-state={link} title={image.linkedPath}>
+        <span className="vc-plabel vc-plabel--fill" data-testid="image-link" data-state={link} title={image.linkedPath}>
           {link === 'embedded' ? t('image.embedded') : link === 'linked' ? t('image.linked', { name }) : t('image.broken', { name })}
         </span>
       </Row>

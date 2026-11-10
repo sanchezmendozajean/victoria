@@ -54,6 +54,12 @@
   flex: none;
   color: var(--text-muted);
 }
+/* A label that takes the rest of the row instead of the fixed label column (info lines next to an icon). */
+.vc-prow > .vc-plabel.vc-plabel--fill {
+  flex: 1;
+  width: auto;
+  min-width: 0;
+}
 .vc-prow--end {
   justify-content: flex-end;
 }
