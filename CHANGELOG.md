@@ -1,5 +1,10 @@
 # Changelog
 
+## Panel Mesas de trabajo
+- Lista numerada de las mesas del Espacio activo (nombre, tamaño en las unidades del documento y orientación), con clic para activar y centrar, doble clic para renombrar y botones: nueva, duplicar (sin ilustración), reorganizar, ajustar a la ilustración, ajustar a la selección, subir, bajar y eliminar. El orden es el de exportación e impresión.
+- **Reorganizar mesas**: diálogo con dirección (filas ←/→, columnas), columnas, espaciado y mover la ilustración; una sola entrada de historial. Núcleo en `core/model/artboardLayout.ts` (`arrangeBoards`, `artworkOnBoard`, `artworkBounds`) y comandos `arrangeArtboards` / `fitArtboardToArtwork`; la herramienta Mesa de trabajo reutiliza ahora esas funciones.
+- Pruebas: 8 de núcleo y un e2e del panel.
+
 ## Diálogos con el estilo de Imprimir
 - Marco común para todos los modales (Exportar, Transformar, Formas, Preferencias, Atajos, Modificadores, Espacio, Muestras, Documento personalizado, Texto en trazado, selector de color y avisos): cabecera de 36 px con icono, título y botón de cerrar (`DialogTitle`), cuerpo con márgenes laterales, filas con etiqueta atenuada alineada, casillas de 12 px, títulos de sección en versalitas con separador, y pie con borde superior y botones con icono (Cancelar ✕ / Aceptar ✓). Los estilos viven en `components/DialogHost.css`.
 - Nuevo icono de cerrar en cada diálogo (`dialog.close`). Los avisos (`DialogHost`) llevan icono de alerta o info según el tipo y icono en Cancelar, Guardar y Eliminar.

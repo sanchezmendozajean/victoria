@@ -1,3 +1,4 @@
+import { ArtboardsPanel } from './ArtboardsPanel';
 import { CharacterPanel } from './CharacterPanel';
 import { ParagraphPanel } from './ParagraphPanel';
 import { PathfinderPanel } from './PathfinderPanel';
@@ -43,6 +44,8 @@ export function PanelBody({ id }: { id: PanelId }) {
       return <LayersPanel />;
     case 'spaces':
       return <SpacesPanel />;
+    case 'artboards':
+      return <ArtboardsPanel />;
     case 'properties':
       return <PropertiesPanel />;
     default:

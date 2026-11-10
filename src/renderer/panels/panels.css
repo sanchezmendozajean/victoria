@@ -999,6 +999,74 @@
   text-align: right;
 }
 
+/* Panel Mesas de trabajo */
+.vc-artboards {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+.vc-artboards__list {
+  flex: 1;
+  min-height: 56px;
+  overflow-y: auto;
+  border-bottom: 1px solid var(--border);
+}
+.vc-artboards__toolbar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+}
+.vc-artboardrow {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+  padding: 0 8px 0 10px;
+  border-bottom: 1px solid var(--border);
+  font-size: var(--fs-label);
+  cursor: default;
+}
+.vc-artboardrow:hover {
+  background: var(--bg-hover);
+}
+.vc-artboardrow.is-active {
+  background: var(--bg-active);
+}
+.vc-artboardrow.is-active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--accent);
+}
+.vc-artboardrow__index {
+  flex: none;
+  width: 14px;
+  color: var(--text-disabled);
+  font-size: var(--fs-micro);
+  text-align: right;
+}
+.vc-artboardrow__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.vc-artboardrow__size {
+  flex: none;
+  color: var(--text-muted);
+  font-size: var(--fs-micro);
+  font-variant-numeric: tabular-nums;
+}
+
 .vc-trace__bar {
   flex: 1;
   height: 6px;

@@ -129,6 +129,8 @@ interface UiState {
   /** The last modifier applied, with its parameters (Mayús+Ctrl+E repeats it). */
   lastModifier: { modifierId: string; params: Params } | null;
   shapeDialog: { kind: ShapeToolKind; at: Vec2 } | null;
+  /** Reorganizar mesas dialog (Artboards panel). */
+  arrangeDialog: boolean;
   /** Archivo › Exportar… ('as') or Exportar para pantallas… ('screens'). */
   exportDialog: 'as' | 'screens' | null;
   /** Archivo › Imprimir… */
@@ -176,6 +178,8 @@ interface UiState {
   closePrintDialog(): void;
   closeExportDialog(): void;
   closeShapeDialog(): void;
+  openArrangeDialog(): void;
+  closeArrangeDialog(): void;
   openCanvasMenu(x: number, y: number): void;
   closeCanvasMenu(): void;
   openSpaceProps(spaceId: string): void;
@@ -310,6 +314,7 @@ export const useUi = create<UiState>()((set, get) => ({
   modifierDialog: null,
   lastModifier: null,
   shapeDialog: null,
+  arrangeDialog: false,
   exportDialog: null,
   printDialog: false,
   preferencesDialog: false,
@@ -373,6 +378,8 @@ export const useUi = create<UiState>()((set, get) => ({
   closeModifierDialog: () => set({ modifierDialog: null }),
   setLastModifier: (lastModifier) => set({ lastModifier }),
   closeShapeDialog: () => set({ shapeDialog: null }),
+  openArrangeDialog: () => set({ arrangeDialog: true }),
+  closeArrangeDialog: () => set({ arrangeDialog: false }),
   openCanvasMenu: (x, y) => set({ canvasMenu: { x, y } }),
   closeCanvasMenu: () => set({ canvasMenu: null }),
   openSpaceProps: (spaceProps) => set({ spaceProps }),

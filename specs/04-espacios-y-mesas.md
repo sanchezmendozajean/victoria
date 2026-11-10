@@ -57,7 +57,7 @@ A3, A4, A5, Carta, Oficio, Tabloide, 10×15 cm (foto), 13×18 cm, Tarjeta 9×5 c
 
 ### Panel Mesas de trabajo
 
-Lista numerada del Espacio activo con nombre y tamaño; reordenar (afecta orden de exportación/impresión); botones: nueva, duplicar, eliminar, reorganizar todas (diálogo: columnas, espaciado, dirección), ajustar a ilustración, ajustar a la selección.
+Lista numerada del Espacio activo con nombre y tamaño; reordenar (afecta orden de exportación/impresión); botones: nueva, duplicar (solo la mesa, sin su ilustración), eliminar, subir/bajar, reorganizar todas (diálogo: dirección por filas ←/→ o por columnas, columnas, espaciado y «mover la ilustración con las mesas»; las columnas/filas se dimensionan por la mesa más grande para no solaparse), ajustar a la ilustración (todo lo visible, trazos incluidos) y ajustar a la selección. Clic en una fila activa la mesa y la centra si está fuera de vista; doble clic la renombra.
 
 ### Visual
 

@@ -20,6 +20,7 @@ import { StartScreen } from './StartScreen';
 import { TextPromptHost } from './TextPrompt';
 import { useDocuments } from '../documents';
 import { PrintDialog } from './PrintDialog';
+import { ArrangeArtboardsDialog } from './ArrangeArtboardsDialog';
 import { ShapeDialog } from './ShapeDialog';
 import { TransformDialog } from './TransformDialog';
 import { Toolbar } from './Toolbar';
@@ -56,6 +57,7 @@ export function App() {
       <DialogHost />
       <TransformDialog />
       <ShapeDialog />
+      <ArrangeArtboardsDialog />
       <ExportDialog />
       <PrintDialog />
       <PreferencesDialog />
