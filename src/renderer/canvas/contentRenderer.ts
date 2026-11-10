@@ -180,6 +180,30 @@ function strokeShape(ctx: CanvasRenderingContext2D, path: Path2D, stroke: Stroke
   ctx.restore();
 }
 
+/**
+ * Under a non-uniform scale (a resized shape keeps the scale in its matrix) a stroke would come out thicker on one
+ * pair of sides. Strokes keep an even weight: the path is mapped to the canvas and stroked there with the mean scale.
+ * Gradient strokes keep the old behaviour (their coordinates live in local space).
+ */
+function strokeUniform(ctx: CanvasRenderingContext2D, path: Path2D, stroke: StrokeStyle, rule: CanvasFillRule, dash: readonly number[] | null, solid: boolean, scale: number): void {
+  const t = ctx.getTransform();
+  const sx = Math.hypot(t.a, t.b);
+  const sy = Math.hypot(t.c, t.d);
+  const skewed = Math.abs(t.a * t.c + t.b * t.d) > 1e-6 * sx * sy;
+  // The stroke weight is what the panel says (in pt), whatever the scale in the object's matrix; "Escalar trazos"
+  // changes the weight itself. Plain view scale: nothing to do.
+  if (!solid || scale <= 0 || (!skewed && Math.abs(sx - scale) <= 1e-6 * scale && Math.abs(sy - scale) <= 1e-6 * scale)) {
+    strokeShape(ctx, path, stroke, rule, dash);
+    return;
+  }
+  const world = new Path2D();
+  world.addPath(path, t);
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  strokeShape(ctx, world, { ...stroke, width: stroke.width * scale }, rule, dash ? dash.map((d) => d * scale) : null);
+  ctx.restore();
+}
+
 const DIMMED = 0.3;
 
 interface Env {
@@ -189,6 +213,8 @@ interface Env {
   resources: Resources;
   outline: boolean;
   dpr: number;
+  /** Device pixels per pt (zoom × dpr): the scale a stroke weight is drawn with. */
+  strokeScale: number;
   images: ImageStore | undefined;
   onImageReady: (() => void) | undefined;
 }
@@ -201,13 +227,16 @@ function paintGeometry(env: Env, node: Node, layer: Layer, alpha: number): void 
   if (!path || !shape) return;
   const { ctx } = env;
   if (env.outline || layer.outline) {
-    const t = ctx.getTransform();
-    const scale = Math.sqrt(Math.abs(t.a * t.d - t.b * t.c)) || 1;
+    const world = new Path2D();
+    world.addPath(path, ctx.getTransform());
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.globalAlpha = 1;
     ctx.setLineDash([]);
-    ctx.lineWidth = env.dpr / scale;
+    ctx.lineWidth = env.dpr;
     ctx.strokeStyle = layer.color;
-    ctx.stroke(path);
+    ctx.stroke(world);
+    ctx.restore();
     return;
   }
   paintAppearance(env, path, shape.fillRule, node.appearance, alpha, shape.subpaths, evaluated);
@@ -316,10 +345,10 @@ function paintStroke(env: Env, path: Path2D, rule: CanvasFillRule, stroke: Strok
       const head = heads[i];
       const trimmed = head && (head.start || head.end) ? trimSegments(segs, head.start?.trim ?? 0, head.end?.trim ?? 0) : segs;
       const dash = customDash && stroke.dash ? alignedDash(stroke.dash, subPathLength(sub)) : stroke.dash;
-      strokeShape(ctx, pathOfSegments(trimmed, sub.closed), stroke, rule, dash);
+      strokeUniform(ctx, pathOfSegments(trimmed, sub.closed), stroke, rule, dash, typeof style === 'string', env.strokeScale);
     });
   } else {
-    strokeShape(ctx, path, stroke, rule);
+    strokeUniform(ctx, path, stroke, rule, stroke.dash, typeof style === 'string', env.strokeScale);
   }
 
   if (!hasHeads) return;
@@ -667,7 +696,7 @@ function drawArtwork(ctx: CanvasRenderingContext2D, o: RenderOptions, view: View
   ctx.transform(view.zoom, 0, 0, view.zoom, view.panX, view.panY);
   const frame = o.isolatedId ? frameOf(o.space, o.isolatedId) : null;
   const isolation = frame ? { id: o.isolatedId as string, chain: new Set([...frame.ancestors.map((n) => n.id), o.isolatedId as string]) } : null;
-  const env: Env = { ctx, resources: o.resources, outline: o.outline, dpr, isolation, images: o.images, onImageReady: o.onImageReady };
+  const env: Env = { ctx, resources: o.resources, outline: o.outline, dpr, strokeScale: dpr * view.zoom, isolation, images: o.images, onImageReady: o.onImageReady };
   for (const layer of o.space.layers) {
     if (layer.visible) drawChildren(env, layer.children, visibleRect(view, width, height), layer, 1, false);
   }

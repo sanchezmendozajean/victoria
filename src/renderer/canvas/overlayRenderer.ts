@@ -39,11 +39,13 @@ function outline(ctx: CanvasRenderingContext2D, o: OverlayOptions, target: Hover
   ctx.save();
   ctx.transform(o.view.zoom, 0, 0, o.view.zoom, o.view.panX, o.view.panY);
   ctx.transform(...target.world);
-  const t = ctx.getTransform();
-  const scale = Math.sqrt(Math.abs(t.a * t.d - t.b * t.c)) || 1;
-  ctx.lineWidth = o.dpr / scale;
+  // Map the path to device space so a non-uniform node scale cannot make the outline uneven.
+  const world = new Path2D();
+  world.addPath(path, ctx.getTransform());
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.lineWidth = o.dpr;
   ctx.strokeStyle = target.color;
-  ctx.stroke(path);
+  ctx.stroke(world);
   ctx.restore();
 }
 
