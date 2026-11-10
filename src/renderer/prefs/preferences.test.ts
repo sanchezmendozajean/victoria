@@ -7,7 +7,14 @@ describe('preferences', () => {
     expect(sanitizePreferences(null)).toEqual(DEFAULT_PREFERENCES);
     expect(sanitizePreferences('x')).toEqual(DEFAULT_PREFERENCES);
     expect(sanitizePreferences({ autoAddDelete: 'yes', pencilFidelity: 9, autosaveMinutes: -3 })).toEqual(DEFAULT_PREFERENCES);
-    expect(sanitizePreferences({ autoAddDelete: false, pencilFidelity: 5, autosaveMinutes: 10.4 })).toEqual({ autoAddDelete: false, pencilFidelity: 5, autosaveMinutes: 10, startScreen: true, placeLinked: false, shortcuts: {}, linuxNoticeSeen: false });
+    expect(sanitizePreferences({ autoAddDelete: false, pencilFidelity: 5, autosaveMinutes: 10.4 })).toEqual({ autoAddDelete: false, pencilFidelity: 5, autosaveMinutes: 10, startScreen: true, placeLinked: false, shortcuts: {}, linuxNoticeSeen: false, moveArtworkWithArtboard: true, arrange: DEFAULT_PREFERENCES.arrange });
+  });
+
+  it('keeps valid artboard settings and cleans the rest', () => {
+    expect(sanitizePreferences({ moveArtworkWithArtboard: false }).moveArtworkWithArtboard).toBe(false);
+    expect(sanitizePreferences({ moveArtworkWithArtboard: 'no' }).moveArtworkWithArtboard).toBe(true);
+    expect(sanitizePreferences({ arrange: { columns: 4, spacing: 12, direction: 'column', moveArtwork: false } }).arrange).toEqual({ columns: 4, spacing: 12, direction: 'column', moveArtwork: false });
+    expect(sanitizePreferences({ arrange: { columns: -1, spacing: 'x', direction: 'diagonal', moveArtwork: 1 } }).arrange).toEqual(DEFAULT_PREFERENCES.arrange);
   });
 
   it('higher pencil fidelity means a smaller tolerance, and 3 is the original 2.5 px', () => {

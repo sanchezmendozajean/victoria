@@ -59,4 +59,30 @@ test.describe('Panel Mesas de trabajo', () => {
     await page.keyboard.press('Control+z');
     await expect(rows(page)).toHaveCount(3);
   });
+
+  test('the move-artwork toggle and the Rearrange values survive a reload', async () => {
+    const { page } = ctx;
+    await page.keyboard.press('Escape');
+    await page.keyboard.press('Shift+O');
+    const toggle = page.getByTestId('artboard-move-art');
+    await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+
+    await page.locator('[data-panel="artboards"]').first().click();
+    await page.getByTestId('artboards-arrange').click();
+    await page.getByTestId('arrange-direction').selectOption('column');
+    await page.getByTestId('arrange-artwork').uncheck();
+    await page.getByTestId('arrange-ok').click();
+
+    await page.reload();
+    await page.waitForSelector('[data-testid="titlebar"]');
+    await page.keyboard.press('Shift+O');
+    await expect(page.getByTestId('artboard-move-art')).toHaveAttribute('aria-pressed', 'false');
+    await page.locator('[data-panel="artboards"]').first().click();
+    await page.getByTestId('artboards-new').click();
+    await page.getByTestId('artboards-arrange').click();
+    await expect(page.getByTestId('arrange-direction')).toHaveValue('column');
+    await expect(page.getByTestId('arrange-artwork')).not.toBeChecked();
+  });
 });

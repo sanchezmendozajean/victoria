@@ -17,6 +17,7 @@ import {
   type Space,
 } from '../../core';
 import { t } from '../i18n';
+import { getPreferences } from '../prefs/preferences';
 import { topLevelIds } from '../tools/shared';
 import { useUi } from './store';
 
@@ -54,7 +55,7 @@ export function duplicateArtboardOf(session: DocumentSession, id: string): void 
   const last = space.artboards[space.artboards.length - 1];
   if (!source || !last) return;
   const copy = copyArtboard(source, session.ids(), t('doc.defaultArtboard', { n: space.artboards.length + 1 }), { x: last.x + last.w + 40, y: source.y });
-  const duplicated = duplicateArtboard(space, source.id, copy, session.ids, useUi.getState().moveArtworkWithArtboard);
+  const duplicated = duplicateArtboard(space, source.id, copy, session.ids, getPreferences().moveArtworkWithArtboard);
   if (!duplicated) return;
   session.run(duplicated.command);
   select(space, copy.id);

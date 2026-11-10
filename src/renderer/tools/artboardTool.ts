@@ -16,6 +16,7 @@ import {
   type Vec2,
 } from '../../core';
 import { useUi } from '../app/store';
+import { getPreferences } from '../prefs/preferences';
 import { t } from '../i18n';
 import { HANDLE_IDS, type HandleId } from './boxGeometry';
 import type { Tool, ToolHost } from './types';
@@ -139,10 +140,10 @@ export function createArtboardTool(): Tool {
         ui.setActiveArtboard(space.id, hit.id);
         let target = hit;
         // The artwork that travels with the board: the clones for Alt (a copy), the objects on it for a plain move.
-        let content: string[] = ui.moveArtworkWithArtboard && !event.altKey ? artworkOnBoard(space, hit) : [];
+        let content: string[] = getPreferences().moveArtworkWithArtboard && !event.altKey ? artworkOnBoard(space, hit) : [];
         if (event.altKey) {
           const copy = copyArtboard(hit, session.ids(), nextName(space));
-          const duplicated = duplicateArtboard(space, hit.id, copy, session.ids, ui.moveArtworkWithArtboard);
+          const duplicated = duplicateArtboard(space, hit.id, copy, session.ids, getPreferences().moveArtworkWithArtboard);
           if (duplicated) {
             session.run(duplicated.command);
             content = duplicated.artworkIds;

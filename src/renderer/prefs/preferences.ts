@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import type { ArrangeDirection } from '../../core';
 import { DEFAULT_SHORTCUTS, isShortcutAction, isValidAccelerator, normalizeAccelerator, setShortcutOverrides } from '../app/shortcuts';
 
 /** What the user can set in Edición › Preferencias (Ctrl+K). Kept per user, outside any document. */
@@ -17,9 +18,23 @@ export interface Preferences {
   shortcuts: Record<string, string>;
   /** The one-time notice about Alt+drag on Linux desktops has been shown. */
   linuxNoticeSeen: boolean;
+  /** Artboard tool and panel: moving or copying an artboard takes the artwork on it along. */
+  moveArtworkWithArtboard: boolean;
+  /** Last values of Reorganizar mesas (columns 0 = pick from the count; spacing in pt). */
+  arrange: ArrangeSettings;
 }
 
-export const DEFAULT_PREFERENCES: Preferences = { autoAddDelete: true, pencilFidelity: 3, autosaveMinutes: 1, startScreen: true, placeLinked: false, shortcuts: {}, linuxNoticeSeen: false };
+export interface ArrangeSettings {
+  columns: number;
+  spacing: number;
+  direction: ArrangeDirection;
+  moveArtwork: boolean;
+}
+
+const ARRANGE_DIRECTIONS: readonly ArrangeDirection[] = ['row', 'row-rtl', 'column'];
+export const DEFAULT_ARRANGE: ArrangeSettings = { columns: 0, spacing: (20 * 72) / 25.4, direction: 'row', moveArtwork: true };
+
+export const DEFAULT_PREFERENCES: Preferences = { autoAddDelete: true, pencilFidelity: 3, autosaveMinutes: 1, startScreen: true, placeLinked: false, shortcuts: {}, linuxNoticeSeen: false, moveArtworkWithArtboard: true, arrange: DEFAULT_ARRANGE };
 
 export const AUTOSAVE_MINUTES = { min: 1, max: 30 } as const;
 const STORAGE_KEY = 'victoria.preferences';
@@ -41,6 +56,20 @@ export function sanitizePreferences(raw: unknown): Preferences {
     placeLinked: typeof source.placeLinked === 'boolean' ? source.placeLinked : DEFAULT_PREFERENCES.placeLinked,
     shortcuts: sanitizeShortcuts(source.shortcuts),
     linuxNoticeSeen: source.linuxNoticeSeen === true,
+    moveArtworkWithArtboard: typeof source.moveArtworkWithArtboard === 'boolean' ? source.moveArtworkWithArtboard : DEFAULT_PREFERENCES.moveArtworkWithArtboard,
+    arrange: sanitizeArrange(source.arrange),
+  };
+}
+
+function sanitizeArrange(raw: unknown): ArrangeSettings {
+  const a = typeof raw === 'object' && raw !== null ? (raw as Record<string, unknown>) : {};
+  const columns = Number(a.columns);
+  const spacing = Number(a.spacing);
+  return {
+    columns: Number.isInteger(columns) && columns >= 0 && columns <= 999 ? columns : DEFAULT_ARRANGE.columns,
+    spacing: Number.isFinite(spacing) && spacing >= 0 && spacing <= 100000 ? spacing : DEFAULT_ARRANGE.spacing,
+    direction: ARRANGE_DIRECTIONS.find((d) => d === a.direction) ?? DEFAULT_ARRANGE.direction,
+    moveArtwork: typeof a.moveArtwork === 'boolean' ? a.moveArtwork : DEFAULT_ARRANGE.moveArtwork,
   };
 }
 

@@ -26,8 +26,8 @@ describe('resizeRect', () => {
 describe('moving an artboard', () => {
   const setup = async (withArtwork: boolean) => {
     const { createTestHost, drag, nodeX } = await import('./fakeHost');
-    const { useUi } = await import('../../app/store');
-    useUi.setState({ moveArtworkWithArtboard: withArtwork });
+    const { usePreferences } = await import('../../prefs/preferences');
+    usePreferences.getState().set({ moveArtworkWithArtboard: withArtwork });
     const t = createTestHost();
     const board = getActiveSpace(t.session.document).artboards[0]!;
     const r = t.rect(board.x + 10, board.y + 10, 20, 20);
@@ -70,8 +70,8 @@ describe('clicking an object with the artboard tool', () => {
 describe('Alt+drag on an artboard', () => {
   const run = async (withArtwork: boolean) => {
     const { createTestHost, drag } = await import('./fakeHost');
-    const { useUi } = await import('../../app/store');
-    useUi.setState({ moveArtworkWithArtboard: withArtwork });
+    const { usePreferences } = await import('../../prefs/preferences');
+    usePreferences.getState().set({ moveArtworkWithArtboard: withArtwork });
     const t = createTestHost();
     const board = getActiveSpace(t.session.document).artboards[0]!;
     t.rect(board.x + 10, board.y + 10, 20, 20);

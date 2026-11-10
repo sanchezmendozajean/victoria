@@ -7,13 +7,11 @@ import { NumberInput } from '../components/NumberInput';
 import { useDocuments } from '../documents';
 import { t } from '../i18n';
 import { CheckRow, Choice } from '../panels/kit';
+import { getPreferences, usePreferences } from '../prefs/preferences';
 import { arrangeAll } from './artboardActions';
 import { useUi } from './store';
 import '../components/DialogHost.css';
 import './TransformDialog.css';
-
-/** Last values (spacing in pt), kept for the session so the dialog opens as it was left. */
-const prefs: { columns: number; spacing: number; direction: ArrangeDirection; moveArtwork: boolean } = { columns: 0, spacing: unitToPt(20, 'mm'), direction: 'row', moveArtwork: true };
 
 /** Reorganizar mesas (specs/04): grid of columns, spacing and direction; the artwork follows its artboard. */
 export function ArrangeArtboardsDialog() {
@@ -29,14 +27,16 @@ function ArrangeForm() {
   const session = documents.active!.session;
   const units = session.document.meta.units;
   const count = getActiveSpace(session.document).artboards.length;
-  const [columns, setColumns] = useState(prefs.columns > 0 ? Math.min(prefs.columns, count) : Math.ceil(Math.sqrt(count)));
-  const [spacing, setSpacing] = useState(ptToUnit(prefs.spacing, units));
-  const [direction, setDirection] = useState<ArrangeDirection>(prefs.direction);
-  const [moveArtwork, setMoveArtwork] = useState(prefs.moveArtwork);
+  // The last values are remembered between sessions (Preferences.arrange).
+  const last = getPreferences().arrange;
+  const [columns, setColumns] = useState(last.columns > 0 ? Math.min(last.columns, count) : Math.ceil(Math.sqrt(count)));
+  const [spacing, setSpacing] = useState(ptToUnit(last.spacing, units));
+  const [direction, setDirection] = useState<ArrangeDirection>(last.direction);
+  const [moveArtwork, setMoveArtwork] = useState(last.moveArtwork);
 
   const accept = () => {
     const spacingPt = unitToPt(spacing, units);
-    Object.assign(prefs, { columns, spacing: spacingPt, direction, moveArtwork });
+    usePreferences.getState().set({ arrange: { columns, spacing: spacingPt, direction, moveArtwork } });
     arrangeAll(session, { columns, spacing: spacingPt, direction }, moveArtwork);
     close();
   };

@@ -25,6 +25,7 @@ import { NumberInput } from '../components/NumberInput';
 import { tip } from '../components/Tooltip';
 import { useDocuments } from '../documents';
 import { t } from '../i18n';
+import { usePreferences } from '../prefs/preferences';
 import { topLevelIds } from '../tools/shared';
 import { nodeIcon, nodeLabel } from './nodeLabels';
 import { applyObjectLook, applyStroke } from './paintActions';
@@ -77,8 +78,8 @@ function ArtboardControls({ session, space }: { session: DocumentSession; space:
   const units = session.document.meta.units;
   const active = useUi((s) => s.activeArtboard[space.id]);
   const setActive = useUi((s) => s.setActiveArtboard);
-  const withArt = useUi((s) => s.moveArtworkWithArtboard);
-  const toggleWithArt = useUi((s) => s.toggleMoveArtworkWithArtboard);
+  const withArt = usePreferences((s) => s.prefs.moveArtworkWithArtboard);
+  const setPrefs = usePreferences((s) => s.set);
   const board = space.artboards.find((a) => a.id === active) ?? space.artboards[0];
   if (!board) return null;
   const set = (patch: Partial<Pick<Artboard, 'x' | 'y' | 'w' | 'h'>>) => session.run(updateArtboard(space.id, board.id, patch));
@@ -109,7 +110,7 @@ function ArtboardControls({ session, space }: { session: DocumentSession; space:
       <BarButton icon="artboard-new" label={t('control.artboardNew')} tooltip={t('control.artboardNewTip')} onClick={create} />
       <BarButton icon="artboard-delete" label={t('control.artboardDelete')} tooltip={t('control.artboardDeleteTip')} onClick={remove} />
       <BarSeparator />
-      <BarButton icon="artboard-move-art" tooltip={t('control.artboardMoveArt')} pressed={withArt} testId="artboard-move-art" onClick={toggleWithArt} />
+      <BarButton icon="artboard-move-art" tooltip={t('control.artboardMoveArt')} pressed={withArt} testId="artboard-move-art" onClick={() => setPrefs({ moveArtworkWithArtboard: !withArt })} />
     </>
   );
 }
