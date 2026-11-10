@@ -1,14 +1,22 @@
 import { TRACE_PRESETS, TRACE_VIEWS, locateNode, paramsForPreset, type TraceParams, type TracePresetId } from '../../core';
 import { imageFactsOf } from '../app/imageObjectActions';
 import { cancelTrace, expandSelectedTrace, retraceSelected, setSelectedTraceView, traceSelectedImage, useTrace } from '../app/traceActions';
-import { Icon } from '../components/Icon';
+import { Icon, type IconId } from '../components/Icon';
+import { MenuPopup, type Anchor, type MenuEntry } from '../components/Menu';
+import { tip } from '../components/Tooltip';
 import { NumberInput } from '../components/NumberInput';
 import { t, type TranslationKey } from '../i18n';
+import { usePreferences } from '../prefs/preferences';
+import { useState } from 'react';
 import type { PanelContext } from './context';
 import { CheckRow, Choice, Row, Section } from './kit';
 
 const PRESETS = Object.keys(TRACE_PRESETS) as TracePresetId[];
 type PresetChoice = TracePresetId | 'custom';
+
+/** Menu icons of the presets (every menu entry has one) and the groups the menu separates, as Illustrator lists them. */
+const PRESET_ICONS: Record<TracePresetId, IconId> = { high: 'image', low: 'image', colors3: 'paint-color', colors6: 'paint-color', colors16: 'paint-color', grays: 'opacity', bw: 'fill', silhouette: 'shapes', lineart: 'tool-pencil', technical: 'tool-line', logo: 'tool-star' };
+const PRESET_GROUPS: TracePresetId[][] = [['high', 'low'], ['colors3', 'colors6', 'colors16'], ['grays'], ['bw', 'logo', 'silhouette', 'lineart', 'technical']];
 
 /** The preset the settings still match exactly, else 'custom'. */
 function presetOf(params: TraceParams): PresetChoice {
@@ -18,6 +26,9 @@ function presetOf(params: TraceParams): PresetChoice {
 /** Calco de imagen (specs/08): trace a picture, and tune a live trace. */
 export function TraceSection({ ctx, id }: { ctx: PanelContext; id: string }) {
   const { running, progress } = useTrace();
+  const preset = usePreferences((s) => s.prefs.tracePreset);
+  const setPrefs = usePreferences((s) => s.set);
+  const [menu, setMenu] = useState<Anchor | null>(null);
   const node = locateNode(ctx.space, id)?.node;
   const live = node && node.type === 'group' ? node.trace : undefined;
   const facts = !live ? imageFactsOf(ctx.session, ctx.space, id) : null;
@@ -42,11 +53,47 @@ export function TraceSection({ ctx, id }: { ctx: PanelContext; id: string }) {
     return (
       <Section title={t('trace.section')}>
         <Row>
-          <button type="button" className="vc-pbutton" data-testid="trace-run" disabled={running} onClick={() => void traceSelectedImage()}>
-            <Icon id="trace-image" size={14} />
-            {t('trace.run')}
-          </button>
+          <div className="vc-split">
+            <button type="button" className="vc-pbutton" data-testid="trace-run" {...tip(t('trace.runWith', { preset: t(`trace.preset.${preset}` as TranslationKey) }))} disabled={running} onClick={() => void traceSelectedImage()}>
+              <Icon id="trace-image" size={14} />
+              {t('trace.run')}
+            </button>
+            <button
+              type="button"
+              className="vc-pbutton vc-split__arrow"
+              data-testid="trace-menu"
+              data-menu-trigger
+              aria-haspopup="menu"
+              aria-expanded={!!menu}
+              {...tip(t('trace.menu'))}
+              disabled={running}
+              onClick={(e) => setMenu(menu ? null : { rect: e.currentTarget.getBoundingClientRect(), placement: 'below' })}
+            >
+              <Icon id="chevron-down" size={12} />
+            </button>
+          </div>
         </Row>
+        {menu && (
+          <MenuPopup
+            anchor={menu}
+            minWidth={200}
+            onClose={() => setMenu(null)}
+            entries={PRESET_GROUPS.flatMap((group, i): MenuEntry[] => [
+              ...(i > 0 ? [{ type: 'separator' as const, id: `sep-${i}` }] : []),
+              ...group.map((p) => ({
+                id: p,
+                label: t(`trace.preset.${p}` as TranslationKey),
+                icon: PRESET_ICONS[p],
+                checked: p === preset,
+                // Picking a preset traces with it and makes it the one the button uses from now on.
+                onSelect: () => {
+                  setPrefs({ tracePreset: p });
+                  void traceSelectedImage(p);
+                },
+              })),
+            ])}
+          />
+        )}
         {progressRow}
       </Section>
     );

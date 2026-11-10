@@ -7,7 +7,13 @@ describe('preferences', () => {
     expect(sanitizePreferences(null)).toEqual(DEFAULT_PREFERENCES);
     expect(sanitizePreferences('x')).toEqual(DEFAULT_PREFERENCES);
     expect(sanitizePreferences({ autoAddDelete: 'yes', pencilFidelity: 9, autosaveMinutes: -3 })).toEqual(DEFAULT_PREFERENCES);
-    expect(sanitizePreferences({ autoAddDelete: false, pencilFidelity: 5, autosaveMinutes: 10.4 })).toEqual({ autoAddDelete: false, pencilFidelity: 5, autosaveMinutes: 10, startScreen: true, placeLinked: false, shortcuts: {}, linuxNoticeSeen: false, moveArtworkWithArtboard: true, arrange: DEFAULT_PREFERENCES.arrange });
+    expect(sanitizePreferences({ autoAddDelete: false, pencilFidelity: 5, autosaveMinutes: 10.4 })).toEqual({ autoAddDelete: false, pencilFidelity: 5, autosaveMinutes: 10, startScreen: true, placeLinked: false, shortcuts: {}, linuxNoticeSeen: false, moveArtworkWithArtboard: true, tracePreset: 'colors16', arrange: DEFAULT_PREFERENCES.arrange });
+  });
+
+  it('the trace preset must be a known one', () => {
+    expect(sanitizePreferences({ tracePreset: 'lineart' }).tracePreset).toBe('lineart');
+    expect(sanitizePreferences({ tracePreset: 'nope' }).tracePreset).toBe('colors16');
+    expect(sanitizePreferences({ tracePreset: 'toString' }).tracePreset).toBe('colors16');
   });
 
   it('keeps valid artboard settings and cleans the rest', () => {

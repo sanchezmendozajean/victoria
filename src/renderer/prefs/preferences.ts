@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { ArtboardArrangeDirection } from '../../core';
+import { TRACE_PRESETS, type ArtboardArrangeDirection, type TracePresetId } from '../../core';
 import { DEFAULT_SHORTCUTS, isShortcutAction, isValidAccelerator, normalizeAccelerator, setShortcutOverrides } from '../app/shortcuts';
 
 /** What the user can set in Edición › Preferencias (Ctrl+K). Kept per user, outside any document. */
@@ -20,6 +20,8 @@ export interface Preferences {
   linuxNoticeSeen: boolean;
   /** Artboard tool and panel: moving or copying an artboard takes the artwork on it along. */
   moveArtworkWithArtboard: boolean;
+  /** Calco de imagen: the preset the Calcar button uses (the last one picked from its menu). */
+  tracePreset: TracePresetId;
   /** Last values of Reorganizar mesas (columns 0 = pick from the count; spacing in pt). */
   arrange: ArrangeSettings;
 }
@@ -34,7 +36,7 @@ export interface ArrangeSettings {
 const ARRANGE_DIRECTIONS: readonly ArtboardArrangeDirection[] = ['row', 'row-rtl', 'column'];
 export const DEFAULT_ARRANGE: ArrangeSettings = { columns: 0, spacing: (20 * 72) / 25.4, direction: 'row', moveArtwork: true };
 
-export const DEFAULT_PREFERENCES: Preferences = { autoAddDelete: true, pencilFidelity: 3, autosaveMinutes: 1, startScreen: true, placeLinked: false, shortcuts: {}, linuxNoticeSeen: false, moveArtworkWithArtboard: true, arrange: DEFAULT_ARRANGE };
+export const DEFAULT_PREFERENCES: Preferences = { autoAddDelete: true, pencilFidelity: 3, autosaveMinutes: 1, startScreen: true, placeLinked: false, shortcuts: {}, linuxNoticeSeen: false, moveArtworkWithArtboard: true, tracePreset: 'colors16', arrange: DEFAULT_ARRANGE };
 
 export const AUTOSAVE_MINUTES = { min: 1, max: 30 } as const;
 const STORAGE_KEY = 'victoria.preferences';
@@ -57,6 +59,7 @@ export function sanitizePreferences(raw: unknown): Preferences {
     shortcuts: sanitizeShortcuts(source.shortcuts),
     linuxNoticeSeen: source.linuxNoticeSeen === true,
     moveArtworkWithArtboard: typeof source.moveArtworkWithArtboard === 'boolean' ? source.moveArtworkWithArtboard : DEFAULT_PREFERENCES.moveArtworkWithArtboard,
+    tracePreset: typeof source.tracePreset === 'string' && Object.hasOwn(TRACE_PRESETS, source.tracePreset) ? (source.tracePreset as TracePresetId) : DEFAULT_PREFERENCES.tracePreset,
     arrange: sanitizeArrange(source.arrange),
   };
 }

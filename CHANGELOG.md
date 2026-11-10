@@ -1,5 +1,8 @@
 # Changelog
 
+## Calcar con ajustes
+- El botón **Calcar** del panel Propiedades es ahora un botón dividido: la flecha abre un menú con los 11 ajustes (Alta y Baja fidelidad, 3, 6 y 16 colores, Tonos de gris, Blanco y negro, Logotipo, Silueta, Arte lineal, Dibujo técnico). Elegir uno calca de inmediato con ese ajuste y lo deja como el que usa el botón (`tracePreset` en las preferencias, por defecto 16 colores); el ajuste sigue pudiéndose cambiar después en el selector «Ajuste» del calco vivo. Los menús abiertos desde un panel flotante ya no lo cierran.
+
 ## Carpeta recordada y SVG sin pintura
 - **Última carpeta**: todos los diálogos de archivo (Abrir, Colocar imágenes, Guardar, Exportar, Exportar para pantallas y el PDF de impresión) empiezan donde terminó el anterior, también tras reiniciar (`last-folder.json` en la carpeta de datos). Guardar como de un documento que ya tiene archivo empieza en su propia carpeta. Si la carpeta ya no existe, vuelve a Documentos (Imágenes para colocar). Lógica en `main/lastDir.ts`.
 - **SVG con formas sin pintura**: el importador descartaba las formas sin relleno ni trazo y un archivo de Illustrator con solo `fill:none` (clase CSS) se abría vacío con el aviso «dibujo vacío». Ahora se importan como trazados sin pintura (como hace Illustrator); solo se descarta `display:none`.

@@ -5,6 +5,7 @@ import { decodePixels, runTrace, type TraceJob } from '../trace/tracer';
 import { askUser } from './dialogs';
 import { imageFactsOf } from './imageObjectActions';
 import { actionContext } from './selectionActions';
+import { getPreferences } from '../prefs/preferences';
 
 interface TraceState {
   running: boolean;
@@ -49,7 +50,7 @@ function selectedTrace() {
 }
 
 /** Calco de imagen: the selected image becomes a live group of flat-colour paths. */
-export async function traceSelectedImage(preset: TracePresetId = 'colors16'): Promise<void> {
+export async function traceSelectedImage(preset: TracePresetId = getPreferences().tracePreset): Promise<void> {
   const c = actionContext();
   const id = c && c.ids.length === 1 ? c.ids[0] : undefined;
   const facts = c && id ? imageFactsOf(c.session, c.space, id) : null;

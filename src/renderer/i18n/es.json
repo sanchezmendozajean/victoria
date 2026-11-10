@@ -976,6 +976,8 @@
   "image.fileDialog": "Imágenes y dibujos (PNG, JPEG, WebP, SVG, PDF)",
   "trace.section": "Calco de imagen",
   "trace.run": "Calcar",
+  "trace.runWith": "Calcar con el ajuste «{preset}»",
+  "trace.menu": "Elegir un ajuste de calco",
   "trace.expand": "Expandir",
   "trace.cancel": "Cancelar",
   "trace.running": "Calcando… {percent} %",
