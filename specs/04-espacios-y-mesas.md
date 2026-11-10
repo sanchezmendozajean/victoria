@@ -45,8 +45,8 @@ interface Artboard {
 
 ### Herramienta Mesa de trabajo (Mayús+O)
 
-- Arrastrar en vacío = nueva mesa. Clic en una mesa = activarla. Tiradores para redimensionar.
-- Alt+arrastrar una mesa = duplicarla **con su contenido**. Opción "Mover/copiar ilustración con la mesa" (activa por defecto).
+- Arrastrar en vacío = nueva mesa. Clic en una mesa = activarla. Clic (sin arrastrar) sobre un objeto = crea una mesa del tamaño de sus límites visibles (borde incluido), como Illustrator. Tiradores para redimensionar.
+- Alt+arrastrar una mesa = duplicarla **con su contenido**. Opción "Mover/copiar ilustración con la mesa" (activa por defecto): botón de alternancia en la barra de control de la herramienta; desactivada, arrastrar una mesa la mueve sin su contenido.
 - Barra de control: preset, orientación, nombre, X, Y, An, Al, botones Nueva, Eliminar, Opciones.
 - Esc vuelve a la herramienta anterior.
 - Supr elimina la mesa activa (no el contenido).

@@ -99,6 +99,8 @@ interface UiState {
   /** Reference point of the control bar X/Y/W/H fields: 0 / 0.5 / 1 on each axis. */
   referencePoint: Vec2;
   linkProportions: boolean;
+  /** Mesa de trabajo tool: dragging an artboard carries the artwork on it (specs/04). */
+  moveArtworkWithArtboard: boolean;
   transformDialog: { kind: TransformKind; origin: Vec2 | null } | null;
   /** Fill and stroke of the next object drawn (and what the toolbar shows with nothing selected). */
   newLook: Appearance;
@@ -143,6 +145,7 @@ interface UiState {
   setLastTransform(transform: { matrix: Matrix; copy: boolean } | null): void;
   setReferencePoint(point: Vec2): void;
   toggleLinkProportions(): void;
+  toggleMoveArtworkWithArtboard(): void;
   openTransformDialog(kind: TransformKind, origin: Vec2 | null): void;
   closeTransformDialog(): void;
   setNewLook(look: Appearance): void;
@@ -288,6 +291,7 @@ export const useUi = create<UiState>()((set, get) => ({
   lastTransform: null,
   referencePoint: { x: 0.5, y: 0.5 },
   linkProportions: false,
+  moveArtworkWithArtboard: true,
   transformDialog: null,
   newLook: defaultAppearance(),
   colorPicker: null,
@@ -318,6 +322,7 @@ export const useUi = create<UiState>()((set, get) => ({
   setLastTransform: (lastTransform) => set({ lastTransform }),
   setReferencePoint: (referencePoint) => set({ referencePoint }),
   toggleLinkProportions: () => set((s) => ({ linkProportions: !s.linkProportions })),
+  toggleMoveArtworkWithArtboard: () => set((s) => ({ moveArtworkWithArtboard: !s.moveArtworkWithArtboard })),
   openTransformDialog: (kind, origin) => set({ transformDialog: { kind, origin } }),
   closeTransformDialog: () => set({ transformDialog: null }),
   setNewLook: (newLook) => set({ newLook }),

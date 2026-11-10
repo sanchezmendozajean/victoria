@@ -87,6 +87,10 @@
 .vc-barbutton:hover {
   background: var(--bg-hover);
 }
+.vc-barbutton.is-active {
+  background: var(--bg-active);
+  color: var(--accent);
+}
 
 .vc-field--input {
   cursor: text;

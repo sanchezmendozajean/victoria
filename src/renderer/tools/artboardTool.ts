@@ -3,12 +3,16 @@ import {
   combineCommands,
   createArtboard,
   nodeWorldBounds,
+  inflateRect,
+  strokesOf,
+  unionRect,
   removeArtboard,
   transformNodes,
   translation,
   updateArtboard,
   type Artboard,
   type Command,
+  type Node,
   type Space,
   type Vec2,
 } from '../../core';
@@ -108,17 +112,45 @@ function contentOf(space: Space, board: Rect): string[] {
 }
 
 type State =
-  | { kind: 'move'; id: string; start: Rect; from: Vec2; content: string[]; applied: Vec2; key: string }
+  | { kind: 'move'; id: string; start: Rect; from: Vec2; content: string[]; applied: Vec2; key: string; fit: Rect | null }
   | { kind: 'resize'; id: string; handle: HandleId; start: Rect; key: string }
-  | { kind: 'create'; id: string; from: Vec2; fromScreen: Vec2; key: string }
+  | { kind: 'create'; id: string; from: Vec2; fromScreen: Vec2; key: string; fit: Rect | null }
   | null;
+
+/** Room a node's own strokes need around its outline (miter spikes ignored: a rectangle fits exactly). */
+function strokeReach(node: Node): number {
+  let d = 0;
+  for (const st of strokesOf(node.appearance)) d = Math.max(d, st.align === 'inside' ? 0 : st.align === 'outside' ? st.width : st.width / 2);
+  return d;
+}
+
+/** Geometric bounds of a node (and what it holds) plus the half width of its strokes, in Space coordinates. */
+function fitBounds(space: Space, node: Node): Rect | null {
+  let out: Rect | null = null;
+  if (node.type === 'group' || node.type === 'clipGroup') {
+    // A clip group shows only what its mask (first child) covers.
+    for (const child of node.type === 'clipGroup' ? node.children.slice(0, 1) : node.children) out = unionRect(out, fitBounds(space, child));
+    return out;
+  }
+  const b = nodeWorldBounds(space, node.id);
+  return b ? inflateRect(b, strokeReach(node)) : null;
+}
+
+/** Visual bounds (stroke included) of the top-level object under the cursor, as Illustrator fits an artboard to it. */
+function objectBoundsAt(host: ToolHost, p: Vec2): Rect | null {
+  const space = host.space;
+  const hit = host.hitTest(p)[0];
+  if (!space || !hit) return null;
+  const b = fitBounds(space, hit.ancestors[0] ?? hit.node);
+  return b ? { x: b.minX, y: b.minY, w: Math.max(MIN_SIZE, b.maxX - b.minX), h: Math.max(MIN_SIZE, b.maxY - b.minY) } : null;
+}
 
 /** The next free name "Mesa n". */
 const nextName = (space: Space) => t('doc.defaultArtboard', { n: space.artboards.length + 1 });
 
 /**
- * Mesa de trabajo (Mayús+O): drag on empty canvas draws a new artboard, a click activates one, handles resize the
- * active one, dragging inside moves it with the artwork on it (Alt copies the artboard), Delete removes it, Escape leaves.
+ * Mesa de trabajo (Mayús+O): drag on empty canvas draws a new artboard, a click on an object makes an artboard fitted to it (stroke included), a click on an artboard activates it, handles resize the
+ * active one, dragging inside moves it with the artwork on it unless the "move artwork with artboard" toggle is off (Alt copies the artboard), Delete removes it, Escape leaves.
  */
 export function createArtboardTool(): Tool {
   let state: State = null;
@@ -149,12 +181,12 @@ export function createArtboardTool(): Tool {
           target = copy;
         }
         const start = { x: target.x, y: target.y, w: target.w, h: target.h };
-        // The copy leaves the artwork where it is; a plain move carries it.
-        state = { kind: 'move', id: target.id, start, from: event.doc, content: event.altKey ? [] : contentOf(space, start), applied: { x: 0, y: 0 }, key: host.gestureKey() };
+        // The copy leaves the artwork where it is; a plain move carries it unless the option is off.
+        state = { kind: 'move', id: target.id, start, from: event.doc, content: event.altKey || !ui.moveArtworkWithArtboard ? [] : contentOf(space, start), applied: { x: 0, y: 0 }, key: host.gestureKey(), fit: event.altKey ? null : objectBoundsAt(host, event.doc) };
         host.invalidateOverlay();
         return;
       }
-      state = { kind: 'create', id: '', from: event.doc, fromScreen: event.screen, key: host.gestureKey() };
+      state = { kind: 'create', id: '', from: event.doc, fromScreen: event.screen, key: host.gestureKey(), fit: objectBoundsAt(host, event.doc) };
     },
 
     onPointerMove(event, host) {
@@ -197,6 +229,13 @@ export function createArtboardTool(): Tool {
     },
 
     onPointerUp(_event, host) {
+      // A plain click on an object (no drag) makes an artboard that fits it.
+      const { session, space } = host;
+      if (state && session && space && state.fit && ((state.kind === 'create' && !state.id) || (state.kind === 'move' && state.applied.x === 0 && state.applied.y === 0))) {
+        const board = createArtboard(session.ids, { name: nextName(space), ...state.fit });
+        session.run(addArtboard(space.id, board));
+        useUi.getState().setActiveArtboard(space.id, board.id);
+      }
       state = null;
       host.invalidateOverlay();
     },

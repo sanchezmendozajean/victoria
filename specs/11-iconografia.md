@@ -66,7 +66,7 @@
 | space-properties | lucide `settings-2` | |
 
 ### Mesas de trabajo
-artboard-new `custom` · artboard-delete `trash-2` · artboard-duplicate `copy` · artboard-options `settings-2` · artboard-portrait `rectangle-vertical` · artboard-landscape `rectangle-horizontal` · artboard-rearrange `layout-grid` · artboard-fit-art `custom (mesa abrazando forma)` · artboard-fit-selection `custom`.
+artboard-new `custom` · artboard-delete `trash-2` · artboard-duplicate `copy` · artboard-options `settings-2` · artboard-portrait `rectangle-vertical` · artboard-landscape `rectangle-horizontal` · artboard-rearrange `layout-grid` · artboard-fit-art `custom (mesa abrazando forma)` · artboard-fit-selection `custom` · artboard-move-art `custom (mesa con su ilustración)`.
 
 ### Alineación
 align-left `align-start-vertical` · align-hcenter `align-center-vertical` · align-right `align-end-vertical` · align-top `align-start-horizontal` · align-vcenter `align-center-horizontal` · align-bottom `align-end-horizontal` · dist-left/hcenter/right `align-horizontal-distribute-start/center/end` · dist-top/vcenter/bottom `align-vertical-distribute-start/center/end` · align-to-selection `custom` · align-to-key `custom (objeto con borde grueso)` · align-to-artboard `custom`.

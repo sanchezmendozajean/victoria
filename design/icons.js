@@ -100,6 +100,7 @@
       ['artboard-rearrange', 'lucide layout-grid', R(3, 3, 7, 7, 1) + R(14, 3, 7, 7, 1) + R(14, 14, 7, 7, 1) + R(3, 14, 7, 7, 1)],
       ['artboard-fit-art', 'custom', R(5, 5, 14, 14) + C(12, 12, 7) + P('M5 2v2', 'M2 5h2', 'M19 22v-2', 'M22 19h-2')],
       ['artboard-fit-selection', 'custom', R(4, 4, 16, 16) + R(8.5, 8.5, 7, 7, 0, D) + P('M4 4l3 3', 'M20 4l-3 3', 'M4 20l3-3', 'M20 20l-3-3')],
+      ['artboard-move-art', 'custom', R(3, 3, 18, 18, 0) + R(8, 8, 8, 8, 1)],
     ]],
     ['Alineación', [
       ['align-left', 'lucide align-start-vertical', R(6, 14, 9, 6, 2) + R(6, 4, 16, 6, 2) + P('M2 2v20')],

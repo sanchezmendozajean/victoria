@@ -63,13 +63,16 @@ interface BarButtonProps {
   label?: string;
   tooltip: string;
   shortcut?: string;
+  /** Makes it a toggle: pressed state shown and announced. */
+  pressed?: boolean;
+  testId?: string;
   onClick?: () => void;
 }
 
 /** 24 px icon button, with an optional text label (control bar actions). */
-export function BarButton({ icon, label, tooltip, shortcut, onClick }: BarButtonProps) {
+export function BarButton({ icon, label, tooltip, shortcut, pressed, testId, onClick }: BarButtonProps) {
   return (
-    <button type="button" className={cx('vc-barbutton', label && 'vc-barbutton--label')} onClick={onClick} {...tip(tooltip, shortcut)}>
+    <button type="button" className={cx('vc-barbutton', label && 'vc-barbutton--label', pressed && 'is-active')} aria-pressed={pressed} data-testid={testId} onClick={onClick} {...tip(tooltip, shortcut)}>
       <Icon id={icon} size={16} />
       {label && <span>{label}</span>}
     </button>

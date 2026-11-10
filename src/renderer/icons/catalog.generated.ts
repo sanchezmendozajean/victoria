@@ -63,6 +63,7 @@ export const ICONS = {
   "artboard-rearrange": "<rect x=\"3\" y=\"3\" width=\"7\" height=\"7\" rx=\"1\" /><rect x=\"14\" y=\"3\" width=\"7\" height=\"7\" rx=\"1\" /><rect x=\"14\" y=\"14\" width=\"7\" height=\"7\" rx=\"1\" /><rect x=\"3\" y=\"14\" width=\"7\" height=\"7\" rx=\"1\" />",
   "artboard-fit-art": "<rect x=\"5\" y=\"5\" width=\"14\" height=\"14\" rx=\"0\" /><circle cx=\"12\" cy=\"12\" r=\"7\" /><path d=\"M5 2v2\"/><path d=\"M2 5h2\"/><path d=\"M19 22v-2\"/><path d=\"M22 19h-2\"/>",
   "artboard-fit-selection": "<rect x=\"4\" y=\"4\" width=\"16\" height=\"16\" rx=\"0\" /><rect x=\"8.5\" y=\"8.5\" width=\"7\" height=\"7\" rx=\"0\" stroke-dasharray=\"2 2.5\"/><path d=\"M4 4l3 3\"/><path d=\"M20 4l-3 3\"/><path d=\"M4 20l3-3\"/><path d=\"M20 20l-3-3\"/>",
+  "artboard-move-art": "<rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"0\" /><rect x=\"8\" y=\"8\" width=\"8\" height=\"8\" rx=\"1\" />",
   // Alineación
   "align-left": "<rect x=\"6\" y=\"14\" width=\"9\" height=\"6\" rx=\"2\" /><rect x=\"6\" y=\"4\" width=\"16\" height=\"6\" rx=\"2\" /><path d=\"M2 2v20\"/>",
   "align-hcenter": "<path d=\"M12 2v20\"/><path d=\"M8 10H4a2 2 0 0 1-2-2V6c0-1.1.9-2 2-2h4\"/><path d=\"M16 10h4a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-4\"/><path d=\"M8 20H7a2 2 0 0 1-2-2v-2c0-1.1.9-2 2-2h1\"/><path d=\"M16 14h1a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-1\"/>",
