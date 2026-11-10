@@ -112,6 +112,17 @@ export function StatusBar() {
           <Icon id="chevron-down" size={10} />
         </button>
       </div>
+      {space && (
+        <div className="vc-statusbar__cell" data-testid="status-space" {...tip(t('status.space'))}>
+          <Icon id="spaces" size={14} className="vc-statusbar__icon" />
+          <span>{t('status.spaceLabel')}</span>
+          <span className="vc-statusbar__dot" style={{ background: space.color }} />
+          <b>{space.name}</b>
+          <span>
+            · {space.artboards.length} {t(space.artboards.length === 1 ? 'spaces.artboardOne' : 'spaces.artboardMany')}
+          </span>
+        </div>
+      )}
       <div className="vc-statusbar__cell" {...tip(t('status.artboardNav'))}>
         <button type="button" className="vc-statusbar__step" data-testid="artboard-prev" aria-label={t('status.artboardPrev')} onClick={() => goToArtboard(artboardIndex - 1)}>
           <Icon id="chevron-left" size={12} />
@@ -138,17 +149,6 @@ export function StatusBar() {
           Y <b>{cursor ? formatLength(cursor.y, units) : '—'}</b>
         </span>
       </div>
-      {space && (
-        <div className="vc-statusbar__cell" data-testid="status-space" {...tip(t('status.space'))}>
-          <Icon id="spaces" size={14} className="vc-statusbar__icon" />
-          <span>{t('status.spaceLabel')}</span>
-          <span className="vc-statusbar__dot" style={{ background: space.color }} />
-          <b>{space.name}</b>
-          <span>
-            · {space.artboards.length} {t(space.artboards.length === 1 ? 'spaces.artboardOne' : 'spaces.artboardMany')}
-          </span>
-        </div>
-      )}
       <div className="vc-statusbar__spacer" />
       {busy && (
         <div className="vc-statusbar__cell" data-testid="status-busy" role="status">

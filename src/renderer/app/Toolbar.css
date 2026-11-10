@@ -6,7 +6,7 @@
   align-items: center;
   flex: none;
   width: var(--w-toolbar);
-  padding: 6px 0;
+  padding: 6px 2px;
   overflow-y: auto;
   overflow-x: hidden;
   background: var(--bg-panel);
@@ -23,7 +23,6 @@
   justify-content: center;
   width: 100%;
   height: 12px;
-  margin-bottom: 4px;
   padding: 0;
   border: 0;
   background: transparent;
@@ -48,7 +47,7 @@
   gap: 1px 0;
 }
 .vc-toolbar--two .vc-toolbar__tool {
-  width: 30px;
+  width: 28px;
 }
 .vc-toolbar__section--end {
   margin-top: 6px;
@@ -61,8 +60,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   padding: 0;
   border: 0;
   border-radius: var(--radius-control);

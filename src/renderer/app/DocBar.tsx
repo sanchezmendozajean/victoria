@@ -212,17 +212,6 @@ export function DocBar() {
                 <span className="vc-spacetab__name">{space.name}</span>
               )}
               {space.excludeFromExport && <Icon id="space-exclude-export" size={12} className="vc-spacetab__excluded" />}
-              <button
-                type="button"
-                className="vc-spacetab__more"
-                {...tip(t('space.options'))}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  showMenu(space.id, event.currentTarget.parentElement ?? event.currentTarget);
-                }}
-              >
-                <Icon id="more" size={14} />
-              </button>
             </div>
           );
         })}
