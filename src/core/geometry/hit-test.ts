@@ -57,7 +57,10 @@ function testItem(item: IndexItem, p: Vec2, tolerance: number): Hit | null {
   const strokes = strokesOf(item.node.appearance);
   // Like Illustrator: a stroke is picked by its vector (the path itself), not by the painted width around it.
   if (strokes.length > 0 && distanceToOutline(flat, local.point) <= tolLocal) return { ...base, part: 'stroke' };
-  return inside ? { ...base, part: 'fill' } : null;
+  if (inside) return { ...base, part: 'fill' };
+  // Text is picked by its (ink) box, with the same few pixels of margin a stroke has, so small text stays easy to click.
+  if (item.node.type === 'text' && hasFill(item.node.appearance) && distanceToOutline(flat, local.point) <= tolLocal) return { ...base, part: 'fill' };
+  return null;
 }
 
 /**

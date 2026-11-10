@@ -1,5 +1,8 @@
 # Changelog
 
+## Clic en el texto solo dentro de su caja
+- El área de clic del texto eran sus cajas de línea (de ascendente a descendente), mucho mayores que la caja de selección que se dibuja (la tinta de los glifos): con texto grande se seleccionaba y arrastraba el texto al hacer clic lejos de su caja. Ahora las cajas de línea se recortan a la tinta, así que se pica donde se ve la caja, con el mismo margen de unos píxeles que un trazo para que el texto pequeño siga siendo fácil de clicar. El texto de área (marco) y el texto sobre trazado no cambian.
+
 ## Lista de fuentes sobre los paneles
 - La lista del selector de fuentes (panel Carácter) se cortaba por el borde del panel que la contenía. Ahora se dibuja en el `body` con posición fija, por encima de todos los paneles y ventanas flotantes: se abre bajo el botón si cabe, si no hacia arriba, con la altura ajustada al espacio libre y dentro de la ventana; se cierra al desplazar el panel o al hacer clic fuera. En una ventana flotante ya no la cierra su propio clic fuera.
 

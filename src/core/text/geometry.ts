@@ -107,6 +107,27 @@ const rectPoly = (x0: number, y0: number, x1: number, y1: number): Vec2[] => [
   { x: x0, y: y1 },
 ];
 
+/**
+ * What a click can hit must be what the selection box shows, and that box is the ink of the glyphs. A line box runs from the
+ * ascender to the descender, which for large text reaches far beyond it: clip the line boxes to the ink so that clicking in
+ * empty space beside or below the letters does not pick the text. Text with no ink (only spaces) keeps its line boxes.
+ */
+function clipBoxesToInk(boxes: Vec2[][], subpaths: readonly SubPath[]): void {
+  let ink: Rect | null = null;
+  for (const sp of subpaths) ink = unionRect(ink, subPathBounds(sp));
+  if (!ink) return;
+  const clipped: Vec2[][] = [];
+  for (const poly of boxes) {
+    const x0 = Math.max(Math.min(...poly.map((p) => p.x)), ink.minX);
+    const x1 = Math.min(Math.max(...poly.map((p) => p.x)), ink.maxX);
+    const y0 = Math.max(Math.min(...poly.map((p) => p.y)), ink.minY);
+    const y1 = Math.min(Math.max(...poly.map((p) => p.y)), ink.maxY);
+    if (x1 > x0 && y1 > y0) clipped.push(rectPoly(x0, y0, x1, y1));
+  }
+  // A line that is only spaces has no ink to clip to: the other lines still decide, and if none is left the boxes stay.
+  if (clipped.length > 0) boxes.splice(0, boxes.length, ...clipped);
+}
+
 function compute(node: TextNode): TextGeometry {
   const subpaths: SubPath[] = [];
   const boxes: Vec2[][] = [];
@@ -151,6 +172,7 @@ function compute(node: TextNode): TextGeometry {
     subpaths.push(sp);
   }
   for (const line of layout.lines) boxes.push(rectPoly(line.x, line.y - line.ascent, line.x + Math.max(line.width, 1), line.y + line.descent));
+  if (!(frame && frame.anchors.length >= 3)) clipBoxesToInk(boxes, subpaths);
   if (frame && frame.anchors.length >= 3) {
     for (const poly of framePolygons(frame)) {
       boxes.push(poly);
