@@ -8,7 +8,8 @@ import { applyToPoint, invert, multiply } from '../model/matrix';
 import { isLayer } from '../model/queries';
 import type { Anchor, Appearance, AppearanceItem, LayerChild, Matrix, Node, Paint, Space } from '../model/types';
 import { combineCommands, type Command } from './command';
-import { groupNodes, removeNodes, replaceNode } from './node';
+import { cloneNode } from '../model/clone';
+import { groupNodes, removeNodes, replaceNode, replaceNodes } from './node';
 import { newModifier } from './modifiers';
 
 // Pathfinder (specs/06 · Buscatrazos): shape modes and pathfinders over the selected objects. Geometry
@@ -182,6 +183,50 @@ export function finishPathfinder(space: Space, plan: PathfinderPlan, computed: C
   const commands: Command[] = [replaceNode(space.id, topOwner, nodes)];
   if (others.length > 0) commands.push(removeNodes(space.id, others));
   return { command: combineCommands(`pathfinder.${op}`, commands), resultIds: nodes.map((n) => n.id) };
+}
+
+// ── Trazado compuesto ──
+
+/**
+ * Objeto › Trazado compuesto › Crear (Ctrl+8): the selected objects become ONE object that holds all their contours.
+ * As in Illustrator it takes the look of the backmost object and sits where the topmost was; where contours overlap
+ * they cut holes (even-odd). Null with fewer than two objects that have contours.
+ */
+export function makeCompoundPath(space: Space, ids: readonly string[], newIds: IdGenerator): PathfinderResult | null {
+  const { operands, owners } = gather(space, new Set(ids));
+  if (operands.length < 2 || owners.length === 0) return null;
+  const topOwner = owners[owners.length - 1] as string;
+  const toLocal = containerInverse(space, topOwner);
+  const paths = operands.flatMap((o) => o.shape.subpaths.map((sp) => createPath(newIds, sp.anchors.map((a) => mapAnchor(toLocal, a)), true)));
+  const compound = createCompound(newIds, paths as never, 'evenodd');
+  compound.appearance = deepClone((operands[0] as Operand).appearance) as Appearance;
+  for (const p of paths) p.appearance = { items: [] };
+  const others = owners.filter((id) => id !== topOwner);
+  const commands: Command[] = [replaceNode(space.id, topOwner, [compound])];
+  if (others.length > 0) commands.push(removeNodes(space.id, others));
+  return { command: combineCommands('compound.make', commands), resultIds: [compound.id] };
+}
+
+/**
+ * Objeto › Trazado compuesto › Liberar: every compound path in `ids` goes back to separate paths, each with the look
+ * of the compound. Null when none of them is a compound path.
+ */
+export function releaseCompoundPaths(space: Space, ids: readonly string[], newIds: IdGenerator): PathfinderResult | null {
+  const replacements: Array<{ id: string; nodes: Node[] }> = [];
+  const resultIds: string[] = [];
+  for (const id of ids) {
+    const node = frameOf(space, id)?.node;
+    if (!node || node.type !== 'compound') continue;
+    const map = new Map<string, string>();
+    const nodes = node.children.map((child) => {
+      const path = cloneNode({ ...child, appearance: node.appearance, transform: node.transform, opacity: node.opacity, blendMode: node.blendMode } as Node, newIds, map);
+      resultIds.push(path.id);
+      return path;
+    });
+    replacements.push({ id, nodes });
+  }
+  if (replacements.length === 0) return null;
+  return { command: replaceNodes(space.id, replacements, 'compound.release'), resultIds };
 }
 
 // ── Shape Builder ──

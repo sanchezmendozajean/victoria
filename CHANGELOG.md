@@ -1,5 +1,8 @@
 # Changelog
 
+## Trazado compuesto
+- **Objeto › Trazado compuesto › Crear (Ctrl+8)** y **Liberar (Alt+Mayús+Ctrl+8)** ya funcionan (tenían menú y atajo pero ninguna acción). Crear junta los contornos de los objetos seleccionados en un solo objeto con el aspecto del de más atrás, en el lugar del de más arriba, con regla par-impar (lo que se solapa hace hueco); Liberar devuelve trazados separados con el aspecto del compuesto. Una entrada de historial cada uno. `makeCompoundPath` / `releaseCompoundPaths` en `core/commands/pathfinder.ts`.
+
 ## Guías inteligentes al redimensionar
 - Con las guías inteligentes activas, escalar con los tiradores de la caja de selección (y la Transformación libre, que los reutiliza) ajusta el borde o la esquina arrastrados a guías, cuadrícula, mesas y a los bordes y centros de otros objetos, y dibuja las líneas con su etiqueta; solo en los ejes que mueve el tirador y solo con la caja sin girar. El tirador sigue al puntero por la distancia recorrida, así que el borde cae exactamente en lo que se ajusta. Lo mismo al redimensionar una mesa de trabajo (sin ajustarse a sus propios bordes). `snapDraggedEdges` en `tools/shared.ts`.
 

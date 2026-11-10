@@ -10,7 +10,9 @@ import {
   hasAnchorSelection,
   intersects,
   locateNode,
+  makeCompoundPath,
   nodeWorldBounds,
+  releaseCompoundPaths,
   removeNodes,
   selectableIds,
   selectOnly,
@@ -77,6 +79,22 @@ export function makeClipSelection(): void {
   if (!c || c.ids.length < 2) return;
   const clip = createClipGroup(c.session.ids, []);
   c.session.run(groupNodes(c.space.id, c.ids, clip), selectOnly(c.space.id, [clip.id]));
+}
+
+/** Objeto › Trazado compuesto › Crear (Ctrl+8): the selected objects become one object. */
+export function makeCompoundSelection(): void {
+  const c = actionContext();
+  if (!c || c.ids.length === 0) return;
+  const result = makeCompoundPath(c.space, c.ids, c.session.ids);
+  if (result) c.session.run(result.command, selectOnly(c.space.id, result.resultIds));
+}
+
+/** Objeto › Trazado compuesto › Liberar (Alt+Mayús+Ctrl+8): back to separate paths. */
+export function releaseCompoundSelection(): void {
+  const c = actionContext();
+  if (!c || c.ids.length === 0) return;
+  const result = releaseCompoundPaths(c.space, c.ids, c.session.ids);
+  if (result) c.session.run(result.command, selectOnly(c.space.id, result.resultIds));
 }
 
 /** Objeto › Máscara de recorte › Liberar (Alt+Ctrl+7). */

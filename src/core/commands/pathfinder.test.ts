@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addNode, arrange, BOOLEAN_WORKER_SEGMENTS, computePieces, finishPathfinder, planPathfinder, planSegments, createDocument, createEllipse, createGroup, createRect, DocumentSession, getActiveSpace, pathfinder, sequentialIds, shapeBuilderEdit, translation, type GroupNode, type Node, type PathfinderOp } from '..';
+import { addNode, arrange, makeCompoundPath, releaseCompoundPaths, BOOLEAN_WORKER_SEGMENTS, computePieces, finishPathfinder, planPathfinder, planSegments, createDocument, createEllipse, createGroup, createRect, DocumentSession, getActiveSpace, pathfinder, sequentialIds, shapeBuilderEdit, translation, type GroupNode, type Node, type PathfinderOp } from '..';
 
 function setup() {
   const ids = sequentialIds('p');
@@ -160,5 +160,62 @@ describe('Pathfinder in two steps (what the Worker path uses)', () => {
     const plan = planPathfinder(t.space(), [a.id, b.id], 'unite')!;
     expect(planSegments(plan)).toBe(8); // two ellipses of four anchors
     expect(BOOLEAN_WORKER_SEGMENTS).toBe(500);
+  });
+});
+
+describe('Trazado compuesto (Ctrl+8)', () => {
+  it('Create turns separate objects into one compound path with the look of the backmost, in one undo step', () => {
+    const t = setup();
+    const a = t.add(t.fill(createRect(t.ids, 40, 40), [255, 0, 0]), 0, 0); // backmost
+    const b = t.add(t.fill(createRect(t.ids, 40, 40), [0, 0, 255]), 100, 0);
+    const c = t.add(t.fill(createRect(t.ids, 40, 40), [0, 255, 0]), 200, 0);
+    const before = t.session.historyLength;
+    const result = makeCompoundPath(t.space(), [a.id, b.id, c.id], t.ids)!;
+    expect(result).not.toBeNull();
+    t.session.run(result.command);
+    expect(t.children()).toHaveLength(1);
+    const node = t.children()[0]!;
+    expect(node.type).toBe('compound');
+    expect(node.id).toBe(result.resultIds[0]);
+    if (node.type !== 'compound') throw new Error('not compound');
+    expect(node.children).toHaveLength(3);
+    expect(node.fillRule).toBe('evenodd');
+    // Contours keep their place in the Space: the second rectangle starts at x = 100.
+    expect(Math.min(...node.children[1]!.anchors.map((p) => p.p.x))).toBe(100);
+    const fill = node.appearance.items.find((i) => i.kind === 'fill');
+    expect(fill && fill.kind === 'fill' && fill.paint.type === 'solid' && fill.paint.color.values).toEqual([255, 0, 0]);
+    expect(t.session.historyLength).toBe(before + 1);
+    t.session.undo();
+    expect(t.children()).toHaveLength(3);
+  });
+
+  it('overlapping contours are kept (they cut a hole), and fewer than two objects do nothing', () => {
+    const t = setup();
+    const big = t.add(t.fill(createRect(t.ids, 100, 100), [0, 0, 0]), 0, 0);
+    const small = t.add(t.fill(createRect(t.ids, 20, 20), [0, 0, 0]), 40, 40);
+    expect(makeCompoundPath(t.space(), [big.id], t.ids)).toBeNull();
+    const result = makeCompoundPath(t.space(), [big.id, small.id], t.ids)!;
+    t.session.run(result.command);
+    const node = t.children()[0]!;
+    expect(node.type === 'compound' && node.children.length).toBe(2);
+  });
+
+  it('Release gives separate paths back, each with the look of the compound, and undoes', () => {
+    const t = setup();
+    const a = t.add(t.fill(createRect(t.ids, 40, 40), [255, 0, 0]), 0, 0);
+    const b = t.add(t.fill(createRect(t.ids, 40, 40), [0, 0, 255]), 100, 0);
+    const made = makeCompoundPath(t.space(), [a.id, b.id], t.ids)!;
+    t.session.run(made.command);
+    expect(releaseCompoundPaths(t.space(), [a.id], t.ids)).toBeNull(); // not a compound any more
+    const released = releaseCompoundPaths(t.space(), made.resultIds, t.ids)!;
+    t.session.run(released.command);
+    expect(t.children().map((n) => n.type)).toEqual(['path', 'path']);
+    expect(t.children().map((n) => n.id)).toEqual(released.resultIds);
+    for (const n of t.children()) {
+      const fill = n.appearance.items.find((i) => i.kind === 'fill');
+      expect(fill && fill.kind === 'fill' && fill.paint.type === 'solid' && fill.paint.color.values).toEqual([255, 0, 0]);
+    }
+    t.session.undo();
+    expect(t.children().map((n) => n.type)).toEqual(['compound']);
   });
 });

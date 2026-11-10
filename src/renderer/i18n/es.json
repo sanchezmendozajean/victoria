@@ -647,6 +647,8 @@
   "command.layer.addSublayer": "Nueva subcapa",
   "command.layer.move": "Mover capa",
   "command.node.clip": "Crear máscara de recorte",
+  "command.compound.make": "Crear trazado compuesto",
+  "command.compound.release": "Liberar trazado compuesto",
   "properties.document": "Documento",
   "properties.documentSection": "Documento",
   "properties.units": "Unidades",

@@ -34,6 +34,7 @@ Ctrl+Z / Mayús+Ctrl+Z deshacen y rehacen **todo** (el historial es exacto, tamb
 - **Capas** y **Espacios** se gestionan en sus paneles; Ctrl+G agrupa, Ctrl+2 bloquea, Ctrl+3 oculta, Ctrl+] / [ cambian el orden.
 - **Relleno, Trazo y Apariencia:** un objeto puede tener varios rellenos y trazos, degradados, opacidad y modos de fusión. **Modificadores** (menú Modificador) añaden efectos no destructivos —sombras, resplandores, desplazar trazado, rugosidad…— y se pueden aplicar para volverlos permanentes (Alt+Ctrl+E).
 - **Buscatrazos** (Unir, Restar, Intersecar…) y **Máscara de recorte** (Ctrl+7) combinan formas.
+- **Trazado compuesto** (Objeto › Trazado compuesto › Crear, Ctrl+8): convierte los objetos seleccionados en **un solo objeto** con todos sus contornos —no es Agrupar—. Toma el aspecto del objeto de más atrás y, donde unos contornos se solapan con otros, quedan huecos. **Liberar** (Alt+Mayús+Ctrl+8) los devuelve como trazados separados.
 - **Alinear, Espaciado y Transformar** colocan objetos con precisión; las reglas, guías, cuadrícula y guías inteligentes están en el menú Vista y en Propiedades.
 
 ## 5. Imágenes y vectorización
