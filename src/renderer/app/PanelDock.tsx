@@ -1,4 +1,4 @@
-import { useEffect, useState, type DragEvent } from 'react';
+import { useEffect, useRef, useState, type DragEvent, type PointerEvent as ReactPointerEvent } from 'react';
 import { Icon } from '../components/Icon';
 import { MenuPopup, type Anchor, type MenuEntry } from '../components/Menu';
 import { cx } from '../components/cx';
@@ -23,6 +23,10 @@ function draggedPanel(event: DragEvent): PanelId | null {
   return id in PANELS ? (id as PanelId) : null;
 }
 
+const FLOAT_MIN = { w: 220, h: 120 };
+/** Remembered between openings, for the whole session. */
+let floatSize: { w: number; h: number } | null = null;
+
 const hasPanel = (event: DragEvent) => event.dataTransfer.types.includes(DRAG_TYPE);
 
 export function PanelDock() {
@@ -39,6 +43,34 @@ export function PanelDock() {
 
   const [dropTarget, setDropTarget] = useState<string | null>(null);
   const [menu, setMenu] = useState<{ group: PanelGroup; anchor: Anchor } | null>(null);
+  const [size, setSize] = useState(floatSize);
+  const floatRef = useRef<HTMLElement>(null);
+
+  // The window hangs from the dock's left edge and top: its left and bottom sides (and the corner) are the ones that move.
+  const startResize = (event: ReactPointerEvent<HTMLElement>, edges: { left?: boolean; bottom?: boolean }) => {
+    const box = floatRef.current?.getBoundingClientRect();
+    if (!box || event.button !== 0) return;
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    const from = { x: event.clientX, y: event.clientY, w: box.width, h: box.height };
+    const maxW = Math.max(FLOAT_MIN.w, box.right - 8);
+    const maxH = Math.max(FLOAT_MIN.h, window.innerHeight - box.top - 8);
+    const move = (e: PointerEvent) => {
+      const w = edges.left ? from.w + (from.x - e.clientX) : from.w;
+      const h = edges.bottom ? from.h + (e.clientY - from.y) : from.h;
+      floatSize = { w: Math.round(Math.min(maxW, Math.max(FLOAT_MIN.w, w))), h: Math.round(Math.min(maxH, Math.max(FLOAT_MIN.h, h))) };
+      setSize(floatSize);
+    };
+    const target = event.currentTarget;
+    const end = () => {
+      target.removeEventListener('pointermove', move);
+      target.removeEventListener('pointerup', end);
+      target.removeEventListener('pointercancel', end);
+    };
+    target.addEventListener('pointermove', move);
+    target.addEventListener('pointerup', end);
+    target.addEventListener('pointercancel', end);
+  };
 
   // The floating window of a strip panel closes on any outside click.
   useEffect(() => {
@@ -197,7 +229,10 @@ export function PanelDock() {
       </div>
 
       {floating && (
-        <aside className="vc-floatpanel" data-testid="panel-float" aria-label={t(PANELS[floating].title)}>
+        <aside ref={floatRef} className="vc-floatpanel" data-testid="panel-float" aria-label={t(PANELS[floating].title)} style={size ? { width: size.w, height: size.h } : undefined}>
+          <div className="vc-floatpanel__grip vc-floatpanel__grip--left" data-testid="float-resize-left" onPointerDown={(e) => startResize(e, { left: true })} />
+          <div className="vc-floatpanel__grip vc-floatpanel__grip--bottom" data-testid="float-resize-bottom" onPointerDown={(e) => startResize(e, { bottom: true })} />
+          <div className="vc-floatpanel__grip vc-floatpanel__grip--corner" data-testid="float-resize-corner" onPointerDown={(e) => startResize(e, { left: true, bottom: true })} />
           <header className="vc-floatpanel__header">
             <Icon id={PANELS[floating].icon} size={14} />
             <span>{t(PANELS[floating].title)}</span>

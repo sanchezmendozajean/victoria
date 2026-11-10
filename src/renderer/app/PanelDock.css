@@ -143,6 +143,31 @@
   box-shadow: var(--shadow-float);
   overflow: hidden;
 }
+.vc-floatpanel__grip {
+  position: absolute;
+  z-index: 1;
+}
+.vc-floatpanel__grip--left {
+  left: 0;
+  top: 0;
+  bottom: 8px;
+  width: 5px;
+  cursor: ew-resize;
+}
+.vc-floatpanel__grip--bottom {
+  left: 8px;
+  right: 0;
+  bottom: 0;
+  height: 5px;
+  cursor: ns-resize;
+}
+.vc-floatpanel__grip--corner {
+  left: 0;
+  bottom: 0;
+  width: 8px;
+  height: 8px;
+  cursor: nesw-resize;
+}
 .vc-floatpanel__header {
   display: flex;
   align-items: center;
@@ -154,7 +179,10 @@
   border-bottom: 1px solid var(--border);
 }
 .vc-floatpanel__body {
+  /* Same as the docked body, so panels that pin a bottom toolbar (Apariencia) stretch their list. */
+  display: flex;
   flex: 1;
+  flex-direction: column;
   min-height: 0;
   overflow: auto;
 }
