@@ -1,7 +1,9 @@
 import {
   addArtboard,
   arrangeArtboards,
+  copyArtboard,
   createArtboard,
+  duplicateArtboard,
   fitArtboardToArtwork,
   frameOf,
   getActiveSpace,
@@ -45,29 +47,23 @@ export function newArtboardIn(session: DocumentSession): void {
   select(space, board.id);
 }
 
-/** A copy of the artboard (not its artwork) right after it in the list, placed to the right of the last board. */
+/** A copy of the artboard right after it in the list, to the right of the last board; with its artwork when the toggle says so. */
 export function duplicateArtboardOf(session: DocumentSession, id: string): void {
   const space = getActiveSpace(session.document);
   const source = space.artboards.find((a) => a.id === id);
   const last = space.artboards[space.artboards.length - 1];
   if (!source || !last) return;
-  const copy: Artboard = {
-    ...createArtboard(session.ids, {
-      name: t('doc.defaultArtboard', { n: space.artboards.length + 1 }),
-      x: last.x + last.w + 40,
-      y: source.y,
-      w: source.w,
-      h: source.h,
-      ...(source.preset !== undefined ? { preset: source.preset } : {}),
-    }),
-    bleed: { ...source.bleed },
-    background: source.background,
-    showCenterMark: source.showCenterMark,
-    showCrossHairs: source.showCrossHairs,
-    showVideoSafe: source.showVideoSafe,
-  };
-  session.run(addArtboard(space.id, copy, space.artboards.indexOf(source) + 1));
+  const copy = copyArtboard(source, session.ids(), t('doc.defaultArtboard', { n: space.artboards.length + 1 }), { x: last.x + last.w + 40, y: source.y });
+  const duplicated = duplicateArtboard(space, source.id, copy, session.ids, useUi.getState().moveArtworkWithArtboard);
+  if (!duplicated) return;
+  session.run(duplicated.command);
   select(space, copy.id);
+}
+
+/** Drag and drop in the list: the board takes the place of the one it was dropped on. */
+export function moveArtboardTo(session: DocumentSession, id: string, index: number): void {
+  const space = getActiveSpace(session.document);
+  session.run(reorderArtboard(space.id, id, index));
 }
 
 /** A Space keeps at least one artboard. */

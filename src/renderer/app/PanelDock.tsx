@@ -77,7 +77,8 @@ export function PanelDock() {
     if (!stripOpen) return;
     const onDown = (event: PointerEvent) => {
       const target = event.target as Element | null;
-      if (!target?.closest('.vc-floatpanel, .vc-dock__stripbutton')) setStripOpen(null);
+      // Dialogs and popovers opened from the window (Reorganizar mesas, colour picker) are part of it.
+      if (!target?.closest('.vc-floatpanel, .vc-dock__stripbutton, .vc-dialog__backdrop, .vc-popover')) setStripOpen(null);
     };
     document.addEventListener('pointerdown', onDown, true);
     return () => document.removeEventListener('pointerdown', onDown, true);

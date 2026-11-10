@@ -38,6 +38,11 @@ test.describe('Panel Mesas de trabajo', () => {
     await page.keyboard.press('Control+z');
     await expect(page.getByTestId('artboards-name').nth(1)).toHaveText('Portada');
 
+    // Drag the last row to the top.
+    await rows(page).nth(2).dragTo(rows(page).first(), { targetPosition: { x: 40, y: 2 } });
+    await expect(page.getByTestId('artboards-index').first()).toHaveText('1');
+    await expect(page.getByTestId('artboards-name').first()).not.toHaveText('Mesa 1');
+
     // Arrange in a single column.
     await page.getByTestId('artboards-arrange').click();
     await expect(page.getByTestId('arrange-dialog')).toBeVisible();
@@ -46,8 +51,7 @@ test.describe('Panel Mesas de trabajo', () => {
     await page.getByTestId('arrange-ok').click();
     await expect(page.getByTestId('arrange-dialog')).toHaveCount(0);
 
-    // A panel of the strip closes on outside clicks (the dialog was one): open it again.
-    await page.locator('[data-panel="artboards"]').first().click();
+    // The dialog belongs to the window: it stays open behind it.
     await expect(panel).toBeVisible();
     await page.getByTestId('artboards-fit-art').click(); // no artwork: nothing breaks
     await page.getByTestId('artboards-delete').click();

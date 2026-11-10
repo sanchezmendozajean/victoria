@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { getActiveSpace } from '../../core';
-import { activeArtboardOf, deleteArtboardOf, duplicateArtboardOf, fitToArtwork, fitToSelection, newArtboardIn, renameArtboardOf, shiftArtboard } from '../app/artboardActions';
+import { activeArtboardOf, deleteArtboardOf, duplicateArtboardOf, fitToArtwork, fitToSelection, moveArtboardTo, newArtboardIn, renameArtboardOf, shiftArtboard } from '../app/artboardActions';
 import { useUi } from '../app/store';
 import { canvasApi } from '../canvas/api';
 import { formatLength } from '../canvas/units';
@@ -10,6 +10,8 @@ import { tip } from '../components/Tooltip';
 import { useDocuments } from '../documents';
 import { t } from '../i18n';
 
+const DRAG_TYPE = 'application/x-victoria-artboard';
+
 /** Mesas de trabajo (specs/04 · Panel Mesas de trabajo): numbered list of the active Space with name and size, plus the artboard actions. */
 export function ArtboardsPanel() {
   const documents = useDocuments();
@@ -17,6 +19,7 @@ export function ArtboardsPanel() {
   const setActive = useUi((s) => s.setActiveArtboard);
   const openArrange = useUi((s) => s.openArrangeDialog);
   const [renaming, setRenaming] = useState<string | null>(null);
+  const [over, setOver] = useState<{ id: string; after: boolean } | null>(null);
   const session = documents.active?.session;
   if (!session) return null;
   const space = getActiveSpace(session.document);
@@ -40,8 +43,33 @@ export function ArtboardsPanel() {
           <div
             key={board.id}
             role="listitem"
-            className={cx('vc-artboardrow', board.id === current?.id && 'is-active')}
+            className={cx('vc-artboardrow', board.id === current?.id && 'is-active', over?.id === board.id && (over.after ? 'is-over-after' : 'is-over-before'))}
             data-testid="artboards-row"
+            draggable={renaming !== board.id}
+            onDragStart={(e) => {
+              e.dataTransfer.setData(DRAG_TYPE, board.id);
+              e.dataTransfer.effectAllowed = 'move';
+            }}
+            onDragOver={(e) => {
+              if (!e.dataTransfer.types.includes(DRAG_TYPE)) return;
+              e.preventDefault();
+              const r = e.currentTarget.getBoundingClientRect();
+              const after = e.clientY > r.top + r.height / 2;
+              if (over?.id !== board.id || over.after !== after) setOver({ id: board.id, after });
+            }}
+            onDragLeave={() => setOver(null)}
+            onDrop={(e) => {
+              const dragged = e.dataTransfer.getData(DRAG_TYPE);
+              setOver(null);
+              if (!dragged) return;
+              e.preventDefault();
+              const from = space.artboards.findIndex((a) => a.id === dragged);
+              const r = e.currentTarget.getBoundingClientRect();
+              const slot = i + (e.clientY > r.top + r.height / 2 ? 1 : 0);
+              // Removing the dragged board first shifts everything after it one place up.
+              if (from >= 0) moveArtboardTo(session, dragged, from < slot ? slot - 1 : slot);
+            }}
+            onDragEnd={() => setOver(null)}
             onClick={() => {
               setActive(space.id, board.id);
               canvasApi.current?.revealRect({ minX: board.x, minY: board.y, maxX: board.x + board.w, maxY: board.y + board.h });

@@ -1045,6 +1045,22 @@
   width: 3px;
   background: var(--accent);
 }
+.vc-artboardrow.is-over-before::after,
+.vc-artboardrow.is-over-after::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--accent);
+  pointer-events: none;
+}
+.vc-artboardrow.is-over-before::after {
+  top: -1px;
+}
+.vc-artboardrow.is-over-after::after {
+  bottom: -1px;
+}
 .vc-artboardrow__index {
   flex: none;
   width: 14px;

@@ -66,3 +66,35 @@ describe('clicking an object with the artboard tool', () => {
     expect(r.id).toBeTruthy();
   });
 });
+
+describe('Alt+drag on an artboard', () => {
+  const run = async (withArtwork: boolean) => {
+    const { createTestHost, drag } = await import('./fakeHost');
+    const { useUi } = await import('../../app/store');
+    useUi.setState({ moveArtworkWithArtboard: withArtwork });
+    const t = createTestHost();
+    const board = getActiveSpace(t.session.document).artboards[0]!;
+    t.rect(board.x + 10, board.y + 10, 20, 20);
+    const tool = (await import('../artboardTool')).createArtboardTool();
+    const from = { x: board.x + board.w / 2, y: board.y + board.h / 2 };
+    drag(tool, t, from, { x: from.x + board.w + 100, y: from.y }, { altKey: true });
+    return { t, board };
+  };
+
+  it('copies the board with its artwork, which travels with the copy', async () => {
+    const { t, board } = await run(true);
+    const space = getActiveSpace(t.session.document);
+    expect(space.artboards).toHaveLength(2);
+    expect(space.artboards[0]!.x).toBe(board.x); // the original stays
+    const xs = (space.layers[0]!.children as { transform: number[] }[]).map((n) => n.transform[4]).sort((a, b) => a! - b!);
+    expect(xs[0]).toBeCloseTo(board.x + 10, 6);
+    expect(xs[1]).toBeCloseTo(board.x + 10 + board.w + 100, 6);
+  });
+
+  it('copies only the board when the option is off', async () => {
+    const { t } = await run(false);
+    const space = getActiveSpace(t.session.document);
+    expect(space.artboards).toHaveLength(2);
+    expect(space.layers[0]!.children).toHaveLength(1);
+  });
+});

@@ -1,9 +1,12 @@
 import type { Draft } from 'immer';
 import { arrangeBoards, artworkBounds, artworkOnBoard, topLevelNodes, type ArrangeOptions } from '../model/artboardLayout';
+import { frameOf } from '../geometry/world';
+import { cloneNodes } from '../model/clone';
+import type { IdGenerator } from '../model/ids';
 import { translation } from '../model/matrix';
 import type { Artboard, Document, Node, Space } from '../model/types';
 import { combineCommands, type Command } from './command';
-import { transformNodes } from './node';
+import { duplicateNodes, transformNodes } from './node';
 
 const findSpace = (d: Draft<Document>, id: string) => d.spaces.find((s) => s.id === id);
 
@@ -86,3 +89,28 @@ export const fitArtboardToArtwork = (space: Space, artboardId: string, nodes: re
   const h = Math.max(1, b.maxY - b.minY);
   return combineCommands('artboard.fit', [updateArtboard(space.id, artboardId, { x: b.minX, y: b.minY, w, h })]);
 };
+
+/**
+ * Adds `copy` as a duplicate of the artboard `sourceId` (right after it, or at `index`) and, with `withArtwork`,
+ * a clone of the objects on the source moved by the offset between both boards. One undoable command;
+ * `artworkIds` are the ids of the clones (top level), so a gesture can keep moving them.
+ */
+export function duplicateArtboard(space: Space, sourceId: string, copy: Artboard, ids: IdGenerator, withArtwork: boolean, index?: number): { command: Command; artworkIds: string[] } | null {
+  const source = space.artboards.find((a) => a.id === sourceId);
+  if (!source) return null;
+  const commands: Command[] = [addArtboard(space.id, copy, index ?? space.artboards.indexOf(source) + 1)];
+  let artworkIds: string[] = [];
+  if (withArtwork) {
+    const originals = artworkOnBoard(space, source);
+    const nodes = originals.flatMap((id): Node[] => {
+      const node = frameOf(space, id)?.node;
+      return node ? [node] : [];
+    });
+    if (nodes.length > 0) {
+      const clones = cloneNodes(nodes, ids);
+      artworkIds = clones.map((c) => c.id);
+      commands.push(duplicateNodes(space.id, nodes.map((n) => n.id), clones, translation(copy.x - source.x, copy.y - source.y)));
+    }
+  }
+  return { command: combineCommands('artboard.duplicate', commands), artworkIds };
+}

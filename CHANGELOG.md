@@ -1,6 +1,7 @@
 # Changelog
 
 ## Panel Mesas de trabajo
+- **Pendientes cerrados**: las filas se reordenan arrastrando (línea de inserción); Duplicar y Alt+arrastrar copian la mesa **con su ilustración** cuando «Mover/copiar ilustración con la mesa» está activo (antes Alt+arrastrar la dejaba atrás, contra la spec) mediante `duplicateArtboard`/`copyArtboard` en el núcleo, y la copia conserva sangrado, fondo y marcas; el panel flotante ya no se cierra al usar un diálogo o popover abierto desde él.
 - Lista numerada de las mesas del Espacio activo (nombre, tamaño en las unidades del documento y orientación), con clic para activar y centrar, doble clic para renombrar y botones: nueva, duplicar (sin ilustración), reorganizar, ajustar a la ilustración, ajustar a la selección, subir, bajar y eliminar. El orden es el de exportación e impresión.
 - **Reorganizar mesas**: diálogo con dirección (filas ←/→, columnas), columnas, espaciado y mover la ilustración; una sola entrada de historial. Núcleo en `core/model/artboardLayout.ts` (`arrangeBoards`, `artworkOnBoard`, `artworkBounds`) y comandos `arrangeArtboards` / `fitArtboardToArtwork`; la herramienta Mesa de trabajo reutiliza ahora esas funciones.
 - Pruebas: 8 de núcleo y un e2e del panel.

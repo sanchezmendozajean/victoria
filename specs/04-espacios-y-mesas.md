@@ -46,7 +46,7 @@ interface Artboard {
 ### Herramienta Mesa de trabajo (Mayús+O)
 
 - Arrastrar en vacío = nueva mesa. Clic en una mesa = activarla. Clic (sin arrastrar) sobre un objeto = crea una mesa del tamaño de sus límites visibles (borde incluido), como Illustrator. Tiradores para redimensionar.
-- Alt+arrastrar una mesa = duplicarla **con su contenido**. Opción "Mover/copiar ilustración con la mesa" (activa por defecto): botón de alternancia en la barra de control de la herramienta; desactivada, arrastrar una mesa la mueve sin su contenido.
+- Alt+arrastrar una mesa = duplicarla **con su contenido** (según la opción de abajo). Opción "Mover/copiar ilustración con la mesa" (activa por defecto): botón de alternancia en la barra de control de la herramienta; desactivada, arrastrar una mesa la mueve sin su contenido.
 - Barra de control: preset, orientación, nombre, X, Y, An, Al, botones Nueva, Eliminar, Opciones.
 - Esc vuelve a la herramienta anterior.
 - Supr elimina la mesa activa (no el contenido).
@@ -57,7 +57,7 @@ A3, A4, A5, Carta, Oficio, Tabloide, 10×15 cm (foto), 13×18 cm, Tarjeta 9×5 c
 
 ### Panel Mesas de trabajo
 
-Lista numerada del Espacio activo con nombre y tamaño; reordenar (afecta orden de exportación/impresión); botones: nueva, duplicar (solo la mesa, sin su ilustración), eliminar, subir/bajar, reorganizar todas (diálogo: dirección por filas ←/→ o por columnas, columnas, espaciado y «mover la ilustración con las mesas»; las columnas/filas se dimensionan por la mesa más grande para no solaparse), ajustar a la ilustración (todo lo visible, trazos incluidos) y ajustar a la selección. Clic en una fila activa la mesa y la centra si está fuera de vista; doble clic la renombra.
+Lista numerada del Espacio activo con nombre y tamaño; reordenar (afecta orden de exportación/impresión); botones: nueva, duplicar (con su ilustración si «Mover/copiar ilustración con la mesa» está activo), eliminar, subir/bajar o arrastrar las filas, reorganizar todas (diálogo: dirección por filas ←/→ o por columnas, columnas, espaciado y «mover la ilustración con las mesas»; las columnas/filas se dimensionan por la mesa más grande para no solaparse), ajustar a la ilustración (todo lo visible, trazos incluidos) y ajustar a la selección. Clic en una fila activa la mesa y la centra si está fuera de vista; doble clic la renombra.
 
 ### Visual
 

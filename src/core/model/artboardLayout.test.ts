@@ -105,3 +105,37 @@ describe('fitArtboardToArtwork', () => {
     expect(fitArtboardToArtwork(space(), space().artboards[0]!.id, null)).toBeNull();
   });
 });
+
+describe('duplicateArtboard', () => {
+  it('copies the board and, on request, the artwork on it, shifted with the copy', async () => {
+    const { duplicateArtboard, copyArtboard } = await import('..');
+    const { ids, session, space, rect } = setup();
+    const source = space().artboards[0]!;
+    const r = rect(source.x + 10, source.y + 10, 20, 20);
+    rect(source.x + 5000, source.y, 20, 20); // off the board: stays single
+    const copy = copyArtboard(source, ids(), 'B2', { x: source.x + 1000, y: source.y });
+    const result = duplicateArtboard(space(), source.id, copy, ids, true)!;
+    expect(result.artworkIds).toHaveLength(1);
+    expect(session.run(result.command)).toBe(true);
+    expect(space().artboards.map((a) => a.name)).toEqual([source.name, 'B2']);
+    const nodes = space().layers[0]!.children as { id: string; transform: number[] }[];
+    const clone = nodes.find((n) => n.id === result.artworkIds[0])!;
+    expect(clone.transform[4]).toBe(source.x + 10 + 1000);
+    expect(nodes.find((n) => n.id === r.id)!.transform[4]).toBe(source.x + 10);
+    expect(nodes).toHaveLength(3);
+    session.undo();
+    expect(space().artboards).toHaveLength(1);
+    expect(space().layers[0]!.children).toHaveLength(2);
+  });
+
+  it('leaves the artwork out when not asked', async () => {
+    const { duplicateArtboard, copyArtboard } = await import('..');
+    const { ids, session, space, rect } = setup();
+    const source = space().artboards[0]!;
+    rect(source.x + 10, source.y + 10, 20, 20);
+    const result = duplicateArtboard(space(), source.id, copyArtboard(source, ids(), 'B2', { x: 9000, y: 0 }), ids, false)!;
+    session.run(result.command);
+    expect(result.artworkIds).toEqual([]);
+    expect(space().layers[0]!.children).toHaveLength(1);
+  });
+});

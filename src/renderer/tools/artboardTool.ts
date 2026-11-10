@@ -1,7 +1,9 @@
 import {
   addArtboard,
   combineCommands,
+  copyArtboard,
   createArtboard,
+  duplicateArtboard,
   artworkOnBoard,
   artworkRect,
   removeArtboard,
@@ -112,7 +114,7 @@ const nextName = (space: Space) => t('doc.defaultArtboard', { n: space.artboards
 
 /**
  * Mesa de trabajo (Mayús+O): drag on empty canvas draws a new artboard, a click on an object makes an artboard fitted to it (stroke included), a click on an artboard activates it, handles resize the
- * active one, dragging inside moves it with the artwork on it unless the "move artwork with artboard" toggle is off (Alt copies the artboard), Delete removes it, Escape leaves.
+ * active one, dragging inside moves it with the artwork on it unless the "move artwork with artboard" toggle is off (Alt copies the artboard, with its artwork under the same toggle), Delete removes it, Escape leaves.
  */
 export function createArtboardTool(): Tool {
   let state: State = null;
@@ -136,15 +138,20 @@ export function createArtboardTool(): Tool {
       if (hit) {
         ui.setActiveArtboard(space.id, hit.id);
         let target = hit;
+        // The artwork that travels with the board: the clones for Alt (a copy), the objects on it for a plain move.
+        let content: string[] = ui.moveArtworkWithArtboard && !event.altKey ? artworkOnBoard(space, hit) : [];
         if (event.altKey) {
-          const copy = createArtboard(session.ids, { name: nextName(space), x: hit.x, y: hit.y, w: hit.w, h: hit.h, ...(hit.preset !== undefined ? { preset: hit.preset } : {}) });
-          session.run(addArtboard(space.id, copy));
-          ui.setActiveArtboard(space.id, copy.id);
-          target = copy;
+          const copy = copyArtboard(hit, session.ids(), nextName(space));
+          const duplicated = duplicateArtboard(space, hit.id, copy, session.ids, ui.moveArtworkWithArtboard);
+          if (duplicated) {
+            session.run(duplicated.command);
+            content = duplicated.artworkIds;
+            ui.setActiveArtboard(space.id, copy.id);
+            target = copy;
+          }
         }
         const start = { x: target.x, y: target.y, w: target.w, h: target.h };
-        // The copy leaves the artwork where it is; a plain move carries it unless the option is off.
-        state = { kind: 'move', id: target.id, start, from: event.doc, content: event.altKey || !ui.moveArtworkWithArtboard ? [] : artworkOnBoard(space, start), applied: { x: 0, y: 0 }, key: host.gestureKey(), fit: event.altKey ? null : objectBoundsAt(host, event.doc) };
+        state = { kind: 'move', id: target.id, start, from: event.doc, content, applied: { x: 0, y: 0 }, key: host.gestureKey(), fit: event.altKey ? null : objectBoundsAt(host, event.doc) };
         host.invalidateOverlay();
         return;
       }

@@ -104,3 +104,8 @@ export function arrangeBoards(boards: readonly BoardBox[], options: ArrangeOptio
   });
   return out;
 }
+
+/** A copy of an artboard (size, bleed, background and marks included) with a fresh id, name and position. */
+export function copyArtboard(source: Artboard, id: string, name: string, at: { x: number; y: number } = source): Artboard {
+  return { ...source, id, name, x: at.x, y: at.y, bleed: { ...source.bleed } };
+}
