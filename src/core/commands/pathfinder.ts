@@ -1,6 +1,7 @@
 import { divideShapes, mergePieces, shapeOperation, trimShapes, unitePieces, type BooleanPiece, type BooleanShape, type Face } from '../geometry/booleans';
 import { nodeGeometry } from '../geometry/geometry';
 import { frameOf } from '../geometry/world';
+import { evaluateNode } from '../modifiers/evaluate';
 import { deepClone } from '../model/deepClone';
 import { createCompound, createGroup, createPath, defaultStroke } from '../model/factory';
 import type { IdGenerator } from '../model/ids';
@@ -27,6 +28,8 @@ export const OUTLINE_WIDTH = 0.25;
 export interface Operand {
   shape: BooleanShape;
   appearance: Appearance;
+  /** Whether each subpath of `shape` was really closed (booleans treat all as closed; compound paths keep it). */
+  closed: boolean[];
 }
 
 const mapAnchor = (m: Matrix, a: Anchor): Anchor => ({ ...a, p: applyToPoint(m, a.p), in: a.in && applyToPoint(m, a.in), out: a.out && applyToPoint(m, a.out) });
@@ -42,11 +45,20 @@ function gather(space: Space, ids: ReadonlySet<string>): { operands: Operand[]; 
       return;
     }
     if (!selfOwner || !node.visible) return;
-    const geometry = nodeGeometry(node);
+    // Live modifiers count: an Outline Stroke object works as the filled contour of its stroke, as in Illustrator after "Contornear trazado".
+    const evaluated = evaluateNode(node);
+    const outline = evaluated?.strokeOutline ?? [...(evaluated?.items.values() ?? [])].find((it) => it.strokeOutline)?.strokeOutline ?? null;
+    const geometry = outline ?? evaluated?.geometry ?? nodeGeometry(node);
     if (!geometry || geometry.subpaths.length === 0) return;
+    let appearance = node.appearance;
+    if (outline) {
+      const stroke = node.appearance.items.find((i) => i.kind === 'stroke' && i.paint.type !== 'none');
+      if (stroke && stroke.kind === 'stroke') appearance = { items: [{ kind: 'fill', paint: deepClone(stroke.paint) as Paint, opacity: stroke.opacity, modifiers: [] }] };
+    }
     operands.push({
       shape: { fillRule: geometry.fillRule, subpaths: geometry.subpaths.map((sp) => ({ closed: true, anchors: sp.anchors.map((a) => mapAnchor(world, a)) })) },
-      appearance: node.appearance,
+      appearance,
+      closed: geometry.subpaths.map((sp) => (outline ? true : sp.closed)),
     });
     if (!owners.includes(selfOwner)) owners.push(selfOwner);
   };
@@ -165,8 +177,15 @@ export interface ComputedPieces {
 /** The objects an operation would use, or null when it cannot apply (fewer than two objects with contours). */
 export function planPathfinder(space: Space, ids: readonly string[], op: PathfinderOp): PathfinderPlan | null {
   const { operands, owners } = gather(space, new Set(ids));
-  return operands.length < 2 || owners.length === 0 ? null : { op, operands, owners };
+  return !enoughOperands(op, operands) || owners.length === 0 ? null : { op, operands, owners };
 }
+
+/** Two objects are needed, except that Unite also merges the overlapping contours of a single compound path. */
+const enoughOperands = (op: PathfinderOp, operands: readonly Operand[]): boolean =>
+  operands.length >= 2 || (op === 'unite' && operands.length === 1 && (operands[0] as Operand).shape.subpaths.length >= 2);
+
+/** Whether `op` can apply to the selection (what enables the Buscatrazos buttons). */
+export const canPathfind = (space: Space, ids: readonly string[], op: PathfinderOp): boolean => enoughOperands(op, gather(space, new Set(ids)).operands);
 
 /** Total segments of the contours of a plan: what decides whether the work goes to a Worker. */
 export const planSegments = (plan: PathfinderPlan): number => plan.operands.reduce((n, o) => n + o.shape.subpaths.reduce((m, sp) => m + sp.anchors.length, 0), 0);
@@ -197,7 +216,7 @@ export function makeCompoundPath(space: Space, ids: readonly string[], newIds: I
   if (operands.length < 2 || owners.length === 0) return null;
   const topOwner = owners[owners.length - 1] as string;
   const toLocal = containerInverse(space, topOwner);
-  const paths = operands.flatMap((o) => o.shape.subpaths.map((sp) => createPath(newIds, sp.anchors.map((a) => mapAnchor(toLocal, a)), true)));
+  const paths = operands.flatMap((o) => o.shape.subpaths.map((sp, i) => createPath(newIds, sp.anchors.map((a) => mapAnchor(toLocal, a)), o.closed[i] ?? true)));
   const compound = createCompound(newIds, paths as never, 'evenodd');
   compound.appearance = deepClone((operands[0] as Operand).appearance) as Appearance;
   for (const p of paths) p.appearance = { items: [] };

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addNode, arrange, makeCompoundPath, releaseCompoundPaths, BOOLEAN_WORKER_SEGMENTS, computePieces, finishPathfinder, planPathfinder, planSegments, createDocument, createEllipse, createGroup, createRect, DocumentSession, getActiveSpace, pathfinder, sequentialIds, shapeBuilderEdit, translation, type GroupNode, type Node, type PathfinderOp } from '..';
+import { addModifier, addNode, arrange, canPathfind, createCompound, createPath, newModifier, makeCompoundPath, releaseCompoundPaths, BOOLEAN_WORKER_SEGMENTS, computePieces, finishPathfinder, planPathfinder, planSegments, createDocument, createEllipse, createGroup, createRect, DocumentSession, getActiveSpace, pathfinder, sequentialIds, shapeBuilderEdit, translation, type GroupNode, type Node, type PathfinderOp } from '..';
 
 function setup() {
   const ids = sequentialIds('p');
@@ -43,6 +43,42 @@ describe('Pathfinder', () => {
     expect(t.session.historyLength).toBe(before + 1);
     t.session.undo();
     expect(t.children()).toHaveLength(2);
+  });
+
+  it('Unite uses the contour of a live Outline Stroke, not the centre line', () => {
+    const t = setup();
+    const line = (x: number, y: number) => {
+      const raw = createPath(t.ids, [{ p: { x: 0, y: 0 }, in: null, out: null, kind: 'corner' }, { p: { x: 100, y: 0 }, in: null, out: null, kind: 'corner' }], false);
+      raw.appearance = { items: [{ kind: 'stroke', paint: { type: 'solid', color: { model: 'rgb', values: [0, 128, 255] } }, stroke: { width: 10, cap: 'butt', join: 'miter', miterLimit: 10, align: 'center', dash: null, dashAlignToCorners: false, arrowScale: [100, 100] }, opacity: 1, modifiers: [] }] };
+      const n = t.add(raw, x, y);
+      t.session.run(addModifier(t.space().id, [{ nodeId: n.id, mod: newModifier(t.ids, 'outline-stroke', {}) }]));
+      return n;
+    };
+    const a = line(0, 0);
+    const b = line(0, 5); // overlaps a: the two 10 pt bands merge into one 15 pt band
+    const [id] = t.run('unite', [a, b]);
+    expect(t.children()).toHaveLength(1);
+    const node = t.children()[0]!;
+    expect(node.id).toBe(id);
+    expect(node.type).toBe('path');
+    const ys = node.type === 'path' ? node.anchors.map((p) => p.p.y) : [];
+    expect(Math.max(...ys) - Math.min(...ys)).toBeCloseTo(15, 3);
+    expect(node.appearance.items[0]).toMatchObject({ kind: 'fill', paint: { color: { values: [0, 128, 255] } } });
+  });
+
+  it('Unite on a single compound path merges its overlapping contours', () => {
+    const t = setup();
+    const sq = (x: number) => createPath(t.ids, [{ x, y: 0 }, { x: x + 40, y: 0 }, { x: x + 40, y: 40 }, { x, y: 40 }].map((p) => ({ p, in: null, out: null, kind: 'corner' as const })), true);
+    const compound = createCompound(t.ids, [sq(0), sq(20)], 'nonzero');
+    t.add(t.fill(compound, [255, 0, 0]), 0, 0);
+    expect(canPathfind(t.space(), [compound.id], 'unite')).toBe(true);
+    expect(canPathfind(t.space(), [compound.id], 'minusFront')).toBe(false);
+    t.run('unite', [compound]);
+    const node = t.children()[0]!;
+    expect(node.type).toBe('path');
+    const xs = node.type === 'path' ? node.anchors.map((p) => p.p.x) : [];
+    expect(Math.min(...xs)).toBeCloseTo(0, 3);
+    expect(Math.max(...xs)).toBeCloseTo(60, 3);
   });
 
   it('Minus Front keeps the look of the bottom object; Minus Back that of the top one', () => {
@@ -198,6 +234,15 @@ describe('Trazado compuesto (Ctrl+8)', () => {
     t.session.run(result.command);
     const node = t.children()[0]!;
     expect(node.type === 'compound' && node.children.length).toBe(2);
+  });
+
+  it('open paths stay open inside the compound path', () => {
+    const t = setup();
+    const a = t.add(createRect(t.ids, 40, 40), 0, 0);
+    const open = t.add(createPath(t.ids, [{ p: { x: 0, y: 0 }, in: null, out: null, kind: 'corner' }, { p: { x: 10, y: 20 }, in: null, out: null, kind: 'corner' }, { p: { x: 20, y: 0 }, in: null, out: null, kind: 'corner' }], false), 100, 0);
+    t.session.run(makeCompoundPath(t.space(), [a.id, open.id], t.ids)!.command);
+    const node = t.children()[0]!;
+    expect(node.type === 'compound' && node.children.map((c) => c.closed)).toEqual([true, false]);
   });
 
   it('Release gives separate paths back, each with the look of the compound, and undoes', () => {

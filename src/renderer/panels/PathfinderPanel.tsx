@@ -1,4 +1,4 @@
-import { operandCount, PATHFINDERS, SHAPE_MODES, type PathfinderOp } from '../../core';
+import { canPathfind, PATHFINDERS, SHAPE_MODES, type PathfinderOp } from '../../core';
 import { applyModifiersToSelection, selectionHasModifiers } from '../app/modifierActions';
 import { runPathfinder } from '../app/pathfinderActions';
 import { Icon, type IconId } from '../components/Icon';
@@ -24,7 +24,7 @@ const ICONS: Record<PathfinderOp, IconId> = {
 export function PathfinderPanel() {
   const ctx = usePanelContext();
   if (!ctx) return <div className="vc-pempty">{t('fill.noDocument')}</div>;
-  const enabled = operandCount(ctx.space, ctx.ids) >= 2;
+  const enabled = (op: PathfinderOp) => canPathfind(ctx.space, ctx.ids, op);
 
   const button = (op: PathfinderOp) => (
     <button
@@ -32,7 +32,7 @@ export function PathfinderPanel() {
       type="button"
       className="vc-pbutton vc-pbutton--icon"
       data-testid={`pf-${op}`}
-      disabled={!enabled}
+      disabled={!enabled(op)}
       {...tip(t(`pf.${op}` as TranslationKey))}
       onClick={(event) => void runPathfinder(op, event.altKey)}
     >

@@ -107,6 +107,22 @@ function booleanOf(a: paper.PathItem, b: paper.PathItem, kind: 'unite' | 'subtra
   return a[kind](b, NO_INSERT);
 }
 
+/**
+ * Merges the overlapping contours of one compound path. Non-zero: contours wound like the biggest one are united and
+ * the opposite ones (holes) are cut out afterwards. Even-odd: the crossings are resolved, so what is drawn stays.
+ */
+function uniteOwnContours(item: paper.PathItem): paper.PathItem {
+  if (!(item instanceof paper.CompoundPath)) return item;
+  const children = (item.children as paper.Path[]).map((c) => c.clone({ insert: false }) as paper.Path);
+  if (item.fillRule === 'evenodd') return item.clone({ insert: false }).resolveCrossings();
+  const biggest = children.reduce((a, b) => (Math.abs(b.area) > Math.abs(a.area) ? b : a));
+  const sameWay = (c: paper.Path) => c.area * biggest.area >= 0;
+  const solids = children.filter(sameWay);
+  const holes = children.filter((c) => !sameWay(c));
+  const merged = solids.slice(1).reduce<paper.PathItem>((acc, c) => booleanOf(acc, c, 'unite'), solids[0] as paper.Path);
+  return holes.reduce<paper.PathItem>((acc, c) => booleanOf(acc, c, 'subtract'), merged);
+}
+
 /** Unite / Minus Front / Intersect / Exclude / Minus Back of shapes given bottom to top. */
 export function shapeOperation(op: ShapeOp, shapes: readonly BooleanShape[]): BooleanPiece[] {
   paperScope();
@@ -116,6 +132,8 @@ export function shapeOperation(op: ShapeOp, shapes: readonly BooleanShape[]): Bo
   const last = present[present.length - 1] as { it: Item; i: number };
   const first = present[0] as { it: Item; i: number };
   try {
+    // One object alone (a compound path): Unite merges its own overlapping contours, resolving them by its fill rule.
+    if (op === 'unite' && present.length === 1) return pieceOutputs(uniteOwnContours(first.it), first.i);
     switch (op) {
       case 'unite': return pieceOutputs(present.slice(1).reduce<paper.PathItem>((acc, x) => booleanOf(acc, x.it, 'unite'), first.it), last.i);
       case 'intersect': return pieceOutputs(present.slice(1).reduce<paper.PathItem>((acc, x) => booleanOf(acc, x.it, 'intersect'), first.it), last.i);
