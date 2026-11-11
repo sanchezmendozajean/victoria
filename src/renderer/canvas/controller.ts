@@ -708,7 +708,7 @@ export class CanvasController implements ToolHost, CanvasApi {
       hover: this.hover,
       selection: this.selectionTargets(space),
       snapLines: this.snapLinesValue,
-      snapLabels: { align: t('snap.align'), center: t('snap.center'), anchor: t('snap.anchor') },
+      snapLabels: { align: t('snap.align'), center: t('snap.center'), anchor: t('snap.anchor'), path: t('snap.path'), intersection: t('snap.intersection') },
       measure: this.measureValue,
       draggingGuide: this.guideDrag && (this.guideDrag.id === null || this.guideDrag.fromRuler) ? this.guideDrag : null,
       drawTool: this.currentTool().drawOverlay ? (c) => this.currentTool().drawOverlay?.(c, this, this.theme) : null,

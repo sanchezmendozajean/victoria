@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { pathFrameOf, pointOnSegment, segmentsOf, type Anchor, type PathNode } from '../../../core';
 import { createDirectSelectionTool } from '../directSelectionTool';
 import { createLassoTool } from '../lassoTool';
@@ -343,5 +343,98 @@ describe('Lasso', () => {
     moves.length = 0;
     tool.drawOverlay?.(ctx as never, t.host, { accent: '#00f' } as never);
     expect(moves).toEqual([]);
+  });
+});
+
+describe('Direct Selection · smart guides while dragging', () => {
+  const pick = (tool: ReturnType<typeof createDirectSelectionTool>, t: TestHost, x: number, y: number) => {
+    click(tool, t, x - 50, y + 50); // select the object (inside the square)
+    click(tool, t, x, y); // then its anchor
+  };
+
+  it('a dragged anchor aligns with the anchors of its own path that stay put', () => {
+    const { t, tool } = setup({ options: { smartGuides: true } });
+    const p = square(t, 500, 500, 100);
+    pick(tool, t, 600, 500);
+    drag(tool, t, { x: 600, y: 500 }, { x: 640, y: 503 });
+    expect(anchorsOf(t, p.id)[1]!.p).toEqual({ x: 640, y: 500 });
+    const shown = vi.mocked(t.host.setSnapLines).mock.calls.flatMap(([lines]) => lines ?? []);
+    expect(shown.some((l) => l.kind === 'anchor' && l.axis === 'y')).toBe(true);
+  });
+
+  it('a dragged anchor aligns with the anchors of other objects, not only with their boxes', () => {
+    const { t, tool } = setup({ options: { smartGuides: true } });
+    const p = square(t, 500, 500, 100);
+    t.path([corner(800, 900), corner(940, 900), corner(880, 800)]); // apex x = 880 is neither an edge nor the centre
+    pick(tool, t, 600, 500);
+    drag(tool, t, { x: 600, y: 500 }, { x: 884, y: 560 });
+    expect(anchorsOf(t, p.id)[1]!.p).toEqual({ x: 880, y: 560 });
+  });
+
+  it('nothing snaps with smart guides off', () => {
+    const { t, tool } = setup();
+    const p = square(t, 500, 500, 100);
+    pick(tool, t, 600, 500);
+    drag(tool, t, { x: 600, y: 500 }, { x: 640, y: 503 });
+    expect(anchorsOf(t, p.id)[1]!.p).toEqual({ x: 640, y: 503 });
+  });
+
+  it('a dragged handle snaps too, except while Shift constrains it', () => {
+    const { t, tool } = setup({ options: { smartGuides: true } });
+    const p = t.path([corner(500, 500, null, [560, 500]), corner(700, 600)], false);
+    click(tool, t, 600, 550); // the segment: selects both anchors, handles show
+    click(tool, t, 500, 500);
+    drag(tool, t, { x: 560, y: 500 }, { x: 563, y: 603 });
+    expect(anchorsOf(t, p.id)[0]!.out).toEqual({ x: 563, y: 600 });
+  });
+});
+
+describe('Direct Selection · snapping to the outline of other objects', () => {
+  const pick = (tool: ReturnType<typeof createDirectSelectionTool>, t: TestHost, x: number, y: number) => {
+    click(tool, t, x - 50, y + 50);
+    click(tool, t, x, y);
+  };
+
+  it('an anchor dropped near another object\'s path lands on it ("trazado")', () => {
+    const { t, tool } = setup({ options: { smartGuides: true } });
+    const p = square(t, 500, 500, 100);
+    t.path([corner(650, 900), corner(950, 1000)], false); // a slanted open line
+    pick(tool, t, 600, 500);
+    // Straight down onto the line y = 900 + (x - 650) / 3, at x = 700 → y = 916.67; the pointer is 2 pt above it.
+    drag(tool, t, { x: 600, y: 500 }, { x: 700, y: 914.5 });
+    const a = anchorsOf(t, p.id)[1]!.p;
+    expect(a.y - (900 + (a.x - 650) / 3)).toBeCloseTo(0, 3);
+    const shown = vi.mocked(t.host.setSnapLines).mock.calls.flatMap(([lines]) => lines ?? []);
+    expect(shown.some((l) => l.kind === 'path' && l.label === 'path')).toBe(true);
+  });
+
+  it('with an axis already aligned, it slides to where the path crosses that axis ("intersección")', () => {
+    const { t, tool } = setup({ options: { smartGuides: true } });
+    const p = square(t, 500, 500, 100);
+    t.path([corner(800, 900), corner(940, 900), corner(880, 800)]); // apex x = 880 (anchor-only alignment)
+    t.path([corner(700, 700), corner(1100, 830)], false); // crosses x = 880 at y = 758.5
+    pick(tool, t, 600, 500);
+    drag(tool, t, { x: 600, y: 500 }, { x: 883, y: 757 });
+    const a = anchorsOf(t, p.id)[1]!.p;
+    expect(a.x).toBeCloseTo(880, 3);
+    expect(a.y).toBeCloseTo(700 + (880 - 700) * (130 / 400), 3);
+    const shown = vi.mocked(t.host.setSnapLines).mock.calls.flatMap(([lines]) => lines ?? []);
+    expect(shown.some((l) => l.kind === 'intersection')).toBe(true);
+  });
+
+  it('far from every path nothing is pulled, and smart guides off never pull', () => {
+    const on = setup({ options: { smartGuides: true } });
+    const p1 = square(on.t, 500, 500, 100);
+    on.t.path([corner(650, 900), corner(950, 1000)], false);
+    pick(on.tool, on.t, 600, 500);
+    drag(on.tool, on.t, { x: 600, y: 500 }, { x: 700, y: 880 });
+    expect(anchorsOf(on.t, p1.id)[1]!.p).toEqual({ x: 700, y: 880 });
+
+    const off = setup();
+    const p2 = square(off.t, 500, 500, 100);
+    off.t.path([corner(650, 900), corner(950, 1000)], false);
+    pick(off.tool, off.t, 600, 500);
+    drag(off.tool, off.t, { x: 600, y: 500 }, { x: 700, y: 914.5 });
+    expect(anchorsOf(off.t, p2.id)[1]!.p).toEqual({ x: 700, y: 914.5 });
   });
 });

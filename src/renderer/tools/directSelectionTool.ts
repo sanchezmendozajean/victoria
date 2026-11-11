@@ -19,6 +19,9 @@ import {
   visibleLeafIds,
   withAnchors,
   snapPoint,
+  objectAnchorPoints,
+  snapToPaths,
+  type SnapLine,
   type Anchor,
   type Matrix,
   type PathFrame,
@@ -44,7 +47,7 @@ type State =
   | { kind: 'idle' }
   | { kind: 'press'; screen: Vec2; doc: Vec2; action: Action }
   | { kind: 'confirming'; released: boolean }
-  | { kind: 'drag'; doc: Vec2; action: Action; key: string; originals: Map<string, { frame: PathFrame; anchors: Anchor[] }>; ids: string[]; bounds: Rect | null; applied: Vec2 }
+  | { kind: 'drag'; doc: Vec2; action: Action; key: string; originals: Map<string, { frame: PathFrame; anchors: Anchor[] }>; ids: string[]; bounds: Rect | null; applied: Vec2; snapPoints: Vec2[] | null }
   | { kind: 'marquee'; screen: Vec2; doc: Vec2; current: Vec2; shift: boolean };
 
 /** World delta → local delta (the linear part of the inverse matrix; anchors live in the path's local space). */
@@ -157,7 +160,7 @@ export function createDirectSelectionTool(id: 'tool-direct-select' | 'tool-group
 
     if (action.type === 'object') {
       const ids = selectedTopLevel(host);
-      state = { kind: 'drag', doc: press.doc, action, key, originals: new Map(), ids, bounds: boxOf(host, ids), applied: { x: 0, y: 0 } };
+      state = { kind: 'drag', doc: press.doc, action, key, originals: new Map(), ids, bounds: boxOf(host, ids), applied: { x: 0, y: 0 }, snapPoints: null };
       drag(event, host, state);
       return;
     }
@@ -201,8 +204,57 @@ export function createDirectSelectionTool(id: 'tool-direct-select' | 'tool-group
         : action.type === 'anchors'
           ? { ...action, primary: { ...action.primary, frame: originals.get(action.primary.frame.path.id)?.frame ?? action.primary.frame } }
           : action;
-    state = { kind: 'drag', doc: press.doc, action: relocatedAction, key, originals, ids: [], bounds: null, applied: { x: 0, y: 0 } };
+    state = { kind: 'drag', doc: press.doc, action: relocatedAction, key, originals, ids: [], bounds: null, applied: { x: 0, y: 0 }, snapPoints: collectSnapPoints(host, relocatedAction, originals, selection) };
     drag(event, host, state);
+  }
+
+  /**
+   * With smart guides on, the anchors a dragged anchor or handle can align to: those of the other objects and the ones of
+   * the edited paths that are not moving (computed once per drag, the originals do not change while it lasts).
+   */
+  function collectSnapPoints(host: ToolHost, action: Action, originals: Map<string, { frame: PathFrame; anchors: Anchor[] }>, selection: Selection): Vec2[] | null {
+    const { space } = host;
+    if (!space || action.type === 'segment' || action.type === 'object' || !host.snapSources(new Set()).objects) return null;
+    const owners = new Set([...originals.values()].map((o) => o.frame.owner.id));
+    const points = objectAnchorPoints(space, owners);
+    for (const [pathId, { frame, anchors }] of originals) {
+      const skip = action.type === 'anchors' ? new Set(selectedAnchorIndices(selection, pathId)) : action.type === 'handle' && pathId === action.frame.path.id ? new Set([action.index]) : new Set<number>();
+      anchors.forEach((a, i) => {
+        if (!skip.has(i)) points.push(toWorld(frame.world, a.p));
+      });
+    }
+    return points;
+  }
+
+  /** Snaps a point dragged by the pointer to guides, the grid, artboards, other objects and the anchors of `snapPoints`. */
+  function snapDragged(host: ToolHost, point: Vec2, exclude: ReadonlySet<string>, snapPoints: Vec2[] | null): Vec2 {
+    const sources = { ...host.snapSources(exclude), anchors: snapPoints };
+    const hasSources = !!(sources.guides?.length || sources.grid || sources.artboards?.length || sources.objects || sources.anchors?.length);
+    if (!hasSources) {
+      host.setSnapLines(null);
+      return point;
+    }
+    const snapped = snapPoint(point, sources, host.pickTolerance);
+    let target = { x: point.x + snapped.dx, y: point.y + snapped.dy };
+    const lines: SnapLine[] = [...snapped.lines];
+    // Smart guides also pull the point onto the outline of another object: onto its crossing with the axis it already
+    // aligned on (an intersection) or, with no other snap, onto the nearest point of the outline.
+    const space = host.space;
+    if (space && sources.objects) {
+      const alignedX = snapped.lines.find((l) => l.axis === 'x');
+      const alignedY = snapped.lines.find((l) => l.axis === 'y');
+      if (!(alignedX && alignedY)) {
+        const line = alignedX ? { axis: 'x' as const, value: alignedX.value } : alignedY ? { axis: 'y' as const, value: alignedY.value } : undefined;
+        const onPath = snapToPaths(space, target, exclude, host.pickTolerance, line);
+        if (onPath) {
+          const kind = line ? 'intersection' : 'path';
+          lines.push({ axis: 'x', value: onPath.x, kind, from: onPath.y, to: onPath.y, label: kind });
+          target = onPath;
+        }
+      }
+    }
+    host.setSnapLines(lines.length > 0 ? lines : null);
+    return target;
   }
 
   function drag(event: CanvasPointerEvent, host: ToolHost, s: Extract<State, { kind: 'drag' }>): void {
@@ -224,7 +276,10 @@ export function createDirectSelectionTool(id: 'tool-direct-select' | 'tool-group
     if (action.type === 'handle') {
       const original = s.originals.get(action.frame.path.id);
       if (!original) return;
-      const local = toLocal(original.frame.world, event.doc);
+      // Smart guides, guides and grid pull the handle too (not while Shift constrains its angle).
+      const target = event.shiftKey ? event.doc : snapDragged(host, event.doc, new Set([original.frame.owner.id]), s.snapPoints);
+      if (event.shiftKey) host.setSnapLines(null);
+      const local = toLocal(original.frame.world, target);
       const next = moveHandle(original.anchors, action.index, action.which, local, { alt: event.altKey, constrain: event.shiftKey });
       session.run(setPathAnchors(space.id, action.frame.path.id, next, s.key));
       return;
@@ -236,13 +291,8 @@ export function createDirectSelectionTool(id: 'tool-direct-select' | 'tool-group
       if (primary) {
         // Snap the anchor under the pointer, so the whole selection follows the correction.
         const start = toWorld(primary.frame.world, primary.anchors[action.primary.index]?.p ?? { x: 0, y: 0 });
-        const sources = host.snapSources(new Set([primary.frame.owner.id]));
-        const hasSources = !!(sources.guides?.length || sources.grid || sources.artboards?.length || sources.objects);
-        if (hasSources) {
-          const snapped = snapPoint({ x: start.x + d.x, y: start.y + d.y }, sources, host.pickTolerance);
-          host.setSnapLines(snapped.lines.length > 0 ? snapped.lines : null);
-          d = { x: d.x + snapped.dx, y: d.y + snapped.dy };
-        }
+        const target = snapDragged(host, { x: start.x + d.x, y: start.y + d.y }, new Set([primary.frame.owner.id]), s.snapPoints);
+        d = { x: target.x - start.x, y: target.y - start.y };
       }
       const selection = currentSelection(host) ?? emptySelection(space.id);
       for (const [pathId, { frame, anchors }] of s.originals) {
@@ -298,7 +348,7 @@ export function createDirectSelectionTool(id: 'tool-direct-select' | 'tool-group
       }
 
       // 3. A segment or the fill of an object.
-      const hit = host.hitTest(event.doc)[0];
+      const hit = host.hitTest(event.doc).find((h) => !h.generated);
       if (hit) {
         const leafFrames = pathsOfNodes(space, [hit.node.id]);
         const segment = hit.part === 'stroke' || leafFrames.length > 0 ? hitSegment(host, event.doc, leafFrames) : null;

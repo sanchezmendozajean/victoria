@@ -1,8 +1,12 @@
+import { nodeGeometry } from '../geometry/geometry';
 import { indexFor } from '../geometry/spatial-index';
+import { applyToPoint } from '../model/matrix';
+import { projectOnSegment } from '../geometry/edit';
+import { pointOnSegment, segmentsOf, type Segment } from '../geometry/path';
 import type { Rect } from '../geometry/rect';
 import type { Artboard, Guide, Space, Vec2 } from '../model/types';
 
-export type SnapKind = 'guide' | 'grid' | 'edge' | 'center' | 'artboard' | 'anchor';
+export type SnapKind = 'guide' | 'grid' | 'edge' | 'center' | 'artboard' | 'anchor' | 'path' | 'intersection';
 
 /** One alignment line to draw (specs/03 · Guías inteligentes). */
 export interface SnapLine {
@@ -14,7 +18,7 @@ export interface SnapLine {
   from: number | null;
   to: number | null;
   /** Magenta label of the smart guide ("alinear", "centro", "ancla"); null for plain guides and grid. */
-  label: 'align' | 'center' | 'anchor' | null;
+  label: 'align' | 'center' | 'anchor' | 'path' | 'intersection' | null;
 }
 
 export interface SnapSources {
@@ -43,7 +47,7 @@ interface Candidate {
 }
 
 /** Lower wins when two snaps are equally close. */
-const PRIORITY: Record<SnapKind, number> = { guide: 0, anchor: 1, edge: 2, center: 2, artboard: 3, grid: 4 };
+const PRIORITY: Record<SnapKind, number> = { guide: 0, anchor: 1, intersection: 1, path: 1, edge: 2, center: 2, artboard: 3, grid: 4 };
 
 function candidatesFor(axis: 'x' | 'y', moving: readonly number[], span: [number, number], sources: SnapSources, tolerance: number): Candidate[] {
   const out: Candidate[] = [];
@@ -136,6 +140,74 @@ export function snapPoint(point: Vec2, sources: SnapSources, tolerance: number):
   const x = solveAxis('x', [point.x], [point.y, point.y], sources, tolerance);
   const y = solveAxis('y', [point.y], [point.x, point.x], sources, tolerance);
   return { dx: x.delta, dy: y.delta, lines: [...x.lines, ...y.lines] };
+}
+
+/**
+ * Every anchor of the visible objects of a Space, in Space coordinates, except those of the objects in `exclude`
+ * (and of text and of the generated steps of a live blend): what a dragged anchor or handle can snap to.
+ */
+export function objectAnchorPoints(space: Space, exclude: ReadonlySet<string> = new Set()): Vec2[] {
+  const out: Vec2[] = [];
+  for (const item of indexFor(space).items) {
+    if (item.generated || exclude.has(item.id) || item.ancestors.some((a) => exclude.has(a.id))) continue;
+    if (item.node.type === 'text') continue;
+    const geometry = nodeGeometry(item.node);
+    if (!geometry) continue;
+    for (const sub of geometry.subpaths) for (const a of sub.anchors) out.push(applyToPoint(item.world, a.p));
+  }
+  return out;
+}
+
+/** Where a cubic span crosses the axis-aligned line (every crossing found by sampling and bisection). */
+function crossings(seg: Segment, line: { axis: 'x' | 'y'; value: number }): Vec2[] {
+  const coord = (t: number) => {
+    const p = pointOnSegment(seg, t);
+    return (line.axis === 'x' ? p.x : p.y) - line.value;
+  };
+  const samples = 32;
+  const out: Vec2[] = [];
+  let previous = coord(0);
+  for (let i = 1; i <= samples; i++) {
+    const current = coord(i / samples);
+    if (previous === 0 || previous * current < 0) {
+      let lo = (i - 1) / samples;
+      let hi = i / samples;
+      for (let k = 0; k < 30; k++) {
+        const mid = (lo + hi) / 2;
+        if (coord(lo) * coord(mid) <= 0) hi = mid;
+        else lo = mid;
+      }
+      out.push(pointOnSegment(seg, (lo + hi) / 2));
+    }
+    previous = current;
+  }
+  return out;
+}
+
+/**
+ * Snap to the outlines of other objects (Illustrator's "trazado"): the closest point on any path within `tolerance`.
+ * With `line` (an axis the point already snapped on) it looks for where the paths cross that line instead (an "intersección").
+ * Text and the generated steps of a live blend are left out, as are the objects in `exclude`.
+ */
+export function snapToPaths(space: Space, point: Vec2, exclude: ReadonlySet<string>, tolerance: number, line?: { axis: 'x' | 'y'; value: number }): Vec2 | null {
+  let best: { point: Vec2; distance: number } | null = null;
+  const rect = { minX: point.x - tolerance, minY: point.y - tolerance, maxX: point.x + tolerance, maxY: point.y + tolerance };
+  for (const item of indexFor(space).search(rect)) {
+    if (item.generated || exclude.has(item.id) || item.ancestors.some((a) => exclude.has(a.id)) || item.node.type === 'text') continue;
+    const geometry = nodeGeometry(item.node);
+    if (!geometry) continue;
+    for (const sub of geometry.subpaths) {
+      const world = { closed: sub.closed, anchors: sub.anchors.map((a) => ({ ...a, p: applyToPoint(item.world, a.p), in: a.in && applyToPoint(item.world, a.in), out: a.out && applyToPoint(item.world, a.out) })) };
+      for (const seg of segmentsOf(world)) {
+        const candidates = line ? crossings(seg, line) : [projectOnSegment(seg, point).point];
+        for (const c of candidates) {
+          const distance = Math.hypot(c.x - point.x, c.y - point.y);
+          if (distance <= tolerance && (!best || distance < best.distance)) best = { point: c, distance };
+        }
+      }
+    }
+  }
+  return best?.point ?? null;
 }
 
 /** Screen-pixel snapping distance of specs/03. */

@@ -26,7 +26,7 @@ export interface OverlayOptions {
   selection: HoverTarget[];
   /** Smart guides to draw, with their translated labels. */
   snapLines: SnapLine[] | null;
-  snapLabels: { align: string; center: string; anchor: string };
+  snapLabels: { align: string; center: string; anchor: string; path: string; intersection: string };
   /** Blue measurement label next to the cursor. */
   measure: { text: string; at: Vec2 } | null;
   /** Extra drawing by the active tool (marquees, rubber bands…), in screen pixels. */
@@ -57,6 +57,26 @@ function drawSnapLines(ctx: CanvasRenderingContext2D, o: OverlayOptions, lines: 
   ctx.font = '10px "Inter Variable", Inter, system-ui, sans-serif';
   ctx.textBaseline = 'middle';
   for (const line of lines) {
+    if (line.kind === 'path' || line.kind === 'intersection') {
+      // A point on an outline: a small cross with its label.
+      const px = Math.round(line.value * o.view.zoom + o.view.panX) + 0.5;
+      const py = Math.round((line.from ?? 0) * o.view.zoom + o.view.panY) + 0.5;
+      ctx.beginPath();
+      ctx.moveTo(px - 5, py - 5);
+      ctx.lineTo(px + 5, py + 5);
+      ctx.moveTo(px + 5, py - 5);
+      ctx.lineTo(px - 5, py + 5);
+      ctx.stroke();
+      const label = line.label ? o.snapLabels[line.label] : null;
+      if (label) {
+        const w = ctx.measureText(label).width + 10;
+        ctx.fillRect(px + 10, py - 22, w, 16);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(label, px + 15, py - 14);
+        ctx.fillStyle = o.theme.smartGuide;
+      }
+      continue;
+    }
     const vertical = line.axis === 'x';
     const at = Math.round(vertical ? line.value * o.view.zoom + o.view.panX : line.value * o.view.zoom + o.view.panY) + 0.5;
     const from = line.from === null ? 0 : (vertical ? line.from * o.view.zoom + o.view.panY : line.from * o.view.zoom + o.view.panX);
