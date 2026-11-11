@@ -221,7 +221,7 @@ ${header(prefix, 'home')}
       <h1>Dibuja vectores con la sensación de Illustrator</h1>
       <p class="lead">Victoria es un editor de gráficos vectoriales de escritorio para dibujar íconos, acomodar imágenes para imprimir y vectorizar imágenes. Nodos, manejadores, pluma, texto sobre trazado, mesas de trabajo… y un concepto nuevo: los <strong>Espacios</strong>.</p>
       <p class="actions">
-        <a class="button button--primary" href="#descargas">Descargar</a>
+        <a class="button button--primary" href="${REPO}/releases/latest" rel="noopener">Descargar la última versión</a>
         <a class="button" href="docs/manual/">Leer la documentación</a>
       </p>
       <p class="meta">Versión ${version} · Windows y Linux · Interfaz en español</p>
@@ -234,6 +234,15 @@ ${header(prefix, 'home')}
   <section class="section" id="funciones">
     <h2>Lo que puedes hacer</h2>
     <ul class="cards">${cards}</ul>
+  </section>
+
+  <section class="section section--split">
+    <div>
+      <h2>Dibuja nodo a nodo</h2>
+      <p>La sensación de dibujo de Illustrator: Pluma, Selección directa con nodos y manejadores, Creador de formas y Buscatrazos. En la captura, el propio ícono de Victoria abierto en edición, con sus capas y el panel de trazo.</p>
+      <p><a href="docs/herramientas/">Herramientas →</a></p>
+    </div>
+    <figure><img src="assets/app-nodes.png" width="1440" height="900" loading="lazy" alt="Victoria editando el ícono de la aplicación: trazado seleccionado con sus nodos, panel de capas, trazo y Buscatrazos" /></figure>
   </section>
 
   <section class="section section--split">
