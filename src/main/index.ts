@@ -29,9 +29,10 @@ const chrome = resolveChrome();
 
 let mainWindow: BrowserWindow | null = null;
 
-/** Window and taskbar icon: next to the app when packaged (extraResources), in build/ while developing. */
+/** Window and taskbar icon: the multi-size .ico on Windows, the .png elsewhere. Packaged: extraResources; dev: build/. */
 function appIconPath(): string {
-  return app.isPackaged ? path.join(process.resourcesPath, 'icon.png') : path.join(app.getAppPath(), 'build', 'icon.png');
+  const file = process.platform === 'win32' ? 'icon.ico' : 'icon.png';
+  return app.isPackaged ? path.join(process.resourcesPath, file) : path.join(app.getAppPath(), 'build', file);
 }
 
 function createWindow(): BrowserWindow {
