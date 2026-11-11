@@ -1,5 +1,17 @@
 # Changelog
 
+## Desagrupar y máscaras de recorte
+- **Objeto › Desagrupar** queda deshabilitado cuando la selección no contiene grupos normales (por ejemplo, un grupo de recorte): una máscara de recorte se deshace con *Máscara de recorte › Liberar*.
+
+## EPS de Illustrator 11+
+- Abrir un EPS guardado por Illustrator reciente («AI11EPS», con los procedimientos `Adobe_AGM_*`) ya no falla con «stack underflow»: se ignoran su prólogo, su preparación y sus inyecciones, y se traducen los operadores cortos de Adobe (`np mo li cv cp clp f cmyk…`). El texto sigue sin leerse (aviso). Los errores de lectura ahora incluyen los últimos operadores ejecutados. Probado con un EPS real de 1,1 MB (74 trazados + 19 compuestos).
+
+## Guías inteligentes al arrastrar anclas
+- Con las guías inteligentes activas, arrastrar un ancla con Selección directa también se alinea con las **anclas** de otros objetos y con las anclas fijas de su propio trazado (antes solo con bordes y centros de otros objetos), y los **manejadores** se ajustan igual. Las líneas se muestran con la etiqueta «ancla». También se ajusta a **trazados** de otros objetos («trazado») y a la **intersección** de un trazado con la alineación ya encontrada («intersección»). Reglas en `specs/03-herramientas.md`.
+
+## Mezcla
+- **Objeto › Mezcla** (Crear Alt+Ctrl+B, Liberar Alt+Mayús+Ctrl+B, Expandir y Opciones de mezcla…): genera pasos intermedios entre dos o más trazados o formas, interpolando contorno (anclas y manejadores, igualando su número) y aspecto (colores, grosor, opacidad). Crear abre un modal con vista previa para elegir el número de pasos (Aceptar/Cancelar). El resultado es una mezcla viva (`GroupNode.blend`): al editar un objeto clave (mover, deformar, recolorear) los pasos se regeneran solos en el mismo paso de deshacer; los pasos no se pueden seleccionar ni editar por separado. Opción **Equidistantes**: el mismo hueco entre cada objeto generado y el siguiente. Pendiente: herramienta Mezcla (W) y mezcla por eje. Reglas en `specs/03-herramientas.md`.
+
 ## Trazado compuesto
 - **Objeto › Trazado compuesto › Crear (Ctrl+8)** y **Liberar (Alt+Mayús+Ctrl+8)** ya funcionan (tenían menú y atajo pero ninguna acción). Crear junta los contornos de los objetos seleccionados en un solo objeto con el aspecto del de más atrás, en el lugar del de más arriba, con regla par-impar (lo que se solapa hace hueco); Liberar devuelve trazados separados con el aspecto del compuesto. Una entrada de historial cada uno. `makeCompoundPath` / `releaseCompoundPaths` en `core/commands/pathfinder.ts`.
 

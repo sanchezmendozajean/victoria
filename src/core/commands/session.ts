@@ -1,4 +1,5 @@
 import { applyPatches, enablePatches, freeze, produce, produceWithPatches, type Patch } from 'immer';
+import { applyBlendRefreshes, findStaleBlends } from '../blend/live';
 import { ImageStore } from '../io/imageStore';
 import { randomIds, type IdGenerator } from '../model/ids';
 import { getSpace } from '../model/queries';
@@ -130,11 +131,14 @@ export class DocumentSession {
   run(command: Command, nextSelection?: Selection): boolean {
     const [afterApply, applyPatchesList, applyInverse] = produceWithPatches(this.doc, (draft) => command.apply(draft));
     if (applyPatchesList.length === 0) return false;
-    const [next, stampPatches, stampInverse] = produceWithPatches(afterApply, (draft) => {
+    // Live blends react to their key objects: their steps are regenerated inside the same history step.
+    const stale = findStaleBlends(afterApply, this.ids);
+    const [afterBlend, blendPatches, blendInverse] = stale.length > 0 ? produceWithPatches(afterApply, (draft) => applyBlendRefreshes(draft, stale)) : [afterApply, [] as Patch[], [] as Patch[]];
+    const [next, stampPatches, stampInverse] = produceWithPatches(afterBlend, (draft) => {
       draft.meta.modified = this.now();
     });
-    const patches = [...applyPatchesList, ...stampPatches];
-    const inverse = [...stampInverse, ...applyInverse];
+    const patches = [...applyPatchesList, ...blendPatches, ...stampPatches];
+    const inverse = [...stampInverse, ...blendInverse, ...applyInverse];
 
     const selectionBefore = this.sel;
     const selectionAfter = nextSelection ?? this.sel;

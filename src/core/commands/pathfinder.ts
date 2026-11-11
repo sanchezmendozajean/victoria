@@ -94,7 +94,7 @@ export interface PathfinderResult {
 }
 
 /** The inverse of the world matrix of the container that holds `id`. */
-function containerInverse(space: Space, id: string): Matrix {
+export function containerInverse(space: Space, id: string): Matrix {
   const frame = frameOf(space, id);
   if (!frame) return [1, 0, 0, 1, 0, 0];
   const parentWorld = multiply(frame.world, invert(frame.node.transform) ?? [1, 0, 0, 1, 0, 0]);

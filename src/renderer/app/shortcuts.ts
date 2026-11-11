@@ -80,6 +80,8 @@ export const DEFAULT_SHORTCUTS = {
   'object.applyModifiers': 'Alt+CmdOrCtrl+E',
   'object.join': 'CmdOrCtrl+J',
   'object.average': 'Alt+CmdOrCtrl+J',
+  'object.blendMake': 'Alt+CmdOrCtrl+B',
+  'object.blendRelease': 'Alt+Shift+CmdOrCtrl+B',
   'object.compoundMake': 'CmdOrCtrl+8',
   'object.compoundRelease': 'Alt+Shift+CmdOrCtrl+8',
   'object.clipMake': 'CmdOrCtrl+7',

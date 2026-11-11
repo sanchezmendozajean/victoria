@@ -10,7 +10,7 @@ import { useUi, type CustomWorkspace, type ViewOptions, type WorkspaceId } from 
 import { selectedPathText, selectedTextIds } from './textActions';
 import { MODIFIER_MENU } from './modifierCatalog';
 import { openModifier, selectionHasModifiers } from './modifierActions';
-import { actionContext } from './selectionActions';
+import { actionContext, canMakeBlend, canUngroup, expandBlendSelection, selectedBlends } from './selectionActions';
 import { moveToSpaceEntries } from './spaceMenus';
 import { goToSpaceIndex } from '../documents/spaceActions';
 import { manager } from '../documents';
@@ -151,7 +151,7 @@ export function buildMenus(ctx: MenuContext): MenuDef[] {
     item('move-to-space', 'menu.object.moveToSpace', 'space-move-to', undefined, { submenu: moveToSpaceEntries(), disabled: !hasSelection }),
     sep('s1'),
     item('group', 'menu.object.group', 'group', 'object.group'),
-    item('ungroup', 'menu.object.ungroup', 'ungroup', 'object.ungroup'),
+    item('ungroup', 'menu.object.ungroup', 'ungroup', 'object.ungroup', { disabled: !canUngroup() }),
     sep('s2'),
     sub('arrange', 'menu.object.arrange', 'arrange-front', [
       item('front', 'menu.object.bringToFront', 'arrange-front', 'object.bringToFront'),
@@ -166,6 +166,13 @@ export function buildMenus(ctx: MenuContext): MenuDef[] {
     sep('s3'),
     item('join', 'menu.object.join', 'join', 'object.join'),
     item('average', 'menu.object.average', 'average', 'object.average'),
+    sub('blend', 'menu.object.blend', 'blend-objects', [
+      item('blend-make', 'menu.object.blendMake', 'blend-objects', 'object.blendMake', { disabled: !canMakeBlend() }),
+      item('blend-release', 'menu.object.blendRelease', 'blend-release', 'object.blendRelease', { disabled: selectedBlends().length === 0 }),
+      item('blend-expand', 'menu.object.blendExpand', 'blend-expand', undefined, { onSelect: expandBlendSelection, disabled: selectedBlends().length === 0 }),
+      sep('blend-sep'),
+      item('blend-options', 'menu.object.blendOptions', 'blend-options', undefined, { disabled: selectedBlends().length === 0, onSelect: () => useUi.getState().setBlendDialog({ mode: 'edit' }) }),
+    ]),
     sub('compound', 'menu.object.compound', 'compound-path', [
       item('compound-make', 'menu.object.compoundMake', 'compound-path', 'object.compoundMake'),
       item('compound-release', 'menu.object.compoundRelease', 'compound-path', 'object.compoundRelease'),

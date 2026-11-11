@@ -30,7 +30,7 @@ Ctrl+Z Deshacer · Mayús+Ctrl+Z Rehacer · Ctrl+X/C/V · Ctrl+F Pegar delante �
 
 ## Objeto
 
-Ctrl+G Agrupar · Mayús+Ctrl+G Desagrupar · Ctrl+2 Bloquear · Alt+Ctrl+2 Desbloquear todo · Ctrl+3 Ocultar · Alt+Ctrl+3 Mostrar todo · Ctrl+] / [ Hacia delante/atrás · Mayús+Ctrl+] / [ Al frente/fondo · Ctrl+D Transformar de nuevo · Mayús+Ctrl+M Mover… · Ctrl+J Unir · Alt+Ctrl+J Promediar · Ctrl+8 Crear trazado compuesto · Alt+Mayús+Ctrl+8 Liberar · Ctrl+7 Máscara de recorte · Alt+Ctrl+7 Liberar · Mayús+Ctrl+O Crear contornos (texto) · Alt+Ctrl+E Aplicar modificadores.
+Ctrl+G Agrupar · Mayús+Ctrl+G Desagrupar · Ctrl+2 Bloquear · Alt+Ctrl+2 Desbloquear todo · Ctrl+3 Ocultar · Alt+Ctrl+3 Mostrar todo · Ctrl+] / [ Hacia delante/atrás · Mayús+Ctrl+] / [ Al frente/fondo · Ctrl+D Transformar de nuevo · Mayús+Ctrl+M Mover… · Ctrl+J Unir · Alt+Ctrl+J Promediar · Alt+Ctrl+B Crear mezcla · Alt+Mayús+Ctrl+B Liberar mezcla · Ctrl+8 Crear trazado compuesto · Alt+Mayús+Ctrl+8 Liberar · Ctrl+7 Máscara de recorte · Alt+Ctrl+7 Liberar · Mayús+Ctrl+O Crear contornos (texto) · Alt+Ctrl+E Aplicar modificadores.
 
 ## Modificador
 

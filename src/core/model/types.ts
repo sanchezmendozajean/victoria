@@ -162,9 +162,23 @@ export interface TraceInfo {
   view?: TraceView;
 }
 
+/** A group that is the live result of Mezcla: which children are key objects and how many steps join each pair. */
+export interface BlendInfo {
+  /** Intermediate objects between each pair of consecutive key objects. */
+  steps: number;
+  /** Ids of the key children, in blend order (the other children are generated). */
+  keys: string[];
+  /** Spread the steps so the gap between neighbouring objects is the same (instead of equal spacing in the interpolation). */
+  equidistant?: boolean;
+  /** Fingerprint of what the generated steps were made from; the session regenerates them when it stops matching. */
+  sig?: string;
+}
+
 export interface GroupNode extends BaseNode {
   type: 'group';
   children: Node[];
+  /** Present while the blend can still be edited; Expandir removes it, Liberar dissolves the group. */
+  blend?: BlendInfo;
   /** Present while the group can still be traced again; Expandir removes it. */
   trace?: TraceInfo;
 }

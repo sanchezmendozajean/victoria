@@ -165,7 +165,9 @@ function collectPaths(node: Node, world: Matrix, layer: Layer, out: PathFrame[])
     if (path) out.push({ path, live: true, owner: node, world, layer });
   } else if (node.type === 'compound') for (const path of node.children) out.push({ path, live: false, owner: node, world, layer });
   else if (node.type === 'group' || node.type === 'clipGroup') {
-    for (const child of node.children) collectPaths(child, multiply(world, child.transform), layer, out);
+    // The generated steps of a live blend are not editable: only its key objects are.
+    const blend = node.type === 'group' ? node.blend : undefined;
+    for (const child of node.children) if (!blend || blend.keys.includes(child.id)) collectPaths(child, multiply(world, child.transform), layer, out);
   }
 }
 

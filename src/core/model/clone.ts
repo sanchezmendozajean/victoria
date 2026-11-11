@@ -12,6 +12,7 @@ export function cloneNode<T extends Node>(node: T, ids: IdGenerator, idMap: Map<
     n.id = fresh;
     if (n.type === 'group' || n.type === 'clipGroup') n.children.forEach(rename);
     if (n.type === 'compound') n.children.forEach(rename);
+    if (n.type === 'group' && n.blend) n.blend.keys = n.blend.keys.map((k) => idMap.get(k) ?? k);
     for (const item of n.appearance.items) {
       const mods = item.kind === 'modifier' ? [item.mod] : item.modifiers;
       for (const mod of mods) mod.id = ids();

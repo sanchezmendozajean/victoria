@@ -15,4 +15,6 @@ export * from './trace';
 export * from './appearance';
 export * from './text';
 export * from './pathfinder';
+export * from './blend';
+export { BLEND_DEFAULT_STEPS, BLEND_MAX_STEPS, BLEND_MIN_STEPS, clampBlendSteps } from '../blend/blend';
 export * from './modifiers';

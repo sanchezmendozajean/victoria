@@ -3,7 +3,7 @@ import { applyToPoint } from '../model/matrix';
 import { geometricBoundsInParent, hasFill, nodeGeometry } from './geometry';
 import { flattenGeometry, pointInFill } from './hit';
 import { containsPoint, intersects, transformRect, type Rect } from './rect';
-import { indexFor, type IndexItem } from './spatial-index';
+import { indexFor, isGeneratedIn, type IndexItem } from './spatial-index';
 import { pathsOfNodes } from './world';
 
 export interface MarqueeOptions {
@@ -86,7 +86,7 @@ export function marqueeTargets(space: Space, rect: Rect, options: MarqueeOptions
     let target: Node;
     if (isolation) {
       const depth = item.ancestors.findIndex((a) => a.id === isolation);
-      if (depth === -1) continue;
+      if (depth === -1 || isGeneratedIn(item, isolation)) continue;
       target = item.ancestors[depth + 1] ?? item.node;
     } else {
       target = item.ancestors[0] ?? item.node;
@@ -161,6 +161,6 @@ export function anchorsInPolygon(space: Space, objectIds: readonly string[], pol
 export function visibleLeafIds(space: Space, rect: Rect, includeLocked = false): string[] {
   return indexFor(space)
     .search(rect)
-    .filter((i) => includeLocked || !i.locked)
+    .filter((i) => !i.generated && (includeLocked || !i.locked))
     .map((i) => i.id);
 }

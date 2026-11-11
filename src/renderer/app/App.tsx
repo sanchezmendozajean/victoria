@@ -12,6 +12,7 @@ import { ColorPickerDialog } from './ColorPickerDialog';
 import { SpacePropertiesDialog } from './SpacePropertiesDialog';
 import { ModifierDialog } from './ModifierDialog';
 import { PathTextDialog } from './PathTextDialog';
+import { BlendDialog } from './BlendDialog';
 import { ExportDialog } from './ExportDialog';
 import { PreferencesDialog } from './PreferencesDialog';
 import { CustomDocumentDialog } from './CustomDocumentDialog';
@@ -65,6 +66,7 @@ export function App() {
       <CustomDocumentDialog />
       <TextPromptHost />
       <PathTextDialog />
+      <BlendDialog />
       <ModifierDialog />
       <ColorPickerDialog />
       <SpacePropertiesDialog />

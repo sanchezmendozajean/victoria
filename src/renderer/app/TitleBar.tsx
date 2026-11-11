@@ -49,9 +49,12 @@ export function TitleBar() {
   const [open, setOpen] = useState<OpenMenu | null>(null);
   const barRef = useRef<HTMLDivElement>(null);
 
+  // Entries enabled by what is selected (Mezcla, Aplicar modificadores) are decided when the menus are built.
+  const selection = session?.selection;
+  const revision = session?.revision;
   const menus = useMemo(
     () => buildMenus({ os: platform.os, theme, workspace, customWorkspaces, setTheme, setWorkspace, saveWorkspaceAs, deleteWorkspace, openPanel, resetPanels, undoLabel, redoLabel, viewOptions, openTransformDialog: (kind) => openTransformDialog(kind, null) }),
-    [platform.os, theme, workspace, customWorkspaces, setTheme, setWorkspace, saveWorkspaceAs, deleteWorkspace, openPanel, resetPanels, undoLabel, redoLabel, viewOptions, openTransformDialog, shortcuts],
+    [platform.os, theme, workspace, customWorkspaces, setTheme, setWorkspace, saveWorkspaceAs, deleteWorkspace, openPanel, resetPanels, undoLabel, redoLabel, viewOptions, openTransformDialog, shortcuts, selection, revision],
   );
 
   const workspaceMenu: MenuEntry[] = workspaceEntries({ workspace, customWorkspaces, setWorkspace, saveWorkspaceAs, deleteWorkspace });

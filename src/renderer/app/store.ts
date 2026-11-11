@@ -123,6 +123,11 @@ interface UiState {
   /** Transform panel: strokes and effects scale with the object. */
   scaleStrokes: boolean;
   pathTextDialog: boolean;
+  /** Mezcla dialog: 'create' previews a new blend (and undoes it on cancel back to history length `base`), 'edit' changes the selected one. */
+  blendDialog: { mode: 'create'; base: number } | { mode: 'edit' } | null;
+  /** The step count new blends start with. */
+  blendSteps: number;
+  blendEquidistant: boolean;
   modifierDialog: { modifierId: string; nodeIds: string[]; edit: { nodeId: string; modId: string } | null; target?: ModifierTarget } | null;
   /** The last modifier applied, with its parameters (Mayús+Ctrl+E repeats it). */
   lastModifier: { modifierId: string; params: Params } | null;
@@ -185,6 +190,9 @@ interface UiState {
   closeModifierDialog(): void;
   setLastModifier(modifier: NonNullable<UiState['lastModifier']>): void;
   setPathTextDialog(open: boolean): void;
+  setBlendDialog(dialog: UiState['blendDialog']): void;
+  setBlendSteps(steps: number): void;
+  setBlendEquidistant(equidistant: boolean): void;
 
   toggleViewOption(key: keyof ViewOptions): void;
   setActiveArtboard(spaceId: string, artboardId: string): void;
@@ -307,6 +315,9 @@ export const useUi = create<UiState>()((set, get) => ({
   alignPreviewBounds: false,
   scaleStrokes: false,
   pathTextDialog: false,
+  blendDialog: null,
+  blendSteps: 5,
+  blendEquidistant: false,
   modifierDialog: null,
   lastModifier: null,
   shapeDialog: null,
@@ -380,6 +391,9 @@ export const useUi = create<UiState>()((set, get) => ({
   openSpaceProps: (spaceProps) => set({ spaceProps }),
   closeSpaceProps: () => set({ spaceProps: null }),
   setPathTextDialog: (pathTextDialog) => set({ pathTextDialog }),
+  setBlendDialog: (blendDialog) => set({ blendDialog }),
+  setBlendSteps: (blendSteps) => set({ blendSteps }),
+  setBlendEquidistant: (blendEquidistant) => set({ blendEquidistant }),
 
   toggleViewOption: (key) => set((s) => ({ viewOptions: { ...s.viewOptions, [key]: !s.viewOptions[key] } })),
   setActiveArtboard: (spaceId, artboardId) => set((s) => ({ activeArtboard: { ...s.activeArtboard, [spaceId]: artboardId } })),

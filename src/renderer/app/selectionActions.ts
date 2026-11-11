@@ -10,7 +10,14 @@ import {
   hasAnchorSelection,
   intersects,
   locateNode,
+  blendGroups,
+  blendableCount,
+  expandBlends,
+  makeBlend,
   makeCompoundPath,
+  releaseBlends,
+  setBlendOptions,
+  type BlendOptions,
   nodeWorldBounds,
   releaseCompoundPaths,
   removeNodes,
@@ -62,6 +69,12 @@ export function groupSelection(): void {
   if (!c || c.ids.length < 1) return;
   const group = createGroup(c.session.ids, []);
   c.session.run(groupNodes(c.space.id, c.ids, group), selectOnly(c.space.id, [group.id]));
+}
+
+/** Desagrupar only applies to plain groups: a clipping group is undone with Máscara de recorte › Liberar. */
+export function canUngroup(): boolean {
+  const c = actionContext();
+  return !!c && c.ids.some((id) => locateNode(c.space, id)?.node.type === 'group');
 }
 
 export function ungroupSelection(): void {
@@ -189,4 +202,61 @@ export function transformAgain(): void {
   const last = useUi.getState().lastTransform;
   if (!c || !last || c.ids.length === 0) return;
   applyTransform(c.session, c.space, c.ids, last.matrix, last.copy);
+}
+
+/**
+ * Objeto › Mezcla › Crear (Alt+Ctrl+B): blends the selected paths and shapes with the remembered step count and opens the
+ * parameters dialog over the result as a preview; Cancelar in the dialog undoes everything done since (see BlendDialog).
+ */
+export function makeBlendSelection(): void {
+  const c = actionContext();
+  if (!c || c.ids.length < 2) return;
+  const base = c.session.historyLength;
+  const result = makeBlend(c.space, c.ids, useUi.getState().blendSteps, c.session.ids, useUi.getState().blendEquidistant);
+  if (!result) return;
+  c.session.run(result.command, selectOnly(c.space.id, result.resultIds));
+  useUi.getState().setBlendDialog({ mode: 'create', base });
+}
+
+/** Cancelar in the Mezcla dialog: back to how the document was before the blend was created. */
+export function cancelBlendCreate(base: number): void {
+  const session = actionContext()?.session;
+  if (!session) return;
+  while (session.historyLength > base && session.rollback()) { /* undo the preview */ }
+}
+
+/** Objeto › Mezcla › Liberar (Alt+Mayús+Ctrl+B): back to the key objects. */
+export function releaseBlendSelection(): void {
+  const c = actionContext();
+  if (!c || c.ids.length === 0) return;
+  const result = releaseBlends(c.space, c.ids);
+  if (result) c.session.run(result.command, selectOnly(c.space.id, result.resultIds));
+}
+
+/** Objeto › Mezcla › Expandir: the blend stops being live. */
+export function expandBlendSelection(): void {
+  const c = actionContext();
+  if (!c || c.ids.length === 0) return;
+  const result = expandBlends(c.space, c.ids);
+  if (result) c.session.run(result.command, selectOnly(c.space.id, result.resultIds));
+}
+
+/** Changes the steps and/or spacing of the selected live blends (one history step per change). */
+export function setSelectedBlendOptions(patch: Partial<BlendOptions>): void {
+  const c = actionContext();
+  if (!c) return;
+  const command = setBlendOptions(c.space, c.ids, patch, c.session.ids);
+  if (command) c.session.run(command);
+}
+
+/** The live blends in the selection. */
+export function selectedBlends(): ReturnType<typeof blendGroups> {
+  const c = actionContext();
+  return c ? blendGroups(c.space, c.ids) : [];
+}
+
+/** Mezcla › Crear needs at least two paths or shapes. */
+export function canMakeBlend(): boolean {
+  const c = actionContext();
+  return !!c && blendableCount(c.space, c.ids) >= 2;
 }
