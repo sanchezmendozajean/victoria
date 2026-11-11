@@ -1,5 +1,5 @@
 import { commonStrokeField, locateNode, setColorMode, setUnits, type Node, type Units } from '../../core';
-import { arrangeSelection, groupSelection, ungroupSelection } from '../app/selectionActions';
+import { arrangeSelection, groupSelection, releaseCompoundSelection, ungroupSelection } from '../app/selectionActions';
 import { nodeIcon, nodeLabel } from '../app/nodeLabels';
 import { applyObjectLook, applyStroke } from '../app/paintActions';
 import { useUi, type ViewOptions } from '../app/store';
@@ -103,7 +103,8 @@ function ObjectProperties() {
   const first = ctx.leaves[0];
   const selectedNode = ctx.ids.length === 1 ? findNode(ctx, ctx.ids[0] as string) : null;
   const weight = commonStrokeField(ctx.leaves, 'width');
-  const isGroup = !!selectedNode && (selectedNode.type === 'group' || selectedNode.type === 'clipGroup');
+  const isCompound = !!selectedNode && selectedNode.type === 'compound';
+  const isGroup =!!selectedNode && (selectedNode.type === 'group' || selectedNode.type === 'clipGroup');
   const chip = (target: 'fill' | 'stroke') => (
     <button type="button" className="vc-propchip" data-testid={`properties-${target}`} {...tip(t(target === 'fill' ? 'control.fill' : 'control.stroke'))} onClick={(e) => { setActive(target); openPicker(target, e.currentTarget); }}>
       <PaintChip paint={look[target].mixed ? null : (look[target] as { value: Parameters<typeof PaintChip>[0]['paint'] }).value} mixed={look[target].mixed} resources={resources} size={18} />
@@ -150,10 +151,17 @@ function ObjectProperties() {
             <Icon id="group" size={14} />
             {t('menu.object.group')}
           </button>
-          <button type="button" className="vc-pbutton" data-testid="quick-ungroup" disabled={!isGroup} onClick={ungroupSelection}>
-            <Icon id="ungroup" size={14} />
-            {t('menu.object.ungroup')}
-          </button>
+          {isCompound ? (
+            <button type="button" className="vc-pbutton" data-testid="quick-compound-release" onClick={releaseCompoundSelection}>
+              <Icon id="compound-path" size={14} />
+              {t('menu.object.compoundReleaseFull')}
+            </button>
+          ) : (
+            <button type="button" className="vc-pbutton" data-testid="quick-ungroup" disabled={!isGroup} onClick={ungroupSelection}>
+              <Icon id="ungroup" size={14} />
+              {t('menu.object.ungroup')}
+            </button>
+          )}
           <button type="button" className="vc-pbutton" data-testid="quick-isolate" disabled={!isGroup} onClick={() => selectedNode && setIsolation(ctx.space.id, selectedNode.id)}>
             <Icon id="isolate" size={14} />
             {t('control.isolate')}

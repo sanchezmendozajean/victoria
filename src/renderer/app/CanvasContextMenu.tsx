@@ -6,7 +6,7 @@ import { runAction } from './actions';
 import type { IconId } from '../components/Icon';
 import { formatAccelerator, SHORTCUTS, type ShortcutAction } from './shortcuts';
 import { canMoveToSpace, moveToSpaceEntries } from './spaceMenus';
-import { actionContext } from './selectionActions';
+import { actionContext, isCompoundSelection } from './selectionActions';
 import { useUi } from './store';
 
 /** Right click on the canvas: the quick actions of the selection, with "Mover a Espacio" (specs/04 · regla 6). */
@@ -28,7 +28,9 @@ export function CanvasContextMenu() {
     });
     return [
       act('group', t('menu.object.group'), 'group', 'object.group'),
-      act('ungroup', t('menu.object.ungroup'), 'ungroup', 'object.ungroup'),
+      isCompoundSelection()
+        ? act('compound-release', t('menu.object.compoundReleaseFull'), 'compound-path', 'object.compoundRelease')
+        : act('ungroup', t('menu.object.ungroup'), 'ungroup', 'object.ungroup'),
       { type: 'separator', id: 's1' },
       act('front', t('menu.object.bringToFront'), 'arrange-front', 'object.bringToFront'),
       act('back', t('menu.object.sendToBack'), 'arrange-back', 'object.sendToBack'),

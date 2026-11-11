@@ -77,6 +77,12 @@ export function canUngroup(): boolean {
   return !!c && c.ids.some((id) => locateNode(c.space, id)?.node.type === 'group');
 }
 
+/** True when the selection is made of compound paths only (the "Desagrupar" slot then becomes "Liberar trazado compuesto"). */
+export function isCompoundSelection(): boolean {
+  const c = actionContext();
+  return !!c && c.ids.length > 0 && c.ids.every((id) => locateNode(c.space, id)?.node.type === 'compound');
+}
+
 export function ungroupSelection(): void {
   const c = actionContext();
   if (!c) return;

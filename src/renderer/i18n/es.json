@@ -71,6 +71,7 @@
   "blend.accept": "Aceptar",
   "menu.object.compoundMake": "Crear",
   "menu.object.compoundRelease": "Liberar",
+  "menu.object.compoundReleaseFull": "Liberar trazado compuesto",
   "menu.object.clip": "Máscara de recorte",
   "menu.object.clipMake": "Crear",
   "menu.object.clipRelease": "Liberar",
