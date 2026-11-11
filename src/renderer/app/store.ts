@@ -282,7 +282,7 @@ export const useUi = create<UiState>()((set, get) => ({
   workspace: stored.workspace,
   customWorkspaces: stored.custom,
 
-  activeTool: 'tool-pen',
+  activeTool: 'tool-select',
   slotTool: {},
   toolbarTwoColumns: loadToolbarColumns(),
   cropMode: null,
