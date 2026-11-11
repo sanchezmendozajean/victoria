@@ -63,6 +63,7 @@ export function createTestHost(init: HostInit = {}) {
     get pickTolerance(): number {
       return 4 / host.view.zoom;
     },
+    outlineView: false,
     hitTest: (doc: Vec2): Hit[] => hitTest(getActiveSpace(session.document), doc, { tolerance: host.pickTolerance, isolation: host.isolation }),
     snapSources(exclude: ReadonlySet<string>): SnapSources {
       const space = getActiveSpace(session.document);

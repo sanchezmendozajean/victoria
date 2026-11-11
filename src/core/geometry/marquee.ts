@@ -14,6 +14,8 @@ export interface MarqueeOptions {
   isolation?: string | null;
   /** Pick tolerance in Space units for thin strokes. */
   tolerance?: number;
+  /** Outline view (Ctrl+Y): only paths count, so a marquee inside a filled shape does not pick it. */
+  outlineOnly?: boolean;
 }
 
 function segmentsCross(a: Vec2, b: Vec2, r: Rect): boolean {
@@ -46,7 +48,7 @@ function segmentsCross(a: Vec2, b: Vec2, r: Rect): boolean {
 }
 
 /** Does the painted shape of a leaf touch the rectangle (outline crossing it, or its area covering it)? */
-function touches(item: IndexItem, rect: Rect, tolerance: number): boolean {
+function touches(item: IndexItem, rect: Rect, tolerance: number, outlineOnly: boolean): boolean {
   const geometry = nodeGeometry(item.node);
   if (!geometry) return false;
   const world: Matrix = item.world;
@@ -61,7 +63,7 @@ function touches(item: IndexItem, rect: Rect, tolerance: number): boolean {
     }
   }
   // Fully inside a filled shape (the marquee is smaller than the shape and crosses no outline).
-  if (item.node.type === 'image' || hasFill(item.node.appearance)) {
+  if (!outlineOnly && (item.node.type === 'image' || hasFill(item.node.appearance))) {
     const inverse = invertSafe(world);
     if (inverse && pointInFill(lines, applyToPoint(inverse, { x: (rect.minX + rect.maxX) / 2, y: (rect.minY + rect.maxY) / 2 }), geometry.fillRule)) return true;
   }
@@ -79,7 +81,7 @@ function invertSafe(m: Matrix): Matrix | null {
  * touches, in paint order. Hidden and locked objects are skipped.
  */
 export function marqueeTargets(space: Space, rect: Rect, options: MarqueeOptions = {}): Node[] {
-  const { mode = 'touch', includeLocked = false, isolation = null, tolerance = 0.5 } = options;
+  const { mode = 'touch', includeLocked = false, isolation = null, tolerance = 0.5, outlineOnly = false } = options;
   const found = new Map<string, { node: Node; order: number }>();
   for (const item of indexFor(space).search(rect)) {
     if (item.locked && !includeLocked) continue;
@@ -99,7 +101,7 @@ export function marqueeTargets(space: Space, rect: Rect, options: MarqueeOptions
             const world = transformRect(parentOf(item), own);
             return world.minX >= rect.minX && world.maxX <= rect.maxX && world.minY >= rect.minY && world.maxY <= rect.maxY;
           })()
-        : intersects(item, rect) && touches(item, rect, tolerance);
+        : intersects(item, rect) && touches(item, rect, tolerance, outlineOnly);
     if (inside && !found.has(target.id)) found.set(target.id, { node: target, order: item.order });
     else if (inside) found.get(target.id)!.order = Math.max(found.get(target.id)!.order, item.order);
   }

@@ -330,6 +330,18 @@ describe('orientedBounds', () => {
   });
 });
 
+describe('outline view picking', () => {
+  it('picks by the path only: the inside of a filled object does not block what is behind it', () => {
+    const picture = createImage(ids, 'hash', 100, 50, translation(10, 10));
+    const space = spaceWith(picture);
+    expect(hitTest(space, pt(60, 35), { tolerance: 1, outlineOnly: true })).toEqual([]);
+    expect(hitTest(space, pt(10, 35), { tolerance: 1, outlineOnly: true })[0]?.id).toBe(picture.id);
+    // A marquee inside the frame crosses no path, so it picks nothing; one over the edge does.
+    expect(marqueeTargets(space, { minX: 50, minY: 30, maxX: 60, maxY: 40 }, { outlineOnly: true })).toEqual([]);
+    expect(marqueeTargets(space, { minX: 5, minY: 30, maxX: 15, maxY: 40 }, { outlineOnly: true }).map((n) => n.id)).toEqual([picture.id]);
+  });
+});
+
 describe('pictures', () => {
   it('a picture without fill is hit anywhere inside its frame and by a marquee inside it', () => {
     const picture = createImage(ids, 'hash', 100, 50, translation(10, 10));

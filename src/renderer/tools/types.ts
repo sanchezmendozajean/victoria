@@ -55,6 +55,8 @@ export interface ToolHost {
   readonly units: Units;
   /** 4 screen px in Space units. */
   readonly pickTolerance: number;
+  /** Outline view (Ctrl+Y) is on: objects are picked by their path, not by their painted area. */
+  readonly outlineView: boolean;
   /** All objects under the point, topmost first (respects isolation and locks). */
   hitTest(doc: Vec2): Hit[];
   /** What a drag may snap to right now (guides, grid, artboards, other objects), per the View menu. */

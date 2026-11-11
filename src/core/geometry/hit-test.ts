@@ -12,6 +12,8 @@ export interface HitOptions {
   includeLocked?: boolean;
   /** Group being edited in isolation: only objects inside it can be hit. */
   isolation?: string | null;
+  /** Outline view (Ctrl+Y): objects are picked by their path only, never by their painted area. */
+  outlineOnly?: boolean;
 }
 
 export interface Hit {
@@ -45,7 +47,7 @@ function insideMask(item: IndexItem, p: Vec2, tolerance: number): boolean {
   });
 }
 
-function testItem(item: IndexItem, p: Vec2, tolerance: number): Hit | null {
+function testItem(item: IndexItem, p: Vec2, tolerance: number, outlineOnly: boolean): Hit | null {
   const geometry = hitGeometry(item.node);
   if (!geometry) return null;
   const local = toLocal(item.world, p);
@@ -53,6 +55,9 @@ function testItem(item: IndexItem, p: Vec2, tolerance: number): Hit | null {
   const tolLocal = tolerance / local.scale;
   const flat = flattenGeometry(geometry, Math.max(tolLocal / 4, 1e-4));
   const base = { id: item.id, node: item.node, ancestors: item.ancestors, layer: item.layer, world: item.world, generated: item.generated };
+
+  // Outline view: only 1 px paths are visible, so only they can be picked (a fill behind other objects never blocks them).
+  if (outlineOnly) return distanceToOutline(flat, local.point) <= tolLocal ? { ...base, part: 'stroke' } : null;
 
   // A picture paints its whole frame even though its appearance has no fill (e.g. a pasted image).
   const inside = (item.node.type === 'image' || hasFill(item.node.appearance)) && pointInFill(flat, local.point, geometry.fillRule);
@@ -70,13 +75,13 @@ function testItem(item: IndexItem, p: Vec2, tolerance: number): Hit | null {
  * paths excluded), any object with a stroke is hit on its outline; unpainted areas are empty space.
  */
 export function hitTest(space: Space, point: Vec2, options: HitOptions): Hit[] {
-  const { tolerance, includeLocked = false, isolation = null } = options;
+  const { tolerance, includeLocked = false, isolation = null, outlineOnly = false } = options;
   const hits: Hit[] = [];
   for (const item of indexFor(space).atPoint(point, tolerance)) {
     if (item.locked && !includeLocked) continue;
     if (isolation && !item.ancestors.some((a) => a.id === isolation)) continue;
     if (isolation && isGeneratedIn(item, isolation)) continue;
-    const hit = testItem(item, point, tolerance);
+    const hit = testItem(item, point, tolerance, outlineOnly);
     if (hit && insideMask(item, point, tolerance)) hits.push(hit);
   }
   return hits;

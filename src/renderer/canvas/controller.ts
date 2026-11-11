@@ -352,11 +352,14 @@ export class CanvasController implements ToolHost, CanvasApi {
   get pickTolerance(): number {
     return HOVER_PICK_PX / this.viewValue.zoom;
   }
+  get outlineView(): boolean {
+    return this.input?.options.outline === true;
+  }
 
   hitTest(doc: Vec2): Hit[] {
     const space = this.currentSpace();
     if (!space) return [];
-    return hitTest(space, doc, { tolerance: this.pickTolerance, isolation: this.isolation });
+    return hitTest(space, doc, { tolerance: this.pickTolerance, isolation: this.isolation, outlineOnly: this.outlineView });
   }
 
   snapSources(exclude: ReadonlySet<string>): SnapSources {

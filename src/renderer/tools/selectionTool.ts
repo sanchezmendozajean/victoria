@@ -365,7 +365,7 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
             maxX: Math.max(finished.doc.x, event.doc.x),
             maxY: Math.max(finished.doc.y, event.doc.y),
           };
-          const found = marqueeTargets(space, rect, { isolation: host.isolation, tolerance: host.pickTolerance }).map((n) => n.id);
+          const found = marqueeTargets(space, rect, { isolation: host.isolation, tolerance: host.pickTolerance, outlineOnly: host.outlineView }).map((n) => n.id);
           const base = currentSelection(host) ?? emptySelection(space.id);
           session.select(finished.shift ? addToSelection(base, found) : selectOnly(space.id, found));
         }
