@@ -65,6 +65,7 @@ function ModifierForm({ dialog, session }: { dialog: NonNullable<ReturnType<type
 
   const [params, setParams] = useState<Params>(initial);
   const [preview, setPreview] = useState(true);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
   const key = useRef(`dialog${++dialogCounter}`);
   const touched = useRef(false);
   const instances = useRef<Map<string, ModifierInstance>>(new Map());
@@ -166,11 +167,24 @@ function ModifierForm({ dialog, session }: { dialog: NonNullable<ReturnType<type
   const title = (titleKey ? t(titleKey) : dialog.modifierId).replace(/…$/, '');
 
   return (
-    <div className="vc-dialog__backdrop" data-testid="modifier-dialog">
+    <div className="vc-dialog__backdrop vc-dialog__backdrop--clear" data-testid="modifier-dialog">
       <form
-        className="vc-dialog vc-transform"
+        className="vc-dialog vc-dialog--movable vc-transform"
         role="dialog"
         aria-label={title}
+        style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }}
+        onPointerDown={(event) => {
+          const target = event.target as HTMLElement;
+          if (!target.closest('.vc-dialog__header') || target.closest('button')) return;
+          const start = { x: event.clientX - offset.x, y: event.clientY - offset.y };
+          const move = (e: PointerEvent) => setOffset({ x: e.clientX - start.x, y: e.clientY - start.y });
+          const up = () => {
+            window.removeEventListener('pointermove', move);
+            window.removeEventListener('pointerup', up);
+          };
+          window.addEventListener('pointermove', move);
+          window.addEventListener('pointerup', up);
+        }}
         onSubmit={(event) => {
           event.preventDefault();
           accept();

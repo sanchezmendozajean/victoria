@@ -7,6 +7,18 @@
   justify-content: center;
   background: rgba(0, 0, 0, 0.45);
 }
+/* Dialogs with a live preview (modifiers): no dimming, and the header drags the dialog away from the artwork. */
+.vc-dialog__backdrop--clear {
+  background: transparent;
+}
+.vc-dialog--movable .vc-dialog__header {
+  cursor: move;
+  user-select: none;
+  touch-action: none;
+}
+.vc-dialog--movable .vc-dialog__close {
+  cursor: default;
+}
 .vc-dialog__backdrop--alert {
   /* Messages (errors, results) must stay above whatever form dialog asked for them. */
   z-index: 2100;
