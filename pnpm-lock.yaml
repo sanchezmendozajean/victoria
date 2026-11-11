@@ -234,8 +234,8 @@ importers:
         specifier: ^6.0.2
         version: 6.0.2
       paper:
-        specifier: ^0.12.20
-        version: 0.12.20
+        specifier: ^0.12.18
+        version: 0.12.18
       rbush:
         specifier: ^4.0.1
         version: 4.0.1
@@ -1993,8 +1993,8 @@ packages:
   pako@1.0.11:
     resolution: {integrity: sha512-4hLB8Py4zZce5s4yd9XzopqwVv/yGNhV1Bl8NTmCq1763HeK2+EwVTv+leGeL13Dnh2wfbqowVPXCIO0z4taYw==}
 
-  paper@0.12.20:
-    resolution: {integrity: sha512-il3NkXmeQKZvTSp0bVUHWecXbf+QmThhG1H2zV3ZQXVK/iD7paWbUJXaYqgM8nL1Dzr7fMYV26BMfYeJs2hdxQ==}
+  paper@0.12.18:
+    resolution: {integrity: sha512-ZSLIEejQTJZuYHhSSqAf4jXOnii0kPhCJGAnYAANtdS72aNwXJ9cP95tZHgq1tnNpvEwgQhggy+4OarviqTCGw==}
     engines: {node: '>=8.0.0'}
 
   path-exists@4.0.0:
@@ -4326,7 +4326,7 @@ snapshots:
 
   pako@1.0.11: {}
 
-  paper@0.12.20: {}
+  paper@0.12.18: {}
 
   path-exists@4.0.0: {}
 

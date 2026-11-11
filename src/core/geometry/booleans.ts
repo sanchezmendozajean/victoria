@@ -114,7 +114,10 @@ function booleanOf(a: paper.PathItem, b: paper.PathItem, kind: 'unite' | 'subtra
 function uniteOwnContours(item: paper.PathItem): paper.PathItem {
   if (!(item instanceof paper.CompoundPath)) return item;
   const children = (item.children as paper.Path[]).map((c) => c.clone({ insert: false }) as paper.Path);
-  if (item.fillRule === 'evenodd') return item.clone({ insert: false }).resolveCrossings();
+  if (item.fillRule === 'evenodd') {
+    const copy = item.clone({ insert: false }) as unknown as { resolveCrossings(): paper.PathItem };
+    return copy.resolveCrossings();
+  }
   const biggest = children.reduce((a, b) => (Math.abs(b.area) > Math.abs(a.area) ? b : a));
   const sameWay = (c: paper.Path) => c.area * biggest.area >= 0;
   const solids = children.filter(sameWay);
