@@ -22,6 +22,22 @@ export type EpsWarning = { code: 'text' | 'image' | 'gradient' | 'pattern' | 'op
 
 export class EpsFormatError extends Error {}
 
+/**
+ * The short operators that the procset Adobe_AGM_Core defines in EPS files saved by recent Illustrator versions ("AI11EPS",
+ * Illustrator 11+ with PostScript level 2/3 output): each one is an alias of standard operators. The prolog that defines
+ * them is not run, so they are mapped here.
+ */
+const AGM_ALIASES: Record<string, readonly string[]> = {
+  np: ['newpath'], mo: ['moveto'], li: ['lineto'], cv: ['curveto'], cp: ['closepath'],
+  clp: ['clip', 'newpath'], eclp: ['eoclip', 'newpath'], nclp: ['newpath', 'clip'],
+  f: ['fill'], ef: ['eofill'], '@': ['stroke'], ct: ['concat'],
+  lw: ['setlinewidth'], lc: ['setlinecap'], lj: ['setlinejoin'], ml: ['setmiterlimit'], dsh: ['setdash'],
+  gry: ['setgray'], rgb: ['setrgbcolor'], cmyk: ['setcmykcolor'], nzopmsc: ['setcmykcolor'],
+  sop: ['setoverprint'], sadj: ['setstrokeadjust'], pgsv: [], pgrs: [], gset: [], gcln: [],
+};
+/** AGM operators for fonts and text (not supported: skipped with a warning). */
+const AGM_TEXT = new Set(['nf', 'msf', 'xsh', 'sh', 'ash', 'wsh', 'awsh', 'ct_VMDictPut', 'xshw', 'tr']);
+
 type Str = { k: 'str'; v: string };
 type Lit = { k: 'lit'; v: string };
 type Op = { k: 'op'; v: string };
@@ -66,7 +82,8 @@ function boundingBox(text: string): [number, number, number, number] {
 
 /** Removes the regions an Illustrator EPS fills with its own prolog and with gradient/pattern definitions. */
 function stripIllustrator(text: string, warnings: EpsWarning[]): string {
-  const cut = (from: string, to: string, warning?: EpsWarning['code']) => {
+  const agmFile = /^%%BeginResource: procset Adobe_AGM_Core/m.test(text); // before the prolog (where it is declared) is cut
+  const cut = (from: string, to: string, warning?: EpsWarning['code'], throughLine = false) => {
     let out = '';
     let at = 0;
     for (;;) {
@@ -76,11 +93,19 @@ function stripIllustrator(text: string, warnings: EpsWarning[]): string {
       if (b < 0) break;
       out += text.slice(at, a);
       at = b + to.length;
+      if (throughLine) while (at < text.length && text[at] !== '\n' && text[at] !== '\r') at++;
       if (warning && !warnings.some((w) => w.code === warning)) warnings.push({ code: warning });
     }
     text = out + text.slice(at);
   };
   cut('%%BeginProlog', '%%EndProlog');
+  cut('%ADOBeginClientInjection', '%ADOEndClientInjection', undefined, true);
+  if (agmFile) {
+    // Page setup and trailer only drive Adobe's procsets (which are not run); the drawing sits between them.
+    cut('%%BeginPageSetup', '%%EndPageSetup');
+    const trailer = text.indexOf('%%PageTrailer');
+    if (trailer >= 0) text = text.slice(0, trailer);
+  }
   cut('%%BeginSetup', '%%EndSetup');
   cut('%AI5_BeginGradient', '%AI5_EndGradient', 'gradient');
   cut('%AI5_BeginPattern', '%AI5_EndPattern', 'pattern');
@@ -205,6 +230,7 @@ export function readEps(bytes: Uint8Array, ids: IdGenerator): EpsResult {
   if (!text.startsWith('%!')) throw new EpsFormatError('not a PostScript file');
   const [llx, lly, urx, ury] = boundingBox(text);
   const warnings: EpsWarning[] = [];
+  const agm = /^%%BeginResource: procset Adobe_AGM_Core/m.test(text);
   const illustrator = /^%%Creator:.*Illustrator/m.test(text) || /^%AI\d*_/m.test(text);
   if (illustrator) text = stripIllustrator(text, warnings);
   const program = tokenize(text);
@@ -235,8 +261,10 @@ export function readEps(bytes: Uint8Array, ids: IdGenerator): EpsResult {
     if (!warnings.some((w) => w.code === code && w.detail === detail)) warnings.push({ code, detail });
   };
 
+  /** The last operators run, to say where a malformed file went wrong. */
+  const trail: string[] = [];
   const pop = (): Val => {
-    if (stack.length === 0) throw new EpsFormatError('stack underflow');
+    if (stack.length === 0) throw new EpsFormatError(`stack underflow after: ${trail.join(' ')}`);
     return stack.pop() as Val;
   };
   const num = (): number => {
@@ -452,13 +480,26 @@ export function readEps(bytes: Uint8Array, ids: IdGenerator): EpsResult {
   const IMAGE_OPS = new Set(['image', 'imagemask', 'colorimage', 'currentfile', 'eexec', 'readhexstring', 'readstring', 'filter', 'shfill', 'setpattern', 'makepattern', 'sethalftone', 'settransfer', 'Xh', 'XH', 'Xm', 'XM', 'XG', 'XF', 'XE', 'XD']);
 
   function exec(name: string, depth: number): void {
+    trail.push(name);
+    if (trail.length > 8) trail.shift();
     // User definitions win over built-ins (PostScript prologs redefine `m`, `l`, …).
     const user = lookup(name);
     if (user !== undefined) {
       runVal(user, depth);
       return;
     }
-    const ai = illustrator;
+    if (agm) {
+      const alias = AGM_ALIASES[name];
+      if (alias) {
+        for (const op of alias) exec(op, depth);
+        return;
+      }
+      if (name === 'add_res') { pop(); pop(); pop(); return; }
+      if (name === 'rp') return; // repeat-encoding shorthand inside font encodings
+      if (/^[A-Z]{6}[+]/.test(name)) return; // an embedded font's name, operand of nf / msf
+      if (AGM_TEXT.has(name)) { warn('text'); stack.length = 0; return; }
+    }
+    const ai = illustrator && !agm;
     switch (name) {
       // Stack
       case 'pop': pop(); return;

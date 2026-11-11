@@ -164,3 +164,66 @@ describe('Illustrator EPS', () => {
     expect(r.nodes).toHaveLength(3);
   });
 });
+
+describe('Illustrator EPS saved with the Adobe_AGM procsets ("AI11EPS")', () => {
+  // The shape of what Illustrator 11+ writes: a big PostScript prolog and setup that only drive Adobe's own procedures,
+  // injected helpers, and a page whose drawing uses the short operators the prolog defines (np, mo, li, cv, cp, clp, f, cmyk…).
+  const AGM = [
+    '%!PS-Adobe-3.1 EPSF-3.0',
+    '%%Creator: Adobe Illustrator(R) 22.0',
+    '%%BoundingBox: 0 0 100 50',
+    '%ADOBeginClientInjection: DocumentHeader "AI11EPS"',
+    '%AI9_PrintingDataBegin',
+    '%ADOEndClientInjection: DocumentHeader "AI11EPS"',
+    '%%EndComments',
+    '%%BeginProlog',
+    '%%BeginResource: procset Adobe_AGM_Core 2.0 0',
+    '/Adobe_AGM_Utils 10 dict def',
+    '%%EndResource',
+    '%%EndProlog',
+    '%%BeginSetup',
+    'Adobe_AGM_Utils begin 2 2010 Adobe_AGM_Core/ds gx',
+    '%%EndSetup',
+    '%%Page: 1 1',
+    '%%BeginPageSetup',
+    '%ADOBeginClientInjection: PageSetup Start "AI11EPS"',
+    '%ADOEndClientInjection: PageSetup Start "AI11EPS"',
+    'Adobe_AGM_Utils begin Adobe_AGM_Core/ps gx',
+    '%%EndPageSetup',
+    '1 -1 scale 0 -50 translate',
+    'pgsv [1 0 0 1 0 0 ]ct gsave np',
+    'gsave 0 0 mo 0 50 li 100 50 li 100 0 li cp clp',
+    'false sop /0 [/DeviceCMYK] /CSA add_res',
+    '0 0 0 1 cmyk 10 10 mo 40 10 li 40 40 li cp f',
+    '10 lw 1 lc 0 1 1 0 cmyk 50 10 mo 60 0 80 0 90 10 cv @',
+    '%%IncludeResource: font Foo',
+    '/ABCDEF+Foo /Foo findfont ct_VMDictPut',
+    'ABCDEF+Foo nf',
+    '20 20 mo (Hi) [5 5 0 ]xsh',
+    'grestore grestore pgrs',
+    '%%PageTrailer',
+    'Adobe_AGM_Image/pt gx currentdict Adobe_AGM_Utils eq {end} if',
+    '%%EOF',
+  ].join('\r');
+
+  it('opens it: the prolog is skipped and the short operators draw', () => {
+    const r = read(AGM);
+    expect([r.width, r.height]).toEqual([100, 50]);
+    expect(r.warnings.map((w) => w.code)).toEqual(['text']);
+    const clip = r.nodes[0] as ClipGroupNode;
+    expect(clip.type).toBe('clipGroup');
+    const [mask, shape, curve] = clip.children as PathNode[];
+    expect(mask!.anchors).toHaveLength(4);
+    expect(shape!.closed).toBe(true);
+    expect(shape!.anchors.map((a) => [a.p.x, a.p.y])).toEqual([[10, 10], [40, 10], [40, 40]]); // already Y-down: scale -1 undone by the flip
+    expect(solid(fillOf(shape!))).toEqual({ model: 'cmyk', values: [0, 0, 0, 100] });
+    expect(solid(strokeOf(curve!))).toEqual({ model: 'cmyk', values: [0, 100, 100, 0] });
+    expect(curve!.anchors[0]!.out).toEqual({ x: 60, y: 0 });
+    const stroke = strokeOf(curve!)!;
+    expect(stroke.kind === 'stroke' && stroke.stroke.width).toBe(10);
+  });
+
+  it('a malformed program says where it failed', () => {
+    expect(() => read(`${HEADER}0 0 moveto add add add\n`)).toThrow(/stack underflow after: .*add/);
+  });
+});
