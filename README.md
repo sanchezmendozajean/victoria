@@ -2,6 +2,8 @@
 
 # Victoria
 
+**[Página web, descargas y documentación →](https://sanchezmendozajean.github.io/victoria/)**
+
 Editor de gráficos vectoriales de escritorio, construido con **Electron**, que replica la forma de dibujar de Adobe Illustrator (nodos, manejadores, pluma, textos, texto sobre trazado, formas, mesas de trabajo, Creador de formas) y añade un concepto nuevo: **Espacios**.
 
 > Uso objetivo: dibujar íconos, acomodar imágenes para imprimir y vectorizar imágenes. No pretende competir con Illustrator en funciones profesionales de preimpresión; sí pretende igualar su *sensación* de dibujo.
