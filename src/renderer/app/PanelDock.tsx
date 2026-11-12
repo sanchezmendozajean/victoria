@@ -23,7 +23,7 @@ function draggedPanel(event: DragEvent): PanelId | null {
   return id in PANELS ? (id as PanelId) : null;
 }
 
-const FLOAT_MIN = { w: 220, h: 120 };
+const FLOAT_MIN = { w: 270, h: 120 };
 /** Remembered between openings, for the whole session. */
 let floatSize: { w: number; h: number } | null = null;
 
