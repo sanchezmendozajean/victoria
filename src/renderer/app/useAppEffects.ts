@@ -35,7 +35,12 @@ export function useAppEffects() {
 
   // System fonts: listed once at start; faces load on demand as text asks for them.
   useEffect(() => {
-    void fontManager.init();
+    // New text starts in an installed family (Arial is missing on most Linux systems).
+    void fontManager.init().then(() => {
+      const { textStyle, setTextStyle } = useUi.getState();
+      if (!fontManager.hasFamily(textStyle.fontFamily)) setTextStyle({ fontFamily: fontManager.defaultFamily(), fontStyle: 'Regular' });
+      document.documentElement.dataset.fonts = 'ready'; // lets the e2e tests wait for the list
+    });
   }, []);
 
   // Platform info and window state come from main through the typed preload API.
