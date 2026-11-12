@@ -75,6 +75,11 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      # Only for CHANGELOG.md: the notes of this version head the release.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+          path: source
       - uses: actions/download-artifact@v4
         with:
           path: dist-release
@@ -84,7 +89,14 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           ls -la dist-release
-          cat > notes.md <<'NOTES'
+          # The section "## <version> — ..." of CHANGELOG.md, up to the next "## " heading (without its own heading).
+          awk -v v="${TAG#v}" '
+            index($0, "## " v " ") == 1 || $0 == "## " v { on = 1; next }
+            on && /^## / { exit }
+            on { print }
+          ' source/CHANGELOG.md > changes.md
+          if [ -s changes.md ]; then { echo "## Novedades"; cat changes.md; echo; } > notes.md; else : > notes.md; fi
+          cat >> notes.md <<'NOTES'
           Editor vectorial de escritorio para Windows y Linux.
 
           **Instaladores sin firmar.** Windows mostrará el aviso de SmartScreen la primera vez (Más información › Ejecutar de todas formas). Los paquetes de Linux no se han verificado todavía en una máquina real.
