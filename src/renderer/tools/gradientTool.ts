@@ -13,6 +13,7 @@ import {
   paintTargets,
   primaryItem,
   setGradientTransform,
+  dragGradientStop,
   sortStops,
   worldToLocal,
   type Gradient,
@@ -22,7 +23,7 @@ import {
   type Vec2,
 } from '../../core';
 import { constrainTo45 } from './boxGeometry';
-import { currentSelection, dragged, topLevelIds } from './shared';
+import { currentSelection, dragged, snapTo, topLevelIds } from './shared';
 import type { CanvasPointerEvent, Tool, ToolHost } from './types';
 
 type GradientPaint = Extract<Paint, { type: 'linear' | 'radial' }>;
@@ -46,10 +47,12 @@ interface Annotator {
 
 const apply = (m: Matrix, p: Vec2): Vec2 => ({ x: m[0] * p.x + m[2] * p.y + m[4], y: m[1] * p.x + m[3] * p.y + m[5] });
 
+type Handle = 'origin' | 'end' | 'aspect' | 'stop' | 'mid';
+
 type State =
   | { kind: 'idle' }
   | { kind: 'define'; start: Vec2; screen: Vec2; key: string; created: boolean }
-  | { kind: 'handle'; handle: 'origin' | 'end' | 'aspect' | 'stop' | 'mid'; index: number; key: string; pointer: Vec2; start: Vec2; end: Vec2; started: boolean; screen: Vec2 };
+  | { kind: 'handle'; handle: Handle; index: number; key: string; pointer: Vec2; start: Vec2; end: Vec2; started: boolean; screen: Vec2; moved?: boolean; duplicated?: boolean; alt?: boolean; startOffset?: number };
 
 /**
  * Gradient tool (G): drag over the selection to set the direction and length of its gradient (giving it
@@ -152,9 +155,40 @@ export function createGradientTool(): Tool {
     setAxis(host, start, end, key);
   }
 
+  /** Where the end of the axis goes: snapped to guides and smart guides, or (Shift) at 45° steps from the start, unsnapped. */
+  const endPoint = (host: ToolHost, start: Vec2, event: CanvasPointerEvent): Vec2 => {
+    if (!event.shiftKey) return snapTo(host, event.doc);
+    host.setSnapLines(null);
+    const d = constrainTo45({ x: event.doc.x - start.x, y: event.doc.y - start.y });
+    return { x: start.x + d.x, y: start.y + d.y };
+  };
+
+  /** The part of the annotator under `doc`: a handle that can be dragged, or the axis (a click adds a stop). */
+  const partAt = (host: ToolHost, a: Annotator, doc: Vec2): { kind: 'handle'; handle: Handle; index: number } | { kind: 'axis'; offset: number } | null => {
+    const stops = sortStops(a.gradient.stops);
+    for (let i = 0; i < stops.length; i++) {
+      if (near(host, doc, stopPoint(host, a, (stops[i] as { offset: number }).offset))) return { kind: 'handle', handle: 'stop', index: i };
+    }
+    for (let i = 0; i < stops.length - 1; i++) {
+      const s = stops[i] as { offset: number; midpoint?: number };
+      const n = stops[i + 1] as { offset: number };
+      if (near(host, doc, stopPoint(host, a, s.offset + (n.offset - s.offset) * (s.midpoint ?? 0.5)), 5)) return { kind: 'handle', handle: 'mid', index: i };
+    }
+    if (near(host, doc, a.end)) return { kind: 'handle', handle: 'end', index: 0 };
+    if (a.aspectPoint && near(host, doc, a.aspectPoint)) return { kind: 'handle', handle: 'aspect', index: 0 };
+    if (near(host, doc, a.start)) return { kind: 'handle', handle: 'origin', index: 0 };
+    const offset = offsetOf(a, doc);
+    if (offset > 0 && offset < 1 && near(host, doc, onAxis(a, offset), 5)) return { kind: 'axis', offset };
+    return null;
+  };
+
+  /** What the pointer shows (specs/03 · Degradado): a hand over what can be dragged, an arrow with + over the axis. */
+  let hoverCursor = 'crosshair';
+  const cursorFor = (part: ReturnType<typeof partAt>): string => (!part ? 'crosshair' : part.kind === 'axis' ? 'copy' : part.handle === 'origin' ? 'move' : 'grab');
+
   return {
     id: 'tool-gradient',
-    cursor: () => 'crosshair',
+    cursor: () => (state.kind === 'handle' ? (state.handle === 'origin' ? 'move' : 'grabbing') : state.kind === 'define' ? 'crosshair' : hoverCursor),
 
     onPointerDown(event: CanvasPointerEvent, host) {
       const { session, space } = host;
@@ -162,33 +196,22 @@ export function createGradientTool(): Tool {
       const a = annotator(host);
       if (a) {
         const key = host.gestureKey();
-        const mk = (handle: 'origin' | 'end' | 'aspect' | 'stop' | 'mid', index = 0): State => ({ kind: 'handle', handle, index, key, pointer: event.doc, start: a.start, end: a.end, started: false, screen: event.screen });
+        const mk = (handle: Handle, index = 0): State => ({ kind: 'handle', handle, index, key, pointer: event.doc, start: a.start, end: a.end, started: false, screen: event.screen, alt: event.altKey });
         const stops = sortStops(a.gradient.stops);
-        for (let i = 0; i < stops.length; i++) {
-          if (near(host, event.doc, stopPoint(host, a, (stops[i] as { offset: number }).offset))) {
-            if (event.clickCount >= 2 && stops.length > 2) {
-              session.run(editGradients(space.id, [a.node.id], host.activePaint, (g) => void (g.stops = sortStops(g.stops).filter((_, j) => j !== i)), session.ids, key));
-              return;
-            }
-            state = mk('stop', i);
+        const part = partAt(host, a, event.doc);
+        if (part?.kind === 'handle') {
+          const i = part.index;
+          if (part.handle === 'stop' && event.clickCount >= 2 && stops.length > 2) {
+            session.run(editGradients(space.id, [a.node.id], host.activePaint, (g) => void (g.stops = sortStops(g.stops).filter((_, j) => j !== i)), session.ids, key));
             return;
           }
+          state = mk(part.handle, i);
+          if (part.handle === 'stop' && state.kind === 'handle') state.startOffset = stops[i]?.offset ?? 0;
+          return;
         }
-        for (let i = 0; i < stops.length - 1; i++) {
-          const s = stops[i] as { offset: number; midpoint?: number };
-          const n = stops[i + 1] as { offset: number };
-          if (near(host, event.doc, stopPoint(host, a, s.offset + (n.offset - s.offset) * (s.midpoint ?? 0.5)), 5)) {
-            state = mk('mid', i);
-            return;
-          }
-        }
-        if (near(host, event.doc, a.end)) return void (state = mk('end'));
-        if (a.aspectPoint && near(host, event.doc, a.aspectPoint)) return void (state = mk('aspect'));
-        if (near(host, event.doc, a.start)) return void (state = mk('origin'));
         // A click on the axis adds a stop there.
-        const offset = offsetOf(a, event.doc);
-        const onLine = offset > 0 && offset < 1 && near(host, event.doc, onAxis(a, offset), 5);
-        if (onLine) {
+        if (part?.kind === 'axis') {
+          const offset = part.offset;
           const { color, opacity } = gradientColorAt(stops, offset);
           session.run(
             editGradients(
@@ -207,24 +230,23 @@ export function createGradientTool(): Tool {
         }
       }
       if (leaves(host).length === 0) return;
-      state = { kind: 'define', start: event.doc, screen: event.screen, key: host.gestureKey(), created: false };
+      // The start of a new gradient snaps like any drawn point (guides, grid, smart guides).
+      state = { kind: 'define', start: snapTo(host, event.doc), screen: event.screen, key: host.gestureKey(), created: false };
     },
 
     onPointerMove(event, host) {
       const s = state;
       if (s.kind === 'define') {
         if (!dragged(event.screen, s.screen)) return;
-        let end = event.doc;
-        if (event.shiftKey) {
-          const d = constrainTo45({ x: end.x - s.start.x, y: end.y - s.start.y });
-          end = { x: s.start.x + d.x, y: s.start.y + d.y };
-        }
+        const end = endPoint(host, s.start, event);
         s.created = true;
         define(host, s.start, end, s.key);
         host.invalidateOverlay();
         return;
       }
       if (s.kind !== 'handle') {
+        const a = annotator(host);
+        hoverCursor = cursorFor(a ? partAt(host, a, event.doc) : null);
         host.invalidateOverlay();
         return;
       }
@@ -234,16 +256,14 @@ export function createGradientTool(): Tool {
       const { session, space } = host;
       if (!a || !session || !space) return;
       if (s.handle === 'origin') {
-        const d = { x: event.doc.x - s.pointer.x, y: event.doc.y - s.pointer.y };
-        setAxis(host, { x: s.start.x + d.x, y: s.start.y + d.y }, { x: s.end.x + d.x, y: s.end.y + d.y }, s.key);
+        // The origin snaps; the end keeps its distance from it.
+        const start = snapTo(host, { x: s.start.x + event.doc.x - s.pointer.x, y: s.start.y + event.doc.y - s.pointer.y });
+        const d = { x: start.x - s.start.x, y: start.y - s.start.y };
+        setAxis(host, start, { x: s.end.x + d.x, y: s.end.y + d.y }, s.key);
       } else if (s.handle === 'end') {
-        let end = event.doc;
-        if (event.shiftKey) {
-          const d = constrainTo45({ x: end.x - s.start.x, y: end.y - s.start.y });
-          end = { x: s.start.x + d.x, y: s.start.y + d.y };
-        }
-        setAxis(host, s.start, end, s.key);
+        setAxis(host, s.start, endPoint(host, s.start, event), s.key);
       } else if (s.handle === 'aspect') {
+        host.setSnapLines(null); // stops, midpoints and the aspect slide along a fixed line: no snapping
         const vx = s.end.x - s.start.x;
         const vy = s.end.y - s.start.y;
         const length = Math.hypot(vx, vy) || 1;
@@ -251,23 +271,32 @@ export function createGradientTool(): Tool {
         const comp = (event.doc.x - s.start.x) * perp.x + (event.doc.y - s.start.y) * perp.y;
         setAxis(host, s.start, s.end, s.key, Math.max(0.01, Math.abs(comp) / length));
       } else if (s.handle === 'stop') {
-        const offset = Math.min(1, Math.max(0, offsetOf(a, event.doc)));
-        const i = s.index;
+        host.setSnapLines(null);
+        // The stop is followed as it passes its neighbours. Alt (held at the start or pressed during the drag) moves a copy
+        // and puts the original back where it was (Illustrator).
+        const offset = offsetOf(a, event.doc);
+        const from = s.index;
+        const duplicate = !s.duplicated && (!!s.alt || event.altKey);
+        const back = duplicate && s.moved ? (s.startOffset ?? 0) : null;
+        let next = from;
         session.run(
           editGradients(
             space.id,
             [a.node.id],
             host.activePaint,
             (g) => {
-              const sorted = sortStops(g.stops);
-              if (sorted[i]) sorted[i].offset = Math.round(offset * 1000) / 1000;
-              g.stops = sortStops(sorted);
+              const at = back === null ? from : dragGradientStop(g, from, back);
+              next = dragGradientStop(g, at, offset, duplicate);
             },
             session.ids,
             s.key,
           ),
         );
+        s.index = next;
+        s.moved = true;
+        s.duplicated ||= duplicate;
       } else {
+        host.setSnapLines(null);
         const stops = sortStops(a.gradient.stops);
         const lo = stops[s.index];
         const hi = stops[s.index + 1];
@@ -295,6 +324,7 @@ export function createGradientTool(): Tool {
     onPointerUp(event, host) {
       const s = state;
       state = { kind: 'idle' };
+      host.setSnapLines(null);
       const { session, space } = host;
       if (!session || !space) return;
       if (s.kind === 'define' && !s.created) {
@@ -321,12 +351,14 @@ export function createGradientTool(): Tool {
 
     onKey(key, host) {
       if (key !== 'Escape') return;
+      host.setSnapLines(null);
       if ((state.kind === 'define' && state.created) || (state.kind === 'handle' && state.started)) host.session?.rollback();
       state = { kind: 'idle' };
       host.invalidateOverlay();
     },
 
     cancel(host) {
+      host.setSnapLines(null);
       if ((state.kind === 'define' && state.created) || (state.kind === 'handle' && state.started)) host.session?.rollback();
       state = { kind: 'idle' };
     },

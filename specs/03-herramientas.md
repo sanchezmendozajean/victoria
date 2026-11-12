@@ -186,7 +186,7 @@ Clic sobre objeto: copia apariencia (relleno, trazo, opacidad, atributos de text
 
 ## Degradado (G)
 
-Barra anotadora sobre el objeto: arrastrar define dirección; puntos de color editables en el lienzo (doble clic abre selector); arrastrar el extremo cuadrado = longitud; círculo = rotación; en radial, el punto punteado = relación de aspecto.
+Barra anotadora sobre el objeto: arrastrar define dirección; puntos de color editables en el lienzo (doble clic abre selector; Alt+arrastrar un punto deja el original y mueve una copia del mismo color); el cursor dice qué se puede hacer: mano sobre paradas, puntos medios, extremo y relación de aspecto (puño al arrastrar), mover sobre el origen, flecha con + sobre el eje (un clic añade parada) y cruz en el resto (arrastrar define un degradado nuevo); con las guías activas, el inicio de un degradado nuevo, el origen y el extremo se ajustan a guías, cuadrícula, mesas y guías inteligentes (bordes, centros y anclas, también los del propio objeto); con Mayús el extremo va a pasos de 45° sin ajustarse; paradas, puntos medios y relación de aspecto no se ajustan (se deslizan sobre una línea fija); arrastrar el extremo cuadrado = longitud; círculo = rotación; en radial, el punto punteado = relación de aspecto.
 
 ## Mesa de trabajo (Mayús+O)
 

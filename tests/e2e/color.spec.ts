@@ -225,6 +225,48 @@ test.describe('colour, stroke and panels (phase 6)', () => {
     await page.keyboard.press('Control+z');
   });
 
+  test('Gradient: Alt+drag a stop duplicates its colour; a plain drag moves it; one undo step each', async () => {
+    const { page } = ctx;
+    await rectangle(page, -150, -60, 50, 20);
+    await page.getByTestId('paint-mode-gradient').click();
+    await page.keyboard.press('Control+F9');
+    const stops = page.getByTestId('gradient-stop');
+    await expect(stops).toHaveCount(2);
+    const colours = async () => stops.evaluateAll((els) => els.map((el) => getComputedStyle(el.querySelector('i')!).backgroundColor));
+    const lefts = async () => stops.evaluateAll((els) => els.map((el) => (el as HTMLElement).style.left));
+    const [first, last] = await colours();
+    const bar = (await page.getByTestId('gradient-bar').boundingBox())!;
+    const start = (await stops.first().boundingBox())!;
+    // alt: 'before' = held when the drag starts; 'during' = pressed once the stop is already moving.
+    const drag = async (alt: 'before' | 'during' | null) => {
+      const y = start.y + start.height / 2;
+      await page.mouse.move(start.x + start.width / 2, y);
+      if (alt === 'before') await page.keyboard.down('Alt');
+      await page.mouse.down();
+      await page.mouse.move(bar.x + bar.width * 0.2, y, { steps: 3 });
+      if (alt === 'during') await page.keyboard.down('Alt');
+      await page.mouse.move(bar.x + bar.width * 0.4, y, { steps: 3 });
+      await page.mouse.up();
+      if (alt) await page.keyboard.up('Alt');
+    };
+
+    for (const when of ['before', 'during'] as const) {
+      await drag(when);
+      await expect(stops).toHaveCount(3);
+      expect(await colours()).toEqual([first, first, last]); // the original stays at 0 %, the copy has its colour
+      expect((await lefts())[0]).toBe('0%');
+      await page.keyboard.press('Control+z');
+      await expect(stops).toHaveCount(2);
+    }
+
+    await drag(null);
+    await expect(stops).toHaveCount(2);
+    expect(await colours()).toEqual([first, last]);
+    expect((await lefts())[0]).not.toBe('0%');
+    await page.keyboard.press('Control+z');
+    await expect.poll(lefts).toEqual(['0%', '100%']);
+  });
+
   test('Gradient tool: dragging gives the selection a gradient and shows the annotator', async () => {
     const { page } = ctx;
     await rectangle(page, -150, -60, 50, 20);

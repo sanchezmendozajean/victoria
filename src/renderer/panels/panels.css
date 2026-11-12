@@ -248,8 +248,11 @@
   background: var(--bg-active);
   border-color: var(--accent);
 }
+/* Always square, and never squeezed by a crowded row. */
 .vc-pbutton--icon {
-  width: 24px;
+  width: var(--h-control);
+  min-width: var(--h-control);
+  flex: none;
   padding: 0;
   justify-content: center;
 }
@@ -1112,4 +1115,12 @@
 .vc-trace__bar > div {
   height: 100%;
   background: var(--vc-accent, #4c8dff);
+}
+
+/* An icon and its field, kept together when several share a row. */
+.vc-pfield {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
 }

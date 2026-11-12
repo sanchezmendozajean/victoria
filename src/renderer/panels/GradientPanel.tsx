@@ -3,6 +3,7 @@ import {
   colorToHex,
   colorToRgb,
   convertColor,
+  dragGradientStop,
   editGradients,
   gradientAngle,
   gradientAxis,
@@ -113,20 +114,40 @@ export function GradientPanel() {
     setSelected(i);
     key.current = nextPaintKey();
     const el = e.currentTarget;
+    // The dragged stop's index changes as it passes its neighbours.
+    let current = i;
+    let duplicated = false;
+    let moved = false;
+    const startOffset = stops[i]?.offset ?? 0;
+    const altAtStart = e.altKey;
     const move = (ev: PointerEvent) => {
       const r = bar.current?.getBoundingClientRect();
       if (!r || !el.hasPointerCapture(ev.pointerId)) return;
-      const offset = Math.min(1, Math.max(0, (ev.clientX - r.left) / r.width));
-      editStop(i, { offset: Math.round(offset * 1000) / 1000 });
+      const offset = (ev.clientX - r.left) / r.width;
+      const from = current;
+      // Alt held at the start or pressed during the drag: the original goes back to where it was and a copy moves on.
+      const duplicate = !duplicated && (altAtStart || ev.altKey);
+      const wasMoved = moved;
+      let next = from;
+      edit((g) => {
+        const at = duplicate && wasMoved ? dragGradientStop(g, from, startOffset) : from;
+        next = dragGradientStop(g, at, offset, duplicate);
+      });
+      moved = true;
+      duplicated ||= duplicate;
+      current = next;
+      setSelected(next);
     };
     const up = (ev: PointerEvent) => {
       el.removeEventListener('pointermove', move);
       el.removeEventListener('pointerup', up);
       const r = bar.current?.getBoundingClientRect();
       // Dragged well below the bar: the stop is removed (at least two stops stay).
-      if (r && ev.clientY - r.bottom > 28 && stops.length > 2) {
+      const count = stops.length + (duplicated ? 1 : 0);
+      if (r && ev.clientY - r.bottom > 28 && count > 2) {
+        const gone = current;
         edit((g) => {
-          g.stops = sortStops(g.stops).filter((_, j) => j !== i);
+          g.stops = sortStops(g.stops).filter((_, j) => j !== gone);
         });
         setSelected(0);
       }
@@ -197,47 +218,48 @@ export function GradientPanel() {
             value={gradient.type}
             label={t('gradient.type')}
             testId="gradient-type"
-            width={110}
+            width={62}
             options={[
               { id: 'linear', label: t('gradient.linear') },
               { id: 'radial', label: t('gradient.radial') },
             ]}
             onChange={(type) => edit((g) => void (g.type = type), nextPaintKey())}
           />
-          <span style={{ flex: 1 }} />
-          <button type="button" className="vc-pbutton vc-pbutton--icon" data-testid="gradient-reverse" {...tip(t('gradient.reverse'))} onClick={() => edit((g) => void (g.stops = reversedStops(g.stops)), nextPaintKey())}>
+          <span className="vc-pfield">
+            <Icon id="angle" size={14} className="vc-field__icon" />
+            <NumberInput
+              value={Math.round(gradientAngle(paint.transform) * 100) / 100}
+              onCommit={(v) => setTransform((m) => rotateGradient(m, v, gradient.type), nextPaintKey())}
+              suffix="°"
+              decimals={2}
+              width={60}
+              testId="gradient-angle"
+              tooltip={t('gradient.angle')}
+            />
+          </span>
+          {gradient.type === 'radial' && (
+            <span className="vc-pfield">
+              <Icon id="scale-fit" size={14} className="vc-field__icon" />
+              <NumberInput
+                value={Math.round(axis.aspect * 1000) / 10}
+                onCommit={(v) =>
+                  setTransform((m) => {
+                    const a = gradientAxis(m);
+                    return gradientTransform(a.start, a.end, Math.max(0.01, v / 100));
+                  }, nextPaintKey())
+                }
+                suffix="%"
+                min={1}
+                decimals={1}
+                width={44}
+                testId="gradient-aspect"
+                tooltip={t('gradient.aspect')}
+              />
+            </span>
+          )}
+          <button type="button" className="vc-pbutton vc-pbutton--icon" style={{ marginLeft: 'auto' }} data-testid="gradient-reverse" {...tip(t('gradient.reverse'))} onClick={() => edit((g) => void (g.stops = reversedStops(g.stops)), nextPaintKey())}>
             <Icon id="flip-h" size={16} />
           </button>
-        </Row>
-        <Row>
-          <Icon id="angle" size={14} className="vc-field__icon" />
-          <NumberInput
-            value={Math.round(gradientAngle(paint.transform) * 100) / 100}
-            onCommit={(v) => setTransform((m) => rotateGradient(m, v, gradient.type), nextPaintKey())}
-            suffix="°"
-            decimals={2}
-            width={84}
-            testId="gradient-angle"
-            tooltip={t('gradient.angle')}
-          />
-          {gradient.type === 'radial' && (
-            <NumberInput
-              icon="scale-fit"
-              value={Math.round(axis.aspect * 1000) / 10}
-              onCommit={(v) =>
-                setTransform((m) => {
-                  const a = gradientAxis(m);
-                  return gradientTransform(a.start, a.end, Math.max(0.01, v / 100));
-                }, nextPaintKey())
-              }
-              suffix="%"
-              min={1}
-              decimals={1}
-              width={84}
-              testId="gradient-aspect"
-              tooltip={t('gradient.aspect')}
-            />
-          )}
         </Row>
       </Section>
 

@@ -131,8 +131,8 @@ Decisiones de comportamiento que la spec no cubría (cada una tiene su prueba) y
 ### Degradado
 
 - Un degradado es un recurso del documento; **editarlo copia el recurso si lo comparten objetos fuera de la selección**, así duplicar un objeto nunca enlaza sus degradados. El ángulo es antihorario (como Illustrator); el radial admite relación de aspecto y se pinta como elipse; el punto medio de una parada curva la mezcla con la siguiente.
-- La barra del panel: clic añade una parada con el color que había ahí, arrastrar mueve, **arrastrar hacia abajo la quita** (quedan siempre dos); los rombos son los puntos medios.
-- Herramienta **Degradado (G)**: arrastrar sobre la selección da el degradado (o lo reorienta); un clic da uno que llena los límites. El anotador muestra origen (círculo), final (cuadrado), relación de aspecto (radial), paradas **colgadas 14 px bajo el eje** (para que no tapen los extremos) y puntos medios; clic en el eje añade parada, doble clic en una parada la quita, Mayús restringe a 45°.
+- La barra del panel: clic añade una parada con el color que había ahí, arrastrar mueve, **Alt+arrastrar duplica la parada** (la original se queda y se mueve una copia con su color y opacidad, como Illustrator; si Alt se pulsa ya arrastrando, la original vuelve a su sitio), **arrastrar hacia abajo la quita** (quedan siempre dos); la parada arrastrada sigue siendo la misma aunque pase por encima de otra; los rombos son los puntos medios.
+- Herramienta **Degradado (G)**: arrastrar sobre la selección da el degradado (o lo reorienta); un clic da uno que llena los límites. El anotador muestra origen (círculo), final (cuadrado), relación de aspecto (radial), paradas **colgadas 14 px bajo el eje** (para que no tapen los extremos) y puntos medios; clic en el eje añade parada, Alt+arrastrar una parada la duplica, doble clic en una parada la quita, Mayús restringe a 45°.
 - **Pendiente**: aplicar degradado a lo largo / a través del trazo (el lienzo 2D no lo permite sin construir el contorno); los degradados de trazo usan la aproximación circular.
 
 ### Trazo

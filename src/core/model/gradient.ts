@@ -86,6 +86,27 @@ export function makeGradient(ids: IdGenerator, type: Gradient['type'], from: Col
 
 export const sortStops = (stops: readonly GradientStop[]): GradientStop[] => [...stops].sort((a, b) => a.offset - b.offset);
 
+/**
+ * Drags stop `index` (of the stops sorted by offset) to `offset`. With `duplicate` (Alt, like Illustrator)
+ * the original stays and a copy of it is the one that moves. Returns the index the dragged stop has
+ * afterwards, which changes when it passes a neighbour; follow-up moves of the same drag must use it.
+ */
+export function dragGradientStop(gradient: { stops: GradientStop[] }, index: number, offset: number, duplicate = false): number {
+  const sorted = sortStops(gradient.stops);
+  let target = sorted[index];
+  if (!target) return index;
+  if (duplicate) {
+    // A plain copy (the stop may be an immer draft).
+    const copy = JSON.parse(JSON.stringify(target)) as GradientStop;
+    sorted.splice(index + 1, 0, copy);
+    target = copy;
+  }
+  target.offset = Math.min(1, Math.max(0, Math.round(offset * 1000) / 1000));
+  const result = sortStops(sorted);
+  gradient.stops = result;
+  return result.indexOf(target);
+}
+
 /** Colour between two stops (linear in sRGB), honouring the midpoint of the first. */
 export function colorBetween(a: GradientStop, b: GradientStop, offset: number): { color: Color; opacity: number } {
   const span = b.offset - a.offset;

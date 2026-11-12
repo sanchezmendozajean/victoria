@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { colorToHex, gradientAxis, primaryItem, selectOnly, setPaint, type Color, type Matrix, type Paint, type ShapeNode } from '../../../core';
 import { createEyedropperTool } from '../eyedropperTool';
 import { createGradientTool } from '../gradientTool';
@@ -97,6 +97,93 @@ describe('Gradient tool (G)', () => {
     const axis = gradientAxis(transformOf(t));
     expect(axis.start).toEqual({ x: 10, y: 35 });
     expect(axis.end).toEqual({ x: 110, y: 35 });
+  });
+
+  it('Alt+drag on a stop leaves it and moves a copy of its colour, in one undo step', () => {
+    const { t, tool, r } = setup();
+    t.session.run(setPaint(t.spaceId(), [r.id], 'fill', { type: 'solid', color: rgb(200, 0, 0) }));
+    drag(tool, t, { x: 0, y: 25 }, { x: 100, y: 25 });
+    const before = t.session.historyLength;
+    drag(tool, t, { x: 0, y: 39 }, { x: 40, y: 39 }, { altKey: true }); // the first stop's marker, 14 px below the axis
+    expect(t.session.historyLength).toBe(before + 1);
+    const stops = t.session.document.resources.gradients[0]!.stops;
+    expect(stops.map((s) => s.offset)).toEqual([0, 0.4, 1]);
+    expect(stops.map((s) => colorToHex(s.color))).toEqual(['#C80000', '#C80000', '#FFFFFF']);
+    t.session.undo();
+    expect(t.session.document.resources.gradients[0]!.stops).toHaveLength(2);
+  });
+
+  it('Alt pressed during a stop drag puts the original back and moves a copy', () => {
+    const { t, tool, r } = setup();
+    t.session.run(setPaint(t.spaceId(), [r.id], 'fill', { type: 'solid', color: rgb(200, 0, 0) }));
+    drag(tool, t, { x: 0, y: 25 }, { x: 100, y: 25 });
+    const before = t.session.historyLength;
+    tool.onPointerDown(ev(0, 39), t.host);
+    tool.onPointerMove(ev(10, 39), t.host);
+    tool.onPointerMove(ev(20, 39), t.host); // moving the original without Alt
+    tool.onPointerMove(ev(30, 39, { altKey: true }), t.host); // Alt now
+    tool.onPointerMove(ev(40, 39, { altKey: true }), t.host);
+    tool.onPointerUp(ev(40, 39, { altKey: true }), t.host);
+    const stops = t.session.document.resources.gradients[0]!.stops;
+    expect(stops.map((s) => s.offset)).toEqual([0, 0.4, 1]);
+    expect(stops.map((s) => colorToHex(s.color))).toEqual(['#C80000', '#C80000', '#FFFFFF']);
+    expect(t.session.historyLength).toBe(before + 1);
+  });
+
+  it('a dragged stop that passes its neighbour stays the one being dragged', () => {
+    const { t, tool, r } = setup();
+    t.session.run(setPaint(t.spaceId(), [r.id], 'fill', { type: 'solid', color: rgb(200, 0, 0) }));
+    drag(tool, t, { x: 0, y: 25 }, { x: 100, y: 25 });
+    click(tool, t, 50, 25); // a middle stop at 0.5
+    const middle = colorToHex(t.session.document.resources.gradients[0]!.stops[1]!.color);
+    drag(tool, t, { x: 0, y: 39 }, { x: 75, y: 39 }, {}, 8); // the red stop, past the middle one
+    const stops = t.session.document.resources.gradients[0]!.stops;
+    expect(stops.map((s) => s.offset)).toEqual([0.5, 0.75, 1]);
+    expect(stops.map((s) => colorToHex(s.color))).toEqual([middle, '#C80000', '#FFFFFF']);
+  });
+
+  it('the cursor shows what can be dragged: a hand on stops and ends, move on the origin, + on the axis', () => {
+    const { t, tool } = setup();
+    drag(tool, t, { x: 0, y: 25 }, { x: 100, y: 25 });
+    const at = (x: number, y: number) => {
+      tool.onPointerMove(ev(x, y), t.host);
+      return tool.cursor(false);
+    };
+    expect(at(0, 39)).toBe('grab'); // first stop's marker, 14 px below the axis
+    expect(at(50, 39)).toBe('grab'); // midpoint diamond
+    expect(at(100, 25)).toBe('grab'); // end square
+    expect(at(0, 25)).toBe('move'); // origin
+    expect(at(30, 25)).toBe('copy'); // on the axis: a click adds a stop
+    expect(at(30, 80)).toBe('crosshair'); // elsewhere: a drag defines a new gradient
+    tool.onPointerDown(ev(0, 39), t.host);
+    expect(tool.cursor(false)).toBe('grabbing');
+    tool.onPointerUp(ev(0, 39), t.host);
+    tool.onPointerDown(ev(0, 25), t.host);
+    expect(tool.cursor(false)).toBe('move');
+    tool.onPointerUp(ev(0, 25), t.host);
+  });
+
+  it('with smart guides, the origin and the end snap to edges and centres; Shift (45°) does not snap', () => {
+    const t = createTestHost({ options: { smartGuides: true } });
+    const tool = createGradientTool();
+    const r = t.rect(0, 0, 100, 50);
+    t.session.select(selectOnly(t.spaceId(), [r.id]));
+    drag(tool, t, { x: 12, y: 27 }, { x: 70, y: 27 });
+    let axis = gradientAxis(transformOf(t));
+    expect(axis.start).toEqual({ x: 12, y: 25 }); // the start snaps to the object's vertical centre
+    drag(tool, t, { x: 70, y: 25 }, { x: 98, y: 23 }); // the end, near the right edge and the centre
+    axis = gradientAxis(transformOf(t));
+    expect(axis.end).toEqual({ x: 100, y: 25 });
+    expect(t.host.setSnapLines).toHaveBeenCalledWith(expect.arrayContaining([expect.objectContaining({ axis: 'x' })]));
+    expect(vi.mocked(t.host.setSnapLines).mock.lastCall?.[0]).toBeNull(); // the guides go away on release
+    drag(tool, t, { x: 12, y: 25 }, { x: 52, y: 27 }); // the origin; the end follows
+    axis = gradientAxis(transformOf(t));
+    expect(axis.start).toEqual({ x: 50, y: 25 });
+    expect(axis.end).toEqual({ x: 138, y: 25 });
+    drag(tool, t, { x: 138, y: 25 }, { x: 98, y: 27 }, { shiftKey: true }); // Shift: 45° steps, no snapping
+    axis = gradientAxis(transformOf(t));
+    expect(axis.end.x).toBeCloseTo(98, 0); // not pulled to the right edge (100)
+    expect(axis.end.y).toBeCloseTo(25, 6);
   });
 
   it('Escape during the drag removes the gradient again', () => {
