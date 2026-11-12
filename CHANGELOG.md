@@ -6,6 +6,7 @@
 - Los botones de solo ícono de los paneles son siempre cuadrados (22×22) y no se encogen en una fila llena; los paneles flotantes tienen un ancho mínimo de 270 px (antes 220), para que la fila del degradado quepa entera.
 - Herramienta Degradado: el cursor cambia sobre el anotador: mano sobre lo que se puede arrastrar (paradas, puntos medios, extremo, relación de aspecto), mover sobre el origen, flecha con + sobre el eje; antes era siempre la cruz.
 - Herramienta Degradado: el inicio de un degradado nuevo, el origen y el extremo del anotador reaccionan a las guías inteligentes (y a guías, cuadrícula y mesas) y muestran sus líneas; con Mayús el extremo se restringe a 45° sin ajustarse.
+- CI: la prueba e2e del clic sobre texto grande ya no depende del tamaño de pantalla (fallaba en Ubuntu); xvfb corre a 1440×900.
 - Al arrastrar una parada que pasa por encima de otra, se seguía moviendo la que quedaba en su índice anterior (la vecina): ahora la parada arrastrada es siempre la misma.
 
 ## 0.1.1 — CI en verde y fuente por defecto en Linux

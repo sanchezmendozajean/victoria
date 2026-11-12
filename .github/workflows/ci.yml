@@ -36,7 +36,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y openbox
       - name: End-to-end (Linux, X11 under xvfb)
         if: runner.os == 'Linux'
-        run: xvfb-run --auto-servernum sh -c 'openbox & sleep 1; pnpm test:e2e'
+        run: xvfb-run --auto-servernum --server-args='-screen 0 1440x900x24' sh -c 'openbox & sleep 1; pnpm test:e2e'
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
