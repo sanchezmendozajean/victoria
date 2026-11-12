@@ -10,9 +10,9 @@
   "scripts": {
     "dev": "vite",
     "build:app": "vite build",
-    "build": "npm run build:app && electron-builder",
-    "build:win": "npm run build:app && electron-builder --win nsis portable",
-    "build:linux": "npm run build:app && electron-builder --linux AppImage deb rpm",
+    "build": "npm run build:app && electron-builder --publish never",
+    "build:win": "npm run build:app && electron-builder --win nsis portable --publish never",
+    "build:linux": "npm run build:app && electron-builder --linux AppImage deb rpm --publish never",
     "typecheck": "tsc -p tsconfig.core.json --noEmit && tsc -p tsconfig.web.json --noEmit && tsc -p tsconfig.node.json --noEmit && tsc -p tsconfig.e2e.json --noEmit",
     "lint": "eslint . && npm run typecheck",
     "test": "vitest run",
