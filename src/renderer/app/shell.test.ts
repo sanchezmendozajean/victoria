@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { MenuEntry } from '../components/Menu';
 import { t } from '../i18n';
 import { ICONS } from '../icons/catalog.generated';
-import { buildMenus, WORKSPACES } from './menus';
+import { buildMenus, recentEntries, WORKSPACES } from './menus';
 import { DEFAULT_VIEW_OPTIONS } from './store';
 import { ALL_SLOTS, TOOL_SECTIONS, toolAccelerator } from './tools';
 
@@ -73,6 +73,22 @@ describe('menus', () => {
     };
     expect(shortcutOf('object', 'apply-modifiers')).toBe('Alt+Ctrl+E');
     expect(shortcutOf('file', 'export-screens')).toBeUndefined();
+  });
+});
+
+describe('Archivo › Abrir recientes', () => {
+  it('lists the recent documents; repeated names show their folder; empty shows a disabled hint', () => {
+    const entries = recentEntries([
+      { path: 'C:\\Dibujos\\Textura.vict', name: 'Textura', modified: 3 },
+      { path: 'C:\\Dibujos\\Icono.vict', name: 'Icono', modified: 2 },
+      { path: '/home/ana/logos/Icono.vict', name: 'Icono', modified: 1 },
+    ]) as Array<{ label: string; icon: string; onSelect?: () => void }>;
+    expect(entries.map((e) => e.label)).toEqual(['Textura', 'Icono — Dibujos', 'Icono — logos']);
+    expect(entries.every((e) => e.icon === 'file' && typeof e.onSelect === 'function')).toBe(true);
+    const empty = recentEntries([]) as Array<{ label: string; disabled?: boolean }>;
+    expect(empty).toHaveLength(1);
+    expect(empty[0]!.label).toBe(t('menu.file.recentEmpty'));
+    expect(empty[0]!.disabled).toBe(true);
   });
 });
 

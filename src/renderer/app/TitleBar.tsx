@@ -1,5 +1,6 @@
 import { useShortcuts } from './useShortcuts';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { RecentFile } from '../../shared/ipc';
 import { Logo } from '../components/Logo';
 import { Icon } from '../components/Icon';
 import { MenuPopup, type Anchor, type MenuEntry } from '../components/Menu';
@@ -47,14 +48,25 @@ export function TitleBar() {
   const undoLabel = session?.undoLabel ?? null;
   const redoLabel = session?.redoLabel ?? null;
   const [open, setOpen] = useState<OpenMenu | null>(null);
+  // Archivo › Abrir recientes: the same list as the start screen, read again each time the File menu opens.
+  const [recentFiles, setRecentFiles] = useState<readonly RecentFile[]>([]);
+  const fileMenuOpen = open?.id === 'file';
+  useEffect(() => {
+    if (!fileMenuOpen) return;
+    let alive = true;
+    void window.victoria.listRecentFiles().then((list) => alive && setRecentFiles(list), () => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [fileMenuOpen]);
   const barRef = useRef<HTMLDivElement>(null);
 
   // Entries enabled by what is selected (Mezcla, Aplicar modificadores) are decided when the menus are built.
   const selection = session?.selection;
   const revision = session?.revision;
   const menus = useMemo(
-    () => buildMenus({ os: platform.os, theme, workspace, customWorkspaces, setTheme, setWorkspace, saveWorkspaceAs, deleteWorkspace, openPanel, resetPanels, undoLabel, redoLabel, viewOptions, openTransformDialog: (kind) => openTransformDialog(kind, null) }),
-    [platform.os, theme, workspace, customWorkspaces, setTheme, setWorkspace, saveWorkspaceAs, deleteWorkspace, openPanel, resetPanels, undoLabel, redoLabel, viewOptions, openTransformDialog, shortcuts, selection, revision],
+    () => buildMenus({ os: platform.os, theme, workspace, customWorkspaces, setTheme, setWorkspace, saveWorkspaceAs, deleteWorkspace, openPanel, resetPanels, undoLabel, redoLabel, viewOptions, recentFiles, openTransformDialog: (kind) => openTransformDialog(kind, null) }),
+    [platform.os, theme, workspace, customWorkspaces, setTheme, setWorkspace, saveWorkspaceAs, deleteWorkspace, openPanel, resetPanels, undoLabel, redoLabel, viewOptions, recentFiles, openTransformDialog, shortcuts, selection, revision],
   );
 
   const workspaceMenu: MenuEntry[] = workspaceEntries({ workspace, customWorkspaces, setWorkspace, saveWorkspaceAs, deleteWorkspace });

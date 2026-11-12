@@ -76,7 +76,10 @@ export function StartScreen() {
                 <li key={file.path}>
                   <button type="button" className="vc-start__file" data-testid="start-recent-item" title={file.path} onClick={() => void manager.openRecent(file.path)}>
                     <RecentPreview path={file.path} />
-                    <span className="vc-start__file-name">{file.name}</span>
+                    <span className="vc-start__file-text">
+                      <span className="vc-start__file-name">{file.name}</span>
+                      <span className="vc-start__file-path" data-testid="start-recent-path">{file.path}</span>
+                    </span>
                     <span className="vc-start__file-date">{new Date(file.modified).toLocaleDateString('es')}</span>
                   </button>
                 </li>

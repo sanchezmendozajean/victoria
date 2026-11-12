@@ -30,12 +30,22 @@ test.describe('start screen (Phase 12)', () => {
 
     // The saved document is offered again, and opens.
     await expect(page.getByTestId('start-recent-item').first()).toContainText('cartel');
+    // Under the name, the full path of the file.
+    await expect(page.getByTestId('start-recent-path').first()).toHaveText(file);
     // Saving put a preview inside the file; the list shows it.
     await expect(page.getByTestId('start-thumb').first()).toBeVisible();
     expect(await page.getByTestId('start-thumb').first().evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0);
     await page.getByTestId('start-recent-item').first().click();
     await expect(page.getByTestId('start-screen')).toHaveCount(0);
     await expect(page.getByTestId('canvas-surface')).toBeVisible();
+    await expect(page.getByTestId('doc-tabs')).toContainText('cartel');
+
+    // Archivo › Abrir recientes lists the same documents (it used to say there were none) and opens them.
+    await page.keyboard.press('Control+w');
+    await expect(page.getByTestId('start-screen')).toBeVisible();
+    await page.getByTestId('menu-file').click();
+    await page.getByRole('menuitem', { name: /Abrir recientes/ }).hover();
+    await page.getByRole('menuitem', { name: /^cartel/ }).click();
     await expect(page.getByTestId('doc-tabs')).toContainText('cartel');
 
     // A preset card creates a document with that artboard.

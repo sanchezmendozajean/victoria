@@ -1,4 +1,4 @@
-import type { Theme } from '../../shared/ipc';
+import type { RecentFile, Theme } from '../../shared/ipc';
 import type { MenuEntry, MenuItem } from '../components/Menu';
 import type { IconId } from '../components/Icon';
 import { t, type TranslationKey } from '../i18n';
@@ -30,6 +30,8 @@ export interface MenuContext {
   undoLabel: string | null;
   redoLabel: string | null;
   viewOptions: ViewOptions;
+  /** Archivo › Abrir recientes (newest first), as the start screen lists them. */
+  recentFiles?: readonly RecentFile[];
   openTransformDialog(kind: 'rotate' | 'scale' | 'reflect' | 'move'): void;
 }
 
@@ -80,6 +82,22 @@ export function workspaceEntries(ctx: Pick<MenuContext, 'workspace' | 'customWor
   return entries;
 }
 
+/**
+ * Archivo › Abrir recientes: one entry per recent document (the same list as the start screen). Names that repeat
+ * carry their folder so they can be told apart.
+ */
+export function recentEntries(files: readonly RecentFile[]): MenuEntry[] {
+  if (files.length === 0) return [{ id: 'recent-none', label: t('menu.file.recentEmpty'), icon: 'file', disabled: true }];
+  const count = new Map<string, number>();
+  for (const f of files) count.set(f.name.toLowerCase(), (count.get(f.name.toLowerCase()) ?? 0) + 1);
+  return files.map((f, i) => {
+    const parts = f.path.split(/[\\/]/);
+    const folder = parts[parts.length - 2] ?? '';
+    const label = (count.get(f.name.toLowerCase()) ?? 0) > 1 && folder ? `${f.name} — ${folder}` : f.name;
+    return { id: `recent-${i}`, label, icon: 'file', onSelect: () => void manager.openRecent(f.path) };
+  });
+}
+
 export function buildMenus(ctx: MenuContext): MenuDef[] {
   const keys = (action: ShortcutAction) => formatAccelerator(SHORTCUTS[action], ctx.os);
 
@@ -100,7 +118,7 @@ export function buildMenus(ctx: MenuContext): MenuDef[] {
   const file: MenuEntry[] = [
     item('new', 'menu.file.new', 'new', 'file.new'),
     item('open', 'menu.file.open', 'open', 'file.open'),
-    item('recent', 'menu.file.recent', 'recent', undefined, { submenu: [item('recent-none', 'menu.file.recentEmpty', 'file')] }),
+    item('recent', 'menu.file.recent', 'recent', undefined, { submenu: recentEntries(ctx.recentFiles ?? []) }),
     sep('s1'),
     item('save', 'menu.file.save', 'save', 'file.save'),
     item('save-as', 'menu.file.saveAs', 'save-as', 'file.saveAs'),

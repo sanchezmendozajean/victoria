@@ -96,8 +96,21 @@
   text-align: left;
   cursor: pointer;
 }
-.vc-start__file-name {
+/* Name, and the full path of the file under it (long paths are cut with an ellipsis; the tooltip has it whole). */
+.vc-start__file-text {
+  display: flex;
   flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  text-align: left;
+}
+.vc-start__file-path {
+  overflow: hidden;
+  font-size: 11px;
+  color: var(--text-muted, #9aa0a6);
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .vc-start__thumb {
