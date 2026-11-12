@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.1 — CI en verde y fuente por defecto en Linux
+- **Texto nuevo en Linux**: la familia inicial era siempre «Arial», que casi ningún Linux tiene, así que el texto nuevo se dibujaba (y exportaba) con glifos de caja. Al terminar de listar las fuentes del sistema, si la familia por defecto no está instalada se usa la primera disponible entre Arial, Helvetica, Liberation Sans, DejaVu Sans, Noto Sans, Segoe UI y Ubuntu.
+- **Pruebas e2e al día**: barra de herramientas de 33 px, Selección como herramienta inicial, `openPrinterPreferences` en la API, Alt+rueda para el zoom (specs/03), el trazo se pica por su vector, barra de título de Windows a todo el ancho. Las suites que cuentan píxeles fijan el zoom al 100 % (los runners tienen pantallas de 1024×768) y las de texto esperan a la lista de fuentes. `E2E_SIZE=1024x728` reproduce la ventana de CI.
+- **CI en Linux**: xvfb corre con un gestor de ventanas (openbox) para que maximizar funcione.
+
 ## Desagrupar y máscaras de recorte
 - **Objeto › Desagrupar** queda deshabilitado cuando la selección no contiene grupos normales (por ejemplo, un grupo de recorte): una máscara de recorte se deshace con *Máscara de recorte › Liberar*.
 
