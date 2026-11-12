@@ -3,6 +3,7 @@ import { cornerAnchor, createEllipse, createPolygon, createStar, nodeGeometry, s
 import { listWidgets, widgetAt } from '../cornerWidgets';
 import { createDirectSelectionTool } from '../directSelectionTool';
 import { createSelectionTool } from '../selectionTool';
+import { boxOf } from '../shared';
 import { click, createTestHost, drag, ev, type TestHost } from './fakeHost';
 
 const first = (t: TestHost) => t.space().layers[0]!.children[0]! as ShapeNode;
@@ -39,7 +40,9 @@ describe('widget geometry', () => {
     const s = t.add(createStar(t.ids, 50, 25, 5));
     const list = listWidgets(t.space(), selectOnly(t.spaceId(), [e.id, p.id, s.id]), 1, false);
     expect(list.map((w) => w.kind)).toEqual(['pie', 'pie', 'polygon', 'star']);
-    expect(list[0]!.pos).toEqual({ x: 200, y: 50 });
+    // Outside the ellipse (PIE_OUT_PX = 18 at zoom 1), on a stem from its edge.
+    expect(list[0]!.pos).toEqual({ x: 218, y: 50 });
+    expect(list[0]!.kind === 'pie' && list[0]!.edge).toEqual({ x: 200, y: 50 });
   });
 
   it('skips locked objects and objects that are not live shapes', () => {
@@ -140,12 +143,22 @@ describe('dragging widgets with the Selection tool', () => {
     const tool = createSelectionTool();
     const e = t.add(createEllipse(t.ids, 200, 200));
     t.session.select(selectOnly(t.spaceId(), [e.id]));
-    drag(tool, t, { x: 200, y: 100 }, { x: 100, y: 200 }); // end handle to the bottom: 90°
+    drag(tool, t, { x: 218, y: 100 }, { x: 100, y: 200 }); // end handle (18 px outside the edge) to the bottom: 90°
     expect(params<{ startAngle: number; endAngle: number }>(t)).toMatchObject({ startAngle: 0, endAngle: 90 });
-    drag(tool, t, { x: 200, y: 100 }, { x: 100, y: 0 }); // start handle to the top: 270°
+    drag(tool, t, { x: 218, y: 100 }, { x: 100, y: 0 }); // start handle to the top: 270°
     const p = params<{ startAngle: number; endAngle: number }>(t);
     expect(p.startAngle).toBeCloseTo(270, 6);
     expect(p.endAngle).toBe(90); // the contour wraps: sweep = 90 − 270 + 360
+  });
+
+  it('the side handle of the bounding box resizes the ellipse; the pie handles are out of its way', () => {
+    const t = createTestHost();
+    const tool = createSelectionTool();
+    const e = t.add(createEllipse(t.ids, 200, 200));
+    t.session.select(selectOnly(t.spaceId(), [e.id]));
+    drag(tool, t, { x: 200, y: 100 }, { x: 260, y: 100 }); // the east handle, where the 0° pie handle used to sit
+    expect(params<{ startAngle: number; endAngle: number }>(t)).toMatchObject({ startAngle: 0, endAngle: 360 });
+    expect(boxOf(t.host, [e.id])!.maxX).toBeCloseTo(260, 6);
   });
 
   it('shows no widgets when many objects are selected', () => {

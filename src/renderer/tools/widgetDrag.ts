@@ -84,6 +84,13 @@ export function createWidgetDrag(includeAnchors: boolean) {
       ctx.strokeStyle = theme.accent;
       for (const w of widgets(host)) {
         const p = { x: w.pos.x * view.zoom + view.panX, y: w.pos.y * view.zoom + view.panY };
+        if (w.kind === 'pie') {
+          // The stem from the ellipse to its handle.
+          ctx.beginPath();
+          ctx.moveTo(w.edge.x * view.zoom + view.panX, w.edge.y * view.zoom + view.panY);
+          ctx.lineTo(p.x, p.y);
+          ctx.stroke();
+        }
         ctx.beginPath();
         ctx.arc(p.x, p.y, 4.5, 0, Math.PI * 2);
         ctx.fillStyle = w.kind === 'pie' ? theme.accent : '#ffffff';

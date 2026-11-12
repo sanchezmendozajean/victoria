@@ -28,12 +28,14 @@ import type { ToolHost } from './types';
 export const WIDGET_PICK_PX = 6;
 /** Where a widget rests when its radius is 0, measured from the corner (screen px). */
 export const WIDGET_REST_PX = 14;
+/** How far (screen px) the pie handles of an ellipse hang outside it: beyond the bounding-box handles and their pick area. */
+export const PIE_OUT_PX = 18;
 
 export type Widget =
   | { kind: 'rect'; id: string; world: Matrix; pos: Vec2; corner: 0 | 1 | 2 | 3; params: RectParams }
   | { kind: 'polygon'; id: string; world: Matrix; pos: Vec2; params: PolygonParams }
   | { kind: 'star'; id: string; world: Matrix; pos: Vec2; params: StarParams }
-  | { kind: 'pie'; id: string; world: Matrix; pos: Vec2; which: 'start' | 'end'; params: EllipseParams }
+  | { kind: 'pie'; id: string; world: Matrix; pos: Vec2; which: 'start' | 'end'; params: EllipseParams; /** Where the handle meets the ellipse (it hangs outside, on a stem). */ edge: Vec2 }
   | { kind: 'anchor'; id: string; pathId: string; world: Matrix; pos: Vec2; index: number; picked: number[]; anchors: Anchor[]; direction: Vec2 };
 
 const unit = (v: Vec2): Vec2 => {
@@ -103,9 +105,15 @@ export function listWidgets(space: Space, selection: Selection, zoom: number, an
       out.push({ kind: 'star', id, world, params: node.params, pos: anchorToWorld(world, { x: v.x + inward.x * d, y: v.y + inward.y * d }) });
     } else if (node.shape === 'ellipse') {
       const { w, h, startAngle, endAngle } = node.params;
-      const at = (deg: number): Vec2 => anchorToWorld(world, { x: w / 2 + (w / 2) * Math.cos((deg * Math.PI) / 180), y: h / 2 + (h / 2) * Math.sin((deg * Math.PI) / 180) });
-      out.push({ kind: 'pie', id, world, which: 'start', params: node.params, pos: at(startAngle) });
-      out.push({ kind: 'pie', id, world, which: 'end', params: node.params, pos: at(endAngle) });
+      // The handles hang PIE_OUT_PX outside the ellipse, so at 0°/90°/180°/270° they clear the side handles of the
+      // bounding box (which would otherwise sit right under them and resize turned into "change the angle").
+      const out_ = PIE_OUT_PX / zoom / scaleOf(world);
+      const at = (deg: number, extra: number): Vec2 => {
+        const a = (deg * Math.PI) / 180;
+        return anchorToWorld(world, { x: w / 2 + (w / 2 + extra) * Math.cos(a), y: h / 2 + (h / 2 + extra) * Math.sin(a) });
+      };
+      out.push({ kind: 'pie', id, world, which: 'start', params: node.params, pos: at(startAngle, out_), edge: at(startAngle, 0) });
+      out.push({ kind: 'pie', id, world, which: 'end', params: node.params, pos: at(endAngle, out_), edge: at(endAngle, 0) });
     }
   }
   if (!anchors) return out;

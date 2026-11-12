@@ -117,6 +117,7 @@ Trazo a mano alzada simplificado con el algoritmo de ajuste de curvas de Schneid
 - **Clic sin arrastrar** abre diálogo con dimensiones exactas.
 - Polígono: flechas ↑/↓ durante el arrastre cambian lados; estrella: ↑/↓ puntas, Ctrl mantiene radio interno.
 - Todas crean **formas vivas** (panel Propiedades › Forma muestra sus parámetros).
+- Elipse: sus dos controles de sector (ángulo inicial y final) cuelgan **18 px por fuera** del contorno, unidos a él por un trazo corto, para no quedar bajo los tiradores laterales de la caja delimitadora (a 0°, 90°, 180° y 270° coincidían y redimensionar cambiaba el ángulo).
 
 ## Texto (T), Texto de área, Texto en trazado
 
@@ -265,6 +266,6 @@ Reglas de comportamiento que la spec no cubría y que se implementaron como lo h
 ### Acciones sobre anclas (barra de control y menú Objeto)
 
 - **Suprimir** con anclas seleccionadas elimina las anclas (un paso de deshacer, varios trazados a la vez); sin anclas, elimina los objetos.
-- **Unir (Ctrl+J)**: con dos anclas extremo seleccionadas las une (del mismo trazado: lo cierra); con trazados abiertos seleccionados, uno solo se cierra y varios se encadenan por sus extremos más cercanos. Si los extremos no coinciden se añade un segmento recto.
+- **Unir (Ctrl+J)**: con dos anclas extremo seleccionadas las une (del mismo trazado: lo cierra); con trazados abiertos seleccionados, uno solo se cierra y varios se encadenan por sus extremos más cercanos. Si los extremos no coinciden se añade un segmento recto. Las anclas se toman donde se ven en la página: cada trazado tiene su propia transformación (una copia movida conserva sus anclas locales), así que las del otro trazado se pasan al marco del que se queda antes de unir; también en el lápiz al terminar sobre otro trazado.
 - **Promediar (Alt+Ctrl+J)** pregunta el eje: *Horizontal* alinea los puntos en la misma Y, *Vertical* en la misma X, *Ambos* los junta. Sin anclas seleccionadas actúa sobre todas las de los trazados seleccionados.
 - **Cortar en el ancla**, **convertir a esquina/suave** y **mostrar/ocultar manejadores** están en la barra de control con Selección directa.
