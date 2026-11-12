@@ -1,11 +1,12 @@
 import { expect, test } from '@playwright/test';
-import { launchApp } from './launch';
+import { fontsReady, launchApp } from './launch';
 
 test('clicking beside or below big text, outside its selection box, does not pick it', async () => {
   const ctx = await launchApp();
   const { page } = ctx;
   try {
     await page.setViewportSize({ width: 1440, height: 900 });
+    await fontsReady(page);
     const b = (await page.getByTestId('canvas-surface').boundingBox())!;
     await page.keyboard.press('t');
     await page.mouse.click(b.x + 200, b.y + 300);

@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { launchApp, type Launched } from './launch';
+import { atActualSize, fontsReady, launchApp, type Launched } from './launch';
 
 const surface = async (page: Page) => (await page.getByTestId('canvas-surface').boundingBox())!;
 const typeLabel = (page: Page) => page.getByTestId('control-type');
@@ -43,7 +43,8 @@ test.describe('text (phase 7)', () => {
   let ctx: Launched;
   test.beforeAll(async () => {
     ctx = await launchApp();
-    await ctx.page.waitForTimeout(800); // system fonts are listed at start
+    await fontsReady(ctx.page);
+    await atActualSize(ctx.page);
   });
   test.afterAll(async () => {
     await ctx.app.close();

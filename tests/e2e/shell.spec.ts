@@ -43,7 +43,7 @@ test('regions have the measures of specs/10', async () => {
   expect(await height(page, 'doc-tabs')).toBe(30);
   expect(await height(page, 'spaces-bar')).toBe(28);
   expect(await height(page, 'status-bar')).toBe(24);
-  expect(await width(page, 'toolbar')).toBe(31);
+  expect(await width(page, 'toolbar')).toBe(33);
   expect(await width(page, 'panel-strip')).toBe(36);
   expect(await width(page, 'panel-column')).toBe(280);
 });
@@ -75,6 +75,7 @@ test('the renderer is sandboxed and only sees the typed API', async () => {
     'openExportFolder',
     'openFile',
     'openImages',
+    'openPrinterPreferences',
     'openRecentFile',
     'print',
     'readClipboard',
@@ -89,10 +90,10 @@ test('the renderer is sandboxed and only sees the typed API', async () => {
   ]);
 });
 
-test('the Pen is the active tool and the status bar says so', async () => {
+test('the Selection tool is the active tool and the status bar says so', async () => {
   const { page } = ctx;
-  await expect(page.locator('[data-tool="tool-pen"]').first()).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.getByTestId('status-tool')).toContainText('Pluma');
+  await expect(page.locator('[data-tool="tool-select"]').first()).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByTestId('status-tool')).toContainText('Selección');
 });
 
 test('tools change by click and by shortcut', async () => {
@@ -150,7 +151,7 @@ test('the toolbar toggles between one and two columns', async () => {
   const xs = await page.locator('.vc-toolbar__section').first().locator('.vc-toolbar__tool').evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().left)));
   expect(new Set(xs).size).toBe(2); // buttons flow into two columns
   await page.locator('.vc-toolbar__collapse').click();
-  expect(await width(page, 'toolbar')).toBe(31);
+  expect(await width(page, 'toolbar')).toBe(33);
 });
 
 test('menus open, switch on hover, show icons and shortcuts, and close with Escape', async () => {

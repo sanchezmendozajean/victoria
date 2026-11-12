@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { launchApp, type Launched } from './launch';
+import { atActualSize, launchApp, type Launched } from './launch';
 
 const PT_MM = 25.4 / 72;
 
@@ -66,6 +66,7 @@ test.describe('drawing tools (phase 5)', () => {
   test.beforeAll(async () => {
     ctx = await launchApp();
     await ctx.page.waitForTimeout(500);
+    await atActualSize(ctx.page);
   });
   test.afterAll(async () => {
     await ctx.app.close();

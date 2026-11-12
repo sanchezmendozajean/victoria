@@ -60,13 +60,13 @@ test.describe('Spaces (phase 10)', () => {
     await rows(page).nth(1).click();
     const before = await names(page);
     await page.getByTestId('spaces-up').click();
-    expect(await names(page)).toEqual([before[1], before[0], before[2]]);
+    await expect.poll(() => names(page)).toEqual([before[1], before[0], before[2]]);
     await page.keyboard.press('Control+z');
-    expect(await names(page)).toEqual(before);
+    await expect.poll(() => names(page)).toEqual(before);
     await rows(page).nth(2).dblclick();
     await page.getByTestId('spaces-rename').fill('Bocetos');
     await page.keyboard.press('Enter');
-    expect((await names(page))[2]).toBe('Bocetos');
+    await expect.poll(async () => (await names(page))[2]).toBe('Bocetos');
     await rows(page).nth(2).getByTestId('spaces-export').click();
     await expect(tabs(page).nth(2).locator('.vc-spacetab__excluded')).toHaveCount(1);
   });

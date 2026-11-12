@@ -1,11 +1,12 @@
 import { expect, test } from '@playwright/test';
-import { launchApp } from './launch';
+import { fontsReady, launchApp } from './launch';
 
 test('the font list opens over the panels, inside the window, and picking still works', async () => {
   const ctx = await launchApp();
   const { page } = ctx;
   try {
     await page.setViewportSize({ width: 1440, height: 900 });
+    await fontsReady(page);
     await page.keyboard.press('Control+t');
     await expect(page.getByTestId('character-panel')).toBeVisible();
     const picker = page.getByTestId('font-picker');
@@ -25,8 +26,12 @@ test('the font list opens over the panels, inside the window, and picking still 
     const covered = await page.evaluate(({ x, y }) => !!document.elementFromPoint(x, y)?.closest('.vc-fontpicker__popup'), { x: box.x + box.width / 2, y: box.y + box.height / 2 });
     expect(covered).toBe(true);
 
-    await page.getByTestId('font-search').fill('Arial');
-    await page.locator('[data-testid^="font-option-"]').first().click();
+    // Search for a family this machine has (Arial is missing on Linux runners).
+    const options = page.locator('[data-testid^="font-option-"]');
+    await expect(options.first()).toBeVisible();
+    const family = ((await options.last().getAttribute('data-testid')) ?? '').replace('font-option-', '');
+    await page.getByTestId('font-search').fill(family);
+    await page.getByTestId(`font-option-${family}`).click();
     await expect(popup).toHaveCount(0);
   } finally {
     await ctx.app.close();

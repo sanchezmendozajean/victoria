@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { launchApp, type Launched } from './launch';
+import { atActualSize, launchApp, type Launched } from './launch';
 
 const surface = async (page: Page) => (await page.getByTestId('canvas-surface').boundingBox())!;
 const at = async (page: Page, dx: number, dy: number) => {
@@ -62,6 +62,7 @@ test.describe('colour, stroke and panels (phase 6)', () => {
   test.beforeAll(async () => {
     ctx = await launchApp();
     await ctx.page.waitForTimeout(500);
+    await atActualSize(ctx.page);
   });
   test.afterAll(async () => {
     await ctx.app.close();
@@ -111,6 +112,7 @@ test.describe('colour, stroke and panels (phase 6)', () => {
     await expect(page.getByTestId('fill-field-H')).toHaveValue('120');
     // The ramp picks a hue.
     const hue = page.getByTestId('fill-spectrum-hue');
+    await hue.scrollIntoViewIfNeeded(); // the panel scrolls on small screens
     const box = (await hue.boundingBox())!;
     await page.mouse.click(box.x + 2, box.y + box.height / 2); // red end
     await expectPixel(page, -100, -20, [255, 0, 0], 12);

@@ -40,9 +40,9 @@ test('native-overlay chrome (Windows) reserves room for the OS buttons instead o
   const { app, page } = await launchApp({ VICTORIA_CHROME: 'native-overlay' });
   try {
     await expect(page.locator('.vc-titlebar__control')).toHaveCount(0);
-    const bar = await page.getByTestId('titlebar').evaluate((el) => Math.round(el.getBoundingClientRect().width));
-    const viewport = await page.evaluate(() => window.innerWidth);
-    expect(bar).toBeLessThan(viewport); // env(titlebar-area-width) leaves the right end to Windows
+    // The bar spans the window (its border runs under the caption buttons); env(titlebar-area-width) pads the right end for Windows.
+    const reserved = await page.getByTestId('titlebar').evaluate((el) => Number.parseFloat(getComputedStyle(el).paddingRight));
+    expect(reserved).toBeGreaterThan(50);
   } finally {
     await app.close();
   }

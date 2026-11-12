@@ -15,7 +15,8 @@ test.describe('Preferencias (Phase 12)', () => {
     await page.getByTestId('canvas-surface').click({ position: { x: 5, y: 5 } });
     await page.keyboard.press('Control+k');
     await expect(page.getByTestId('preferences-dialog')).toBeVisible();
-    await expect(page.getByTestId('prefs-reset')).toBeDisabled();
+    // launchApp() turns the start screen off, so the preferences already differ from the defaults.
+    await expect(page.getByTestId('prefs-reset')).toBeEnabled();
     await page.getByTestId('pref-auto-add-delete').uncheck();
     const fidelity = page.getByTestId('pref-pencil-fidelity');
     await fidelity.fill('5');
@@ -36,6 +37,7 @@ test.describe('Preferencias (Phase 12)', () => {
     await page.getByTestId('prefs-reset').click();
     await expect(page.getByTestId('pref-auto-add-delete')).toBeChecked();
     await expect(page.getByTestId('pref-pencil-fidelity')).toHaveValue('3');
+    await expect(page.getByTestId('prefs-reset')).toBeDisabled();
     await expect(page.getByTestId('pref-autosave')).toHaveValue('1');
     await page.getByTestId('prefs-close').click();
     await expect(page.getByTestId('preferences-dialog')).toHaveCount(0);

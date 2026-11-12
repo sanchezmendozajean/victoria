@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { launchApp, type Launched } from './launch';
+import { atActualSize, launchApp, type Launched } from './launch';
 import { redPng } from './png';
 
 const surface = async (page: Page) => (await page.getByTestId('canvas-surface').boundingBox())!;
@@ -39,6 +39,7 @@ test.describe('clipboard (Phase 11)', () => {
   let ctx: Launched;
   test.beforeAll(async () => {
     ctx = await launchApp();
+    await atActualSize(ctx.page);
   });
   test.afterAll(async () => {
     await ctx.app.close();

@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { existsSync, mkdtempSync, readdirSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { launchApp, type Launched } from './launch';
+import { fontsReady, launchApp, type Launched } from './launch';
 
 const surface = async (page: Page) => (await page.getByTestId('canvas-surface').boundingBox())!;
 
@@ -56,6 +56,7 @@ test.describe('export (Phase 11)', () => {
   test.beforeAll(async () => {
     out = mkdtempSync(path.join(tmpdir(), 'victoria-export-'));
     ctx = await launchApp();
+    await fontsReady(ctx.page);
     await drawRect(ctx.page);
   });
   test.afterAll(async () => {

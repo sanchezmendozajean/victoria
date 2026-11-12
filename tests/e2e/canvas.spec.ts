@@ -246,17 +246,18 @@ test.describe('canvas with artwork (demo document)', () => {
     await ctx.page.screenshot({ path: 'test-results/canvas-demo.png' });
   });
 
-  test('Ctrl+wheel zooms at the cursor: the point under it stays put', async () => {
+  test('Alt+wheel zooms at the cursor: the point under it stays put', async () => {
     const { page } = ctx;
     const spot = (await findPixel(page, DARK))!;
     const box = await surfaceBox(page);
     await page.mouse.move(box.x + spot.x, box.y + spot.y);
-    await page.keyboard.down('Control');
+    await page.keyboard.down('Alt');
     for (let i = 0; i < 4; i++) await page.mouse.wheel(0, -100);
-    await page.keyboard.up('Control');
+    await page.keyboard.up('Alt');
     await settle(page);
     await expect.poll(() => zoomOf(page)).toBeGreaterThan(260);
-    expect((await pixel(page, 'canvas-content', spot.x, spot.y)).slice(0, 3)).toEqual(DARK);
+    const under = (await pixel(page, 'canvas-content', spot.x, spot.y)).slice(0, 3);
+    under.forEach((v, i) => expect(Math.abs(v - (DARK[i] as number))).toBeLessThanOrEqual(12)); // antialiasing of the zoomed stroke
   });
 
   test('the wheel pans vertically, Shift+wheel horizontally', async () => {
@@ -354,9 +355,16 @@ test.describe('canvas with artwork (demo document)', () => {
     await moveTo(page, 5, 5);
     await settle(page);
     expect(await overlayInk(page)).toBe(0);
-    await moveTo(page, spot.x, spot.y);
+    // A stroke is picked by its path, not by its painted width: hover the middle of the dark run below the first dark pixel.
+    let run = 0;
+    while (run < 40) {
+      const [r, g, b] = await pixel(page, 'canvas-content', spot.x, spot.y + run + 1);
+      if (Math.abs((r as number) - (DARK[0] as number)) > 12 || Math.abs((g as number) - (DARK[1] as number)) > 12 || Math.abs((b as number) - (DARK[2] as number)) > 12) break;
+      run++;
+    }
+    await moveTo(page, spot.x, spot.y + Math.round(run / 2));
     await settle(page);
-    expect(await overlayInk(page)).toBeGreaterThan(50);
+    await expect.poll(() => overlayInk(page)).toBeGreaterThan(50);
     await moveTo(page, 5, 5);
     await settle(page);
     expect(await overlayInk(page)).toBe(0);
