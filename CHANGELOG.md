@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.3 — Recientes, unir trazados y ajustes de paneles
+- **Archivo › Abrir recientes** decía siempre «Sin documentos recientes» (era una entrada fija). Ahora muestra la misma lista que la pantalla de inicio, leída de nuevo cada vez que se abre el menú Archivo, y abre el documento elegido; si dos documentos se llaman igual, cada uno lleva el nombre de su carpeta.
+- **Pantalla de inicio**: bajo el nombre de cada documento reciente se muestra la ruta del archivo (cortada con «…» si no cabe; el tooltip la tiene entera).
+- **Objeto › Unir (Ctrl+J)** con dos anclas de trazados distintos (o con varios trazados abiertos) ignoraba la transformación de cada trazado: al unir un trazado con una copia movida (Alt+arrastrar), las anclas de la copia caían sobre el original y parecía que uno de los dos desaparecía. Ahora las anclas del otro trazado se pasan al marco del que se queda (`anchorsInFrame` en `core/geometry/anchors.ts`) y los extremos más cercanos se miden en la página. Lo mismo al terminar un trazo de lápiz sobre otro trazado.
+- **Elipse**: los controles de ángulo (sector) estaban sobre su contorno; a 0° coincidían con el tirador lateral derecho de la caja delimitadora y, al intentar redimensionar, se cambiaba el ángulo. Ahora cuelgan 18 px por fuera, unidos al contorno por un trazo corto, y el tirador de tamaño queda libre.
+- **Panel Mesas de trabajo**: selector de **Unidades** (px, mm, cm, pt, in) arriba, que cambia las unidades del documento como el de Propiedades; un paso de deshacer.
+- **Panel Alineación**: el selector **Alinear a** y «Usar límites de previsualización» están bajo el título **Alinear objetos**, encima de sus botones (antes en una sección propia al final).
+- **CI**: la prueba e2e del clic sobre texto grande espera al repintado y a la barra de control, y hace clic sobre la tinta de una letra (fallaba a veces en Windows).
+
 ## 0.1.2 — Degradado: duplicar paradas con Alt, cursor y guías inteligentes
 - **Alt+arrastrar** una parada de color (en la barra del panel Degradado o en el anotador de la herramienta Degradado) deja la original en su sitio y mueve una copia con el mismo color y opacidad, como Illustrator; Alt vale pulsado antes de empezar o durante el arrastre (la original vuelve a su sitio); un solo paso de deshacer. Arrastrar hacia abajo en el panel quita la copia. `dragGradientStop` en `core/model/gradient.ts`.
 - Panel Degradado: tipo, ángulo y relación de aspecto comparten una fila, con los íconos de ángulo y de relación de aspecto fuera de su campo (antes el de relación de aspecto iba dentro).
