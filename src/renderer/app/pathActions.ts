@@ -6,6 +6,7 @@ import {
   editPaths,
   joinPathNodes,
   joinPaths,
+  anchorsInFrame,
   pathFrameOf,
   removeAnchors,
   replaceNodes,
@@ -135,7 +136,8 @@ export function joinSelection(): void {
     if (a.frame.path.id === b.frame.path.id) {
       c.session.run(joinPathNodes(c.space.id, a.frame.path.id, [], closeOpenPath(a.frame.path.anchors), true), ownersOnly(c.space, c.selection));
     } else {
-      const joined = joinPaths(a.frame.path.anchors, a.end, b.frame.path.anchors, b.end);
+      // Each path has its own transform: the other path's anchors are brought into the frame of the one that stays.
+      const joined = joinPaths(a.frame.path.anchors, a.end, anchorsInFrame(b.frame.path.anchors, b.frame.world, a.frame.world), b.end);
       c.session.run(joinPathNodes(c.space.id, a.frame.path.id, [b.frame.path.id], joined, false), selectOnly(c.space.id, [a.frame.path.id]));
     }
     return;
@@ -151,6 +153,8 @@ export function joinSelection(): void {
     return;
   }
   let chain: Anchor[] = deepClone(first.path.anchors);
+  // The other paths' anchors in the frame of the first one (each path has its own transform).
+  const localOf = (frame: PathFrame) => anchorsInFrame(frame.path.anchors, frame.world, first.world);
   const pending = paths.slice(1);
   const removed: string[] = [];
   while (pending.length > 0) {
@@ -158,7 +162,7 @@ export function joinSelection(): void {
     const tail = (chain[chain.length - 1] as Anchor).p;
     let best: { index: number; chainEnd: 'start' | 'end'; otherEnd: 'start' | 'end'; distance: number } | null = null as { index: number; chainEnd: 'start' | 'end'; otherEnd: 'start' | 'end'; distance: number } | null;
     for (let index = 0; index < pending.length; index++) {
-      const own = (pending[index] as PathFrame).path.anchors;
+      const own = localOf(pending[index] as PathFrame);
       const pts = { start: (own[0] as Anchor).p, end: (own[own.length - 1] as Anchor).p };
       for (const chainEnd of ['start', 'end'] as const) {
         for (const otherEnd of ['start', 'end'] as const) {
@@ -170,7 +174,7 @@ export function joinSelection(): void {
     const pick = best as unknown as { index: number; chainEnd: 'start' | 'end'; otherEnd: 'start' | 'end' };
     const [next] = pending.splice(pick.index, 1);
     if (!next) break;
-    chain = joinPaths(chain, pick.chainEnd, next.path.anchors, pick.otherEnd);
+    chain = joinPaths(chain, pick.chainEnd, localOf(next), pick.otherEnd);
     removed.push(next.path.id);
   }
   c.session.run(joinPathNodes(c.space.id, first.path.id, removed, chain, false), selectOnly(c.space.id, [first.path.id]));

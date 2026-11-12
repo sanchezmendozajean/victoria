@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  anchorsInFrame,
   applyCornerRadii,
   averageAnchors,
   closeOpenPath,
@@ -105,6 +106,16 @@ describe('cutPath (scissors)', () => {
 });
 
 describe('join / close / average', () => {
+  it('brings anchors from one path frame into another (each path has its own transform)', () => {
+    const a: Anchor = { p: { x: 10, y: 0 }, in: { x: 5, y: 0 }, out: { x: 15, y: 0 }, kind: 'smooth' };
+    // From a copy moved 0,-40 (and scaled ×2) into a frame translated 100,0.
+    const moved = anchorsInFrame([a], [2, 0, 0, 2, 0, -40], [1, 0, 0, 1, 100, 0]);
+    expect(moved[0]!.p).toEqual({ x: -80, y: -40 });
+    expect(moved[0]!.in).toEqual({ x: -90, y: -40 });
+    expect(moved[0]!.out).toEqual({ x: -70, y: -40 });
+    expect(a.p).toEqual({ x: 10, y: 0 }); // the input is untouched
+  });
+
   it('joins end to start and welds coincident anchors', () => {
     const joined = joinPaths(line([0, 0], [10, 0]), 'end', line([10, 0], [20, 0]), 'start');
     expect(joined.map((a) => a.p.x)).toEqual([0, 10, 20]);

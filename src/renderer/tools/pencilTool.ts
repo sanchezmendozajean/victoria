@@ -4,6 +4,7 @@ import {
   createPath,
   fitCurve,
   joinPaths,
+  anchorsInFrame,
   joinPathNodes,
   selectOnly,
   type Anchor,
@@ -84,7 +85,7 @@ export function createPencilTool(): Tool {
         // Ending on another open path joins them too.
         const tail = endpointAt(host, lastPoint, f.path.id);
         if (tail) {
-          joined = joinPaths(joined, 'end', tail.frame.path.anchors, tail.end);
+          joined = joinPaths(joined, 'end', anchorsInFrame(tail.frame.path.anchors, tail.frame.world, f.world), tail.end);
           removed.push(tail.frame.path.id);
         }
         session.run(joinPathNodes(space.id, f.path.id, removed, joined, false), selectOnly(space.id, [f.path.id]));

@@ -9,6 +9,7 @@ import {
   cornerAnchor,
   selectOnly,
   sequentialIds,
+  translation,
   withAnchors,
   type Anchor,
   type PathNode,
@@ -142,6 +143,34 @@ describe('Join (Ctrl+J)', () => {
     expect(paths()).toHaveLength(1);
     expect(paths()[0]!.id).toBe(a.id);
     expect(paths()[0]!.anchors.map((x) => x.p.x)).toEqual([0, 10, 20, 50]);
+  });
+
+  it('joins a moved copy: its own transform is taken into account (it used to land on the original)', () => {
+    // Two identical arcs; the second was moved 0,-40 by its transform (as Alt+drag leaves it), so their local anchors match.
+    const arc = () => pts([0, 0], [50, 20], [100, 0]);
+    const a = addPath(arc());
+    const b = createPath(ids, arc(), false);
+    b.transform = translation(0, -40);
+    session.run(addNode(space().id, layerId(), b));
+    session.select({ spaceId: space().id, ids: [a.id, b.id], anchors: { [a.id]: [0], [b.id]: [0] } });
+    actions.joinSelection();
+    expect(paths()).toHaveLength(1);
+    // In a's frame (identity): b's anchors come in at y − 40, reversed so that its start meets a's start.
+    expect(paths()[0]!.anchors.map((x) => x.p)).toEqual([
+      { x: 100, y: 0 }, { x: 50, y: 20 }, { x: 0, y: 0 },
+      { x: 0, y: -40 }, { x: 50, y: -20 }, { x: 100, y: -40 },
+    ]);
+  });
+
+  it('chains whole paths with their own transforms, measuring the nearest ends on the page', () => {
+    const a = addPath(pts([0, 0], [10, 0]));
+    const b = createPath(ids, pts([0, 0], [10, 0]), false);
+    b.transform = translation(20, 0); // on the page: 20..30
+    session.run(addNode(space().id, layerId(), b));
+    session.select(selectOnly(space().id, [a.id, b.id]));
+    actions.joinSelection();
+    expect(paths()).toHaveLength(1);
+    expect(paths()[0]!.anchors.map((x) => x.p.x)).toEqual([0, 10, 20, 30]);
   });
 
   it('closes a path whose two end anchors are picked', () => {

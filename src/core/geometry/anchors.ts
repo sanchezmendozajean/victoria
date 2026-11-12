@@ -1,4 +1,5 @@
-import type { Anchor, Vec2 } from '../model/types';
+import { applyToPoint, invert, multiply } from '../model/matrix';
+import type { Anchor, Matrix, Vec2 } from '../model/types';
 import { moveAnchors } from './edit';
 import { pointOnSegment, segmentsOf, splitSegment, type SubPath } from './path';
 import { roundedPolygon } from './shapes';
@@ -119,6 +120,17 @@ export const reverseAnchors = (anchors: readonly Anchor[]): Anchor[] => anchors.
 function weld(first: Anchor, second: Anchor): Anchor {
   const kind = first.kind === 'smooth' && second.kind === 'smooth' ? 'smooth' : 'corner';
   return { p: { ...first.p }, in: first.in && { ...first.in }, out: second.out && { ...second.out }, kind };
+}
+
+/**
+ * The anchors of a path whose frame is `from` (its world matrix), expressed in the frame `to`: what one path
+ * must do before taking another path's anchors (join), since each path has its own transform.
+ */
+export function anchorsInFrame(anchors: readonly Anchor[], from: Matrix, to: Matrix): Anchor[] {
+  const inverse = invert(to);
+  if (!inverse) return anchors.map(clone);
+  const m = multiply(inverse, from);
+  return anchors.map((a) => ({ ...clone(a), p: applyToPoint(m, a.p), in: a.in && applyToPoint(m, a.in), out: a.out && applyToPoint(m, a.out) }));
 }
 
 /** Joins two open paths end to end; anchors that coincide are welded into one. */
