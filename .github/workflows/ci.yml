@@ -30,9 +30,13 @@ jobs:
       - name: End-to-end (Windows)
         if: runner.os == 'Windows'
         run: pnpm test:e2e
+      # A window manager (openbox) so maximize and other window-state requests work under xvfb.
+      - name: Install a window manager for xvfb
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y openbox
       - name: End-to-end (Linux, X11 under xvfb)
         if: runner.os == 'Linux'
-        run: xvfb-run --auto-servernum pnpm test:e2e
+        run: xvfb-run --auto-servernum sh -c 'openbox & sleep 1; pnpm test:e2e'
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
