@@ -47,6 +47,17 @@ const findPixel = (page: Page, rgb: number[]) =>
     rgb,
   );
 
+/** The middle of the dark run that starts at `spot` (the first dark pixel of a stroke) and goes down. */
+async function strokeMiddle(page: Page, spot: { x: number; y: number }): Promise<{ x: number; y: number }> {
+  let run = 0;
+  while (run < 40) {
+    const [r, g, b] = await pixel(page, 'canvas-content', spot.x, spot.y + run + 1);
+    if (Math.abs((r as number) - (DARK[0] as number)) > 12 || Math.abs((g as number) - (DARK[1] as number)) > 12 || Math.abs((b as number) - (DARK[2] as number)) > 12) break;
+    run++;
+  }
+  return { x: spot.x, y: spot.y + Math.round(run / 2) };
+}
+
 /** Number of non-transparent pixels of the overlay (what the tools and guides drew). */
 const overlayInk = (page: Page) =>
   page.getByTestId('canvas-overlay').evaluate((c: HTMLCanvasElement) => {
@@ -248,7 +259,8 @@ test.describe('canvas with artwork (demo document)', () => {
 
   test('Alt+wheel zooms at the cursor: the point under it stays put', async () => {
     const { page } = ctx;
-    const spot = (await findPixel(page, DARK))!;
+    // The middle of the stroke, not its antialiased edge: it stays dark however far the zoom goes.
+    const spot = await strokeMiddle(page, (await findPixel(page, DARK))!);
     const box = await surfaceBox(page);
     await page.mouse.move(box.x + spot.x, box.y + spot.y);
     await page.keyboard.down('Alt');
@@ -355,14 +367,9 @@ test.describe('canvas with artwork (demo document)', () => {
     await moveTo(page, 5, 5);
     await settle(page);
     expect(await overlayInk(page)).toBe(0);
-    // A stroke is picked by its path, not by its painted width: hover the middle of the dark run below the first dark pixel.
-    let run = 0;
-    while (run < 40) {
-      const [r, g, b] = await pixel(page, 'canvas-content', spot.x, spot.y + run + 1);
-      if (Math.abs((r as number) - (DARK[0] as number)) > 12 || Math.abs((g as number) - (DARK[1] as number)) > 12 || Math.abs((b as number) - (DARK[2] as number)) > 12) break;
-      run++;
-    }
-    await moveTo(page, spot.x, spot.y + Math.round(run / 2));
+    // A stroke is picked by its path, not by its painted width: hover the middle of the stroke.
+    const middle = await strokeMiddle(page, spot);
+    await moveTo(page, middle.x, middle.y);
     await settle(page);
     await expect.poll(() => overlayInk(page)).toBeGreaterThan(50);
     await moveTo(page, 5, 5);
