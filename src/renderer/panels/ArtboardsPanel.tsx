@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { getActiveSpace } from '../../core';
+import { getActiveSpace, setUnits, type Units } from '../../core';
 import { activeArtboardOf, deleteArtboardOf, duplicateArtboardOf, fitToArtwork, fitToSelection, moveArtboardTo, newArtboardIn, renameArtboardOf, shiftArtboard } from '../app/artboardActions';
 import { useUi } from '../app/store';
 import { canvasApi } from '../canvas/api';
@@ -9,10 +9,13 @@ import { Icon } from '../components/Icon';
 import { tip } from '../components/Tooltip';
 import { useDocuments } from '../documents';
 import { t } from '../i18n';
+import { Choice } from './kit';
 
 const DRAG_TYPE = 'application/x-victoria-artboard';
 
 /** Mesas de trabajo (specs/04 · Panel Mesas de trabajo): numbered list of the active Space with name and size, plus the artboard actions. */
+const UNITS: readonly Units[] = ['px', 'mm', 'cm', 'pt', 'in'];
+
 export function ArtboardsPanel() {
   const documents = useDocuments();
   const activeMap = useUi((s) => s.activeArtboard);
@@ -38,6 +41,12 @@ export function ArtboardsPanel() {
 
   return (
     <div className="vc-panelbody vc-artboards" data-testid="artboards-panel">
+      {/* The document units, also in Propiedades: the sizes below and every field follow them. */}
+      <div className="vc-artboards__units">
+        <Icon id="rulers" size={14} className="vc-field__icon" />
+        <span className="vc-plabel">{t('properties.units')}</span>
+        <Choice value={units} label={t('properties.units')} testId="artboards-units" width={72} options={UNITS.map((u) => ({ id: u, label: u }))} onChange={(u) => session.run(setUnits(u))} />
+      </div>
       <div className="vc-artboards__list" role="list">
         {space.artboards.map((board, i) => (
           <div

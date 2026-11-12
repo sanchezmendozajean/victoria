@@ -1124,3 +1124,15 @@
   gap: 4px;
   flex: none;
 }
+.vc-artboards__units {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.vc-artboards__units .vc-plabel {
+  flex: 1;
+  color: var(--text-muted);
+}

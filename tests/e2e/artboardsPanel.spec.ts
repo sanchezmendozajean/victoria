@@ -60,6 +60,22 @@ test.describe('Panel Mesas de trabajo', () => {
     await expect(rows(page)).toHaveCount(3);
   });
 
+  test('the units selector changes the document units: the sizes follow, one undo step each', async () => {
+    const { page } = ctx;
+    if (!(await page.getByTestId('artboards-panel').isVisible())) await page.locator('[data-panel="artboards"]').first().click();
+    const units = page.getByTestId('artboards-units');
+    await expect(units).toBeVisible();
+    const before = await units.inputValue();
+    await units.selectOption('pt');
+    await expect(page.getByTestId('artboards-size').first()).toContainText('pt');
+    await units.selectOption('in');
+    await expect(page.getByTestId('artboards-size').first()).toContainText('in');
+    await page.keyboard.press('Control+z');
+    await expect(units).toHaveValue('pt');
+    await page.keyboard.press('Control+z');
+    await expect(units).toHaveValue(before);
+  });
+
   test('the move-artwork toggle and the Rearrange values survive a reload', async () => {
     const { page } = ctx;
     await page.keyboard.press('Escape');
