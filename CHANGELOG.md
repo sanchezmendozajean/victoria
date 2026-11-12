@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.2 — Degradado: duplicar paradas con Alt, cursor y guías inteligentes
+- **Alt+arrastrar** una parada de color (en la barra del panel Degradado o en el anotador de la herramienta Degradado) deja la original en su sitio y mueve una copia con el mismo color y opacidad, como Illustrator; Alt vale pulsado antes de empezar o durante el arrastre (la original vuelve a su sitio); un solo paso de deshacer. Arrastrar hacia abajo en el panel quita la copia. `dragGradientStop` en `core/model/gradient.ts`.
+- Panel Degradado: tipo, ángulo y relación de aspecto comparten una fila, con los íconos de ángulo y de relación de aspecto fuera de su campo (antes el de relación de aspecto iba dentro).
+- Los botones de solo ícono de los paneles son siempre cuadrados (22×22) y no se encogen en una fila llena; los paneles flotantes tienen un ancho mínimo de 270 px (antes 220), para que la fila del degradado quepa entera.
+- Herramienta Degradado: el cursor cambia sobre el anotador: mano sobre lo que se puede arrastrar (paradas, puntos medios, extremo, relación de aspecto), mover sobre el origen, flecha con + sobre el eje; antes era siempre la cruz.
+- Herramienta Degradado: el inicio de un degradado nuevo, el origen y el extremo del anotador reaccionan a las guías inteligentes (y a guías, cuadrícula y mesas) y muestran sus líneas; con Mayús el extremo se restringe a 45° sin ajustarse.
+- Al arrastrar una parada que pasa por encima de otra, se seguía moviendo la que quedaba en su índice anterior (la vecina): ahora la parada arrastrada es siempre la misma.
+
 ## 0.1.1 — CI en verde y fuente por defecto en Linux
 - **Texto nuevo en Linux**: la familia inicial era siempre «Arial», que casi ningún Linux tiene, así que el texto nuevo se dibujaba (y exportaba) con glifos de caja. Al terminar de listar las fuentes del sistema, si la familia por defecto no está instalada se usa la primera disponible entre Arial, Helvetica, Liberation Sans, DejaVu Sans, Noto Sans, Segoe UI y Ubuntu.
 - **Pruebas e2e al día**: barra de herramientas de 33 px, Selección como herramienta inicial, `openPrinterPreferences` en la API, Alt+rueda para el zoom (specs/03), el trazo se pica por su vector, barra de título de Windows a todo el ancho. Las suites que cuentan píxeles fijan el zoom al 100 % (los runners tienen pantallas de 1024×768) y las de texto esperan a la lista de fuentes. `E2E_SIZE=1024x728` reproduce la ventana de CI.
