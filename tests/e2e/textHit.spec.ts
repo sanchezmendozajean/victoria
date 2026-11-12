@@ -21,10 +21,10 @@ test('clicking beside or below big text, outside its selection box, does not pic
     const size = page.getByTestId('char-size');
     await size.fill('80');
     await size.press('Enter');
-    await page.waitForTimeout(400);
 
-    // Ink of the letters: black pixels in a window around the text (CSS px, relative to the canvas).
-    const ink = await page.getByTestId('canvas-content').evaluate(
+    // Ink of the letters: black pixels in a window around the text (CSS px, relative to the canvas), plus the middle
+    // of the first stroke of ink on the row halfway down (a point surely on a letter, not between two).
+    const measure = () => page.getByTestId('canvas-content').evaluate(
       (el, area) => {
         const c = el as HTMLCanvasElement;
         const dpr = c.width / c.getBoundingClientRect().width;
@@ -38,21 +38,33 @@ test('clicking beside or below big text, outside its selection box, does not pic
             }
           }
         }
-        return { minX: minX / dpr, minY: minY / dpr, maxX: maxX / dpr, maxY: maxY / dpr };
+        const dark = (x: number, y: number) => {
+          const i = (y * c.width + x) * 4;
+          return d[i]! < 60 && d[i + 1]! < 60 && d[i + 2]! < 60 && d[i + 3]! > 200;
+        };
+        const row = Math.round((minY + maxY) / 2);
+        let from = minX;
+        while (from <= maxX && !dark(from, row)) from++;
+        let to = from;
+        while (to <= maxX && dark(to, row)) to++;
+        return { minX: minX / dpr, minY: minY / dpr, maxX: maxX / dpr, maxY: maxY / dpr, onX: (from + to) / 2 / dpr, onY: row / dpr };
       },
       { x0: b.width / 2 - 120, x1: b.width / 2 + 200, y0: b.height / 2 - 120, y1: b.height / 2 + 60 },
     );
-    expect(ink.maxX).toBeGreaterThan(ink.minX); // the letters were found
+    // Wait for the repaint at 80 pt (slow runners): the letters are then well over 40 px tall.
+    await expect.poll(async () => { const m = await measure(); return m.maxY - m.minY; }).toBeGreaterThan(40);
+    const ink = await measure();
     const inkX = b.x + (ink.minX + ink.maxX) / 2;
     const midY = b.y + (ink.minY + ink.maxY) / 2;
     const picked = async (x: number, y: number) => {
       await page.keyboard.press('Control+Shift+a'); // deselect
       await expect(page.getByTestId('control-type')).toHaveCount(0);
       await page.mouse.click(x, y);
+      await page.waitForTimeout(300); // the control bar follows the selection a moment later
       return (await page.getByTestId('control-type').count()) > 0;
     };
 
-    expect(await picked(inkX, midY)).toBe(true); // on the letters
+    expect(await picked(b.x + ink.onX, b.y + ink.onY)).toBe(true); // on a letter
     // The line box (ascender to descender) used to reach well past the drawn box: 25 px below the letters must be empty space.
     expect(await picked(inkX, b.y + ink.maxY + 25)).toBe(false);
     expect(await picked(inkX, b.y + ink.minY - 25)).toBe(false);
