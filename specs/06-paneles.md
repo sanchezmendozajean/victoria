@@ -46,10 +46,8 @@ Alinear izquierda/centro/derecha, justificar (última línea izq/centro/der), ju
 
 ## Alineación (★)
 
-Fila 1 — **Alinear objetos**: izquierda, centro horizontal, derecha, arriba, centro vertical, abajo.
-Fila 2 — **Distribuir objetos**: por arriba, centro V, abajo, izquierda, centro H, derecha.
-Fila 3 — **Alinear a**: Selección | Objeto clave | Mesa de trabajo (selector con ícono). Con "Objeto clave", el siguiente clic sobre un objeto lo marca (borde grueso azul).
-Opción: "Usar límites de previsualización" (incluye grosor de trazo).
+Sección **Alinear objetos**: primero, bajo el título, el selector **Alinear a**: Selección | Objeto clave | Mesa de trabajo (con ícono; con "Objeto clave", el siguiente clic sobre un objeto lo marca con borde grueso azul) y la opción "Usar límites de previsualización" (incluye grosor de trazo); debajo, los botones izquierda, centro horizontal, derecha, arriba, centro vertical, abajo.
+Sección **Distribuir objetos**: por arriba, centro V, abajo, izquierda, centro H, derecha.
 
 ## Espaciado (★)
 

@@ -56,18 +56,7 @@ export function AlignPanel() {
   return (
     <div className="vc-panelbody" data-testid="align-panel">
       <Section title={t('align.objects')}>
-        <AlignButtons />
-      </Section>
-      <Section title={t('align.distribute')}>
-        <div className="vc-iconrow">
-          {DISTRIBUTE.map((d) => (
-            <button key={d.kind} type="button" className="vc-pbutton vc-pbutton--icon" data-testid={`distribute-${d.kind}`} disabled={!many} {...tip(t(d.label))} onClick={() => distributeSelection(d.kind)}>
-              <Icon id={d.icon} size={16} />
-            </button>
-          ))}
-        </div>
-      </Section>
-      <Section title={t('align.alignTo')}>
+        {/* What the objects align to, right under the title (it decides what the buttons below do). */}
         <Row>
           <Choice
             value={alignTo}
@@ -88,6 +77,16 @@ export function AlignPanel() {
         </Row>
         {alignTo === 'key' && <p className="vc-phint" data-testid="align-key-hint">{keyObject ? t('align.keyChosen') : t('align.keyHint')}</p>}
         <CheckRow checked={preview} onChange={setPreview} label={t('align.previewBounds')} testId="align-preview-bounds" />
+        <AlignButtons />
+      </Section>
+      <Section title={t('align.distribute')}>
+        <div className="vc-iconrow">
+          {DISTRIBUTE.map((d) => (
+            <button key={d.kind} type="button" className="vc-pbutton vc-pbutton--icon" data-testid={`distribute-${d.kind}`} disabled={!many} {...tip(t(d.label))} onClick={() => distributeSelection(d.kind)}>
+              <Icon id={d.icon} size={16} />
+            </button>
+          ))}
+        </div>
       </Section>
     </div>
   );
