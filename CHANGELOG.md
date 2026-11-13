@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.4 — Aislamiento, subtrazados y anclas
+- **Aislar cualquier objeto**: doble clic con la herramienta Selección sobre un trazado, trazado compuesto o forma viva lo aísla, como en Illustrator (antes solo los grupos); el resto se atenúa y no se puede seleccionar. En aislamiento, Selección directa y Lazo solo revelan, toman y enmarcan anclas del objeto aislado. El botón «Aislar objeto» (barra de control y Propiedades) vale para cualquier objeto que no sea texto.
+- **Barra de aislamiento flotante**: flota sobre el lienzo, en la esquina superior izquierda junto a las reglas, en lugar de ocupar una franja propia.
+- **Subtrazados como objetos**: en un trazado compuesto aislado, la herramienta Selección elige cada subtrazado como si fuera un objeto independiente (clic, Mayús+clic, marco) y lo mueve, escala, rota o desplaza con flechas por separado; Alt+arrastrar los duplica dentro del mismo compuesto. Reflejar (botones del panel Transformar, diálogo y herramienta), rotar, escalar, Ctrl+D y los campos X/Y/An/Al actúan solo sobre los subtrazados elegidos.
+- **Selección directa**: al pasar sobre un ancla de cualquier trazado visible (seleccionado o no) se dibuja un cuadro algo mayor y un clic la selecciona directamente (antes, en un trazado sin seleccionar, hacía falta un segundo clic).
+- **Ajuste de anclas**: un ancla (o manejador) a menos de 4 px de pantalla de otra ancla cae exactamente sobre ella (antes se alineaba eje por eje y podía quedarse al lado). El ancla arrastrada se pega también a los segmentos de su propio trazado que no se mueven y a los de los otros subtrazados de un trazado compuesto, como en Illustrator; y las anclas de esos otros subtrazados ahora atraen. `snapToSegments` en `core/snap/snap.ts`.
+- **Unir (Ctrl+J) en trazados compuestos**: no hacía nada con extremos de subtrazados; ahora une dos subtrazados dentro del compuesto (o uno con otro trazado) y cierra un subtrazado si se eligen sus dos extremos.
+- **Creador de formas**: una esquina unida al resto de un rectángulo solo por el punto de tangencia de un círculo se resaltaba (y se unía) aunque el cursor no pasara por ella. Ahora un contorno que se toca a sí mismo en un punto se parte en regiones separadas (`splitPinchedContour` en `core/geometry/pinch.ts`); lo mismo en Buscatrazos › Dividir.
+- **Objeto › Transformar › Restablecer cuadro delimitador** (como Illustrator): la caja de un objeto girado vuelve a quedar alineada con la página sin mover ni cambiar el objeto. Trazados, trazados compuestos, grupos y líneas; un paso de deshacer. Ícono nuevo `reset-bbox`.
+- **Formas vivas con Selección directa**: arrastrar todas las anclas de una forma viva la mueve entera sin pedir convertirla; el aviso solo aparece si se mueven algunas. Las **líneas** se convierten en trazado sin preguntar al mover uno de sus extremos.
+- **Redondeo de esquinas**: en un rectángulo vivo con anclas seleccionadas, solo las esquinas de esas anclas muestran su control de redondeo y solo esas se redondean (Alt, solo la arrastrada).
+
 ## 0.1.3 — Recientes, unir trazados y ajustes de paneles
 - **Archivo › Abrir recientes** decía siempre «Sin documentos recientes» (era una entrada fija). Ahora muestra la misma lista que la pantalla de inicio, leída de nuevo cada vez que se abre el menú Archivo, y abre el documento elegido; si dos documentos se llaman igual, cada uno lleva el nombre de su carpeta.
 - **Pantalla de inicio**: bajo el nombre de cada documento reciente se muestra la ruta del archivo (cortada con «…» si no cabe; el tooltip la tiene entera).
