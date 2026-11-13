@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { addNode, createDocument, createRect, DocumentSession, getActiveSpace, nodeWorldBounds, patchStroke, primaryItem, selectOnly, sequentialIds, translation, worldRotationOf, type ShapeNode } from '../../core';
+import { addNode, cornerAnchor, createCompound, createPath, pathFrameOf, withAnchors, type PathNode, createDocument, createRect, DocumentSession, getActiveSpace, nodeWorldBounds, patchStroke, primaryItem, selectOnly, sequentialIds, translation, worldRotationOf, type ShapeNode } from '../../core';
 
 let current: { session: DocumentSession } | null = null;
 vi.mock('../documents', () => ({
@@ -103,5 +103,31 @@ describe('transform actions (control bar and Transform panel)', () => {
     actions.rotateSelection(30);
     actions.flipSelection('v');
     expect(session.historyLength).toBe(before);
+  });
+});
+
+describe('transform actions on the picked sub-paths of an isolated compound path', () => {
+  it('a flip turns only the picked sub-path, across its own centre; the X field moves it alone', () => {
+    const space = getActiveSpace(session.document);
+    const tri = (x: number) => createPath(ids, [cornerAnchor({ x, y: 0 }), cornerAnchor({ x: x + 40, y: 0 }), cornerAnchor({ x, y: 20 })], true) as PathNode;
+    const one = tri(0);
+    const two = tri(100);
+    const compound = createCompound(ids, [one, two]);
+    compound.transform = translation(0, 300);
+    session.run(addNode(space.id, space.layers[0]!.id, compound));
+    useUi.setState({ isolation: { [space.id]: compound.id } });
+    session.select(withAnchors(selectOnly(space.id, [compound.id]), { [two.id]: [0, 1, 2] }));
+    const anchors = (id: string) => pathFrameOf(getActiveSpace(session.document), id)!.path.anchors.map((a) => ({ x: +a.p.x.toFixed(9) + 0, y: +a.p.y.toFixed(9) + 0 }));
+
+    actions.flipSelection('h'); // mirrored left ↔ right inside its box 100…140
+    expect(anchors(two.id)).toEqual([{ x: 140, y: 0 }, { x: 100, y: 0 }, { x: 140, y: 20 }]);
+    expect(anchors(one.id)).toEqual([{ x: 0, y: 0 }, { x: 40, y: 0 }, { x: 0, y: 20 }]);
+    session.undo();
+    expect(anchors(two.id)).toEqual([{ x: 100, y: 0 }, { x: 140, y: 0 }, { x: 100, y: 20 }]);
+
+    actions.moveSelectionTo('x', 200); // reference point top-left: the sub-path box, not the compound's
+    expect(anchors(two.id)[0]).toEqual({ x: 200, y: 0 });
+    expect(anchors(one.id)[0]).toEqual({ x: 0, y: 0 });
+    useUi.setState({ isolation: {} });
   });
 });

@@ -127,7 +127,8 @@ export function joinSelection(): void {
 
   // 1. Two picked end anchors.
   const ends = anchorTargets(c).flatMap(({ frame, indices }) =>
-    frame.owner.type === 'path' && !frame.live && !frame.path.closed
+    // A standalone path, or a sub-path of a compound path (whose sub-paths can be joined to each other or to other paths).
+    (frame.owner.type === 'path' || frame.owner.type === 'compound') && !frame.live && !frame.path.closed
       ? indices.filter((i) => i === 0 || i === frame.path.anchors.length - 1).map((i) => ({ frame, end: (i === 0 ? 'start' : 'end') as 'start' | 'end', index: i }))
       : [],
   );
@@ -138,7 +139,10 @@ export function joinSelection(): void {
     } else {
       // Each path has its own transform: the other path's anchors are brought into the frame of the one that stays.
       const joined = joinPaths(a.frame.path.anchors, a.end, anchorsInFrame(b.frame.path.anchors, b.frame.world, a.frame.world), b.end);
-      c.session.run(joinPathNodes(c.space.id, a.frame.path.id, [b.frame.path.id], joined, false), selectOnly(c.space.id, [a.frame.path.id]));
+      // The object that stays selected: the path itself, or the compound path that holds the joined sub-path.
+      // The other path goes away; if it was the last sub-path of another compound path, so does that compound.
+      const gone = b.frame.owner.type === 'compound' && b.frame.owner.id !== a.frame.owner.id && b.frame.owner.children.length <= 1 ? b.frame.owner.id : b.frame.path.id;
+      c.session.run(joinPathNodes(c.space.id, a.frame.path.id, [gone], joined, false), selectOnly(c.space.id, [a.frame.owner.id]));
     }
     return;
   }

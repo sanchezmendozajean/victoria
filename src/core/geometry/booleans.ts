@@ -1,6 +1,7 @@
 import paper from 'paper/dist/paper-core';
 import type { Anchor, Vec2 } from '../model/types';
 import type { SubPath } from './path';
+import { insideContour, splitPinchedContour } from './pinch';
 
 // Boolean operations on filled shapes with paper.js running headless. Curves are kept as Béziers: paper splits
 // them at the intersections instead of flattening them. Everything here is geometry in a common space; the
@@ -103,6 +104,21 @@ function pieceOutputs(item: paper.PathItem | null | undefined, source: number): 
   }));
 }
 
+/**
+ * A region whose outline touches itself at a point is two regions (see `pinch.ts`): each loop becomes its own piece,
+ * with the holes that fall inside it.
+ */
+function splitPinched(piece: BooleanPiece): BooleanPiece[] {
+  const [outer, ...holes] = piece.subpaths;
+  if (!outer) return [piece];
+  const loops = splitPinchedContour(outer);
+  if (loops.length <= 1) return [piece];
+  return loops.map((loop) => {
+    const own = holes.filter((h) => h.anchors[0] && insideContour(loop, h.anchors[0].p));
+    return { ...piece, subpaths: [loop, ...own], fillRule: own.length > 0 ? 'evenodd' : 'nonzero' };
+  });
+}
+
 function booleanOf(a: paper.PathItem, b: paper.PathItem, kind: 'unite' | 'subtract' | 'intersect' | 'exclude'): paper.PathItem {
   return a[kind](b, NO_INSERT);
 }
@@ -185,7 +201,7 @@ export function divideShapes(shapes: readonly BooleanShape[]): Face[] {
     const out: Face[] = [];
     for (const face of faces) {
       const source = Math.max(...face.covers);
-      for (const piece of pieceOutputs(face.item, source)) out.push({ ...piece, covers: face.covers });
+      for (const piece of pieceOutputs(face.item, source)) for (const part of splitPinched(piece)) out.push({ ...part, covers: face.covers });
     }
     return out;
   } finally {

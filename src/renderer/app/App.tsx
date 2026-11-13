@@ -3,7 +3,6 @@ import { DialogHost } from '../components/DialogHost';
 import { TooltipHost } from '../components/Tooltip';
 import { ControlBar } from './ControlBar';
 import { DocBar } from './DocBar';
-import { IsolationBar } from './IsolationBar';
 import { PanelDock } from './PanelDock';
 import { StatusBar } from './StatusBar';
 import { TitleBar } from './TitleBar';
@@ -44,7 +43,6 @@ export function App() {
           {hasDocuments ? (
             <>
               <DocBar />
-              <IsolationBar />
               <CanvasArea />
             </>
           ) : (

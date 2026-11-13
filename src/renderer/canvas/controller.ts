@@ -733,6 +733,9 @@ export class CanvasController implements ToolHost, CanvasApi {
         if (mask) visit(mask, multiply(world, mask.transform), color);
       } else if (node.type === 'group') {
         for (const child of node.children) visit(child, multiply(world, child.transform), color);
+      } else if (node.type === 'compound' && node.id === this.isolation && node.children.some((p) => selection.anchors?.[p.id]?.length)) {
+        // An isolated compound path with picked sub-paths: only those are outlined (they act as objects of their own).
+        for (const p of node.children) if (selection.anchors?.[p.id]?.length) out.push({ node: p, world, color });
       } else {
         out.push({ node, world, color });
       }

@@ -6,7 +6,6 @@ import {
   rectCenter,
   rotateAbout,
   scaleAbout,
-  selectionBounds,
   toRadians,
   translation,
   type Matrix,
@@ -18,7 +17,7 @@ import { useDocuments } from '../documents';
 import { t } from '../i18n';
 import { topLevelIds } from '../tools/shared';
 import type { TransformKind } from '../tools/types';
-import { applyTransform, nextTransformKey } from './selectionActions';
+import { applyTransform, nextTransformKey, transformBounds } from './selectionActions';
 import { useUi } from './store';
 import '../components/DialogHost.css';
 import './TransformDialog.css';
@@ -62,7 +61,7 @@ function TransformForm({ kind, origin, ids }: FormProps) {
 
   // The origin is fixed for the lifetime of the dialog: the selection centre unless a tool set one.
   const center = useMemo<Vec2>(() => {
-    const box = selectionBounds(getActiveSpace(session.document), ids);
+    const box = transformBounds(getActiveSpace(session.document), session.selection, ids);
     return origin ?? (box ? rectCenter(box) : { x: 0, y: 0 });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

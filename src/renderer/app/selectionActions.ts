@@ -1,4 +1,7 @@
 import {
+  canResetBoundingBox,
+  convertShapeToPath,
+  resetBoundingBox,
   arrangeNodes,
   cloneNodes,
   createClipGroup,
@@ -21,6 +24,9 @@ import {
   nodeWorldBounds,
   releaseCompoundPaths,
   removeNodes,
+  duplicateSubPaths,
+  selectionBounds,
+  type Rect,
   selectableIds,
   selectOnly,
   setAllNodesProps,
@@ -37,6 +43,8 @@ import {
 import { manager } from '../documents';
 import { lastSelectionOf } from '../documents/manager';
 import { topLevelIds } from '../tools/shared';
+import { compoundIn, pickedIn, subPathSelection, subPathsBounds, transformedCopies, transformSubPaths, type IsolatedCompound } from '../tools/subPathSelection';
+import type { PathNode } from '../../core';
 import { deleteSelectedAnchors } from './pathActions';
 import { useUi } from './store';
 
@@ -190,7 +198,34 @@ export const nextTransformKey = (): string => `dlg${++dialogCounter}`;
  * Applies `matrix` (in Space coordinates) to the objects, or to copies of them. Returns the ids that
  * hold the result, so callers can keep them selected.
  */
+/** The picked sub-paths of an isolated compound path: while there are any, they are what transforms act on. */
+export function isolatedSubPaths(space: Space, selection: Selection | null): { compound: IsolatedCompound; subs: PathNode[] } | null {
+  const compound = compoundIn(space, useUi.getState().isolation[space.id] ?? null);
+  if (!compound || !selection || selection.spaceId !== space.id) return null;
+  const subs = pickedIn(selection, compound);
+  return subs.length > 0 ? { compound, subs } : null;
+}
+
+/** Box the transform fields and actions work with: the picked sub-paths of an isolated compound, else the objects. */
+export function transformBounds(space: Space, selection: Selection | null, ids: readonly string[]): Rect | null {
+  const sub = isolatedSubPaths(space, selection);
+  if (sub) return subPathsBounds(sub.compound, sub.subs);
+  return ids.length > 0 ? selectionBounds(space, ids) : null;
+}
+
 export function applyTransform(session: DocumentSession, space: Space, ids: readonly string[], matrix: Matrix, copy: boolean, key?: string): string[] {
+  const sub = isolatedSubPaths(space, session.selection);
+  if (sub) {
+    const subIds = sub.subs.map((p) => p.id);
+    if (!copy) {
+      const command = transformSubPaths(space.id, sub.compound, subIds, matrix, key);
+      if (command) session.run(command);
+      return [...ids];
+    }
+    const copies = transformedCopies(sub.compound, sub.subs, matrix, session.ids);
+    session.run(duplicateSubPaths(space.id, subIds, copies, key), subPathSelection(space.id, sub.compound, copies));
+    return [...ids];
+  }
   if (!copy) {
     session.run(transformNodesScaling(space.id, ids, matrix, useUi.getState().scaleStrokes, key));
     return [...ids];
@@ -200,6 +235,35 @@ export function applyTransform(session: DocumentSession, space: Space, ids: read
   const cloneIds = clones.map((n) => n.id);
   session.run(duplicateNodes(space.id, ids, clones, matrix, key), selectOnly(space.id, cloneIds));
   return cloneIds;
+}
+
+/** Selected objects Restablecer cuadro delimitador can act on: paths, compound paths, groups, and live lines (made paths first). */
+function resettable(c: ActionContext): { ids: string[]; lines: string[] } {
+  const ids: string[] = [];
+  const lines: string[] = [];
+  for (const id of c.ids) {
+    const node = locateNode(c.space, id)?.node;
+    if (!node) continue;
+    if (node.type === 'shape' && node.shape === 'line') lines.push(id);
+    if (canResetBoundingBox(node) || (node.type === 'shape' && node.shape === 'line')) ids.push(id);
+  }
+  return { ids, lines };
+}
+
+export const canResetBoundingBoxSelection = (): boolean => {
+  const c = actionContext();
+  return !!c && resettable(c).ids.length > 0;
+};
+
+/** Objeto › Transformar › Restablecer cuadro delimitador: one undo step (a live line becomes a path in the same step). */
+export function resetBoundingBoxSelection(): void {
+  const c = actionContext();
+  if (!c) return;
+  const { ids, lines } = resettable(c);
+  if (ids.length === 0) return;
+  const key = `reset-bbox-${Date.now()}`;
+  for (const id of lines) c.session.run(convertShapeToPath(c.space.id, id, key));
+  c.session.run(resetBoundingBox(c.space.id, ids, key));
 }
 
 /** Objeto › Transformar de nuevo (Ctrl+D). */

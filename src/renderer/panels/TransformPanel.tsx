@@ -1,5 +1,6 @@
-import { selectionBounds, toDegrees, worldRotationOf } from '../../core';
+import { toDegrees, worldRotationOf } from '../../core';
 import { flipSelection, moveSelectionTo, resizeSelection, rotateSelection, shearSelection } from '../app/transformActions';
+import { transformBounds } from '../app/selectionActions';
 import { useUi } from '../app/store';
 import { ptToUnit, unitToPt } from '../canvas/units';
 import { Icon } from '../components/Icon';
@@ -20,8 +21,9 @@ export function TransformPanel({ compact = false }: { compact?: boolean }) {
   const scaleStrokes = useUi((s) => s.scaleStrokes);
   const setScaleStrokes = useUi((s) => s.setScaleStrokes);
   const active = useUi((s) => s.activeArtboard);
+  useUi((s) => s.isolation); // the box follows picked sub-paths while a compound path is isolated
   if (!ctx) return <div className="vc-pempty">{t('fill.noDocument')}</div>;
-  const box = ctx.ids.length > 0 ? selectionBounds(ctx.space, ctx.ids) : null;
+  const box = transformBounds(ctx.space, ctx.selection, ctx.ids);
   const units = ctx.session.document.meta.units;
   const board = ctx.space.artboards.find((a) => a.id === active[ctx.space.id]) ?? ctx.space.artboards[0];
   const origin = { x: board?.x ?? 0, y: board?.y ?? 0 };

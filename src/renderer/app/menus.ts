@@ -10,7 +10,7 @@ import { useUi, type CustomWorkspace, type ViewOptions, type WorkspaceId } from 
 import { selectedPathText, selectedTextIds } from './textActions';
 import { MODIFIER_MENU } from './modifierCatalog';
 import { openModifier, selectionHasModifiers } from './modifierActions';
-import { actionContext, canMakeBlend, canUngroup, expandBlendSelection, selectedBlends } from './selectionActions';
+import { actionContext, canMakeBlend, canResetBoundingBoxSelection, canUngroup, expandBlendSelection, resetBoundingBoxSelection, selectedBlends } from './selectionActions';
 import { moveToSpaceEntries } from './spaceMenus';
 import { goToSpaceIndex } from '../documents/spaceActions';
 import { manager } from '../documents';
@@ -164,6 +164,8 @@ export function buildMenus(ctx: MenuContext): MenuDef[] {
       item('rotate', 'menu.object.rotate', 'tool-rotate', undefined, { onSelect: () => ctx.openTransformDialog('rotate') }),
       item('reflect', 'menu.object.reflect', 'tool-reflect', undefined, { onSelect: () => ctx.openTransformDialog('reflect') }),
       item('scale', 'menu.object.scale', 'tool-scale', undefined, { onSelect: () => ctx.openTransformDialog('scale') }),
+      sep('transform-sep'),
+      item('reset-bbox', 'menu.object.resetBoundingBox', 'reset-bbox', undefined, { onSelect: resetBoundingBoxSelection, disabled: !canResetBoundingBoxSelection() }),
     ]),
     item('move', 'menu.object.move', 'transform', 'object.move'),
     item('move-to-space', 'menu.object.moveToSpace', 'space-move-to', undefined, { submenu: moveToSpaceEntries(), disabled: !hasSelection }),

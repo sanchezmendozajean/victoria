@@ -26,12 +26,12 @@ export function selectedFrames(host: ToolHost): PathFrame[] {
   return selection && host.space ? pathsOfNodes(host.space, selection.ids) : [];
 }
 
-/** Frames of every visible, unlocked path near `p` (not only the selected ones). */
+/** Frames of every visible, unlocked path near `p` (not only the selected ones), inside the isolated object if any. */
 export function framesNear(host: ToolHost, p: Vec2, radius = pickRadius(host) * 2): PathFrame[] {
   const space = host.space;
   if (!space) return [];
   const rect: Rect = { minX: p.x - radius, minY: p.y - radius, maxX: p.x + radius, maxY: p.y + radius };
-  return pathsOfNodes(space, visibleLeafIds(space, rect)).filter((f) => !f.layer.locked && !f.owner.locked);
+  return pathsOfNodes(space, visibleLeafIds(space, rect, false, host.isolation)).filter((f) => !f.layer.locked && !f.owner.locked);
 }
 
 export interface AnchorHit {

@@ -1,5 +1,6 @@
 import {
   cloneNodes,
+  duplicateSubPaths,
   duplicateNodes,
   emptySelection,
   locateNode,
@@ -45,6 +46,7 @@ import { createDirectSelectionTool } from './directSelectionTool';
 import { createTextWidgets } from './textWidgets';
 import { boxScreenRect, cursorForTurnedHandle, fromBoxSpace, orientedBoxOf, rotatePoint, toBoxScreen, toBoxSpace, type OrientedBox } from './orientedBox';
 import type { ToolId } from '../app/tools';
+import { isolatedCompound, pickedSubPaths, subPathAt, subPathSelection, subPathsBounds, subPathsInRect, transformedCopies, transformSubPaths } from './subPathSelection';
 
 type State =
   | { kind: 'idle' }
@@ -77,17 +79,46 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
   /** The oriented box of the current selection (turning live while a rotation drags several objects). */
   const boxFor = (host: ToolHost, ids: string[]): OrientedBox | null => {
     if (!host.space) return null;
+    const compound = isolatedCompound(host);
+    if (compound) {
+      const rect = subPathsBounds(compound, compound.node.children.filter((p) => ids.includes(p.id)));
+      return rect ? { rect, theta: 0 } : null;
+    }
     let theta = sticky && sticky.key === idsKey(ids) ? sticky.theta : 0;
     if (state.kind === 'rotate' && ids.length > 1) theta = state.baseTheta + state.angle;
     return orientedBoxOf(host.space, ids, theta);
+  };
+
+  /** What the box holds and transforms: the top-level selected objects, or the picked sub-paths of an isolated compound path. */
+  const units = (host: ToolHost): string[] => {
+    const compound = isolatedCompound(host);
+    return compound ? pickedSubPaths(host, compound).map((p) => p.id) : selectedTopLevel(host);
+  };
+  /** Objects smart guides ignore while `ids` move (an isolated compound path ignores itself). */
+  const excluded = (host: ToolHost, ids: readonly string[]): Set<string> => {
+    const compound = isolatedCompound(host);
+    return new Set(compound ? [compound.node.id] : ids);
+  };
+  /** Runs a Space transform on `ids` (objects, or sub-paths of the isolated compound path). */
+  const runTransform = (host: ToolHost, ids: string[], m: Matrix, key: string, scaling: boolean): void => {
+    const { session, space } = host;
+    if (!session || !space) return;
+    const compound = isolatedCompound(host);
+    if (compound) {
+      const command = transformSubPaths(space.id, compound, ids, m, key);
+      if (command) session.run(command);
+      return;
+    }
+    session.run(scaling ? transformNodesScaling(space.id, ids, m, host.scaleStrokes, key) : transformNodes(space.id, ids, m, key));
   };
 
   const size = (r: Rect, units: Parameters<typeof formatLength>[1]) => `${t('measure.width')}: ${formatLength(r.maxX - r.minX, units)}  ${t('measure.height')}: ${formatLength(r.maxY - r.minY, units)}`;
 
 
   function startMove(host: ToolHost, press: Extract<State, { kind: 'press' }>): void {
-    const ids = selectedTopLevel(host);
-    const bounds = boxOf(host, ids);
+    const ids = units(host);
+    const compound = isolatedCompound(host);
+    const bounds = compound ? subPathsBounds(compound, compound.node.children.filter((p) => ids.includes(p.id))) : boxOf(host, ids);
     if (!bounds || ids.length === 0) {
       state = { kind: 'idle' };
       return;
@@ -103,7 +134,8 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
     if (copy !== s.duplicated && (s.duplicated || s.applied.x !== 0 || s.applied.y !== 0)) {
       // The gesture so far is undone: the originals go back to where they were pressed.
       session.rollback();
-      session.select(selectOnly(host.space.id, s.originals));
+      const compound = isolatedCompound(host);
+      session.select(compound ? subPathSelection(host.space.id, compound, compound.node.children.filter((p) => s.originals.includes(p.id))) : selectOnly(host.space.id, s.originals));
       s.ids = s.originals;
       s.duplicated = false;
       s.applied = { x: 0, y: 0 };
@@ -112,11 +144,19 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
     if (!space) return;
     let delta: Vec2 = { x: event.doc.x - s.doc.x, y: event.doc.y - s.doc.y };
     if (event.shiftKey) delta = constrainTo45(delta);
-    delta = snapDelta(host, s.bounds, delta, new Set(s.ids));
+    delta = snapDelta(host, s.bounds, delta, excluded(host, s.ids));
     const step = { x: delta.x - s.applied.x, y: delta.y - s.applied.y };
     if (step.x === 0 && step.y === 0 && s.duplicated === copy) return;
 
-    if (copy && !s.duplicated) {
+    const compound = isolatedCompound(host);
+    if (copy && !s.duplicated && compound) {
+      // Alt+drag of sub-paths: copies go into the compound, each right above its original, and take the move.
+      const subs = compound.node.children.filter((p) => s.ids.includes(p.id));
+      const copies = transformedCopies(compound, subs, translation(delta.x, delta.y), session.ids);
+      session.run(duplicateSubPaths(space.id, subs.map((p) => p.id), copies, `path.edit:${s.key}`), subPathSelection(space.id, compound, copies));
+      s.ids = copies.map((c) => c.id);
+      s.duplicated = true;
+    } else if (copy && !s.duplicated) {
       // Alt+drag: copies stay above their originals and take the move; the originals stay put.
       const nodes = s.ids.map((id) => locateNode(space, id)?.node).filter((n): n is Node => !!n);
       const clones = cloneNodes(nodes, session.ids);
@@ -124,16 +164,14 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
       s.ids = clones.map((c) => c.id);
       s.duplicated = true;
     } else {
-      session.run(transformNodes(space.id, s.ids, translation(step.x, step.y), s.key));
+      runTransform(host, s.ids, translation(step.x, step.y), s.key, false);
     }
     s.applied = delta;
     host.setMeasure(`Δx: ${formatLength(delta.x, host.units)}  Δy: ${formatLength(delta.y, host.units)}`, event.screen);
   }
 
   function transformStep(host: ToolHost, ids: string[], key: string, next: Matrix, applied: Matrix): void {
-    const { session, space } = host;
-    if (!session || !space) return;
-    session.run(transformNodesScaling(space.id, ids, stepBetween(next, applied), host.scaleStrokes, key));
+    runTransform(host, ids, stepBetween(next, applied), key, true);
   }
 
   function scale(event: CanvasPointerEvent, host: ToolHost, s: Extract<State, { kind: 'scale' }>): void {
@@ -146,7 +184,7 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
       const raw = { x: grab.x + current.x - start.x, y: grab.y + current.y - start.y };
       const axes = { x: s.handle.includes('e') || s.handle.includes('w'), y: s.handle.includes('n') || s.handle.includes('s') };
       // The handle follows the pointer by the distance it travelled, so the edge lands exactly on what it snapped to.
-      current = snapDraggedEdges(host, raw, axes, new Set(s.ids));
+      current = snapDraggedEdges(host, raw, axes, excluded(host, s.ids));
       start = grab;
     } else {
       host.setSnapLines(null);
@@ -169,7 +207,7 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
     host.setMeasure(`${Math.round(-angle * (180 / Math.PI) * 100) / 100}°`, event.screen);
   }
 
-  /** Double click: enter isolation on a group, or leave it by double-clicking outside. */
+  /** Double click: isolate the object (a group, or a single path like Illustrator), or leave by double-clicking outside. */
   function doubleClick(event: CanvasPointerEvent, host: ToolHost): boolean {
     const { session, space } = host;
     if (!session || !space) return false;
@@ -192,17 +230,16 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
       host.switchTool('tool-type');
       return true;
     }
-    if (target.type === 'group' || target.type === 'clipGroup') {
-      host.setIsolation(target.id);
-      const inner = selectionTarget(hit, target.id);
-      session.select(selectOnly(space.id, inner ? [inner.id] : []));
-      return true;
-    }
-    return false;
+    if (target.id === host.isolation) return true; // already isolated (a single path)
+    // Inside a group the unit becomes its child; an isolated path stays selected itself.
+    host.setIsolation(target.id);
+    const inner = selectionTarget(hit, target.id);
+    session.select(selectOnly(space.id, inner ? [inner.id] : []));
+    return true;
   }
 
   function updateHover(event: CanvasPointerEvent, host: ToolHost): void {
-    const ids = selectedTopLevel(host);
+    const ids = units(host);
     const box = boxFor(host, ids);
     hoverCursor = 'default';
     if (widgets.hover(event.doc, host) || textWidgets.hover(event.doc, host)) {
@@ -243,7 +280,7 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
       }
 
       // 1. Bounding box handles (scale) and the rotate zone just outside the corners.
-      const ids = selectedTopLevel(host);
+      const ids = units(host);
       const box = boxFor(host, ids);
       if (box && !host.options.hideEdges && event.clickCount < 2) {
         const sbox = boxScreenRect(box, host.view);
@@ -267,6 +304,17 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
       // 2. An object: select it (Shift toggles) and prepare to move.
       const hit = host.hitTest(event.doc)[0];
       const target = hit ? selectionTarget(hit, host.isolation) : null;
+      // An isolated compound path: its sub-paths are picked one by one, like separate objects.
+      const compound = isolatedCompound(host);
+      const sub = compound && target?.id === compound.node.id ? subPathAt(compound, event.doc, host.pickTolerance) : null;
+      if (compound && target && sub) {
+        const picked = pickedSubPaths(host, compound);
+        const was = picked.some((p) => p.id === sub.id);
+        const next = event.shiftKey ? (was ? picked.filter((p) => p.id !== sub.id) : [...picked, sub]) : was ? picked : [sub];
+        session.select(subPathSelection(space.id, compound, next));
+        state = { kind: 'press', screen: event.screen, doc: event.doc, target, wasSelected: event.shiftKey ? !was : was, shift: event.shiftKey, alt: event.altKey };
+        return;
+      }
       if (target) {
         if (event.shiftKey) {
           const next = toggleInSelection(selection, target.id);
@@ -365,9 +413,16 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
             maxX: Math.max(finished.doc.x, event.doc.x),
             maxY: Math.max(finished.doc.y, event.doc.y),
           };
-          const found = marqueeTargets(space, rect, { isolation: host.isolation, tolerance: host.pickTolerance, outlineOnly: host.outlineView }).map((n) => n.id);
-          const base = currentSelection(host) ?? emptySelection(space.id);
-          session.select(finished.shift ? addToSelection(base, found) : selectOnly(space.id, found));
+          const compound = isolatedCompound(host);
+          if (compound) {
+            const found = subPathsInRect(compound, rect);
+            const picked = finished.shift ? pickedSubPaths(host, compound) : [];
+            session.select(subPathSelection(space.id, compound, [...picked, ...found.filter((p) => !picked.includes(p))]));
+          } else {
+            const found = marqueeTargets(space, rect, { isolation: host.isolation, tolerance: host.pickTolerance, outlineOnly: host.outlineView }).map((n) => n.id);
+            const base = currentSelection(host) ?? emptySelection(space.id);
+            session.select(finished.shift ? addToSelection(base, found) : selectOnly(space.id, found));
+          }
         }
         host.invalidateOverlay();
       }
@@ -405,10 +460,10 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
       const arrows: Record<string, Vec2> = { ArrowLeft: { x: -1, y: 0 }, ArrowRight: { x: 1, y: 0 }, ArrowUp: { x: 0, y: -1 }, ArrowDown: { x: 0, y: 1 } };
       const dir = arrows[event.key];
       if (!dir || !session || !space || event.ctrlKey || event.metaKey) return false;
-      const ids = selectedTopLevel(host);
+      const ids = units(host);
       if (ids.length === 0) return false;
       const step = event.shiftKey ? ARROW_STEP_SHIFT : ARROW_STEP;
-      session.run(transformNodes(space.id, ids, translation(dir.x * step, dir.y * step), 'arrows'));
+      runTransform(host, ids, translation(dir.x * step, dir.y * step), 'arrows', false);
       return true;
     },
 
@@ -456,7 +511,7 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
           ctx.restore();
         }
       }
-      const ids = selectedTopLevel(host);
+      const ids = units(host);
       const box = boxFor(host, ids);
       if (box && !host.options.hideEdges) {
         const s = boxScreenRect(box, host.view);

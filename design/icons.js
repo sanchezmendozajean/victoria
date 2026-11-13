@@ -324,6 +324,7 @@
       ['file-text', 'lucide file-text', FILE + P('M8 13h8', 'M8 17h6')],
       ['import', 'lucide file-input', FILE + P('M2 15h10', 'm9 18 3-3-3-3')],
       ['transform', 'lucide move', P('M12 2v20', 'm15 19-3 3-3-3', 'm19 9 3 3-3 3', 'M2 12h20', 'm5 9-3 3 3 3', 'm9 5 3-3 3 3')],
+      ['reset-bbox', 'custom', `<path d="M12 1.5l10.5 10.5-10.5 10.5L1.5 12z" ${D}/>` + R(6, 6, 12, 12, 1)],
       ['isolate', 'custom', R(3, 3, 18, 18, 2, D) + R(8, 8, 8, 8, 1)],
       ['shapes', 'lucide shapes', P('M8.3 10a.7.7 0 0 1-.626-1.079L11.4 3a.7.7 0 0 1 1.198-.043L16.3 8.9a.7.7 0 0 1-.572 1.1Z') + R(3, 14, 7, 7, 1) + C(17.5, 17.5, 3.5)],
       ['social', 'custom', R(3, 3, 18, 18, 5) + C(12, 12, 4) + C(17, 7, .8, F)],

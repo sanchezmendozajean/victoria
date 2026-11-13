@@ -1,10 +1,10 @@
 import type { Draft } from 'immer';
-import { multiply } from '../model/matrix';
+import { applyToPoint, invert, multiply } from '../model/matrix';
 import { locateLayer, locateNode, locateNodes, walkNodes } from '../model/queries';
-import { pathFrameOf } from '../geometry/world';
+import { frameOf, pathFrameOf } from '../geometry/world';
 import { shapeSubPaths } from '../geometry/shapes';
 import { deepClone } from '../model/deepClone';
-import type { Anchor, Appearance, BaseNode, ClipGroupNode, TextNode, Document, GroupNode, LayerChild, Matrix, Node, PathNode, ShapeNode, Space } from '../model/types';
+import type { Anchor, Appearance, BaseNode, ClipGroupNode, CompoundNode, TextNode, Document, GroupNode, LayerChild, Matrix, Node, PathNode, ShapeNode, Space } from '../model/types';
 import { combineCommands, type Command } from './command';
 import { scaleStrokeWidths } from './appearance';
 
@@ -286,6 +286,50 @@ function convertShapeInDraft(space: DraftSpace, id: string): void {
   found.siblings[found.index] = { ...base, type: 'path', closed: contour.closed, anchors: contour.anchors } as PathNode as DraftChild;
 }
 
+/** Whether Objeto › Transformar › Restablecer cuadro delimitador can act on a node (its content can take the rotation). */
+export const canResetBoundingBox = (node: Node): boolean => node.type === 'path' || node.type === 'compound' || node.type === 'group' || node.type === 'clipGroup';
+
+/**
+ * Objeto › Transformar › Restablecer cuadro delimitador (Illustrator): the object keeps its place and look, but its
+ * rotation moves from its transform into its content, so the selection box lines up with the page again. The new
+ * world matrix is the old origin with a uniform scale of the same area (strokes keep their width); paths and compound
+ * paths take the rest in their anchors, groups in their children's transforms. Other nodes are left as they are.
+ */
+export const resetBoundingBox = (spaceId: string, ids: readonly string[], mergeKey?: string): Command => ({
+  label: 'object.resetBoundingBox',
+  spaceId,
+  ...(mergeKey ? { mergeKey: `path.edit:${mergeKey}` } : {}),
+  apply: (d) => {
+    const space = findSpace(d, spaceId);
+    if (!space) return;
+    for (const id of ids) {
+      const frame = frameOf(space as Space, id);
+      const found = locateNode(space as Space, id);
+      if (!frame || !found || !canResetBoundingBox(frame.node)) continue;
+      const w = frame.world;
+      const scale = Math.sqrt(Math.abs(w[0] * w[3] - w[1] * w[2])) || 1;
+      const upright: Matrix = [scale, 0, 0, scale, w[4], w[5]];
+      const inverseUpright = invert(upright);
+      const inverseParent = invert(frame.parentWorld);
+      if (!inverseUpright || !inverseParent) continue;
+      // Content matrix: from the old local space to the new one (the world stays the same: upright · k = w).
+      const k = multiply(inverseUpright, w);
+      const mapAnchors = (anchors: Draft<Anchor>[]) => {
+        for (const a of anchors) {
+          a.p = applyToPoint(k, a.p);
+          if (a.in) a.in = applyToPoint(k, a.in);
+          if (a.out) a.out = applyToPoint(k, a.out);
+        }
+      };
+      const node = found.node as DraftNode;
+      if (node.type === 'path') mapAnchors(node.anchors);
+      else if (node.type === 'compound') for (const p of node.children) mapAnchors(p.anchors);
+      else if (node.type === 'group' || node.type === 'clipGroup') for (const c of node.children) c.transform = multiply(k, c.transform as Matrix);
+      node.transform = multiply(inverseParent, upright);
+    }
+  },
+});
+
 /** Editing the nodes of a live shape turns it into a plain path (specs/02 · Shape). */
 export const convertShapeToPath = (spaceId: string, id: string, mergeKey?: string): Command => ({
   label: 'shape.toPath',
@@ -398,14 +442,53 @@ export const joinPathNodes = (spaceId: string, keepId: string, removeIds: readon
   apply: (d) => {
     const space = findSpace(d, spaceId);
     if (!space) return;
-    const found = locateNode(space, keepId);
-    if (found && found.node.type === 'path') {
-      found.node.anchors = anchors;
-      found.node.closed = closed;
+    // The path may be standalone or a sub-path of a compound path (which the node walk does not enter).
+    const keep = locateNode(space, keepId)?.node ?? compoundChildOf(space, keepId)?.child;
+    if (keep && keep.type === 'path') {
+      keep.anchors = anchors;
+      keep.closed = closed;
     }
-    detach(space, removeIds);
+    const plain: string[] = [];
+    for (const id of removeIds) {
+      const sub = compoundChildOf(space, id);
+      if (sub) sub.owner.children.splice(sub.index, 1);
+      else plain.push(id);
+    }
+    detach(space, plain);
   },
 });
+
+/**
+ * Alt+drag inside an isolated compound path: `copies` (sub-paths with new ids, already moved) are put into the compound,
+ * each right above the sub-path it copies (`sources`, same order). Unknown sources are skipped.
+ */
+export const duplicateSubPaths = (spaceId: string, sources: readonly string[], copies: readonly PathNode[], mergeKey?: string): Command => ({
+  label: 'path.duplicate',
+  spaceId,
+  ...(mergeKey ? { mergeKey } : {}),
+  apply: (d) => {
+    const space = findSpace(d, spaceId);
+    if (!space) return;
+    // From the last so earlier indexes stay valid.
+    for (let i = sources.length - 1; i >= 0; i--) {
+      const found = compoundChildOf(space, sources[i] as string);
+      const copy = copies[i];
+      if (found && copy) found.owner.children.splice(found.index + 1, 0, deepClone(copy) as Draft<PathNode>);
+    }
+  },
+});
+
+/** A sub-path of a compound path anywhere in the Space, with the compound that holds it. */
+function compoundChildOf(space: DraftSpace, id: string): { owner: Draft<CompoundNode>; child: Draft<PathNode>; index: number } | null {
+  for (const layer of space.layers) {
+    for (const node of walkNodes(layer.children as LayerChild[])) {
+      if (node.type !== 'compound') continue;
+      const index = node.children.findIndex((c) => c.id === id);
+      if (index >= 0) return { owner: node as Draft<CompoundNode>, child: node.children[index] as Draft<PathNode>, index };
+    }
+  }
+  return null;
+}
 
 /** Opens or closes a path and sets its anchors in one step (Pen closing, Ctrl+J on the two ends of one path). */
 export const setPathGeometry = (spaceId: string, pathId: string, anchors: Anchor[], closed: boolean, mergeKey?: string): Command => ({

@@ -8,7 +8,7 @@ import { hitTest, selectionTarget } from './hit-test';
 import { flattenGeometry, pointInFill } from './hit';
 import { flattenSubPath, segmentBounds, segmentsOf } from './path';
 import { indexFor, SpaceIndex } from './spatial-index';
-import { shapeSubPaths } from './shapes';
+import { rectCornersOfAnchors, shapeSubPaths } from './shapes';
 
 const ids = sequentialIds('g');
 const pt = (x: number, y: number): Vec2 => ({ x, y });
@@ -329,5 +329,21 @@ describe('spatial index', () => {
     expect(hits).toBeGreaterThan(0);
     expect(average).toBeLessThan(2);
     expect(build).toBeLessThan(500);
+  });
+});
+
+describe('rectCornersOfAnchors', () => {
+  const ids = sequentialIds('rc');
+  it('maps contour anchors to the corners of a live rectangle, square corners one anchor, rounded ones two', () => {
+    const r = createRect(ids, 100, 50) as ShapeNode & { shape: 'rect'; params: { w: number; h: number; radii: [number, number, number, number] } };
+    expect(rectCornersOfAnchors(r.params, [2])).toEqual([2]);
+    expect(rectCornersOfAnchors(r.params, [3, 0])).toEqual([0, 3]);
+    // Top-right rounded: anchors 0 | 1 2 | 3 | 4.
+    r.params.radii = [0, 10, 0, 0];
+    expect(shapeSubPaths(r)[0]!.anchors).toHaveLength(5);
+    expect(rectCornersOfAnchors(r.params, [1])).toEqual([1]);
+    expect(rectCornersOfAnchors(r.params, [2])).toEqual([1]);
+    expect(rectCornersOfAnchors(r.params, [3, 4])).toEqual([2, 3]);
+    expect(rectCornersOfAnchors(r.params, [9])).toEqual([]);
   });
 });

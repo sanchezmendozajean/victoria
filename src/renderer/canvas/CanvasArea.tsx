@@ -8,6 +8,7 @@ import { RULER_SIZE } from './rulerRenderer';
 import { t } from '../i18n';
 import { useDocuments } from '../documents';
 import { useUi } from '../app/store';
+import { IsolationBar } from '../app/IsolationBar';
 import { canvasApi } from './api';
 import { CanvasController } from './controller';
 import './CanvasArea.css';
@@ -258,6 +259,7 @@ export function CanvasArea() {
         onPointerDown={(event) => beginGuide('vertical', event)}
       />
       <div className="vc-canvas__corner" hidden={!rulers} title={t('canvas.rulerOrigin')} />
+      <IsolationBar />
     </main>
   );
 }

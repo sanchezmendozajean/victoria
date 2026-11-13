@@ -162,7 +162,7 @@ function ObjectProperties() {
               {t('menu.object.ungroup')}
             </button>
           )}
-          <button type="button" className="vc-pbutton" data-testid="quick-isolate" disabled={!isGroup} onClick={() => selectedNode && setIsolation(ctx.space.id, selectedNode.id)}>
+          <button type="button" className="vc-pbutton" data-testid="quick-isolate" disabled={!selectedNode || selectedNode.type === 'text'} onClick={() => selectedNode && setIsolation(ctx.space.id, selectedNode.id)}>
             <Icon id="isolate" size={14} />
             {t('control.isolate')}
           </button>

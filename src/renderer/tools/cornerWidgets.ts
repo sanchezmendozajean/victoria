@@ -3,6 +3,7 @@ import {
   frameOf,
   pathFrameOf,
   patchNode,
+  rectCornersOfAnchors,
   selectedAnchorIndices,
   setPathAnchors,
   worldToLocal,
@@ -32,7 +33,7 @@ export const WIDGET_REST_PX = 14;
 export const PIE_OUT_PX = 18;
 
 export type Widget =
-  | { kind: 'rect'; id: string; world: Matrix; pos: Vec2; corner: 0 | 1 | 2 | 3; params: RectParams }
+  | { kind: 'rect'; id: string; world: Matrix; pos: Vec2; corner: 0 | 1 | 2 | 3; params: RectParams; /** The corners a drag rounds: the picked ones, or all four. */ targets: number[] }
   | { kind: 'polygon'; id: string; world: Matrix; pos: Vec2; params: PolygonParams }
   | { kind: 'star'; id: string; world: Matrix; pos: Vec2; params: StarParams }
   | { kind: 'pie'; id: string; world: Matrix; pos: Vec2; which: 'start' | 'end'; params: EllipseParams; /** Where the handle meets the ellipse (it hangs outside, on a stem). */ edge: Vec2 }
@@ -55,7 +56,8 @@ const RECT_SIGNS: Array<[number, number]> = [
   [1, -1],
 ];
 
-function rectWidgets(node: ShapeNode & { shape: 'rect' }, world: Matrix, zoom: number): Widget[] {
+/** `picked`: the corners whose anchors are picked (Direct Selection); empty = the whole shape is selected, all four corners. */
+function rectWidgets(node: ShapeNode & { shape: 'rect' }, world: Matrix, zoom: number, picked: readonly number[]): Widget[] {
   const { w, h, radii } = node.params;
   const rest = WIDGET_REST_PX / zoom / scaleOf(world);
   const limit = Math.min(w, h) / 2;
@@ -65,10 +67,12 @@ function rectWidgets(node: ShapeNode & { shape: 'rect' }, world: Matrix, zoom: n
     { x: w, y: h },
     { x: 0, y: h },
   ];
-  return corners.map((c, i) => {
+  const targets = picked.length > 0 ? [...picked] : [0, 1, 2, 3];
+  return corners.flatMap((c, i) => {
+    if (!targets.includes(i)) return [];
     const [sx, sy] = RECT_SIGNS[i] as [number, number];
     const d = Math.min(Math.max(radii[i] as number, rest), limit);
-    return { kind: 'rect', id: node.id, world, corner: i as 0 | 1 | 2 | 3, params: node.params, pos: anchorToWorld(world, { x: c.x + sx * d, y: c.y + sy * d }) };
+    return [{ kind: 'rect' as const, id: node.id, world, corner: i as 0 | 1 | 2 | 3, params: node.params, targets, pos: anchorToWorld(world, { x: c.x + sx * d, y: c.y + sy * d }) }];
   });
 }
 
@@ -89,7 +93,10 @@ export function listWidgets(space: Space, selection: Selection, zoom: number, an
     const node = frame.node;
     if (node.type !== 'shape') continue;
     const world = frame.world;
-    if (node.shape === 'rect') out.push(...rectWidgets(node as ShapeNode & { shape: 'rect' }, world, zoom));
+    if (node.shape === 'rect') {
+      const rect = node as ShapeNode & { shape: 'rect' };
+      out.push(...rectWidgets(rect, world, zoom, rectCornersOfAnchors(rect.params, selectedAnchorIndices(selection, id))));
+    }
     else if (node.shape === 'polygon') {
       const { radius, sides, cornerRadius } = node.params;
       const n = Math.max(3, Math.round(sides));
@@ -165,7 +172,8 @@ export function widgetAt(widgets: readonly Widget[], p: Vec2, zoom: number, pick
 
 /**
  * The command that follows a widget drag to `pointer` (document coordinates). Alt on a corner widget
- * changes that corner alone; otherwise every corner of the shape (or every picked anchor) follows.
+ * changes that corner alone; otherwise the picked corners of a rectangle (all four when none is picked), or every
+ * picked anchor of a path, follow.
  */
 export function widgetCommand(space: Space, widget: Widget, pointer: Vec2, alt: boolean, key: string): Command | null {
   const local = worldToLocal(widget.world, pointer);
@@ -175,9 +183,9 @@ export function widgetCommand(space: Space, widget: Widget, pointer: Vec2, alt: 
       const [sx, sy] = RECT_SIGNS[widget.corner] as [number, number];
       const corner = [{ x: 0, y: 0 }, { x: w, y: 0 }, { x: w, y: h }, { x: 0, y: h }][widget.corner] as Vec2;
       const r = Math.max(0, Math.min(Math.min(w, h) / 2, ((local.x - corner.x) * sx + (local.y - corner.y) * sy) / 2));
-      const radii = alt
-        ? (widget.params.radii.map((v, i) => (i === widget.corner ? r : v)) as RectParams['radii'])
-        : ([r, r, r, r] as RectParams['radii']);
+      // Alt: this corner alone; otherwise the picked corners (all four when none is picked).
+      const targets = alt ? [widget.corner] : widget.targets;
+      const radii = widget.params.radii.map((v, i) => (targets.includes(i) ? r : v)) as RectParams['radii'];
       return patchNode<ShapeNode>(space.id, widget.id, { params: { ...widget.params, radii } } as Partial<ShapeNode>, `widget:${key}`);
     }
     case 'polygon': {

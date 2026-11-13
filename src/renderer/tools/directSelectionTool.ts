@@ -15,12 +15,16 @@ import {
   setPathAnchors,
   toggleAnchor,
   transformNodes,
+  combineCommands,
+  type Command,
   translation,
   visibleLeafIds,
   withAnchors,
   snapPoint,
   objectAnchorPoints,
   snapToPaths,
+  segmentsOf,
+  type Segment,
   type SnapLine,
   type Anchor,
   type Matrix,
@@ -32,6 +36,7 @@ import {
 import { t } from '../i18n';
 import { constrainTo45 } from './boxGeometry';
 import { createWidgetDrag } from './widgetDrag';
+import { framesNear } from './pathHits';
 import { boxOf, currentSelection, dragged, selectedTopLevel, snapDelta } from './shared';
 import type { CanvasPointerEvent, Tool, ToolHost, ToolKeyEvent } from './types';
 
@@ -47,7 +52,7 @@ type State =
   | { kind: 'idle' }
   | { kind: 'press'; screen: Vec2; doc: Vec2; action: Action }
   | { kind: 'confirming'; released: boolean }
-  | { kind: 'drag'; doc: Vec2; action: Action; key: string; originals: Map<string, { frame: PathFrame; anchors: Anchor[] }>; ids: string[]; bounds: Rect | null; applied: Vec2; snapPoints: Vec2[] | null }
+  | { kind: 'drag'; doc: Vec2; action: Action; key: string; originals: Map<string, { frame: PathFrame; anchors: Anchor[] }>; ids: string[]; bounds: Rect | null; applied: Vec2; snapPoints: Vec2[] | null; /** Segments of the edited paths that stay put (the anchor can land on them). */ snapSegments?: Segment[]; /** Live shapes with every anchor picked: they move whole and stay live. */ wholes?: Map<string, { frame: PathFrame; anchors: Anchor[] }> }
   | { kind: 'marquee'; screen: Vec2; doc: Vec2; current: Vec2; shift: boolean };
 
 /** World delta → local delta (the linear part of the inverse matrix; anchors live in the path's local space). */
@@ -114,17 +119,24 @@ export function createDirectSelectionTool(id: 'tool-direct-select' | 'tool-group
     return null;
   }
 
+  /** The anchor under the pointer: of a selected object first, otherwise of any visible, unlocked path (as in Illustrator). */
   function hitAnchor(host: ToolHost, p: Vec2) {
-    let best: { frame: PathFrame; index: number; distance: number } | null = null;
-    for (const frame of selectedFrames(host)) {
-      frame.path.anchors.forEach((a, index) => {
-        const w = toWorld(frame.world, a.p);
-        const distance = Math.hypot(w.x - p.x, w.y - p.y);
-        if (distance <= tolerance(host) && (!best || distance < best.distance)) best = { frame, index, distance };
-      });
-    }
-    return best as { frame: PathFrame; index: number; distance: number } | null;
+    const nearest = (frames: readonly PathFrame[]) => {
+      let best: { frame: PathFrame; index: number; distance: number } | null = null;
+      for (const frame of frames) {
+        frame.path.anchors.forEach((a, index) => {
+          const w = toWorld(frame.world, a.p);
+          const distance = Math.hypot(w.x - p.x, w.y - p.y);
+          if (distance <= tolerance(host) && (!best || distance < best.distance)) best = { frame, index, distance };
+        });
+      }
+      return best as { frame: PathFrame; index: number; distance: number } | null;
+    };
+    return nearest(selectedFrames(host)) ?? nearest(framesNear(host, p));
   }
+
+  /** The anchor the pointer is over while idle: drawn bigger so it can be seen and picked with one click. */
+  let hovered: { frame: PathFrame; index: number } | null = null;
 
   /** The span of a path under the pointer (within pick distance), among the given frames. */
   function hitSegment(host: ToolHost, p: Vec2, frames: PathFrame[]) {
@@ -166,12 +178,19 @@ export function createDirectSelectionTool(id: 'tool-direct-select' | 'tool-group
     }
 
     const selection = currentSelection(host) ?? emptySelection(space.id);
-    const frames = selectedFrames(host).filter((f) => {
+    const picked = selectedFrames(host).filter((f) => {
       if (action.type === 'anchors') return selectedAnchorIndices(selection, f.path.id).length > 0;
       return f.path.id === action.frame.path.id;
     });
+    // Every anchor of a live shape picked: dragging them only moves the shape, which stays live (no conversion, no warning).
+    const isWhole = (f: PathFrame) => action.type === 'anchors' && f.live && selectedAnchorIndices(selection, f.path.id).length >= f.path.anchors.length;
+    const wholes = new Map(picked.filter(isWhole).map((f) => [f.path.id, { frame: f, anchors: f.path.anchors }]));
+    const frames = picked.filter((f) => !isWhole(f));
     const live = frames.filter((f) => f.live);
-    if (live.length > 0) {
+    // A live line has nothing to lose (its length is the distance between its two anchors): it becomes a path silently.
+    const asks = live.some((f) => !(f.owner.type === 'shape' && f.owner.shape === 'line'));
+    if (live.length > 0 && !asks) for (const f of live) session.run(convertShapeToPath(space.id, f.owner.id, key));
+    if (asks) {
       state = { kind: 'confirming', released: false };
       const answer = await host.confirm({
         title: t('direct.convertTitle'),
@@ -204,7 +223,7 @@ export function createDirectSelectionTool(id: 'tool-direct-select' | 'tool-group
         : action.type === 'anchors'
           ? { ...action, primary: { ...action.primary, frame: originals.get(action.primary.frame.path.id)?.frame ?? action.primary.frame } }
           : action;
-    state = { kind: 'drag', doc: press.doc, action: relocatedAction, key, originals, ids: [], bounds: null, applied: { x: 0, y: 0 }, snapPoints: collectSnapPoints(host, relocatedAction, originals, selection) };
+    state = { kind: 'drag', doc: press.doc, action: relocatedAction, key, originals, ids: [], bounds: null, applied: { x: 0, y: 0 }, snapPoints: collectSnapPoints(host, relocatedAction, originals, selection), snapSegments: collectSnapSegments(host, relocatedAction, originals, selection), wholes };
     drag(event, host, state);
   }
 
@@ -217,6 +236,14 @@ export function createDirectSelectionTool(id: 'tool-direct-select' | 'tool-group
     if (!space || action.type === 'segment' || action.type === 'object' || !host.snapSources(new Set()).objects) return null;
     const owners = new Set([...originals.values()].map((o) => o.frame.owner.id));
     const points = objectAnchorPoints(space, owners);
+    // The other sub-paths of an edited compound path: its owner is left out above, but their anchors stay put.
+    const seen = new Set<string>();
+    for (const { frame } of originals.values()) {
+      const owner = frame.owner;
+      if (owner.type !== 'compound' || seen.has(owner.id)) continue;
+      seen.add(owner.id);
+      for (const sub of owner.children) if (!originals.has(sub.id)) for (const a of sub.anchors) points.push(toWorld(frame.world, a.p));
+    }
     for (const [pathId, { frame, anchors }] of originals) {
       const skip = action.type === 'anchors' ? new Set(selectedAnchorIndices(selection, pathId)) : action.type === 'handle' && pathId === action.frame.path.id ? new Set([action.index]) : new Set<number>();
       anchors.forEach((a, i) => {
@@ -226,13 +253,57 @@ export function createDirectSelectionTool(id: 'tool-direct-select' | 'tool-group
     return points;
   }
 
+  /**
+   * With smart guides on, the segments of the edited paths that do not change during the drag (neither of their anchors
+   * moves) and every segment of the other sub-paths of an edited compound path, in Space coordinates: the dragged point
+   * can land on them like on any other path (as in Illustrator).
+   */
+  function collectSnapSegments(host: ToolHost, action: Action, originals: Map<string, { frame: PathFrame; anchors: Anchor[] }>, selection: Selection): Segment[] {
+    if (!host.space || action.type === 'segment' || action.type === 'object' || !host.snapSources(new Set()).objects) return [];
+    const out: Segment[] = [];
+    const worldSegments = (world: PathFrame['world'], anchors: readonly Anchor[], closed: boolean) =>
+      segmentsOf({ closed, anchors: anchors.map((a) => ({ ...a, p: toWorld(world, a.p), in: a.in && toWorld(world, a.in), out: a.out && toWorld(world, a.out) })) });
+    const seen = new Set<string>();
+    for (const [pathId, { frame, anchors }] of originals) {
+      const moving = action.type === 'anchors' ? new Set(selectedAnchorIndices(selection, pathId)) : action.type === 'handle' && pathId === action.frame.path.id ? new Set([action.index]) : new Set<number>();
+      const n = anchors.length;
+      worldSegments(frame.world, anchors, frame.path.closed).forEach((seg, i) => {
+        if (!moving.has(i) && !moving.has((i + 1) % n)) out.push(seg);
+      });
+      const owner = frame.owner;
+      if (owner.type === 'compound' && !seen.has(owner.id)) {
+        seen.add(owner.id);
+        for (const sub of owner.children) if (!originals.has(sub.id)) out.push(...worldSegments(frame.world, sub.anchors, sub.closed));
+      }
+    }
+    return out;
+  }
+
   /** Snaps a point dragged by the pointer to guides, the grid, artboards, other objects and the anchors of `snapPoints`. */
-  function snapDragged(host: ToolHost, point: Vec2, exclude: ReadonlySet<string>, snapPoints: Vec2[] | null): Vec2 {
+  function snapDragged(host: ToolHost, point: Vec2, exclude: ReadonlySet<string>, snapPoints: Vec2[] | null, snapSegments: readonly Segment[] = []): Vec2 {
     const sources = { ...host.snapSources(exclude), anchors: snapPoints };
     const hasSources = !!(sources.guides?.length || sources.grid || sources.artboards?.length || sources.objects || sources.anchors?.length);
     if (!hasSources) {
       host.setSnapLines(null);
       return point;
+    }
+    // An anchor within reach (as a point, not axis by axis) wins: the dragged point lands exactly on it, as Illustrator
+    // does. Axis by axis, a nearer edge or centre on one axis would leave it beside the anchor instead.
+    let nearest: Vec2 | null = null;
+    let best = host.pickTolerance;
+    for (const q of snapPoints ?? []) {
+      const d = Math.hypot(q.x - point.x, q.y - point.y);
+      if (d <= best) {
+        best = d;
+        nearest = q;
+      }
+    }
+    if (nearest) {
+      host.setSnapLines([
+        { axis: 'x', value: nearest.x, kind: 'anchor', from: nearest.y, to: nearest.y, label: 'anchor' },
+        { axis: 'y', value: nearest.y, kind: 'anchor', from: nearest.x, to: nearest.x, label: null },
+      ]);
+      return { ...nearest };
     }
     const snapped = snapPoint(point, sources, host.pickTolerance);
     let target = { x: point.x + snapped.dx, y: point.y + snapped.dy };
@@ -245,7 +316,7 @@ export function createDirectSelectionTool(id: 'tool-direct-select' | 'tool-group
       const alignedY = snapped.lines.find((l) => l.axis === 'y');
       if (!(alignedX && alignedY)) {
         const line = alignedX ? { axis: 'x' as const, value: alignedX.value } : alignedY ? { axis: 'y' as const, value: alignedY.value } : undefined;
-        const onPath = snapToPaths(space, target, exclude, host.pickTolerance, line);
+        const onPath = snapToPaths(space, target, exclude, host.pickTolerance, line, snapSegments);
         if (onPath) {
           const kind = line ? 'intersection' : 'path';
           lines.push({ axis: 'x', value: onPath.x, kind, from: onPath.y, to: onPath.y, label: kind });
@@ -277,7 +348,7 @@ export function createDirectSelectionTool(id: 'tool-direct-select' | 'tool-group
       const original = s.originals.get(action.frame.path.id);
       if (!original) return;
       // Smart guides, guides and grid pull the handle too (not while Shift constrains its angle).
-      const target = event.shiftKey ? event.doc : snapDragged(host, event.doc, new Set([original.frame.owner.id]), s.snapPoints);
+      const target = event.shiftKey ? event.doc : snapDragged(host, event.doc, new Set([original.frame.owner.id]), s.snapPoints, s.snapSegments);
       if (event.shiftKey) host.setSnapLines(null);
       const local = toLocal(original.frame.world, target);
       const next = moveHandle(original.anchors, action.index, action.which, local, { alt: event.altKey, constrain: event.shiftKey });
@@ -287,18 +358,27 @@ export function createDirectSelectionTool(id: 'tool-direct-select' | 'tool-group
 
     if (event.shiftKey) d = constrainTo45(d);
     if (action.type === 'anchors') {
-      const primary = s.originals.get(action.primary.frame.path.id);
+      const primary = s.originals.get(action.primary.frame.path.id) ?? s.wholes?.get(action.primary.frame.path.id);
       if (primary) {
         // Snap the anchor under the pointer, so the whole selection follows the correction.
         const start = toWorld(primary.frame.world, primary.anchors[action.primary.index]?.p ?? { x: 0, y: 0 });
-        const target = snapDragged(host, { x: start.x + d.x, y: start.y + d.y }, new Set([primary.frame.owner.id]), s.snapPoints);
+        const moving = new Set([primary.frame.owner.id, ...[...(s.wholes?.values() ?? [])].map((w) => w.frame.owner.id)]);
+        const target = snapDragged(host, { x: start.x + d.x, y: start.y + d.y }, moving, s.snapPoints, s.snapSegments);
         d = { x: target.x - start.x, y: target.y - start.y };
       }
       const selection = currentSelection(host) ?? emptySelection(space.id);
+      const commands: Command[] = [];
       for (const [pathId, { frame, anchors }] of s.originals) {
         const indices = selectedAnchorIndices(selection, pathId);
-        session.run(setPathAnchors(space.id, pathId, moveAnchors(anchors, indices, toLocalDelta(frame.world, d)), s.key));
+        commands.push(setPathAnchors(space.id, pathId, moveAnchors(anchors, indices, toLocalDelta(frame.world, d)), s.key));
       }
+      const step = { x: d.x - s.applied.x, y: d.y - s.applied.y };
+      if (s.wholes && s.wholes.size > 0 && (step.x !== 0 || step.y !== 0)) {
+        commands.push(transformNodes(space.id, [...s.wholes.values()].map((w) => w.frame.owner.id), translation(step.x, step.y)));
+        s.applied = d;
+      }
+      // One command per move with the drag's key, so the whole drag stays one undo step.
+      if (commands.length > 0) session.run({ ...combineCommands('path.edit', commands), mergeKey: `path.edit:${s.key}` });
       return;
     }
 
@@ -377,9 +457,15 @@ export function createDirectSelectionTool(id: 'tool-direct-select' | 'tool-group
     onPointerMove(event, host) {
       if (widgets.move(event, host)) return;
       switch (state.kind) {
-        case 'idle':
+        case 'idle': {
           host.setHover(host.hitAt(event.doc));
+          const over = hitAnchor(host, event.doc);
+          if (over?.frame.path.id !== hovered?.frame.path.id || over?.index !== hovered?.index) {
+            hovered = over ? { frame: over.frame, index: over.index } : null;
+            host.invalidateOverlay();
+          }
           break;
+        }
         case 'press':
           if (dragged(event.screen, state.screen)) void beginDrag(event, host, state);
           break;
@@ -419,7 +505,7 @@ export function createDirectSelectionTool(id: 'tool-direct-select' | 'tool-group
           maxX: Math.max(finished.doc.x, event.doc.x),
           maxY: Math.max(finished.doc.y, event.doc.y),
         };
-        const found = anchorsInRect(space, visibleLeafIds(space, rect), rect);
+        const found = anchorsInRect(space, visibleLeafIds(space, rect, false, host.isolation), rect);
         const byPath: { [pathId: string]: number[] } = {};
         const owners: string[] = [];
         for (const a of found) {
@@ -527,6 +613,24 @@ export function createDirectSelectionTool(id: 'tool-direct-select' | 'tool-group
           });
         }
         ctx.restore();
+      }
+      // The anchor under the pointer, a size bigger (filled when it is already picked).
+      if (hovered && state.kind === 'idle' && !host.options.hideEdges) {
+        const a = hovered.frame.path.anchors[hovered.index];
+        if (a) {
+          const w = toWorld(hovered.frame.world, a.p);
+          const p = { x: w.x * host.view.zoom + host.view.panX, y: w.y * host.view.zoom + host.view.panY };
+          const picked = selection ? selectedAnchorIndices(selection, hovered.frame.path.id).includes(hovered.index) : false;
+          ctx.save();
+          ctx.lineWidth = 1.5;
+          ctx.strokeStyle = theme.accent;
+          ctx.fillStyle = picked ? theme.accent : '#ffffff';
+          const x = Math.round(p.x) - 4;
+          const y = Math.round(p.y) - 4;
+          ctx.fillRect(x, y, 8, 8);
+          ctx.strokeRect(x, y, 8, 8);
+          ctx.restore();
+        }
       }
       if (state.kind === 'marquee' && dragged(state.current, state.screen)) {
         const r = { x: Math.min(state.screen.x, state.current.x), y: Math.min(state.screen.y, state.current.y), w: Math.abs(state.current.x - state.screen.x), h: Math.abs(state.current.y - state.screen.y) };

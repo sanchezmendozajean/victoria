@@ -11,7 +11,6 @@ import {
   nodeWorldBounds,
   pathFrameOf,
   selectedAnchorIndices,
-  selectionBounds,
   setPathAnchors,
   type DocumentSession,
   type Node,
@@ -29,6 +28,7 @@ import { usePreferences } from '../prefs/preferences';
 import { topLevelIds } from '../tools/shared';
 import { nodeIcon, nodeLabel } from './nodeLabels';
 import { applyObjectLook, applyStroke } from './paintActions';
+import { transformBounds } from './selectionActions';
 import { moveSelectionTo, resizeSelection, rotateSelection } from './transformActions';
 import { PaintChip } from '../panels/kit';
 import { usePaintLook } from '../panels/PaintWidget';
@@ -129,9 +129,10 @@ function ObjectControls({ session, space, ids }: { session: DocumentSession; spa
   const linked = useUi((s) => s.linkProportions);
   const toggleLink = useUi((s) => s.toggleLinkProportions);
   const setIsolation = useUi((s) => s.setIsolation);
+  useUi((s) => s.isolation); // the box follows picked sub-paths while a compound path is isolated
 
   const first = selectionNode(space, ids[0] as string);
-  const box = selectionBounds(space, ids);
+  const box = transformBounds(space, session.selection, ids);
   if (!first || !box) return null;
 
   const width = box.maxX - box.minX;
@@ -139,7 +140,7 @@ function ObjectControls({ session, space, ids }: { session: DocumentSession; spa
   const point = { x: box.minX + ref.x * width, y: box.minY + ref.y * height };
   const label = ids.length > 1 ? t('control.objects', { count: ids.length }) : nodeLabel(first);
   const icon: IconId = ids.length > 1 ? 'group' : nodeIcon(first);
-  const isGroup = ids.length === 1 && (first.type === 'group' || first.type === 'clipGroup');
+  const canIsolate = ids.length === 1 && first.type !== 'text';
   const moveTo = (axis: 'x' | 'y') => (value: number) => moveSelectionTo(axis, unitToPt(value, units) + origin[axis]);
   const resize = (axis: 'x' | 'y') => (value: number) => resizeSelection(axis, unitToPt(value, units));
 
@@ -190,7 +191,7 @@ function ObjectControls({ session, space, ids }: { session: DocumentSession; spa
       <BarButton
         icon="isolate"
         tooltip={t('control.isolate')}
-        onClick={() => isGroup && setIsolation(space.id, first.id)}
+        onClick={() => canIsolate && setIsolation(space.id, first.id)}
       />
     </>
   );

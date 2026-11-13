@@ -79,6 +79,22 @@ function arcAnchors(cx: number, cy: number, rx: number, ry: number, startDeg: nu
   return anchors;
 }
 
+/**
+ * Which corners (0 top-left, 1 top-right, 2 bottom-right, 3 bottom-left) of a live rectangle the given anchors of its
+ * contour belong to. Mirrors `roundedPolygon`: a square corner gives one anchor, a rounded one two.
+ */
+export function rectCornersOfAnchors(params: { w: number; h: number; radii: readonly number[] }, indices: readonly number[]): number[] {
+  const limit = Math.min(params.w, params.h) / 2;
+  const owner: number[] = [];
+  for (let c = 0; c < 4; c++) {
+    const r = Math.max(0, Math.min(params.radii[c] ?? 0, limit));
+    const square = r <= 0 || params.w <= 0 || params.h <= 0;
+    owner.push(c);
+    if (!square) owner.push(c);
+  }
+  return [...new Set(indices.map((i) => owner[i]).filter((c): c is number => c !== undefined))].sort((x, y) => x - y);
+}
+
 /** Contours of a live shape in its local space (rect/ellipse start at (0,0); polygon/star are centred on it). */
 export function shapeSubPaths(node: ShapeNode): SubPath[] {
   switch (node.shape) {

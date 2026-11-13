@@ -173,6 +173,36 @@ describe('dragging widgets with the Selection tool', () => {
   });
 });
 
+describe('corners of a live rectangle with picked anchors (Direct Selection)', () => {
+  it('only the picked corners have a widget, and a drag rounds only them; Alt only the dragged one', () => {
+    const t = createTestHost();
+    const tool = createDirectSelectionTool();
+    const r = t.rect(0, 0, 200, 100);
+    // Contour anchors of a square-cornered rectangle: 0 top-left, 1 top-right, 2 bottom-right, 3 bottom-left.
+    t.session.select(withAnchors(selectOnly(t.spaceId(), [r.id]), { [r.id]: [2] }));
+    let list = listWidgets(t.space(), t.session.selection, 1, true);
+    expect(list.map((w) => (w.kind === 'rect' ? w.corner : -1))).toEqual([2]);
+    drag(tool, t, list[0]!.pos, { x: 166, y: 66 });
+    expect(params<{ radii: number[] }>(t).radii).toEqual([0, 0, 34, 0]);
+
+    // Two picked corners (bottom-right is rounded now: anchors 0 | 1 | 2 3 | 4): both follow, Alt only one.
+    t.session.select(withAnchors(selectOnly(t.spaceId(), [r.id]), { [r.id]: [0, 4] }));
+    list = listWidgets(t.space(), t.session.selection, 1, true);
+    expect(list.map((w) => (w.kind === 'rect' ? w.corner : -1))).toEqual([0, 3]);
+    drag(tool, t, list[0]!.pos, { x: 20, y: 20 });
+    expect(params<{ radii: number[] }>(t).radii).toEqual([20, 0, 34, 20]);
+    drag(tool, t, listWidgets(t.space(), t.session.selection, 1, true)[0]!.pos, { x: 10, y: 10 }, { altKey: true });
+    expect(params<{ radii: number[] }>(t).radii).toEqual([10, 0, 34, 20]);
+  });
+
+  it('with the whole shape selected (no anchors), every corner has a widget and they round together', () => {
+    const t = createTestHost();
+    const r = t.rect(0, 0, 200, 100);
+    t.session.select(selectOnly(t.spaceId(), [r.id]));
+    expect(listWidgets(t.space(), t.session.selection, 1, true).filter((w) => w.kind === 'rect')).toHaveLength(4);
+  });
+});
+
 describe('corner anchors of paths (Direct Selection)', () => {
   const square = (t: TestHost) => t.path([cornerAnchor({ x: 0, y: 0 }), cornerAnchor({ x: 200, y: 0 }), cornerAnchor({ x: 200, y: 200 }), cornerAnchor({ x: 0, y: 200 })], true);
 

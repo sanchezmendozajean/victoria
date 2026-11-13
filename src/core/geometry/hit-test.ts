@@ -3,7 +3,7 @@ import type { Layer, Matrix, Node, Space, Vec2 } from '../model/types';
 import { applyToPoint } from '../model/matrix';
 import { hasFill, hitGeometry, nodeGeometry, strokesOf } from './geometry';
 import { distanceToOutline, flattenGeometry, pointInFill } from './hit';
-import { indexFor, isGeneratedIn, type IndexItem } from './spatial-index';
+import { indexFor, insideIsolation, type IndexItem } from './spatial-index';
 
 export interface HitOptions {
   /** Pick radius in Space units (screen pixels / zoom): strokes thinner than this are still easy to hit. */
@@ -79,8 +79,7 @@ export function hitTest(space: Space, point: Vec2, options: HitOptions): Hit[] {
   const hits: Hit[] = [];
   for (const item of indexFor(space).atPoint(point, tolerance)) {
     if (item.locked && !includeLocked) continue;
-    if (isolation && !item.ancestors.some((a) => a.id === isolation)) continue;
-    if (isolation && isGeneratedIn(item, isolation)) continue;
+    if (!insideIsolation(item, isolation)) continue;
     const hit = testItem(item, point, tolerance, outlineOnly);
     if (hit && insideMask(item, point, tolerance)) hits.push(hit);
   }
@@ -93,6 +92,7 @@ export function hitTest(space: Space, point: Vec2, options: HitOptions): Hit[] {
  */
 export function selectionTarget(hit: Hit, isolation: string | null = null): Node | null {
   if (!isolation) return hit.ancestors[0] ?? hit.node;
+  if (hit.node.id === isolation) return hit.node; // an isolated path (not a group): the unit is the path itself
   const depth = hit.ancestors.findIndex((a) => a.id === isolation);
   return depth === -1 ? null : (hit.ancestors[depth + 1] ?? hit.node);
 }

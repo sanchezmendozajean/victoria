@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { pathFrameOf, pointOnSegment, segmentsOf, type Anchor, type PathNode } from '../../../core';
+import { createCompound, createLine, createPath, pathFrameOf, pointOnSegment, segmentsOf, selectOnly, translation, withAnchors, type Anchor, type Node, type PathNode } from '../../../core';
 import { createDirectSelectionTool } from '../directSelectionTool';
 import { createLassoTool } from '../lassoTool';
 import { click, createTestHost, drag, ev, selectedIds, type TestHost } from './fakeHost';
@@ -295,6 +295,64 @@ describe('Direct Selection · live shapes (convert on edit)', () => {
     expect(t.space().layers[0]!.children[0]!.type).toBe('shape');
   });
 
+  it('live shapes with every anchor picked move whole and stay live: no warning, one undo step with the paths', async () => {
+    const { t, tool } = setup({ confirmAnswer: 'cancel' });
+    const r = t.rect(0, 0, 100, 50);
+    const e = t.ellipse(200, 0, 60, 60);
+    const p = t.path([corner(0, 200), corner(100, 200)], false);
+    drag(tool, t, { x: -20, y: -20 }, { x: 300, y: 220 }); // a marquee around everything
+    expect(picked(t, r.id)).toHaveLength(4);
+    const before = t.session.historyLength;
+    tool.onPointerDown(ev(100, 0), t.host); // a corner of the rectangle
+    tool.onPointerMove(ev(110, 20), t.host);
+    await flush();
+    tool.onPointerMove(ev(130, 40), t.host);
+    tool.onPointerUp(ev(130, 40), t.host);
+    expect(t.host.confirm).not.toHaveBeenCalled();
+    const kids = t.space().layers[0]!.children as Node[];
+    expect(kids.map((k) => k.type)).toEqual(['shape', 'shape', 'path']);
+    expect(kids[0]!.transform.slice(4)).toEqual([30, 40]);
+    expect(kids[1]!.transform.slice(4)).toEqual([230, 40]);
+    expect((kids[2] as PathNode).anchors.map((a) => a.p)).toEqual([{ x: 30, y: 240 }, { x: 130, y: 240 }]);
+    expect(t.session.historyLength).toBe(before + 1);
+    t.session.undo();
+    expect((t.space().layers[0]!.children[0] as Node).transform.slice(4)).toEqual([0, 0]);
+    void e;
+    void p;
+  });
+
+  it('a live shape with only some anchors picked still asks before converting', async () => {
+    const { t, tool } = setup({ confirmAnswer: 'cancel' });
+    t.rect(0, 0, 100, 50);
+    drag(tool, t, { x: 80, y: -20 }, { x: 120, y: 70 }); // the two right-hand corners only
+    tool.onPointerDown(ev(100, 0), t.host);
+    tool.onPointerMove(ev(120, 0), t.host);
+    await flush();
+    tool.onPointerUp(ev(120, 0), t.host);
+    expect(t.host.confirm).toHaveBeenCalledTimes(1);
+  });
+
+  it('a live line becomes a path without asking (it has nothing to lose) and moving its end is one undo step', async () => {
+    const { t, tool } = setup({ confirmAnswer: 'cancel' });
+    const line = t.add(createLine(t.ids, 100)); // from (0,0) to (100,0)
+    click(tool, t, 50, 0);
+    click(tool, t, 100, 0);
+    const before = t.session.historyLength;
+    tool.onPointerDown(ev(100, 0), t.host);
+    tool.onPointerMove(ev(110, 20), t.host);
+    await flush();
+    tool.onPointerMove(ev(120, 30), t.host);
+    tool.onPointerUp(ev(120, 30), t.host);
+    expect(t.host.confirm).not.toHaveBeenCalled();
+    const node = t.space().layers[0]!.children[0] as PathNode;
+    expect(node.type).toBe('path');
+    expect(node.id).toBe(line.id);
+    expect(node.anchors.map((a) => a.p)).toEqual([{ x: 0, y: 0 }, { x: 120, y: 30 }]);
+    expect(t.session.historyLength).toBe(before + 1);
+    t.session.undo();
+    expect(t.space().layers[0]!.children[0]!.type).toBe('shape');
+  });
+
   it('shows a rectangle node as read-only until conversion (anchors are picked on the virtual contour)', () => {
     const { t, tool } = setup();
     const r = t.rect(0, 0, 100, 100);
@@ -346,6 +404,54 @@ describe('Lasso', () => {
   });
 });
 
+/** Squares drawn by the overlay (anchors), as [x, y, w, h]. */
+const rects = (tool: ReturnType<typeof createDirectSelectionTool>, t: TestHost) => {
+  const drawn: number[][] = [];
+  const ctx = new Proxy({} as Record<string, unknown>, { get: (_t, k) => (k === 'fillRect' ? (...args: number[]) => drawn.push(args) : () => undefined), set: () => true });
+  tool.drawOverlay?.(ctx as never, t.host, { accent: '#00f' } as never);
+  return drawn;
+};
+
+describe('Direct Selection · anchors revealed under the pointer', () => {
+
+  it('passing over an anchor of an unselected path draws it bigger; leaving it hides it', () => {
+    const { t, tool } = setup();
+    t.path([corner(100, 100), corner(300, 100), corner(300, 300)], false);
+    tool.onPointerMove(ev(301, 299), t.host);
+    expect(rects(tool, t)).toEqual([[296, 296, 8, 8]]);
+    tool.onPointerMove(ev(200, 250), t.host);
+    expect(rects(tool, t)).toEqual([]);
+  });
+
+  it('one click on that anchor picks it, without selecting the path first', () => {
+    const { t, tool } = setup();
+    const p = t.path([corner(100, 100), corner(300, 100), corner(300, 300)], false);
+    click(tool, t, 300, 300);
+    expect(picked(t, p.id)).toEqual([2]);
+    expect(selectedIds(t)).toEqual([p.id]);
+  });
+});
+
+describe('Direct Selection · isolation mode', () => {
+  it('only the anchors of the isolated object can be revealed, picked or marqueed', () => {
+    const { t, tool } = setup();
+    const inside = square(t, 100, 100, 100);
+    const outside = square(t, 300, 100, 100);
+    t.host.setIsolation(inside.id);
+    tool.onPointerMove(ev(301, 101), t.host);
+    expect(rects(tool, t)).toEqual([]);
+    click(tool, t, 300, 100);
+    expect(picked(t, outside.id)).toEqual([]);
+    expect(selectedIds(t)).toEqual([]);
+    click(tool, t, 200, 100);
+    expect(picked(t, inside.id)).toEqual([1]);
+    drag(tool, t, { x: 50, y: 50 }, { x: 450, y: 150 }); // marquee over the top edges of both
+    expect(picked(t, inside.id)).toEqual([0, 1]);
+    expect(picked(t, outside.id)).toEqual([]);
+    expect(selectedIds(t)).toEqual([inside.id]);
+  });
+});
+
 describe('Direct Selection · smart guides while dragging', () => {
   const pick = (tool: ReturnType<typeof createDirectSelectionTool>, t: TestHost, x: number, y: number) => {
     click(tool, t, x - 50, y + 50); // select the object (inside the square)
@@ -369,6 +475,58 @@ describe('Direct Selection · smart guides while dragging', () => {
     pick(tool, t, 600, 500);
     drag(tool, t, { x: 600, y: 500 }, { x: 884, y: 560 });
     expect(anchorsOf(t, p.id)[1]!.p).toEqual({ x: 880, y: 560 });
+  });
+
+  it('a dragged anchor lands exactly on an anchor of its own path, even with an edge nearer on one axis', () => {
+    const { t, tool } = setup({ options: { smartGuides: true } });
+    // An open path whose last anchor (520, 540) is where the first one is dragged to.
+    const p = t.path([corner(500, 500), corner(700, 500), corner(520, 540)], false);
+    // Another object whose left edge (x = 521) is nearer to the pointer than the anchor on the X axis.
+    t.rect(521, 700, 50, 50);
+    click(tool, t, 600, 500); // the path (on its first segment)
+    click(tool, t, 500, 500); // its first anchor
+    drag(tool, t, { x: 500, y: 500 }, { x: 521.5, y: 541 });
+    expect(anchorsOf(t, p.id)[0]!.p).toEqual({ x: 520, y: 540 });
+  });
+
+  it('in a compound path, a dragged anchor lands on an anchor of another of its sub-paths', () => {
+    const { t, tool } = setup({ options: { smartGuides: true } });
+    // Two open sub-paths, moved 100,100 together by the compound's transform.
+    const one = createPath(t.ids, [corner(0, 0), corner(200, 50)], false);
+    const two = createPath(t.ids, [corner(200, 50), corner(20, 120)], false);
+    const compound = createCompound(t.ids, [one, two]);
+    compound.transform = translation(100, 100);
+    t.add(compound);
+    t.session.select(withAnchors(selectOnly(t.spaceId(), [compound.id]), { [one.id]: [0] }));
+    // The first anchor of sub-path one (100,100 on the page) dragged next to the end of sub-path two (120,220).
+    drag(tool, t, { x: 100, y: 100 }, { x: 122.5, y: 218.5 });
+    expect(anchorsOf(t, one.id)[0]!.p).toEqual({ x: 20, y: 120 });
+  });
+
+  it('a dragged anchor lands on a segment of its own path that stays put («trazado»)', () => {
+    const { t, tool } = setup({ options: { smartGuides: true } });
+    // An open path whose first segment is the diagonal y = x / 2 (from 0,0 to 400,200); its last anchor goes next to it.
+    const p = t.path([corner(0, 0), corner(400, 200), corner(430, 500), corner(150, 400)], false);
+    click(tool, t, 415, 350);
+    click(tool, t, 150, 400);
+    drag(tool, t, { x: 150, y: 400 }, { x: 251, y: 123.2 });
+    const q = anchorsOf(t, p.id)[3]!.p;
+    expect(q.y).toBeCloseTo(q.x / 2, 6); // on the diagonal
+    const shown = vi.mocked(t.host.setSnapLines).mock.calls.flatMap(([lines]) => lines ?? []);
+    expect(shown.some((l) => l.label === 'path')).toBe(true);
+  });
+
+  it('in a compound path, a dragged anchor lands on a segment of another sub-path', () => {
+    const { t, tool } = setup({ options: { smartGuides: true } });
+    const one = createPath(t.ids, [corner(0, 0), corner(400, 200)], false);
+    const two = createPath(t.ids, [corner(450, 0), corner(300, 300)], false);
+    const compound = createCompound(t.ids, [one, two]);
+    t.add(compound);
+    t.session.select(withAnchors(selectOnly(t.spaceId(), [compound.id]), { [two.id]: [0] }));
+    // Two's first anchor dragged to just above the middle of sub-path one (200,100).
+    drag(tool, t, { x: 450, y: 0 }, { x: 201, y: 97.8 });
+    const q = anchorsOf(t, two.id)[0]!.p;
+    expect(q.y).toBeCloseTo(q.x / 2, 6); // exactly on the line y = x / 2
   });
 
   it('nothing snaps with smart guides off', () => {

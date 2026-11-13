@@ -3,7 +3,7 @@ import { applyToPoint } from '../model/matrix';
 import { geometricBoundsInParent, hasFill, nodeGeometry } from './geometry';
 import { flattenGeometry, pointInFill } from './hit';
 import { containsPoint, intersects, transformRect, type Rect } from './rect';
-import { indexFor, isGeneratedIn, type IndexItem } from './spatial-index';
+import { indexFor, insideIsolation, isGeneratedIn, type IndexItem } from './spatial-index';
 import { pathsOfNodes } from './world';
 
 export interface MarqueeOptions {
@@ -86,7 +86,9 @@ export function marqueeTargets(space: Space, rect: Rect, options: MarqueeOptions
   for (const item of indexFor(space).search(rect)) {
     if (item.locked && !includeLocked) continue;
     let target: Node;
-    if (isolation) {
+    if (isolation && item.id === isolation) {
+      target = item.node;
+    } else if (isolation) {
       const depth = item.ancestors.findIndex((a) => a.id === isolation);
       if (depth === -1 || isGeneratedIn(item, isolation)) continue;
       target = item.ancestors[depth + 1] ?? item.node;
@@ -160,9 +162,9 @@ export function anchorsInPolygon(space: Space, objectIds: readonly string[], pol
 }
 
 /** Every visible, unlocked leaf object whose bounds meet `rect` (candidates for anchor picking). */
-export function visibleLeafIds(space: Space, rect: Rect, includeLocked = false): string[] {
+export function visibleLeafIds(space: Space, rect: Rect, includeLocked = false, isolation: string | null = null): string[] {
   return indexFor(space)
     .search(rect)
-    .filter((i) => !i.generated && (includeLocked || !i.locked))
+    .filter((i) => !i.generated && (includeLocked || !i.locked) && insideIsolation(i, isolation))
     .map((i) => i.id);
 }

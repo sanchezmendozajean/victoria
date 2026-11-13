@@ -61,7 +61,8 @@ Herramientas agrupadas se muestran como en Illustrator: triángulo en la esquina
 - Mayús+clic añade/quita. Arrastre en vacío = marco de selección (toca = selecciona).
 - **Cuadro delimitador** con 8 tiradores: arrastrar escala; Mayús = proporcional; Alt = desde el centro. Fuera de una esquina (cursor curvo) = rotar; Mayús = pasos de 45°.
 - Arrastrar objeto = mover; Mayús restringe a 45°; **Alt+arrastrar = duplicar**. Ctrl+D = repetir última transformación.
-- Doble clic en grupo = **modo aislamiento** (barra superior gris con ruta "Capa 1 › Grupo"; Esc o doble clic fuera para salir).
+- La caja delimitadora gira con el objeto. **Objeto › Transformar › Restablecer cuadro delimitador** la vuelve a alinear con la página sin mover ni cambiar el objeto: la rotación pasa de su transformación a su contenido (anclas de trazados y trazados compuestos, transformaciones de los hijos de un grupo); queda una escala uniforme del mismo área para que los trazos conserven su grosor. Una línea viva se convierte en trazado en el mismo paso. Formas vivas (rectángulo, elipse…), texto e imágenes no cambian.
+- Doble clic en un objeto = **modo aislamiento** (barra gris flotante sobre la esquina superior izquierda del lienzo, junto a las reglas, con ruta "Capa 1 › Grupo"; Esc o doble clic fuera para salir). Vale para grupos (la unidad de selección pasa a ser su hijo) y, como en Illustrator, para un trazado, trazado compuesto o forma viva sueltos (la unidad es el propio objeto). El texto no se aísla: el doble clic lo edita. En un **trazado compuesto aislado**, la herramienta Selección trata cada subtrazado como un objeto independiente: clic lo selecciona (internamente, todas sus anclas), Mayús+clic añade o quita, el marco toma los subtrazados que toca, y la caja delimitadora (recta) mueve, escala y rota solo los elegidos; las flechas los desplazan. Alt+arrastrar los duplica dentro del mismo compuesto: cada copia queda justo encima de su original y es la que se mueve (Alt puede pulsarse o soltarse a mitad del arrastre; un solo paso de deshacer). Solo los subtrazados elegidos se contornean. Mientras haya subtrazados elegidos, también son lo que transforman los botones de reflejo y los campos del panel Transformar y de la barra de control (que muestran su caja), los diálogos Rotar/Escala/Reflejar/Mover, Ctrl+D y las herramientas Rotar, Reflejar y Escala (Alt copia dentro del compuesto). Mientras dura, todo lo demás se atenúa y ninguna herramienta de selección lo alcanza: Selección, Selección directa (anclas reveladas, clics, marco) y Lazo solo ven el objeto aislado. El botón **Aislar objeto** de la barra de control y de Propiedades hace lo mismo con el objeto seleccionado.
 - Flechas: mover 1 pt (configurable); Mayús+flecha = 10 pt.
 - Widgets de forma viva visibles (círculos de radio de esquina) y "Widget de tarta" en elipses.
 - Hover: resaltar el contorno del objeto bajo el cursor con el color de su capa.
@@ -69,6 +70,7 @@ Herramientas agrupadas se muestran como en Illustrator: triángulo en la esquina
 ## Selección directa (A)
 
 - Clic sobre un nodo lo selecciona (cuadro relleno); los demás del trazado se muestran huecos.
+- **Al pasar el cursor sobre un nodo** (de cualquier trazado visible y desbloqueado, esté seleccionado o no) se muestra un cuadro algo mayor (8 px, relleno si ya está seleccionado): es el que tomará el clic, que lo selecciona directamente sin seleccionar antes el trazado.
 - Clic sobre un segmento selecciona el segmento y muestra manejadores de sus nodos extremos.
 - **Arrastrar un segmento curvo lo deforma** (reshape) moviendo ambos manejadores proporcionalmente, como Illustrator.
 - Arrastrar un manejador:
@@ -78,7 +80,7 @@ Herramientas agrupadas se muestran como en Illustrator: triángulo en la esquina
 - Marco de selección directa selecciona nodos dentro.
 - **Widgets de esquina viva**: al seleccionar nodos de esquina aparece un círculo pequeño; arrastrar redondea (todas las esquinas seleccionadas). Alt+clic en el widget cicla redonda → invertida → chaflán.
 - Barra de control contextual con: convertir a esquina / a suave, mostrar/ocultar manejadores, eliminar nodos, cortar trazado en nodo, unir extremos (Ctrl+J), promediar (Alt+Ctrl+J).
-- Al aplicar sobre una forma viva: aviso y conversión a trazado.
+- Al aplicar sobre una forma viva: aviso y conversión a trazado. Si **todas** las anclas de una forma viva están seleccionadas (por ejemplo, con un marco que la abarca entera), arrastrarlas solo la desplaza: se mueve entera, sigue siendo viva y no hay aviso; el aviso queda para cuando se mueven solo algunas de sus anclas. **Excepción: la línea** (Segmento de línea) se convierte sin aviso, en el mismo paso de deshacer que el movimiento, porque no tiene parámetros que perder (su longitud es la distancia entre sus dos anclas).
 
 ## Pluma (P) — comportamiento exacto
 
@@ -128,7 +130,7 @@ Ver `07-texto.md`. Resumen:
 ## Creador de formas (Mayús+M) — imprescindible
 
 1. Requiere ≥ 1 objeto seleccionado. Calcula la **disposición plana** (planar arrangement) de todas las regiones y aristas formadas por los contornos seleccionados.
-2. Hover: la región bajo el cursor se resalta con una malla gris (patrón de puntos) y su contorno en el color de la capa.
+2. Hover: la región bajo el cursor se resalta con una malla gris (patrón de puntos) y su contorno en el color de la capa. Una región es un área conectada: si un contorno se toca a sí mismo en un punto (por ejemplo, un círculo tangente a dos lados de un rectángulo deja su esquina unida al resto solo por ese punto), cada parte es una región propia (`core/geometry/pinch.ts`, tolerancia 0,001 pt). Igual en Buscatrazos › Dividir.
 3. **Clic** en una región = la convierte en forma independiente.
 4. **Arrastrar** a través de varias regiones = las **une** (se dibuja una línea roja de recorrido).
 5. **Alt + clic/arrastrar** = **elimina** regiones o aristas (cursor con "−"). Alt sobre una arista abierta elimina ese segmento.
@@ -206,7 +208,7 @@ Imprescindibles para la sensación Illustrator:
 - Líneas de alineación con otros objetos (bordes y centros), guías de ángulo (0, 45, 90…), etiquetas de medida (Δx, Δy, ancho, alto, ángulo) junto al cursor.
 - Ajuste a punto (snap) con tolerancia de 4 px de pantalla.
 - **También al redimensionar**: al arrastrar un tirador de la caja de selección (o de una mesa de trabajo), el borde o la esquina arrastrados se ajustan a guías, cuadrícula, mesas y a bordes y centros de otros objetos, solo en los ejes que mueve ese tirador, y se dibujan las líneas y etiquetas. Con la caja girada no hay ajuste. Una mesa no se ajusta a sus propios bordes anteriores.
-- **También al arrastrar anclas y manejadores** (Selección directa): el ancla (o el manejador) bajo el cursor se ajusta a guías, cuadrícula, mesas, bordes y centros de otros objetos y, además, a las **anclas** de los demás objetos y a las anclas **del propio trazado que no se mueven** (etiqueta «ancla»), en los dos ejes; el resto de anclas seleccionadas sigue la corrección. Con Mayús (restricción de ángulo del manejador) el manejador no se ajusta. **A trazados**: si no hay otro ajuste, el punto arrastrado se pega al trazado más cercano de otro objeto (etiqueta «trazado»); si ya se alineó en un eje con una guía, una ancla, etc., se desliza hasta donde un trazado cruza esa alineación (etiqueta «intersección»). Se ajusta al vector del trazado (el centro del trazo), no a su grosor; texto y pasos generados de una mezcla viva no cuentan. Los puntos de ajuste se calculan una vez al empezar el arrastre.
+- **También al arrastrar anclas y manejadores** (Selección directa): el ancla (o el manejador) bajo el cursor se ajusta a guías, cuadrícula, mesas, bordes y centros de otros objetos y, además, a las **anclas** de los demás objetos y a las anclas **del propio trazado que no se mueven** (etiqueta «ancla»; en un trazado compuesto, también las de sus otros subtrazados), en los dos ejes; si un ancla queda a menos de la tolerancia **como punto**, el punto arrastrado cae **exactamente sobre ella** (prioridad sobre el ajuste eje por eje, que lo dejaría al lado si otro borde o centro estuviera más cerca en un eje); el resto de anclas seleccionadas sigue la corrección. Con Mayús (restricción de ángulo del manejador) el manejador no se ajusta. **A trazados**: si no hay otro ajuste, el punto arrastrado se pega al trazado más cercano de otro objeto **o a un segmento del propio trazado que no cambia** (ninguna de sus dos anclas se mueve; en un trazado compuesto, también los segmentos de sus otros subtrazados) (etiqueta «trazado»); si ya se alineó en un eje con una guía, una ancla, etc., se desliza hasta donde un trazado cruza esa alineación (etiqueta «intersección»). Se ajusta al vector del trazado (el centro del trazo), no a su grosor; texto y pasos generados de una mezcla viva no cuentan. Los puntos de ajuste se calculan una vez al empezar el arrastre.
 - Indicadores de espaciado igual entre objetos (flechas rosas) — v2.
 
 ## Otros ajustes
@@ -259,13 +261,13 @@ Reglas de comportamiento que la spec no cubría y que se implementaron como lo h
 
 ### Widgets de forma viva y esquinas vivas
 
-- Visibles con Selección y Selección directa sobre formas vivas seleccionadas (hasta 24 objetos). Rectángulo: un círculo por esquina; **arrastrar cambia las cuatro esquinas, Alt solo esa**; Alt+clic cicla redonda → invertida → chaflán (todo el rectángulo). Polígono y estrella: un widget en el vértice superior para todos los vértices. Elipse: dos tiradores de **tarta** (inicio y fin).
+- Visibles con Selección y Selección directa sobre formas vivas seleccionadas (hasta 24 objetos). Rectángulo: un círculo por esquina; **arrastrar cambia las cuatro esquinas, Alt solo esa**. Si con Selección directa hay anclas seleccionadas del rectángulo, solo esas esquinas muestran su círculo y arrastrar redondea solo esas (Alt, solo la del círculo arrastrado); Alt+clic cicla redonda → invertida → chaflán (todo el rectángulo). Polígono y estrella: un widget en el vértice superior para todos los vértices. Elipse: dos tiradores de **tarta** (inicio y fin).
 - En trazados, Selección directa muestra un widget en cada ancla de esquina seleccionada cuyos vecinos son segmentos rectos (`Anchor.cornerRadius`, ver spec 02). El radio se reduce hasta la mitad del segmento más corto.
 - Un widget en reposo está a 14 px de pantalla de su esquina, y sigue al radio cuando este es mayor.
 
 ### Acciones sobre anclas (barra de control y menú Objeto)
 
 - **Suprimir** con anclas seleccionadas elimina las anclas (un paso de deshacer, varios trazados a la vez); sin anclas, elimina los objetos.
-- **Unir (Ctrl+J)**: con dos anclas extremo seleccionadas las une (del mismo trazado: lo cierra); con trazados abiertos seleccionados, uno solo se cierra y varios se encadenan por sus extremos más cercanos. Si los extremos no coinciden se añade un segmento recto. Las anclas se toman donde se ven en la página: cada trazado tiene su propia transformación (una copia movida conserva sus anclas locales), así que las del otro trazado se pasan al marco del que se queda antes de unir; también en el lápiz al terminar sobre otro trazado.
+- **Unir (Ctrl+J)**: con dos anclas extremo seleccionadas las une (del mismo trazado: lo cierra; también extremos de subtrazados de un trazado compuesto, que se unen dentro de él); con trazados abiertos seleccionados, uno solo se cierra y varios se encadenan por sus extremos más cercanos. Si los extremos no coinciden se añade un segmento recto. Las anclas se toman donde se ven en la página: cada trazado tiene su propia transformación (una copia movida conserva sus anclas locales), así que las del otro trazado se pasan al marco del que se queda antes de unir; también en el lápiz al terminar sobre otro trazado.
 - **Promediar (Alt+Ctrl+J)** pregunta el eje: *Horizontal* alinea los puntos en la misma Y, *Vertical* en la misma X, *Ambos* los junta. Sin anclas seleccionadas actúa sobre todas las de los trazados seleccionados.
 - **Cortar en el ancla**, **convertir a esquina/suave** y **mostrar/ocultar manejadores** están en la barra de control con Selección directa.

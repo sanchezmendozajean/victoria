@@ -43,7 +43,7 @@ export function createLassoTool(): Tool {
 
       const bounds = rectFromPoints(finished.doc);
       if (!bounds) return;
-      const found = anchorsInPolygon(space, visibleLeafIds(space, bounds), finished.doc);
+      const found = anchorsInPolygon(space, visibleLeafIds(space, bounds, false, host.isolation), finished.doc);
       const base = finished.shift ? (currentSelection(host) ?? emptySelection(space.id)) : emptySelection(space.id);
       const byPath: { [pathId: string]: number[] } = { ...(finished.shift ? base.anchors : {}) };
       const owners = new Set(base.ids);

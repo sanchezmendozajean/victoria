@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
-import { selectionBounds, translation } from '../../../core';
+import { cornerAnchor, createCompound, createPath, pathFrameOf, selectionBounds, translation, type PathNode } from '../../../core';
 import { createSelectionTool } from '../selectionTool';
+import { createTransformTool } from '../transformTools';
 import { click, createTestHost, drag, ev, nodeX, nodeY, selectedIds } from './fakeHost';
 
 const setup = (init?: Parameters<typeof createTestHost>[0]) => {
@@ -76,6 +77,99 @@ describe('Selection tool · groups and isolation', () => {
     expect(t.host.isolation).toBeNull();
     click(tool, t, 450, 50);
     expect(selectedIds(t)).toEqual([other.id]);
+  });
+
+  it('a double click on a single path isolates that path; others cannot be picked until leaving', () => {
+    const { t, tool } = setup();
+    const p = t.rect(0, 0, 50, 50);
+    const other = t.rect(400, 0);
+    click(tool, t, 25, 25, { clickCount: 2 });
+    expect(t.host.isolation).toBe(p.id);
+    expect(selectedIds(t)).toEqual([p.id]);
+    click(tool, t, 25, 25, { clickCount: 2 }); // again on it: stays isolated
+    expect(t.host.isolation).toBe(p.id);
+    click(tool, t, 450, 50);
+    expect(selectedIds(t)).toEqual([]);
+    click(tool, t, 25, 25);
+    expect(selectedIds(t)).toEqual([p.id]);
+    click(tool, t, 450, 50, { clickCount: 2 });
+    expect(t.host.isolation).toBeNull();
+    click(tool, t, 450, 50);
+    expect(selectedIds(t)).toEqual([other.id]);
+  });
+
+  it('inside an isolated compound path each sub-path is picked, moved and turned on its own', () => {
+    const { t, tool } = setup();
+    const square = (x: number) => createPath(t.ids, [cornerAnchor({ x, y: 0 }), cornerAnchor({ x: x + 50, y: 0 }), cornerAnchor({ x: x + 50, y: 50 }), cornerAnchor({ x, y: 50 })], true) as PathNode;
+    const one = square(0);
+    const two = square(100);
+    const compound = t.solid(createCompound(t.ids, [one, two]));
+    compound.transform = translation(100, 100); // sub-paths live in the compound's space
+    t.add(compound);
+    const firstOf = (id: string) => pathFrameOf(t.space(), id)!.path.anchors[0]!.p;
+
+    click(tool, t, 125, 125, { clickCount: 2 });
+    expect(t.host.isolation).toBe(compound.id);
+    click(tool, t, 225, 125); // sub-path two: all its anchors, nothing of one
+    expect(selectedIds(t)).toEqual([compound.id]);
+    expect(t.session.selection.anchors).toEqual({ [two.id]: [0, 1, 2, 3] });
+
+    drag(tool, t, { x: 225, y: 125 }, { x: 235, y: 145 }); // moves two only
+    expect(firstOf(two.id)).toEqual({ x: 110, y: 20 });
+    expect(firstOf(one.id)).toEqual({ x: 0, y: 0 });
+    t.session.undo();
+    expect(firstOf(two.id)).toEqual({ x: 100, y: 0 });
+
+    click(tool, t, 125, 125, { shiftKey: true }); // Shift adds one
+    expect(Object.keys(t.session.selection.anchors ?? {}).sort()).toEqual([one.id, two.id].sort());
+    tool.onKeyDown?.({ key: 'ArrowRight', shiftKey: false, altKey: false, ctrlKey: false, metaKey: false } as never, t.host);
+    expect(firstOf(one.id)).toEqual({ x: 1, y: 0 });
+    expect(firstOf(two.id)).toEqual({ x: 101, y: 0 });
+
+    click(tool, t, 400, 400); // empty: nothing picked; a marquee over two picks it alone
+    drag(tool, t, { x: 215, y: 90 }, { x: 260, y: 110 });
+    expect(t.session.selection.anchors).toEqual({ [two.id]: [0, 1, 2, 3] });
+  });
+
+  it('Alt+drag inside an isolated compound path copies the sub-path above its original; one undo removes it', () => {
+    const { t, tool } = setup();
+    const square = (x: number) => createPath(t.ids, [cornerAnchor({ x, y: 0 }), cornerAnchor({ x: x + 50, y: 0 }), cornerAnchor({ x: x + 50, y: 50 }), cornerAnchor({ x, y: 50 })], true) as PathNode;
+    const one = square(0);
+    const two = square(100);
+    const compound = t.solid(createCompound(t.ids, [one, two]));
+    compound.transform = translation(100, 100);
+    t.add(compound);
+    const children = () => (pathFrameOf(t.space(), one.id)!.owner as typeof compound).children;
+    t.host.setIsolation(compound.id);
+    click(tool, t, 125, 125);
+    drag(tool, t, { x: 125, y: 125 }, { x: 125, y: 205 }, { altKey: true });
+    const after = children();
+    expect(after.map((p) => p.id).slice(0, 1)).toEqual([one.id]);
+    expect(after[2]!.id).toBe(two.id);
+    expect(after).toHaveLength(3);
+    const copy = after[1]!;
+    expect(copy.anchors[0]!.p).toEqual({ x: 0, y: 80 });
+    expect(after[0]!.anchors[0]!.p).toEqual({ x: 0, y: 0 });
+    expect(t.session.selection.anchors).toEqual({ [copy.id]: [0, 1, 2, 3] });
+    t.session.undo();
+    expect(children()).toHaveLength(2);
+  });
+
+  it('the Reflect tool flips only the picked sub-path of an isolated compound path', () => {
+    const { t, tool } = setup();
+    const tri = (x: number) => createPath(t.ids, [cornerAnchor({ x, y: 0 }), cornerAnchor({ x: x + 40, y: 0 }), cornerAnchor({ x, y: 20 })], true) as PathNode;
+    const one = tri(0);
+    const two = tri(100);
+    const compound = t.solid(createCompound(t.ids, [one, two]));
+    t.add(compound);
+    t.host.setIsolation(compound.id);
+    click(tool, t, 110, 5); // pick two
+    const reflect = createTransformTool('reflect');
+    click(reflect, t, 120, 0); // origin
+    click(reflect, t, 120, 50); // vertical axis through x = 120
+    const xs = (id: string) => pathFrameOf(t.space(), id)!.path.anchors.map((a) => Math.round(a.p.x));
+    expect(xs(two.id)).toEqual([140, 100, 140]);
+    expect(xs(one.id)).toEqual([0, 40, 0]);
   });
 
   it('Escape leaves isolation when nothing is being dragged', () => {

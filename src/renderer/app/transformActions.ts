@@ -3,20 +3,18 @@ import {
   reflectAbout,
   rotateAbout,
   scaleAbout,
-  selectionBounds,
   toRadians,
-  transformNodesScaling,
   translation,
   type Matrix,
   type Rect,
   type Vec2,
 } from '../../core';
-import { actionContext, type ActionContext } from './selectionActions';
+import { actionContext, applyTransform, transformBounds, type ActionContext } from './selectionActions';
 import { useUi } from './store';
 
 /** Bounds and reference point of the selection, as the X/Y/An/Al fields of the control bar and the Transform panel see them. */
 export function selectionFrame(c: ActionContext): { box: Rect; width: number; height: number; point: Vec2 } | null {
-  const box = selectionBounds(c.space, c.ids);
+  const box = transformBounds(c.space, c.selection, c.ids);
   if (!box) return null;
   const ref = useUi.getState().referencePoint;
   const width = box.maxX - box.minX;
@@ -24,7 +22,7 @@ export function selectionFrame(c: ActionContext): { box: Rect; width: number; he
   return { box, width, height, point: { x: box.minX + ref.x * width, y: box.minY + ref.y * height } };
 }
 
-const run = (c: ActionContext, matrix: Matrix) => c.session.run(transformNodesScaling(c.space.id, c.ids, matrix, useUi.getState().scaleStrokes));
+const run = (c: ActionContext, matrix: Matrix) => applyTransform(c.session, c.space, c.ids, matrix, false);
 
 /** X or Y of the reference point, in Space points (`target` is absolute: the artboard origin already added). */
 export function moveSelectionTo(axis: 'x' | 'y', target: number): void {

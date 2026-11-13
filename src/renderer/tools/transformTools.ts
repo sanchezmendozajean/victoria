@@ -7,6 +7,7 @@ import {
   rotateAbout,
   scaleAbout,
   selectOnly,
+  duplicateSubPaths,
   transformNodesScaling,
   type Matrix,
   type Node,
@@ -17,6 +18,7 @@ import { boxOf, dragged, selectedTopLevel, stepBetween } from './shared';
 import type { Tool, ToolHost, TransformKind } from './types';
 import { ROTATE_CURSOR } from './cursors';
 import type { ToolId } from '../app/tools';
+import { isolatedCompound, pickedSubPaths, subPathSelection, subPathsBounds, transformedCopies, transformSubPaths } from './subPathSelection';
 
 const IDENTITY: Matrix = [1, 0, 0, 1, 0, 0];
 const IDS: Record<TransformKind, ToolId> = { rotate: 'tool-rotate', scale: 'tool-scale', reflect: 'tool-reflect', move: 'tool-select' };
@@ -42,8 +44,17 @@ export function createTransformTool(kind: Exclude<TransformKind, 'move'>): Tool 
   let gesture: Gesture | null = null;
   let cursorPoint: Vec2 | null = null;
 
+  /** What the tool transforms: the selected objects, or the picked sub-paths of an isolated compound path. */
+  const targets = (host: ToolHost): string[] => {
+    const compound = isolatedCompound(host);
+    const subs = compound ? pickedSubPaths(host, compound) : [];
+    return subs.length > 0 ? subs.map((p) => p.id) : selectedTopLevel(host);
+  };
+
   const center = (host: ToolHost): Vec2 | null => {
-    const box = boxOf(host, selectedTopLevel(host));
+    const compound = isolatedCompound(host);
+    const subs = compound ? pickedSubPaths(host, compound) : [];
+    const box = compound && subs.length > 0 ? subPathsBounds(compound, subs) : boxOf(host, selectedTopLevel(host));
     return origin ?? (box ? rectCenter(box) : null);
   };
 
@@ -68,6 +79,22 @@ export function createTransformTool(kind: Exclude<TransformKind, 'move'>): Tool 
   function apply(host: ToolHost, g: Gesture, next: Matrix): void {
     const { session, space } = host;
     if (!session || !space) return;
+    const compound = isolatedCompound(host);
+    if (compound && g.ids.every((id) => compound.node.children.some((p) => p.id === id))) {
+      // Sub-paths of an isolated compound path: copies go into it, above their originals.
+      if (g.copy && !g.duplicated) {
+        const subs = compound.node.children.filter((p) => g.ids.includes(p.id));
+        const copies = transformedCopies(compound, subs, next, session.ids);
+        session.run(duplicateSubPaths(space.id, g.ids, copies, `path.edit:${g.key}`), subPathSelection(space.id, compound, copies));
+        g.ids = copies.map((c) => c.id);
+        g.duplicated = true;
+      } else {
+        const command = transformSubPaths(space.id, compound, g.ids, stepBetween(next, g.applied), g.key);
+        if (command) session.run(command);
+      }
+      g.applied = next;
+      return;
+    }
     if (g.copy && !g.duplicated) {
       const nodes = g.ids.map((id) => locateNode(space, id)?.node).filter((n): n is Node => !!n);
       const clones = cloneNodes(nodes, session.ids);
@@ -85,7 +112,7 @@ export function createTransformTool(kind: Exclude<TransformKind, 'move'>): Tool 
     cursor: () => (kind === 'rotate' ? ROTATE_CURSOR : 'crosshair'),
 
     onPointerDown(event, host) {
-      const ids = selectedTopLevel(host);
+      const ids = targets(host);
       gesture = { screen: event.screen, doc: event.doc, copy: event.altKey, alt: event.altKey, ids, key: host.gestureKey(), applied: IDENTITY, duplicated: false, running: false };
     },
 

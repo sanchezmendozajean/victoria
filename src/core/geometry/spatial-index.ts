@@ -27,6 +27,13 @@ export interface IndexItem extends Rect {
   generated: boolean;
 }
 
+/** True when the item can be picked while `isolation` is isolated: the isolated object itself, or something inside it. */
+export function insideIsolation(item: IndexItem, isolation: string | null): boolean {
+  if (!isolation) return true;
+  if (item.id === isolation) return true;
+  return item.ancestors.some((a) => a.id === isolation) && !isGeneratedIn(item, isolation);
+}
+
 /** True when, inside the isolated group `isolation`, this item is a generated step of that very blend. */
 export function isGeneratedIn(item: IndexItem, isolation: string): boolean {
   const depth = item.ancestors.findIndex((a) => a.id === isolation);

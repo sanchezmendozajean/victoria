@@ -189,8 +189,8 @@ function crossings(seg: Segment, line: { axis: 'x' | 'y'; value: number }): Vec2
  * With `line` (an axis the point already snapped on) it looks for where the paths cross that line instead (an "intersección").
  * Text and the generated steps of a live blend are left out, as are the objects in `exclude`.
  */
-export function snapToPaths(space: Space, point: Vec2, exclude: ReadonlySet<string>, tolerance: number, line?: { axis: 'x' | 'y'; value: number }): Vec2 | null {
-  let best: { point: Vec2; distance: number } | null = null;
+export function snapToPaths(space: Space, point: Vec2, exclude: ReadonlySet<string>, tolerance: number, line?: { axis: 'x' | 'y'; value: number }, extra: readonly Segment[] = []): Vec2 | null {
+  const segments: Segment[] = [...extra];
   const rect = { minX: point.x - tolerance, minY: point.y - tolerance, maxX: point.x + tolerance, maxY: point.y + tolerance };
   for (const item of indexFor(space).search(rect)) {
     if (item.generated || exclude.has(item.id) || item.ancestors.some((a) => exclude.has(a.id)) || item.node.type === 'text') continue;
@@ -198,13 +198,28 @@ export function snapToPaths(space: Space, point: Vec2, exclude: ReadonlySet<stri
     if (!geometry) continue;
     for (const sub of geometry.subpaths) {
       const world = { closed: sub.closed, anchors: sub.anchors.map((a) => ({ ...a, p: applyToPoint(item.world, a.p), in: a.in && applyToPoint(item.world, a.in), out: a.out && applyToPoint(item.world, a.out) })) };
-      for (const seg of segmentsOf(world)) {
-        const candidates = line ? crossings(seg, line) : [projectOnSegment(seg, point).point];
-        for (const c of candidates) {
-          const distance = Math.hypot(c.x - point.x, c.y - point.y);
-          if (distance <= tolerance && (!best || distance < best.distance)) best = { point: c, distance };
-        }
-      }
+      segments.push(...segmentsOf(world));
+    }
+  }
+  return snapToSegments(segments, point, tolerance, line);
+}
+
+/**
+ * The nearest point of `segments` (Space coordinates) within `tolerance` of `point`, or with `line` the nearest place
+ * where they cross it. Also used for the segments of the edited path that stay put (Direct Selection).
+ */
+export function snapToSegments(segments: readonly Segment[], point: Vec2, tolerance: number, line?: { axis: 'x' | 'y'; value: number }): Vec2 | null {
+  let best: { point: Vec2; distance: number } | null = null;
+  for (const seg of segments) {
+    const minX = Math.min(seg.p0.x, seg.c1.x, seg.c2.x, seg.p3.x) - tolerance;
+    const maxX = Math.max(seg.p0.x, seg.c1.x, seg.c2.x, seg.p3.x) + tolerance;
+    const minY = Math.min(seg.p0.y, seg.c1.y, seg.c2.y, seg.p3.y) - tolerance;
+    const maxY = Math.max(seg.p0.y, seg.c1.y, seg.c2.y, seg.p3.y) + tolerance;
+    if (point.x < minX || point.x > maxX || point.y < minY || point.y > maxY) continue;
+    const candidates = line ? crossings(seg, line) : [projectOnSegment(seg, point).point];
+    for (const c of candidates) {
+      const distance = Math.hypot(c.x - point.x, c.y - point.y);
+      if (distance <= tolerance && (!best || distance < best.distance)) best = { point: c, distance };
     }
   }
   return best?.point ?? null;

@@ -4,6 +4,7 @@ import {
   createDocument,
   createPath,
   createRect,
+  createCompound,
   DocumentSession,
   getActiveSpace,
   cornerAnchor,
@@ -13,6 +14,7 @@ import {
   withAnchors,
   type Anchor,
   type PathNode,
+  type CompoundNode,
 } from '../../core';
 
 let current: { session: DocumentSession } | null = null;
@@ -171,6 +173,31 @@ describe('Join (Ctrl+J)', () => {
     actions.joinSelection();
     expect(paths()).toHaveLength(1);
     expect(paths()[0]!.anchors.map((x) => x.p.x)).toEqual([0, 10, 20, 30]);
+  });
+
+  it('joins two picked end anchors of different sub-paths of a compound path (the button used to do nothing)', () => {
+    const one = createPath(ids, pts([0, 0], [10, 0]), false);
+    const two = createPath(ids, pts([30, 0], [20, 0]), false);
+    const extra = createPath(ids, pts([0, 50], [10, 60], [0, 70]), true);
+    const compound = createCompound(ids, [one, two, extra]);
+    session.run(addNode(space().id, layerId(), compound));
+    session.select({ spaceId: space().id, ids: [compound.id], anchors: { [one.id]: [1], [two.id]: [1] } });
+    actions.joinSelection();
+    const node = children()[0] as CompoundNode;
+    expect(node.type).toBe('compound');
+    expect(node.children.map((c) => c.id)).toEqual([one.id, extra.id]);
+    expect(node.children[0]!.anchors.map((x) => x.p.x)).toEqual([0, 10, 20, 30]);
+    expect(session.selection.ids).toEqual([compound.id]);
+  });
+
+  it('closes a sub-path of a compound path whose two end anchors are picked', () => {
+    const open = createPath(ids, pts([0, 0], [10, 0], [10, 10]), false);
+    const other = createPath(ids, pts([50, 50], [60, 50], [60, 60]), true);
+    const compound = createCompound(ids, [open, other]);
+    session.run(addNode(space().id, layerId(), compound));
+    session.select({ spaceId: space().id, ids: [compound.id], anchors: { [open.id]: [0, 2] } });
+    actions.joinSelection();
+    expect((children()[0] as CompoundNode).children[0]!.closed).toBe(true);
   });
 
   it('closes a path whose two end anchors are picked', () => {

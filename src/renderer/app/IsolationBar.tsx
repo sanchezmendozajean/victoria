@@ -7,7 +7,7 @@ import { nodeLabel } from './nodeLabels';
 import { useUi } from './store';
 import './IsolationBar.css';
 
-/** Grey bar of isolation mode: "Capa 1 › Grupo", with a way back (specs/03 · Selección › aislamiento). */
+/** Floating grey bar of isolation mode, over the canvas: "Capa 1 › Grupo", with a way back (specs/03 · Selección › aislamiento). */
 export function IsolationBar() {
   const documents = useDocuments();
   const session = documents.active?.session;
