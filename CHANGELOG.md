@@ -1,5 +1,15 @@
 # Changelog
 
+## Sin publicar
+- **Desplazar trazado**: ya no deja puntas ni astillas en zonas cóncavas o estrechas (los lazos del contorno que quedaban más cerca del original que el desplazamiento se descartan, igual que los restos diminutos); el ajuste a Béziers ya no redondea esquinas vivas (`fitPolygon` también detecta esquinas por longitud de arista y, si el ajuste se aleja del polígono, conserva el polígono).
+- **Trazado de recorte**: con el grupo de recorte aislado se puede seleccionar por su contorno y darle relleno y trazo; el relleno se pinta detrás del contenido y el trazo encima.
+- **Atajos**: Traer al frente es Mayús+Ctrl+8 y Enviar al fondo Mayús+Ctrl+9. Los atajos con Mayús y un dígito no respondían (con Mayús `event.key` es el símbolo): ahora los dígitos se comparan también por tecla física.
+- **Diseño**: la barra de herramientas empieza bajo la barra de menú y la barra de control queda a su derecha.
+- **Paneles flotantes**: cada panel recuerda su tamaño y se conserva al reiniciar (antes era uno solo, solo en memoria).
+- **Archivo › Ir a la carpeta del archivo** y la misma opción en el clic derecho de la pestaña.
+- **Imágenes vinculadas**: arrastrar y soltar respeta «Colocar imágenes vinculadas» (se pasa la ruta real del archivo); una imagen vinculada o con el vínculo roto seleccionada muestra las diagonales de su marco; el clic derecho ofrece Incrustar, Reubicar o Desincrustar.
+- **Calco de imagen**: cada forma resultante es un trazado simple; solo las formas con agujeros son trazados compuestos.
+
 ## 0.1.4 — Aislamiento, subtrazados y anclas
 - **Aislar cualquier objeto**: doble clic con la herramienta Selección sobre un trazado, trazado compuesto o forma viva lo aísla, como en Illustrator (antes solo los grupos); el resto se atenúa y no se puede seleccionar. En aislamiento, Selección directa y Lazo solo revelan, toman y enmarcan anclas del objeto aislado. El botón «Aislar objeto» (barra de control y Propiedades) vale para cualquier objeto que no sea texto.
 - **Barra de aislamiento flotante**: flota sobre el lienzo, en la esquina superior izquierda junto a las reglas, en lugar de ocupar una franja propia.
