@@ -278,6 +278,20 @@ describe('hit testing', () => {
     expect(hitTest(space, pt(100, 100), { tolerance: 0.5 })).toEqual([]);
   });
 
+  it('the clipping path can be picked by its outline only while its group is isolated', () => {
+    const mask = filled(createRect(ids, 50, 50), false, null);
+    const content = filled(createRect(ids, 200, 200), true, null);
+    const clip = { ...createGroup(ids, [mask, content]), type: 'clipGroup' as const };
+    const space = spaceWith(clip);
+    const edge = pt(0, 25);
+    expect(hitTest(space, edge, { tolerance: 0.5 })[0]?.id).toBe(content.id);
+    const hit = hitTest(space, edge, { tolerance: 0.5, isolation: clip.id })[0];
+    expect(hit?.id).toBe(mask.id);
+    expect(selectionTarget(hit!, clip.id)?.id).toBe(mask.id);
+    // Inside the mask the click still reaches the content.
+    expect(hitTest(space, pt(25, 25), { tolerance: 0.5, isolation: clip.id })[0]?.id).toBe(content.id);
+  });
+
   it('stroke alignment does not change where the vector is picked', () => {
     for (const align of ['inside', 'outside'] as const) {
       const r = filled(createRect(ids, 100, 100), false, 10);

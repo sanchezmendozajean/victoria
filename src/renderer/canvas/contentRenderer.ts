@@ -507,11 +507,26 @@ function drawNode(env: Env, node: Node, cull: Rect, layer: Layer, alpha: number,
       const [mask, ...rest] = node.children;
       const maskPath = mask ? pathFor(mask) : null;
       if (mask && maskPath) {
+        // The clipping path can be given a fill (behind the content) and a stroke (over it), like any path.
+        const paintMask = (kinds: readonly string[]) => {
+          const items = mask.appearance.items.filter((i) => kinds.includes(i.kind));
+          if (items.length === 0) return;
+          const saved = ctx.getTransform();
+          ctx.transform(...mask.transform);
+          paintGeometry(env, { ...mask, appearance: { items } }, layer, a);
+          ctx.setTransform(saved);
+        };
+        const plain = mask.appearance.items.every((i) => i.kind === 'fill' || i.kind === 'stroke');
+        paintMask(plain ? ['fill'] : []);
+        ctx.save();
         const saved = ctx.getTransform();
         ctx.transform(...mask.transform);
         ctx.clip(maskPath, nodeGeometry(mask)?.fillRule ?? 'nonzero');
         ctx.setTransform(saved);
         drawChildren(env, rest, localCull, layer, a, inIsolation);
+        ctx.restore();
+        // With modifiers the items cannot be split, so the whole appearance goes on top.
+        paintMask(plain ? ['stroke'] : ['fill', 'stroke', 'modifier']);
       }
       break;
     }

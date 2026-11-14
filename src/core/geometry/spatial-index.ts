@@ -48,6 +48,8 @@ const IDENTITY: Matrix = [1, 0, 0, 1, 0, 0];
 export class SpaceIndex {
   private readonly tree = new RBush<IndexItem>(16);
   readonly items: IndexItem[] = [];
+  /** Clipping paths: kept apart from `items` so marquees, snapping and normal clicks never see them. */
+  readonly maskItems: IndexItem[] = [];
 
   constructor(space: Space) {
     let order = 0;
@@ -75,6 +77,12 @@ export class SpaceIndex {
           if (child.type === 'clipGroup') {
             const [mask, ...rest] = child.children;
             if (!mask) continue;
+            // The mask is not a regular item (it never blocks a click); it is only picked while its group is isolated.
+            const maskBounds = boundsInParent(mask);
+            if (maskBounds && mask.visible) {
+              const box = transformRect(world, maskBounds);
+              this.maskItems.push({ ...box, geometric: box, id: mask.id, order: order++, node: mask, world: multiply(world, mask.transform), ancestors: inner, layer, locked: nodeLocked || mask.locked, clips, generated: childGenerated });
+            }
             visit(rest, layer, world, inner, nodeLocked, [...clips, { mask, world: multiply(world, mask.transform) }], childGenerated, null);
           } else {
             visit(child.children, layer, world, inner, nodeLocked, clips, childGenerated, child.type === 'group' && child.blend ? new Set(child.blend.keys) : null);

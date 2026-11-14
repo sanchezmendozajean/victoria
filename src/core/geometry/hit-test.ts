@@ -83,7 +83,27 @@ export function hitTest(space: Space, point: Vec2, options: HitOptions): Hit[] {
     const hit = testItem(item, point, tolerance, outlineOnly);
     if (hit && insideMask(item, point, tolerance)) hits.push(hit);
   }
+  if (isolation) hits.unshift(...maskHits(space, point, tolerance, isolation, includeLocked));
   return hits;
+}
+
+/**
+ * The clipping path of the isolated clip group, so it can be selected and painted like any path. It is picked by
+ * its outline (it usually has no stroke to hit), on top of whatever it clips; clicking inside still picks the content.
+ */
+function maskHits(space: Space, p: Vec2, tolerance: number, isolation: string, includeLocked: boolean): Hit[] {
+  const near: Hit[] = [];
+  for (const item of indexFor(space).maskItems) {
+    if (item.ancestors[item.ancestors.length - 1]?.id !== isolation || (item.locked && !includeLocked)) continue;
+    const geometry = hitGeometry(item.node);
+    const local = toLocal(item.world, p);
+    if (!geometry || !local || local.scale === 0 || !insideMask(item, p, tolerance)) continue;
+    const tolLocal = tolerance / local.scale;
+    const flat = flattenGeometry(geometry, Math.max(tolLocal / 4, 1e-4));
+    const base = { id: item.id, node: item.node, ancestors: item.ancestors, layer: item.layer, world: item.world, generated: false };
+    if (distanceToOutline(flat, local.point) <= tolLocal) near.push({ ...base, part: 'stroke' });
+  }
+  return near;
 }
 
 /**
