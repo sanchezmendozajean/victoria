@@ -1,6 +1,6 @@
 # Changelog
 
-## Sin publicar
+## 0.1.5 — Desplazar trazado, recorte y vínculos de imagen
 - **Desplazar trazado**: ya no deja puntas ni astillas en zonas cóncavas o estrechas (los lazos del contorno que quedaban más cerca del original que el desplazamiento se descartan, igual que los restos diminutos); el ajuste a Béziers ya no redondea esquinas vivas (`fitPolygon` también detecta esquinas por longitud de arista y, si el ajuste se aleja del polígono, conserva el polígono).
 - **Trazado de recorte**: con el grupo de recorte aislado se puede seleccionar por su contorno y darle relleno y trazo; el relleno se pinta detrás del contenido y el trazo encima.
 - **Atajos**: Traer al frente es Mayús+Ctrl+8 y Enviar al fondo Mayús+Ctrl+9. Los atajos con Mayús y un dígito no respondían (con Mayús `event.key` es el símbolo): ahora los dígitos se comparan también por tecla física.
