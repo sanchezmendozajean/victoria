@@ -73,8 +73,8 @@ export const DEFAULT_SHORTCUTS = {
   'object.showAll': 'Alt+CmdOrCtrl+3',
   'object.bringForward': 'CmdOrCtrl+]',
   'object.sendBackward': 'CmdOrCtrl+[',
-  'object.bringToFront': 'Shift+CmdOrCtrl+]',
-  'object.sendToBack': 'Shift+CmdOrCtrl+[',
+  'object.bringToFront': 'Shift+CmdOrCtrl+8',
+  'object.sendToBack': 'Shift+CmdOrCtrl+9',
   'object.transformAgain': 'CmdOrCtrl+D',
   'object.move': 'Shift+CmdOrCtrl+M',
   'object.applyModifiers': 'Alt+CmdOrCtrl+E',
@@ -179,6 +179,8 @@ export function formatAccelerator(accelerator: string, os: OsFamily = 'win32'): 
 
 export interface KeyEventLike {
   key: string;
+  /** Physical key ("Digit8"); with Shift held `key` becomes the symbol ("*"), so digits are also matched by it. */
+  code?: string;
   ctrlKey: boolean;
   metaKey: boolean;
   altKey: boolean;
@@ -212,7 +214,8 @@ export function matchesAccelerator(event: KeyEventLike, accelerator: string, os:
   }
 
   const candidates = KEY_ALIASES[mainKey] ?? [mainKey];
-  return candidates.some((candidate) => candidate.toLowerCase() === event.key.toLowerCase());
+  if (candidates.some((candidate) => candidate.toLowerCase() === event.key.toLowerCase())) return true;
+  return /^[0-9]$/.test(mainKey) && (event.code === `Digit${mainKey}` || event.code === `Numpad${mainKey}`);
 }
 
 export function findShortcutAction(event: KeyEventLike, os: OsFamily = 'win32'): ShortcutAction | null {

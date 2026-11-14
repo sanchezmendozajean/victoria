@@ -38,6 +38,14 @@ describe('formatAccelerator', () => {
 });
 
 describe('matchesAccelerator', () => {
+  it('matches a digit with Shift by its physical key, since event.key is then the symbol', () => {
+    const e = (k: string, code: string) => key(k, { ctrlKey: true, shiftKey: true, code });
+    expect(matchesAccelerator(e('*', 'Digit8'), 'Shift+CmdOrCtrl+8')).toBe(true);
+    expect(matchesAccelerator(e('(', 'Digit9'), 'Shift+CmdOrCtrl+9')).toBe(true);
+    expect(matchesAccelerator(e('(', 'Digit9'), 'Shift+CmdOrCtrl+8')).toBe(false);
+    expect(matchesAccelerator(key('8', { ctrlKey: true, code: 'Digit8' }), 'Shift+CmdOrCtrl+8')).toBe(false);
+  });
+
   it('matches single-letter tool keys regardless of case', () => {
     expect(matchesAccelerator(key('p'), 'P')).toBe(true);
     expect(matchesAccelerator(key('P', { shiftKey: true }), 'P')).toBe(false);
