@@ -44,6 +44,7 @@ export function DocBar() {
   const openPanel = useUi((s) => s.openPanel);
   const documents = useDocuments();
   const [menu, setMenu] = useState<OpenSpaceMenu | null>(null);
+  const [tabMenu, setTabMenu] = useState<{ docId: string; anchor: Anchor } | null>(null);
   const [renaming, setRenaming] = useState<string | null>(null);
   const [dragSpace, setDragSpace] = useState<{ id: string; over: string | null } | null>(null);
 
@@ -122,6 +123,11 @@ export function DocBar() {
               className={cx('vc-doctab', isActive && 'is-active')}
               onClick={() => documents.activate(d.id)}
               onAuxClick={(event) => event.button === 1 && void documents.close(d.id)}
+              onContextMenu={(event) => {
+                event.preventDefault();
+                const r = event.currentTarget.getBoundingClientRect();
+                setTabMenu({ docId: d.id, anchor: { rect: { left: r.left, top: r.top, right: r.right, bottom: r.bottom }, placement: 'below' } });
+              }}
             >
               <Icon id="file" size={14} />
               <span className="vc-doctab__name">{displayName(d)}</span>
@@ -242,6 +248,24 @@ export function DocBar() {
         </button>
       </div>
 
+      {tabMenu && (
+        <MenuPopup
+          entries={[
+            {
+              id: 'show-in-folder',
+              label: t('doc.showInFolder'),
+              icon: 'folder-out',
+              disabled: !documents.documents.find((x) => x.id === tabMenu.docId)?.path,
+              onSelect: () => void documents.showInFolder(tabMenu.docId),
+            },
+            { type: 'separator', id: 'sep' },
+            { id: 'close', label: t('doc.close'), icon: 'close', shortcut: formatAccelerator(SHORTCUTS['file.close'], os), onSelect: () => void documents.close(tabMenu.docId) },
+          ]}
+          anchor={tabMenu.anchor}
+          onClose={() => setTabMenu(null)}
+          minWidth={236}
+        />
+      )}
       {menu && menuSpace && <MenuPopup entries={entriesFor(menuSpace)} anchor={menu.anchor} onClose={() => setMenu(null)} minWidth={236} />}
     </div>
   );

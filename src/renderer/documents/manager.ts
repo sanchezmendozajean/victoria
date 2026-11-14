@@ -36,6 +36,8 @@ export interface FilesPort {
   readLinkedImage?(path: string): Promise<Uint8Array | null>;
   /** A document of the recent list. */
   openRecent?(path: string): Promise<OpenedFile | null>;
+  /** Shows a saved document in the system file manager. */
+  showInFolder?(path: string): Promise<boolean>;
 }
 
 /** What the manager needs to read a PDF: pdf.js lives outside it (it is large, and needs a browser). */
@@ -219,6 +221,12 @@ export class DocumentManager {
     const picked = await this.deps.files.openRecent?.(file).catch(() => null);
     if (!picked) return this.fail(this.deps.names.openFailed(file));
     return this.openPicked(picked);
+  }
+
+  /** Shows the file of a document (the active one by default) in the file manager; nothing happens if it was never saved. */
+  async showInFolder(id = this.activeId_): Promise<void> {
+    const path = this.docs_.find((d) => d.id === id)?.path;
+    if (path) await this.deps.files.showInFolder?.(path).catch(() => false);
   }
 
   private async openPicked(picked: { path: string; bytes: Uint8Array }): Promise<OpenDocument | null> {

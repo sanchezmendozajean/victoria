@@ -7,7 +7,26 @@ import type { IconId } from '../components/Icon';
 import { formatAccelerator, SHORTCUTS, type ShortcutAction } from './shortcuts';
 import { canMoveToSpace, moveToSpaceEntries } from './spaceMenus';
 import { actionContext, isCompoundSelection } from './selectionActions';
+import { embedSelectedImage, imageFactsOf, relinkSelectedImage, unembedSelectedImage } from './imageObjectActions';
 import { useUi } from './store';
+
+/** The link actions of a selected image: Incrustar when it is linked, Reubicar when its file is missing, Desincrustar when it is embedded. */
+function imageEntries(): MenuEntry[] {
+  const c = actionContext();
+  const id = c && c.ids.length === 1 ? c.ids[0] : undefined;
+  const facts = c && id ? imageFactsOf(c.session, c.space, id) : null;
+  if (!facts) return [];
+  const sep: MenuEntry = { type: 'separator', id: 's0' };
+  if (facts.link === 'linked') {
+    return [
+      { id: 'image-embed', label: t('image.embed'), icon: 'embed', onSelect: embedSelectedImage },
+      { id: 'image-relink', label: t('image.relink'), icon: 'folder', onSelect: () => void relinkSelectedImage() },
+      sep,
+    ];
+  }
+  if (facts.link === 'broken') return [{ id: 'image-relink', label: t('image.relink'), icon: 'folder', onSelect: () => void relinkSelectedImage() }, sep];
+  return [{ id: 'image-unembed', label: t('image.unembed'), icon: 'unlink', onSelect: () => void unembedSelectedImage() }, sep];
+}
 
 /** Right click on the canvas: the quick actions of the selection, with "Mover a Espacio" (specs/04 · regla 6). */
 export function CanvasContextMenu() {
@@ -27,6 +46,7 @@ export function CanvasContextMenu() {
       onSelect: () => runAction(action),
     });
     return [
+      ...imageEntries(),
       act('group', t('menu.object.group'), 'group', 'object.group'),
       isCompoundSelection()
         ? act('compound-release', t('menu.object.compoundReleaseFull'), 'compound-path', 'object.compoundRelease')

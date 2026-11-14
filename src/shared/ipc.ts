@@ -153,6 +153,7 @@ export const IPC = {
   recentList: 'file:recent-list',
   recentOpen: 'file:recent-open',
   recentThumbnail: 'file:recent-thumbnail',
+  showInFolder: 'file:show-in-folder',
   readLinkedImage: 'file:read-linked-image',
   exportSave: 'export:save',
   exportChooseFolder: 'export:choose-folder',
@@ -194,6 +195,10 @@ export interface VictoriaApi {
   listRecentFiles(): Promise<RecentFile[]>;
   /** Opens one of the listed documents; null when it is not on the list any more or cannot be read. */
   openRecentFile(path: string): Promise<OpenedFile | null>;
+  /** Absolute path of a file dropped on the window; null when it has none (pasted or generated data). */
+  pathForFile(file: File): string | null;
+  /** Shows a saved document in the system file manager, selected. False when the file does not exist any more. */
+  showInFolder(path: string): Promise<boolean>;
   /** The preview picture (PNG) saved inside a listed document, or null. */
   recentThumbnail(path: string): Promise<Uint8Array | null>;
   /** The bytes of the file a linked image points at; null when it is missing, too big or not a PNG, JPEG or WebP. */

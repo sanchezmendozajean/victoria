@@ -130,6 +130,10 @@ export function buildMenus(ctx: MenuContext): MenuDef[] {
     sep('s3'),
     item('document-setup', 'menu.file.documentSetup', 'document-setup', 'file.documentSetup'),
     item('print', 'menu.file.print', 'print', 'file.print'),
+    item('show-in-folder', 'menu.file.showInFolder', 'folder-out', undefined, {
+      disabled: !manager.active?.path,
+      onSelect: () => void manager.showInFolder(),
+    }),
     sep('s4'),
     item('close', 'menu.file.close', 'close', 'file.close'),
   ];

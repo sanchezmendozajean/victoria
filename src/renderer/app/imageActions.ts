@@ -27,7 +27,7 @@ const CASCADE = 24;
 export interface PickedImage {
   name: string;
   bytes: Uint8Array;
-  /** Absolute path of the file, when it came from the file dialog (dropped files have none and are always embedded). */
+  /** Absolute path of the file, when it came from the file dialog or was dropped from the file manager (pasted images have none and are always embedded). */
   path?: string;
 }
 

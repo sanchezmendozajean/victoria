@@ -272,6 +272,14 @@ export async function exportWrite(folder: unknown, files: unknown): Promise<Expo
   return out;
 }
 
+/** Shows a document in the system file manager with the file selected. Only an existing absolute path is accepted. */
+export async function showInFolder(file: unknown): Promise<boolean> {
+  if (typeof file !== 'string' || !path.isAbsolute(file)) return false;
+  if (!(await stat(file).then((s) => s.isFile(), () => false))) return false;
+  shell.showItemInFolder(file);
+  return true;
+}
+
 export async function exportOpenFolder(folder: unknown): Promise<void> {
   if (typeof folder !== "string" || !exportFolders.has(folder)) throw new Error("Folder not chosen by the user");
   await shell.openPath(folder);

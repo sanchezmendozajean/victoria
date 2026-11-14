@@ -184,7 +184,7 @@ export function CanvasArea() {
         if (dropped.length === 0) return;
         event.preventDefault();
         const at = controllerRef.current?.docAtClient(event.clientX, event.clientY);
-        void Promise.all(dropped.map(async (file) => ({ name: file.name, bytes: new Uint8Array(await file.arrayBuffer()) }))).then((files) => placeImageFiles(files, at));
+        void Promise.all(dropped.map(async (file) => ({ name: file.name, bytes: new Uint8Array(await file.arrayBuffer()), path: window.victoria.pathForFile(file) ?? undefined }))).then((files) => placeImageFiles(files, at));
       }}
     >
       <div

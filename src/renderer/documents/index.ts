@@ -39,6 +39,7 @@ export const manager = new DocumentManager({
     autosaveRead: (id) => window.victoria.autosaveRead(id),
     readLinkedImage: (file) => window.victoria.readLinkedImage(file),
     openRecent: (file) => window.victoria.openRecentFile(file),
+    showInFolder: (file) => window.victoria.showInFolder(file),
   },
   prompts: {
     askSaveBeforeClose: async (name) => {

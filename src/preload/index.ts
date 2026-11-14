@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from 'electron';
+import { contextBridge, ipcRenderer, webUtils } from 'electron';
 import { IPC, type VictoriaApi, type WindowState } from '../shared/ipc';
 
 // Only named functions cross the bridge; never expose ipcRenderer itself.
@@ -17,6 +17,14 @@ const api: VictoriaApi = {
   openImages: (labels) => ipcRenderer.invoke(IPC.openImages, labels),
   listRecentFiles: () => ipcRenderer.invoke(IPC.recentList),
   openRecentFile: (file) => ipcRenderer.invoke(IPC.recentOpen, file),
+  pathForFile: (file) => {
+    try {
+      return webUtils.getPathForFile(file) || null;
+    } catch {
+      return null;
+    }
+  },
+  showInFolder: (file) => ipcRenderer.invoke(IPC.showInFolder, file),
   recentThumbnail: (file) => ipcRenderer.invoke(IPC.recentThumbnail, file),
   readLinkedImage: (file) => ipcRenderer.invoke(IPC.readLinkedImage, file),
   exportSaveFile: (request) => ipcRenderer.invoke(IPC.exportSave, request),

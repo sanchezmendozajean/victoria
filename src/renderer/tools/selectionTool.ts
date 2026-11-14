@@ -42,6 +42,7 @@ import { boxOf, currentSelection, dragged, selectedTopLevel, snapDelta, snapDrag
 import type { CanvasPointerEvent, Tool, ToolHost, ToolKeyEvent } from './types';
 import { ROTATE_CURSOR } from './cursors';
 import { createWidgetDrag } from './widgetDrag';
+import { drawLinkedImageMarks } from './linkedImageMark';
 import { createDirectSelectionTool } from './directSelectionTool';
 import { createTextWidgets } from './textWidgets';
 import { boxScreenRect, cursorForTurnedHandle, fromBoxSpace, orientedBoxOf, rotatePoint, toBoxScreen, toBoxSpace, type OrientedBox } from './orientedBox';
@@ -537,6 +538,7 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
           ctx.strokeRect(x, y, 6, 6);
         }
         ctx.restore();
+        drawLinkedImageMarks(ctx, host, ids, theme.accent);
       }
       if (state.kind === 'marquee' && dragged(state.current, state.screen)) {
         const r = { x: Math.min(state.screen.x, state.current.x), y: Math.min(state.screen.y, state.current.y), w: Math.abs(state.current.x - state.screen.x), h: Math.abs(state.current.y - state.screen.y) };
