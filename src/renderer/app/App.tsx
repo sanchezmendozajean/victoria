@@ -36,20 +36,24 @@ export function App() {
   return (
     <div className="vc-app">
       <TitleBar />
-      <ControlBar />
-      <div className="vc-app__middle">
+      <div className="vc-app__body">
         <Toolbar />
-        <div className="vc-app__work">
-          {hasDocuments ? (
-            <>
-              <DocBar />
-              <CanvasArea />
-            </>
-          ) : (
-            <StartScreen />
-          )}
+        <div className="vc-app__column">
+          <ControlBar />
+          <div className="vc-app__middle">
+            <div className="vc-app__work">
+              {hasDocuments ? (
+                <>
+                  <DocBar />
+                  <CanvasArea />
+                </>
+              ) : (
+                <StartScreen />
+              )}
+            </div>
+            <PanelDock />
+          </div>
         </div>
-        <PanelDock />
       </div>
       <StatusBar />
       <TooltipHost />

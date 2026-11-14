@@ -8,6 +8,18 @@
   color: var(--text);
   font-family: var(--font-ui);
 }
+/* The tool bar starts right under the title bar; the control bar sits to its right. */
+.vc-app__body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+.vc-app__column {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
 .vc-app__middle {
   display: flex;
   flex: 1;
