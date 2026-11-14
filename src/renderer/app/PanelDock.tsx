@@ -5,6 +5,7 @@ import { cx } from '../components/cx';
 import { tip } from '../components/Tooltip';
 import { t } from '../i18n';
 import type { PanelGroup } from '../panels/layout';
+import { loadFloatSizes, saveFloatSizes, type FloatSizes } from '../panels/floatSizes';
 import { PanelBody } from '../panels/PanelBody';
 import { PANELS, type PanelId } from '../panels/registry';
 import { useUi } from './store';
@@ -24,8 +25,9 @@ function draggedPanel(event: DragEvent): PanelId | null {
 }
 
 const FLOAT_MIN = { w: 270, h: 120 };
-/** Remembered between openings, for the whole session. */
-let floatSize: { w: number; h: number } | null = null;
+/** Remembered per panel, between openings and restarts. */
+let floatSizes: FloatSizes | null = null;
+const sizesNow = (): FloatSizes => (floatSizes ??= loadFloatSizes());
 
 const hasPanel = (event: DragEvent) => event.dataTransfer.types.includes(DRAG_TYPE);
 
@@ -43,7 +45,7 @@ export function PanelDock() {
 
   const [dropTarget, setDropTarget] = useState<string | null>(null);
   const [menu, setMenu] = useState<{ group: PanelGroup; anchor: Anchor } | null>(null);
-  const [size, setSize] = useState(floatSize);
+  const [, setSizesVersion] = useState(0);
   const floatRef = useRef<HTMLElement>(null);
 
   // The window hangs from the dock's left edge and top: its left and bottom sides (and the corner) are the ones that move.
@@ -53,16 +55,19 @@ export function PanelDock() {
     event.preventDefault();
     event.currentTarget.setPointerCapture(event.pointerId);
     const from = { x: event.clientX, y: event.clientY, w: box.width, h: box.height };
+    const resizing = stripOpen;
     const maxW = Math.max(FLOAT_MIN.w, box.right - 8);
     const maxH = Math.max(FLOAT_MIN.h, window.innerHeight - box.top - 8);
     const move = (e: PointerEvent) => {
       const w = edges.left ? from.w + (from.x - e.clientX) : from.w;
       const h = edges.bottom ? from.h + (e.clientY - from.y) : from.h;
-      floatSize = { w: Math.round(Math.min(maxW, Math.max(FLOAT_MIN.w, w))), h: Math.round(Math.min(maxH, Math.max(FLOAT_MIN.h, h))) };
-      setSize(floatSize);
+      if (!resizing) return;
+      floatSizes = { ...sizesNow(), [resizing]: { w: Math.round(Math.min(maxW, Math.max(FLOAT_MIN.w, w))), h: Math.round(Math.min(maxH, Math.max(FLOAT_MIN.h, h))) } };
+      setSizesVersion((v) => v + 1);
     };
     const target = event.currentTarget;
     const end = () => {
+      saveFloatSizes(sizesNow());
       target.removeEventListener('pointermove', move);
       target.removeEventListener('pointerup', end);
       target.removeEventListener('pointercancel', end);
@@ -230,7 +235,7 @@ export function PanelDock() {
       </div>
 
       {floating && (
-        <aside ref={floatRef} className="vc-floatpanel" data-testid="panel-float" aria-label={t(PANELS[floating].title)} style={size ? { width: size.w, height: size.h } : undefined}>
+        <aside ref={floatRef} className="vc-floatpanel" data-testid="panel-float" aria-label={t(PANELS[floating].title)} style={sizesNow()[floating] ? { width: sizesNow()[floating]?.w, height: sizesNow()[floating]?.h } : undefined}>
           <div className="vc-floatpanel__grip vc-floatpanel__grip--left" data-testid="float-resize-left" onPointerDown={(e) => startResize(e, { left: true })} />
           <div className="vc-floatpanel__grip vc-floatpanel__grip--bottom" data-testid="float-resize-bottom" onPointerDown={(e) => startResize(e, { bottom: true })} />
           <div className="vc-floatpanel__grip vc-floatpanel__grip--corner" data-testid="float-resize-corner" onPointerDown={(e) => startResize(e, { left: true, bottom: true })} />
