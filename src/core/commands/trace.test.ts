@@ -14,6 +14,7 @@ import {
   retrace,
   sequentialIds,
   translation,
+  traceChildren,
   traceImage,
   writeVict,
   type GroupNode,
@@ -30,6 +31,19 @@ function setup() {
   return { ids, session, space, image, pixels };
 }
 
+describe('traceChildren', () => {
+  const sq = (x0: number, y0: number, x1: number, y1: number) => [[x0, y0], [x1, y0], [x1, y1], [x0, y1]].map(([x, y]) => ({ p: { x: x as number, y: y as number }, in: null, out: null, kind: 'corner' as const }));
+
+  it('makes a plain path per shape and a compound path only where a shape has a hole', () => {
+    const ids = sequentialIds('c');
+    const result = { width: 100, height: 100, layers: [{ color: [0, 0, 0] as [number, number, number], paths: [sq(0, 0, 40, 40), sq(10, 10, 20, 20).reverse(), sq(60, 60, 90, 90)] }] };
+    const out = traceChildren(ids, result, 100, 100);
+    expect(out.map((n) => n.type).sort()).toEqual(['compound', 'path']);
+    const compound = out.find((n) => n.type === 'compound');
+    expect(compound?.type === 'compound' && compound.children).toHaveLength(2);
+  });
+});
+
 describe('live trace', () => {
   it('replaces the image by a group at the same place, scaled to its box; undo brings the image back', () => {
     const { ids, session, space, image, pixels } = setup();
@@ -41,9 +55,9 @@ describe('live trace', () => {
     expect(group.transform).toEqual(translation(10, 20));
     expect(group.trace).toMatchObject({ resourceId: 'pic', width: 100, height: 50 });
     // The 40 x 20 px picture is drawn in the 100 x 50 box: its black half is 50 wide.
-    const compound = group.children[0]!;
-    expect(compound.type).toBe('compound');
-    const xs = compound.type === 'compound' ? compound.children.flatMap((p) => p.anchors.map((a) => a.p.x)) : [];
+    const shape = group.children[0]!;
+    expect(shape.type).toBe('path'); // a shape without holes is a plain path, not a compound one
+    const xs = shape.type === 'path' ? shape.anchors.map((a) => a.p.x) : [];
     expect(Math.max(...xs)).toBeCloseTo(50, 6);
     session.undo();
     expect(space().layers[0]!.children[0]!.type).toBe('image');
