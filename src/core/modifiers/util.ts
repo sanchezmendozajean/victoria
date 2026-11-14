@@ -123,7 +123,16 @@ export function fitPolygon(points: readonly Vec2[], tolerance: number, cornerAng
   const n = pts.length;
   if (n < 3) return pts.map((p) => ({ p: { ...p }, in: null, out: null, kind: 'corner' as const }));
   const corners: number[] = [];
-  for (let i = 0; i < n; i++) if (turn(pts[(i - 1 + n) % n] as Vec2, pts[i] as Vec2, pts[(i + 1) % n] as Vec2) > cornerAngle) corners.push(i);
+  for (let i = 0; i < n; i++) {
+    const a = pts[(i - 1 + n) % n] as Vec2;
+    const b = pts[i] as Vec2;
+    const c = pts[(i + 1) % n] as Vec2;
+    const angle = turn(a, b, c);
+    // A smooth curve flattened finely turns little over short edges (angle × length stays small); a turn over
+    // long edges is a real corner even when it is spread over two vertices, and fitting through it would cut it.
+    const reach = (Math.hypot(b.x - a.x, b.y - a.y) + Math.hypot(c.x - b.x, c.y - b.y)) / 2;
+    if (angle > cornerAngle || (angle > 0.15 && angle * reach > 1.2)) corners.push(i);
+  }
   const starts = corners.length > 0 ? corners : [0, Math.floor(n / 2)];
   const runs: Anchor[][] = starts.map((start, k) => {
     const end = starts[(k + 1) % starts.length] as number;

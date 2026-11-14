@@ -135,8 +135,36 @@ function cleanLoop(raw: readonly Vec2[], sign: number): Vec2[][] {
 
 const paperSign = (points: readonly Vec2[]): number => Math.sign(toPaper(points).area);
 
+/** True if some point of `points` is farther than a few fit tolerances from the closed polygon `poly`. */
+function strayFrom(points: readonly Vec2[], poly: readonly Vec2[]): boolean {
+  const limit = 4 * FIT_TOLERANCE;
+  return points.some((p) => {
+    for (let i = 0; i < poly.length; i++) {
+      const a = poly[i] as Vec2;
+      const b = poly[(i + 1) % poly.length] as Vec2;
+      const e = sub(b, a);
+      const l2 = e.x * e.x + e.y * e.y;
+      const t = l2 === 0 ? 0 : Math.max(0, Math.min(1, ((p.x - a.x) * e.x + (p.y - a.y) * e.y) / l2));
+      if (Math.hypot(p.x - (a.x + t * e.x), p.y - (a.y + t * e.y)) < limit) return false;
+    }
+    return true;
+  });
+}
+
+/** Béziers fitted to a polygon; if the fit strays from it (it can round off a sharp corner), the polygon stays. */
+function fitLoop(loop: Vec2[]): SubPath {
+  const anchors = fitPolygon(loop, FIT_TOLERANCE);
+  const fitted: SubPath = { closed: true, anchors };
+  if (anchors.length >= 2) {
+    const curve = flatten(fitted, FLATNESS);
+    // Both ways: the polygon must lie on the curve and the curve on the polygon (a fit can overshoot between points).
+    if (!strayFrom(loop, curve) && !strayFrom(curve, loop)) return fitted;
+  }
+  return { closed: true, anchors: loop.map((p) => ({ p: { ...p }, in: null, out: null, kind: 'corner' as const })) };
+}
+
 function geometryFromLoops(loops: Vec2[][]): Geometry {
-  return { fillRule: 'nonzero', subpaths: loops.map((l): SubPath => ({ closed: true, anchors: fitPolygon(l, FIT_TOLERANCE) })).filter((s) => s.anchors.length >= 2) };
+  return { fillRule: 'nonzero', subpaths: loops.map(fitLoop).filter((s) => s.anchors.length >= 2) };
 }
 
 let scoped = false;
@@ -153,17 +181,69 @@ export function offsetGeometry(input: Geometry, delta: number, join: Join, miter
   const pieces = shapeOperation('unite', [{ subpaths: input.subpaths.map((s) => ({ closed: true, anchors: s.anchors })), fillRule: input.fillRule }]);
   const loops: Vec2[][] = [];
   for (const piece of pieces) {
+    const contours: Vec2[][] = [];
+    const candidates: Vec2[][] = [];
     piece.subpaths.forEach((contour, index) => {
       let points = dedupe(flatten({ closed: true, anchors: contour.anchors }, FLATNESS), true);
       if (points.length < 3) return;
+      contours.push(points);
       // Outer contours run counter-clockwise (algebraically) and holes clockwise, so one normal formula fits both.
       const wantPositive = index === 0;
       if ((signedArea(points) > 0) !== wantPositive) points = points.reverse();
       const raw = offsetSide(points, true, delta, join, Math.max(1, miterLimit));
-      loops.push(...cleanLoop(raw, paperSign(points)));
+      candidates.push(...cleanLoop(raw, paperSign(points)));
     });
+    // The raw curve leaves spikes and slivers where it folds over itself: those pieces end up closer to the
+    // original contour than the offset distance, which no real boundary of the offset region can be.
+    const clear = distanceFilter(contours, Math.abs(delta) * 0.97 - 0.05);
+    // Leftovers smaller than a sliver of the offset square (the gap between two joins) are not real shapes either.
+    const minArea = Math.max(1e-3, 0.02 * delta * delta);
+    loops.push(...candidates.filter((l) => Math.abs(signedArea(l)) >= minArea && clear(l)));
   }
   return geometryFromLoops(loops);
+}
+
+/** Tells whether a loop (its vertices and edge midpoints) keeps at least `min` away from every contour edge. */
+function distanceFilter(contours: readonly Vec2[][], min: number): (loop: Vec2[]) => boolean {
+  const cell = Math.max(min, 1);
+  const grid = new Map<string, Array<[Vec2, Vec2]>>();
+  const key = (cx: number, cy: number) => `${cx},${cy}`;
+  for (const pts of contours) {
+    for (let i = 0; i < pts.length; i++) {
+      const a = pts[i] as Vec2;
+      const b = pts[(i + 1) % pts.length] as Vec2;
+      // Register the edge in every cell its box, grown by the distance, touches.
+      const x0 = Math.floor((Math.min(a.x, b.x) - min) / cell);
+      const x1 = Math.floor((Math.max(a.x, b.x) + min) / cell);
+      const y0 = Math.floor((Math.min(a.y, b.y) - min) / cell);
+      const y1 = Math.floor((Math.max(a.y, b.y) + min) / cell);
+      for (let cx = x0; cx <= x1; cx++) {
+        for (let cy = y0; cy <= y1; cy++) {
+          const k = key(cx, cy);
+          const bucket = grid.get(k);
+          if (bucket) bucket.push([a, b]);
+          else grid.set(k, [[a, b]]);
+        }
+      }
+    }
+  }
+  const tooClose = (p: Vec2): boolean => {
+    for (const [a, b] of grid.get(key(Math.floor(p.x / cell), Math.floor(p.y / cell))) ?? []) {
+      const e = sub(b, a);
+      const l2 = e.x * e.x + e.y * e.y;
+      const t = l2 === 0 ? 0 : Math.max(0, Math.min(1, ((p.x - a.x) * e.x + (p.y - a.y) * e.y) / l2));
+      if (Math.hypot(p.x - (a.x + t * e.x), p.y - (a.y + t * e.y)) < min) return true;
+    }
+    return false;
+  };
+  return (loop) => {
+    for (let i = 0; i < loop.length; i++) {
+      const p = loop[i] as Vec2;
+      const q = loop[(i + 1) % loop.length] as Vec2;
+      if (tooClose(p) || tooClose({ x: (p.x + q.x) / 2, y: (p.y + q.y) / 2 })) return false;
+    }
+    return true;
+  };
 }
 
 /** The filled outline of a stroke of `width` along the contours of a geometry. */
