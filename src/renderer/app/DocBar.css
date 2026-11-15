@@ -20,8 +20,8 @@
   display: flex;
   align-items: center;
   gap: 6px;
+  flex: none;
   height: 26px;
-  max-width: 220px;
   margin-bottom: 2px;
   padding: 0 6px 0 10px;
   border-radius: 4px 4px 0 0;
@@ -44,10 +44,7 @@
   color: var(--icon);
 }
 .vc-doctab__name {
-  min-width: 0;
-  overflow: hidden;
   white-space: nowrap;
-  text-overflow: ellipsis;
 }
 .vc-doctab__dirty {
   flex: none;
