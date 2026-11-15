@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.1.6 — Corrección de CI
+- La prueba e2e que lista la API que el preload expone al renderer incluye las funciones nuevas de 0.1.5 (`showInFolder`, `pathForFile`); sin ellas el CI de 0.1.5 fallaba en Windows y Linux. Sin cambios en la aplicación.
+
 ## 0.1.5 — Desplazar trazado, recorte y vínculos de imagen
 - **Desplazar trazado**: ya no deja puntas ni astillas en zonas cóncavas o estrechas (los lazos del contorno que quedaban más cerca del original que el desplazamiento se descartan, igual que los restos diminutos); el ajuste a Béziers ya no redondea esquinas vivas (`fitPolygon` también detecta esquinas por longitud de arista y, si el ajuste se aleja del polígono, conserva el polígono).
 - **Trazado de recorte**: con el grupo de recorte aislado se puede seleccionar por su contorno y darle relleno y trazo; el relleno se pinta detrás del contenido y el trazo encima.
