@@ -200,6 +200,8 @@ export const groupNodes = (spaceId: string, ids: readonly string[], group: Group
     let members = siblings.filter((n) => picked.has(n.id)) as DraftNode[];
     // A clipping mask: the topmost object is the mask and goes first (specs/02 · ClipGroup).
     if (group.type === 'clipGroup' && members.length > 1) members = [members[members.length - 1] as DraftNode, ...members.slice(0, -1)];
+    // Like Illustrator, a clipping path starts with no fill and no stroke (it can be given them afterwards).
+    if (group.type === 'clipGroup' && members.length > 1) (members[0] as DraftNode).appearance = { items: [] };
     const remainingBefore = siblings.slice(0, insertAt).filter((n) => !picked.has(n.id)).length;
     const rest = siblings.filter((n) => !picked.has(n.id));
     rest.splice(remainingBefore, 0, { ...group, children: members } as DraftChild);

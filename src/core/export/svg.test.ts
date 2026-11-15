@@ -167,6 +167,26 @@ describe('SVG export', () => {
     expect(svg).toMatch(/<clipPath id="c\d+"><path d="M0 0L40 0L40 40L0 40Z" clip-rule="nonzero"\/><\/clipPath>/);
   });
 
+  it('a clipping path starts with no look, and a fill or stroke given to it is drawn behind and over the content', () => {
+    const s = setup();
+    const content = s.add(createRect(s.ids, 100, 100));
+    const mask = s.add(createRect(s.ids, 40, 40));
+    s.look(content.id, fillRed());
+    s.look(mask.id, { items: [...fillRed().items, { kind: 'stroke', paint: { type: 'solid', color: black }, stroke: s.stroke({ width: 3 }), opacity: 1, modifiers: [] }] });
+    s.session.run(groupNodes(s.space().id, [content.id, mask.id], createClipGroup(s.ids, [])));
+    const clip = s.space().layers[0]!.children[0]!;
+    expect(clip.type === 'clipGroup' && clip.children[0]!.appearance.items).toEqual([]); // like Illustrator: no fill, no stroke
+    expect(s.svg().svg).not.toContain('stroke-width="3"');
+
+    s.look(mask.id, { items: [...fillRed().items, { kind: 'stroke', paint: { type: 'solid', color: black }, stroke: s.stroke({ width: 3 }), opacity: 1, modifiers: [] }] });
+    const { svg } = s.svg();
+    const at = (needle: string) => svg.indexOf(needle);
+    // Fill of the mask, then the clipped content, then the stroke of the mask.
+    expect(at('M0 0L40 0L40 40L0 40Z')).toBeGreaterThan(-1);
+    expect(svg.lastIndexOf('stroke-width="3"')).toBeGreaterThan(at('clip-path="url('));
+    expect(at('fill="#ff0000"')).toBeLessThan(at('clip-path="url('));
+  });
+
   it('embeds an image once as a data URI and reuses it; a missing file is reported', () => {
     const s = setup();
     const added = s.session.images.add(PNG)!;

@@ -344,8 +344,22 @@ function nodeOps(node: Node, cull: Rect, ctx: Context): SceneOp | null {
       const [mask, ...rest] = node.children;
       const geometry = mask ? nodeGeometry(mask) : null;
       if (!mask || !geometry) return null;
-      clip = { path: pathOfSubPaths(geometry.subpaths, geometry.fillRule), matrix: mask.transform };
-      children = childOps(rest, localCull, ctx);
+      const clipPath = { path: pathOfSubPaths(geometry.subpaths, geometry.fillRule), matrix: mask.transform };
+      // The clipping path can be given a fill (behind the content) and a stroke (over it), as the canvas draws them.
+      const plain = mask.appearance.items.every((i) => i.kind === 'fill' || i.kind === 'stroke');
+      const maskOps = (kinds: readonly string[]): SceneOp[] => {
+        const items = mask.appearance.items.filter((i) => kinds.includes(i.kind));
+        const ops = items.length > 0 ? geometryOps({ ...mask, appearance: { items } }, ctx) : [];
+        return ops.length > 0 ? [group(mask.transform, 1, 'normal', ops)] : [];
+      };
+      const behind = maskOps(plain ? ['fill'] : []);
+      const over = maskOps(plain ? ['stroke'] : ['fill', 'stroke', 'modifier']);
+      if (behind.length === 0 && over.length === 0) {
+        clip = clipPath;
+        children = childOps(rest, localCull, ctx);
+      } else {
+        children = [...behind, group(IDENTITY, 1, 'normal', childOps(rest, localCull, ctx), clipPath), ...over];
+      }
       break;
     }
     case 'image':
