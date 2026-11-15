@@ -43,12 +43,25 @@
 .vc-doctab.is-active .vc-icon {
   color: var(--icon);
 }
+.vc-doctab__name {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
 .vc-doctab__dirty {
+  flex: none;
   width: 6px;
   height: 6px;
   margin-left: 2px;
   border-radius: 50%;
   background: var(--text-muted);
+  opacity: 0;
+  pointer-events: none;
+}
+.vc-doctab__dirty.is-dirty {
+  opacity: 1;
+  pointer-events: auto;
 }
 .vc-doctab.is-active .vc-doctab__dirty {
   background: var(--text);

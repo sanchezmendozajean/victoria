@@ -131,7 +131,8 @@ export function DocBar() {
             >
               <Icon id="file" size={14} />
               <span className="vc-doctab__name">{displayName(d)}</span>
-              {dirty && <span className="vc-doctab__dirty" data-testid="doc-dirty" {...tip(t('doc.unsaved'))} />}
+              {/* Always takes its room (only its alpha changes), so the name never reflows when the document gets modified. */}
+              <span className={cx('vc-doctab__dirty', dirty && 'is-dirty')} data-testid={dirty ? 'doc-dirty' : undefined} aria-hidden={!dirty} {...(dirty ? tip(t('doc.unsaved')) : {})} />
               <button
                 type="button"
                 className="vc-doctab__close"
