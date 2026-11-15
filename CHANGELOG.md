@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.8 — Impresión y exportación fieles
+- **Imágenes en SVG, vista previa de impresión e impresión**: las imágenes se dibujaban a su tamaño natural en píxeles (ampliadas y recortadas) porque el SVG las colocaba con `<use width height>` sobre un `<image>` sin tamaño; ahora van dentro de un `<symbol>` que se estira a la caja del objeto. Los SVG exportados antes con imágenes tienen el defecto: conviene volver a exportarlos.
+- **Trazado de recorte**: su relleno y su trazo se dibujan también en SVG, impresión, vista previa y PDF (detrás y encima del contenido, como en el lienzo). Un trazado de recorte nuevo empieza sin relleno ni trazo, como en Illustrator; en documentos anteriores, una máscara con relleno o trazo por defecto ahora se ve y se quita seleccionándola con el grupo aislado.
+
 ## 0.1.7 — Pestañas de documento
 - La marca de documento modificado de la pestaña siempre ocupa su sitio (solo cambia su alfa), de modo que el nombre ya no se parte en dos líneas al aparecer. El nombre de la pestaña nunca se corta: la pestaña crece hasta mostrarlo entero.
 
