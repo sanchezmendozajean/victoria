@@ -177,6 +177,8 @@ describe('SVG export', () => {
     expect((svg.match(/<image /g) ?? []).length).toBe(1);
     expect((svg.match(/<use /g) ?? []).length).toBe(2);
     expect(svg).toContain('href="data:image/png;base64,iVBORw0KGgo');
+    // <use width height> only sizes a <symbol>: a bare <image> would be drawn at its natural pixel size.
+    expect(svg).toMatch(/<symbol id="i\d+" viewBox="0 0 1 1" preserveAspectRatio="none"><image width="1" height="1"/);
     expect(warnings).toEqual([]);
 
     const missing = writeSvg(s.scene(), new ImageStore(), { minify: true });

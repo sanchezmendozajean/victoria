@@ -102,7 +102,8 @@ export function writeSvg(scene: Scene, images: ImageStore, options: SvgOptions =
     }
     const id = nextId('i');
     const format = options.imageFormats?.[hash] ?? 'png';
-    defs.push(`<image id="${id}" href="data:${MIME[format]};base64,${toBase64(bytes)}"/>`);
+    // A <symbol> is what <use width height> can size: a bare <image> would be drawn at its natural pixel size.
+    defs.push(`<symbol id="${id}" viewBox="0 0 1 1" preserveAspectRatio="none"><image width="1" height="1" preserveAspectRatio="none" href="data:${MIME[format]};base64,${toBase64(bytes)}"/></symbol>`);
     imageIds.set(hash, id);
     return id;
   };
