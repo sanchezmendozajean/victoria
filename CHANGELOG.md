@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.1.7 — Pestañas de documento
+- La marca de documento modificado de la pestaña siempre ocupa su sitio (solo cambia su alfa), de modo que el nombre ya no se parte en dos líneas al aparecer. El nombre de la pestaña nunca se corta: la pestaña crece hasta mostrarlo entero.
+
 ## 0.1.6 — Corrección de CI
 - La prueba e2e que lista la API que el preload expone al renderer incluye las funciones nuevas de 0.1.5 (`showInFolder`, `pathForFile`); sin ellas el CI de 0.1.5 fallaba en Windows y Linux. Sin cambios en la aplicación.
 
