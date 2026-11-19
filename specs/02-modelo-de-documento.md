@@ -185,6 +185,55 @@ documento.vict
 - Las formas **sin relleno ni trazo** (típico de las guías y máscaras que exporta Illustrator con `fill:none`) se importan como trazados sin pintura, como los abre Illustrator: invisibles salvo en modo contorno o al seleccionarlas. Solo se descarta lo `display:none`.
 - Todo lo que no se entiende se **avisa al terminar** (no falla); un archivo que no es SVG, o un PDF ilegible, se rechaza con un mensaje y no se abre nada.
 
+## Modo SVG: editar un SVG directamente (Fase 13)
+
+Abrir un `.svg` puede **editarlo en su sitio** en lugar de importarlo a un documento nuevo. Es un documento normal del `core` con un origen SVG (`OpenDocument.format = 'svg'`, `path` = el `.svg`); **Guardar** escribe el SVG con `core/export/svg.ts`. Todo lo demás (Deshacer, pestañas, autoguardado en `.vict` dentro de `userData`) funciona igual.
+
+### Cuándo se abre en modo SVG
+
+El criterio es el **viaje de ida y vuelta**: solo se edita en su sitio lo que `exportar → importar` devuelve igual. Se abre en modo SVG si la importación terminó **sin advertencias** (`SvgImport.warnings` vacío). El texto cuenta: un `<text>` que Victoria no sabe representar sin pérdida (ver «Texto vivo» más abajo) emite una advertencia, igual que `<textPath>`. En cualquier otro caso se abre como hoy: un documento Victoria nuevo (copia `.vict`) con el aviso de lo omitido; el archivo original no se toca. Un aviso previo lo explica en una línea.
+
+### Qué se bloquea (con tooltip del motivo)
+
+Un elemento bloqueado queda con el aspecto de deshabilitado y su tooltip dice **por qué** y cómo seguir («Un SVG no puede guardar X. Usa Archivo › Guardar como documento Victoria…»). Regla 8: cada cadena nueva va a `es.json` y cada elemento conserva su ícono.
+
+| Bloqueado | Motivo (resumen) |
+|---|---|
+| Texto de área y texto en trazado; en Carácter y Párrafo: escala horizontal/vertical, rotación de carácter, versalitas, sangrías, espacio antes/después, justificación, guionado | SVG solo guarda texto de punto con los atributos de «Texto vivo» |
+| Modificadores vivos, Mezcla (Objeto › Mezcla), perfiles de ancho y puntas de flecha de trazo, esquinas vivas, Calco de imagen vivo | SVG guarda la geometría final, no el efecto vivo |
+| Sombras y resplandores | Se guardan como `<filter>`, que Victoria no reabre |
+| Alineación de trazo interior/exterior | Se guarda como recorte, no como trazo |
+| Aspecto con más de un relleno o trazo por objeto | SVG tiene un relleno y un trazo por elemento |
+| Más mesas y Espacios: herramienta Mesa de trabajo, panel Mesas, Espacios | Un SVG es una sola mesa |
+
+La lista es **código**: un solo registro `svgCapabilities` en `core` (id de función → motivo) que consultan menús, barra de herramientas, paneles y atajos, para que no haya dos listas. **Se amplía solo con una prueba** que demuestre que la función hace el viaje de ida y vuelta.
+
+### Exportador semántico (descubierto en 13.1)
+
+El exportador actual escribe **dibujo**, no documento: aplana los grupos y escribe cada rectángulo y elipse como un `<path>` de curvas. Guardar así reescribiría la estructura del archivo (un `<rect>` pasaría a ser un trazado de curvas; los `<g>` desaparecerían). Por eso `writeSvg` tiene la opción `structure: 'semantic'` (implementada en 13.2): escribe un `<g>` por cada grupo y grupo de recorte del documento (aunque no lleve atributos), `<rect>` (con `rx` si las cuatro esquinas son redondas e iguales), `<circle>`/`<ellipse>` para rectángulos y elipses vivos completos, y `<path>` para todo lo demás (también un rectángulo con modificadores, esquinas desiguales o una elipse parcial). Un objeto que se escribe como un solo elemento lleva en él su transformación, opacidad y modo de fusión, sin `<g>` de envoltorio. El modo por defecto (`'drawing'`) no cambia: es el de Exportar, PNG, PDF e impresión. Las capas del documento no se escriben como `<g>` (pendiente).
+
+### Texto vivo (decisión: el texto sigue siendo texto)
+
+En modo SVG el texto de punto se guarda como `<text>` y se reabre igual de editable. Las demás salidas (PNG, JPG, PDF, impresión y **Exportar** a SVG) **no cambian**: texto en contornos (spec 08).
+
+- **Exportador.** `exportSvg` recibe `text: 'outlines' | 'live'` (por defecto `'outlines'`). El modo SVG guarda con `'live'`. La posición de cada línea sale del **mismo diseño** (`core/text`) que el lienzo: una `<text>` por párrafo con un `<tspan x y>` por línea, de modo que ningún motor de texto externo reajusta líneas ni reparte espacio.
+- **Atributos que viajan** (y por tanto siguen disponibles en los paneles): `font-family`, `font-weight`, `font-style` (de `fontStyle`), `font-size`, relleno y trazo, `letter-spacing` (de `tracking`), `text-anchor` (de la alineación izquierda/centro/derecha), interlineado explícito (por las posiciones de las líneas; se reconoce al importar por la distancia entre líneas), `text-decoration` (subrayado, tachado), `baseline-shift` (superíndice, subíndice, desplazamiento de línea base), mayúsculas (`text-transform`). Varios rangos de estilo = varios `<tspan>`.
+- **Importador.** Lee los mismos atributos (hoy solo lee familia, estilo y tamaño). Lo que no puede representar **avisa** y fuerza la copia `.vict`: `rotate`, listas de `x`/`y`/`dx`/`dy` por carácter, `textLength`, `writing-mode`, `<textPath>`, `white-space` distinto de `normal`/`pre`. Condición de la aceptación: `importSvg(exportSvg(texto, 'live'))` devuelve el mismo `TextNode`.
+- **Fuentes.** Se guarda siempre el nombre de la familia pedida (`font-family="Familia, genérica"`), **incluso si esa fuente no está instalada**: nunca se reescribe por la sustituta. Un visor externo sin la fuente usará otra y el texto se verá distinto; es el compromiso de no convertirlo en contornos. Para evitarlo: **Guardar › Texto como contornos** (casilla del documento, por defecto desmarcada), que guarda ese archivo con el texto convertido. Al abrir sin la fuente, el texto se edita igual y se marca en rosa (spec 07).
+- **Paridad.** El lienzo, los contornos y el `<text>` guardado salen de la misma geometría de línea; una prueba compara la posición de línea base de cada línea entre ambas salidas.
+
+### Guardar
+
+- **Guardar** reescribe el `.svg` (escritura atómica). Se pierde lo que Victoria no modela: `id`, clases, `<defs>` sin uso, comentarios, metadatos y el orden/forma del XML original. La **primera vez** en cada sesión se muestra un aviso con casilla «No volver a preguntar» (preferencia).
+- **Guardar como…** ofrece SVG y `.vict`. **Guardar como documento Victoria…** crea el `.vict` completo, **desbloquea todas las funciones** y deja de ser un documento SVG; el `.svg` original queda intacto.
+- Los objetos vivos de un `.vict` (polígono, estrella, texto…) no pasan a un SVG: se tratan como en la exportación actual (geometría).
+
+### Aceptación
+
+- Para cada elemento del registro de capacidades permitido: `exportSvg(importSvg(x))` produce la misma escena (prueba en `core/io/svg`).
+- Un SVG con `<mask>`, `<filter>`, `<pattern>`, `<textPath>` o `<text>` con atributos no soportados **no** se abre en modo SVG; uno con texto de punto soportado, sí, y al guardarlo el `<text>` sigue siendo `<text>`.
+- Cada elemento bloqueado tiene tooltip, ícono y se comprueba en una prueba de la interfaz.
+
 ## Esquinas vivas de trazados (Fase 5)
 
 `Anchor.cornerRadius` es un dato **vivo**: el contorno que se dibuja y mide es el trazado con las esquinas redondeadas (`applyCornerRadii`, en `core/geometry/anchors.ts`), pero las anclas guardadas no cambian. Solo se redondea un ancla de **esquina sin manejadores** cuyos dos segmentos vecinos son rectos (en un trazado abierto, no los extremos); las demás se ignoran sin error. El radio se limita a la mitad del segmento vecino más corto. Cada esquina redondeada produce dos anclas con un arco cúbico entre ellas. Quitar el radio (o arrastrar el widget a 0) devuelve la esquina viva sin pérdida.

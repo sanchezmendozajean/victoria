@@ -72,6 +72,11 @@ Se construye por etapas, cada una con su commit y sus pruebas: **11.1** colocar 
 - Preferencias, espacios de trabajo de paneles, pantalla de inicio, tooltips con atajos, rendimiento, instalador firmado (si aplica), manual breve de usuario.
 - Se construye por etapas: **12.1** Preferencias · **12.2** espacios de trabajo y pantalla de inicio · **12.3** rendimiento · **12.4** instalador y manual. Los tooltips con nombre y atajo ya existen (Fase 2). El instalador sale **sin firmar** hasta que haya un certificado (ver `docs/instalador.md`).
 
+## Fase 13 — Modo SVG (editar un SVG directamente)
+
+Detalle en «Modo SVG» de `02-modelo-de-documento.md`. Etapas: **13.1** registro `svgCapabilities` y pruebas de ida y vuelta · **13.2** exportador semántico (`structure: 'semantic'`: `<g>`, `<rect>`, `<ellipse>`) y texto vivo: importador de `<text>` con sus atributos y advertencias, y `exportSvg` con `text: 'live'` (con prueba de ida y vuelta y de paridad con el lienzo) · **13.3** documento con origen SVG y Guardar / Guardar como · **13.4** bloqueo con tooltip en menús, barra de herramientas, paneles y atajos · **13.5** avisos, preferencia, casilla «Texto como contornos» y criterio de apertura.
+- Aceptación: un SVG sin advertencias se edita y se guarda en su sitio, texto de punto incluido (sigue siendo `<text>`); uno con `<mask>`, `<filter>`, `<pattern>`, `<textPath>` o texto no soportado se abre como copia `.vict`; ninguna función permitida pierde datos al guardar.
+
 ## Riesgos y mitigación
 
 | Riesgo | Mitigación |
