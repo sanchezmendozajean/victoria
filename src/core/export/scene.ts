@@ -21,9 +21,14 @@ export interface SceneContour {
   closed: boolean;
 }
 
+/** What a path was before it became curves: a live rectangle or ellipse, so a semantic SVG can write `<rect>` / `<ellipse>`. */
+export type ScenePrimitive = { kind: 'rect'; w: number; h: number; radius: number } | { kind: 'ellipse'; w: number; h: number };
+
 export interface ScenePath {
   contours: SceneContour[];
   rule: FillRule;
+  /** Only when the path is exactly that shape, with no modifier applied (local coordinates, rect from (0,0)). */
+  primitive?: ScenePrimitive;
 }
 
 export type RGB = [number, number, number];
@@ -67,6 +72,8 @@ export type SceneOp =
   | { kind: 'image'; hash: string; width: number; height: number }
   | {
       kind: 'group';
+      /** A group or clipping group of the document (not the wrapper of one object): a semantic SVG always writes its `<g>`. */
+      structural?: boolean;
       matrix: Matrix;
       opacity: number;
       blend: BlendMode;
@@ -291,11 +298,29 @@ const effectOf = (effect: AppearanceEffect, opacity: number): SceneEffect => ({
   blur: effect.blur,
 });
 
+/** A live rectangle (equal round corners) or a whole ellipse; anything else is just a path. */
+function primitiveOf(node: Node): ScenePrimitive | null {
+  if (node.type !== 'shape') return null;
+  if (node.shape === 'rect') {
+    const { w, h, radii, cornerType } = node.params;
+    const r = radii[0];
+    if (cornerType !== 'round' || !radii.every((v) => v === r) || r > Math.min(w, h) / 2) return null;
+    return { kind: 'rect', w, h, radius: r };
+  }
+  if (node.shape === 'ellipse') {
+    const { w, h, startAngle, endAngle } = node.params;
+    return endAngle - startAngle === 360 ? { kind: 'ellipse', w, h } : null;
+  }
+  return null;
+}
+
 function geometryOps(node: Node, ctx: Context): SceneOp[] {
   const evaluated: Evaluated | null = evaluateNode(node);
   const shape: NodeGeometry | null = evaluated ? evaluated.paintShape : renderGeometry(node);
   if (!shape) return [];
   const basePath = pathOfSubPaths(shape.subpaths, shape.fillRule);
+  const primitive = evaluated ? null : primitiveOf(node);
+  if (primitive) basePath.primitive = primitive;
   const wholeOutline = evaluated?.strokeOutline ? pathOfSubPaths(evaluated.strokeOutline.subpaths, 'nonzero') : null;
   const shapeOf = (index: number): ItemShape => {
     const own = evaluated?.items.get(index);
@@ -369,7 +394,9 @@ function nodeOps(node: Node, cull: Rect, ctx: Context): SceneOp | null {
       children = geometryOps(node, ctx);
   }
   if (children.length === 0) return null;
-  return group(node.transform, node.opacity, node.blendMode, children, clip);
+  const op = group(node.transform, node.opacity, node.blendMode, children, clip);
+  if (op.kind === 'group' && (node.type === 'clipGroup' || (node.type === 'group' && !isGroupShape(node)))) op.structural = true;
+  return op;
 }
 
 function childOps(children: readonly LayerChild[], cull: Rect, ctx: Context): SceneOp[] {

@@ -54,6 +54,8 @@ export { importPdfPage } from './io/pdf/pdf';
 export * from './io/importDocument';
 export type { PdfHost, PdfPageData, PdfPageImport, PdfTextItem, PdfWarning } from './io/pdf/pdf';
 export type { SvgImport, SvgWarning } from './io/svg/svg';
+export { SVG_BLOCKED, SVG_ROUND_TRIP, svgBlockReason } from './io/svg/capabilities';
+export type { SvgBlockReason, SvgGate, SvgRoundTripFeature } from './io/svg/capabilities';
 export { readEps, EpsFormatError } from './io/eps';
 export type { EpsResult, EpsWarning } from './io/eps';
 export { assertDocument, DocumentFormatError } from './io/validate';

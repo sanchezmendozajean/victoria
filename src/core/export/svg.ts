@@ -13,6 +13,12 @@ export interface SvgOptions {
   minify?: boolean;
   /** Format of each image resource, for the data URI. */
   imageFormats?: Record<string, ImageResource['format']>;
+  /**
+   * 'drawing' (default) writes what is seen: groups without attributes vanish and every shape is a path of curves.
+   * 'semantic' keeps the document's structure: a `<g>` per group, `<rect>`, `<circle>` and `<ellipse>` for live shapes,
+   * and an object's transform, opacity and blend mode on its own element (specs/02 · Modo SVG).
+   */
+  structure?: 'drawing' | 'semantic';
 }
 
 const MIME: Record<ImageResource['format'], string> = { png: 'image/png', jpeg: 'image/jpeg', webp: 'image/webp' };
@@ -108,6 +114,18 @@ export function writeSvg(scene: Scene, images: ImageStore, options: SvgOptions =
     return id;
   };
 
+  const semantic = options.structure === 'semantic';
+
+  /** `<tag geometry` of a path: a primitive in semantic mode, otherwise `<path d`. `d` is forced for clipped strokes. */
+  const shapeOpen = (path: ScenePath, forcePath = false): string => {
+    const p = path.primitive;
+    if (!semantic || !p || forcePath) return `<path d="${pathData(path)}"`;
+    if (p.kind === 'rect') return `<rect width="${num(p.w)}" height="${num(p.h)}"${p.radius > 0 ? ` rx="${num(p.radius)}"` : ''}`;
+    const [cx, cy] = [num(p.w / 2), num(p.h / 2)];
+    return p.w === p.h ? `<circle cx="${cx}" cy="${cy}" r="${num(p.w / 2)}"` : `<ellipse cx="${cx}" cy="${cy}" rx="${num(p.w / 2)}" ry="${num(p.h / 2)}"`;
+  };
+  const fillRule = (path: ScenePath): string => (path.rule === 'evenodd' && !(semantic && path.primitive) ? ' fill-rule="evenodd"' : '');
+
   /** Stroke presentation attributes (everything but the path and the paint of the fill). */
   const strokeAttrs = (op: Extract<SceneOp, { kind: 'stroke' }>, width: number): string => {
     const dash = op.dash && op.dash.length > 0 ? ` stroke-dasharray="${op.dash.map(num).join(' ')}"` : '';
@@ -121,8 +139,7 @@ export function writeSvg(scene: Scene, images: ImageStore, options: SvgOptions =
       const op = ops[i] as SceneOp;
       const next = ops[i + 1];
       if (op.kind === 'fill' && next && next.kind === 'stroke' && next.align === 'center' && next.path === op.path) {
-        const d = pathData(op.path);
-        if (d) emit(depth, `<path d="${d}" ${paintAttr(op.paint, 'fill', op.opacity)}${op.path.rule === 'evenodd' ? ' fill-rule="evenodd"' : ''} ${strokeAttrs(next, next.width)}/>`);
+        if (pathData(op.path)) emit(depth, `${shapeOpen(op.path)} ${paintAttr(op.paint, 'fill', op.opacity)}${fillRule(op.path)} ${strokeAttrs(next, next.width)}/>`);
         i++;
         continue;
       }
@@ -135,7 +152,7 @@ export function writeSvg(scene: Scene, images: ImageStore, options: SvgOptions =
       case 'fill': {
         const d = pathData(op.path);
         if (!d) return;
-        emit(depth, `<path d="${d}" ${paintAttr(op.paint, 'fill', op.opacity)}${op.path.rule === 'evenodd' ? ' fill-rule="evenodd"' : ''}/>`);
+        emit(depth, `${shapeOpen(op.path)} ${paintAttr(op.paint, 'fill', op.opacity)}${fillRule(op.path)}/>`);
         return;
       }
       case 'stroke': {
@@ -143,14 +160,14 @@ export function writeSvg(scene: Scene, images: ImageStore, options: SvgOptions =
         if (!d) return;
         const clipped = op.align !== 'center';
         const width = clipped ? op.width * 2 : op.width;
-        const attrs = `d="${d}" fill="none" ${strokeAttrs(op, width)}`;
+        const attrs = `fill="none" ${strokeAttrs(op, width)}`;
         if (!clipped) {
-          emit(depth, `<path ${attrs}/>`);
+          emit(depth, `${shapeOpen(op.path)} ${attrs}/>`);
           return;
         }
         const clip = op.align === 'inside' ? clipDef(op.path, null, op.path.rule) : clipDef(outsideClipPath(op.path), null, 'evenodd');
         emit(depth, `<g clip-path="url(#${clip})">`);
-        emit(depth + 1, `<path ${attrs}/>`);
+        emit(depth + 1, `${shapeOpen(op.path, true)} ${attrs}/>`);
         emit(depth, '</g>');
         return;
       }
@@ -166,11 +183,22 @@ export function writeSvg(scene: Scene, images: ImageStore, options: SvgOptions =
         if (op.blend !== 'normal') attrs.push(`style="mix-blend-mode:${BLEND_CSS[op.blend] ?? 'normal'}"`);
         if (op.clip) attrs.push(`clip-path="url(#${clipDef(op.clip.path, op.clip.matrix, op.clip.path.rule)})"`);
         if (op.effect) attrs.push(`filter="url(#${filterDef(op.effect)})"`);
-        if (attrs.length === 0) {
+        if (attrs.length === 0 && !(semantic && op.structural)) {
           writeAll(op.children, depth);
           return;
         }
-        emit(depth, `<g ${attrs.join(' ')}>`);
+        // An object that is a single element carries its own transform, opacity and blend mode: no wrapper.
+        if (semantic && !op.structural && !op.clip && !op.effect) {
+          const at = body.length;
+          writeAll(op.children, depth);
+          const line = body[at] ?? '';
+          if (body.length - at === 1 && /^\s*<(path|rect|circle|ellipse) .*\/>$/.test(line)) {
+            body[at] = line.replace(/^(\s*<\w+)/, `$1 ${attrs.join(' ')}`);
+            return;
+          }
+          body.length = at;
+        }
+        emit(depth, attrs.length > 0 ? `<g ${attrs.join(' ')}>` : '<g>');
         writeAll(op.children, depth + 1);
         emit(depth, '</g>');
       }
