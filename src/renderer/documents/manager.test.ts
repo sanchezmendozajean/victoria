@@ -7,11 +7,13 @@ function fakeEnv() {
   const disk = new Map<string, Uint8Array>(); // saved documents by path
   const autosaves = new Map<string, { bytes: Uint8Array; modified: number }>();
   const errors: string[] = [];
+  const requests: SaveRequest[] = [];
   const state = { now: 1_000_000, nextPick: null as OpenedFile | null, savePath: 'C:\\docs\\a.vict' as string | null, close: 'discard' as CloseChoice, pdfFails: false, pdfPages: 2, thumbnail: null as 'png' | 'fails' | null };
 
   const files: FilesPort = {
     openFile: async () => state.nextPick,
     saveFile: async (request: SaveRequest) => {
+      requests.push(request);
       const target = request.path ?? state.savePath;
       if (!target) return null;
       disk.set(target, request.bytes);
@@ -55,7 +57,7 @@ function fakeEnv() {
     ids: sequentialIds('m'),
     clock: () => state.now,
   });
-  return { manager, disk, autosaves, errors, state };
+  return { manager, disk, autosaves, errors, state, requests };
 }
 
 const edit = (m: DocumentManager, name = 'Edited') => {
@@ -116,6 +118,71 @@ describe('DocumentManager', () => {
     expect([space.artboards[0]!.w, space.artboards[0]!.h]).toEqual([120, 80]);
     expect(space.layers[0]!.children).toHaveLength(2);
     expect(errors).toEqual(['import skipped: filter']);
+  });
+
+  describe('SVG mode', () => {
+    const CLEAN = '<svg xmlns="http://www.w3.org/2000/svg" width="120" height="80"><rect width="30" height="30" fill="#ff0000"/><circle cx="60" cy="40" r="10" fill="#0000ff"/></svg>';
+    const open = async (svg: string, path = 'C:/art/logo.svg') => {
+      const env = fakeEnv();
+      env.state.nextPick = { path, bytes: new TextEncoder().encode(svg) };
+      const doc = await env.manager.open();
+      return { ...env, doc: doc! };
+    };
+
+    it('edits a clean SVG in its own file: its path is kept, nothing is reported and it starts saved', async () => {
+      const { doc, errors } = await open(CLEAN);
+      expect(doc.format).toBe('svg');
+      expect(doc.path).toBe('C:/art/logo.svg');
+      expect(doc.session.dirty).toBe(false);
+      expect(errors).toEqual([]);
+      expect(displayName(doc)).toBe('logo.svg');
+    });
+
+    it('Guardar writes an SVG over that file and never a .vict', async () => {
+      const { manager, doc, disk, requests } = await open(CLEAN);
+      edit(manager);
+      expect(await manager.save()).toBe(true);
+      expect(requests.at(-1)).toMatchObject({ path: 'C:/art/logo.svg', format: 'svg' });
+      const text = new TextDecoder().decode(disk.get('C:/art/logo.svg'));
+      expect(text).toContain('<svg');
+      expect(text).toContain('<rect');
+      expect(text).toContain('<circle');
+      expect(doc.session.dirty).toBe(false);
+      expect(doc.format).toBe('svg');
+    });
+
+    it('opens as a copy when something had to be left out: no path, no SVG mode, and a notice', async () => {
+      const { doc, errors } = await open('<svg xmlns="http://www.w3.org/2000/svg" width="50" height="50"><rect width="9" height="9" filter="url(#f)"/></svg>');
+      expect(doc.format).toBe('vict');
+      expect(doc.path).toBeNull();
+      expect(errors).toEqual(['import skipped: filter']);
+    });
+
+    it('Guardar como asks for an SVG file; Guardar como documento Victoria writes the .vict and unlocks everything', async () => {
+      const { manager, doc, disk, requests, state } = await open(CLEAN);
+      await manager.saveAs();
+      expect(requests.at(-1)).toMatchObject({ path: null, format: 'svg' });
+      state.savePath = 'C:/docs/logo.vict';
+      expect(await manager.saveAsVict()).toBe(true);
+      expect(requests.at(-1)?.format).toBeUndefined();
+      expect(doc.format).toBe('vict');
+      expect(doc.path).toBe('C:/docs/logo.vict');
+      expect(() => readVict(disk.get('C:/docs/logo.vict')!)).not.toThrow();
+      // Later saves are .vict saves.
+      edit(manager);
+      await manager.save();
+      expect(requests.at(-1)?.format).toBeUndefined();
+    });
+
+    it('prepares the document (fonts, images) before laying it out for the SVG', async () => {
+      const { manager, requests } = await open(CLEAN);
+      const calls: string[] = [];
+      (manager as unknown as { deps: { prepareSvg?: () => Promise<void> } }).deps.prepareSvg = async () => void calls.push('prepared');
+      edit(manager);
+      await manager.save();
+      expect(calls).toEqual(['prepared']);
+      expect(requests.at(-1)?.format).toBe('svg');
+    });
   });
 
   it('refuses a damaged SVG with a message and opens nothing', async () => {

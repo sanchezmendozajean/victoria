@@ -288,7 +288,7 @@ describe('SVG mode · live text', () => {
   });
 
   it('refuses what it cannot keep: the importer warns so the file is not edited in place', () => {
-    const doc = (body: string) => importSvg(`<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">${body}</svg>`, sequentialIds('w')).warnings.filter((w) => w.code === 'text').map((w) => w.detail);
+    const doc = (body: string) => importSvg(`<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">${body}</svg>`, sequentialIds('w')).warnings.filter((w) => w.code === 'text-layout').map((w) => w.detail);
     expect(doc('<text x="0" y="10" rotate="10 20">ab</text>')).toEqual(['rotate']);
     expect(doc('<text x="0" y="10" dx="5">ab</text>')).toEqual(['dx']);
     expect(doc('<text x="0 5 10" y="10">abc</text>')).toEqual(['position-list']);

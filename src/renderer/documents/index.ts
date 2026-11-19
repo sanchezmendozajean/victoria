@@ -29,6 +29,7 @@ async function thumbnailOf(session: DocumentSession): Promise<Uint8Array | null>
 
 export const manager = new DocumentManager({
   thumbnail: thumbnailOf,
+  prepareSvg: async (session) => prepareAssets(getActiveSpace(session.document), session.images),
   autosaveIntervalMs: () => getPreferences().autosaveMinutes * 60_000,
   files: {
     openFile: (labels) => window.victoria.openFile(labels),
@@ -67,12 +68,14 @@ export const manager = new DocumentManager({
     epsSkipped: (items) => t('doc.epsSkipped', { items }),
     epsItem: (code) => t(`doc.epsItem.${code}` as TranslationKey),
     importSkipped: (items) => t('doc.importSkipped', { items }),
+    svgOpenedAsCopy: (items) => t('doc.svgOpenedAsCopy', { items }),
     brokenLinks: (count) => t('image.brokenLinks', { count }),
     importItem: (code) => t(`import.warn.${code}` as TranslationKey),
     copyOf: (name) => t('doc.copyOf', { name }),
     saveFailed: t('doc.saveFailed'),
     openLabels: { title: t('doc.openTitle'), filterName: t('doc.fileDialog'), importFilterName: t('doc.epsDialog') },
     saveLabels: { title: t('doc.saveTitle'), filterName: t('doc.fileDialog') },
+    saveSvgLabels: { title: t('doc.saveSvgTitle'), filterName: t('doc.svgFileDialog') },
   },
   pdf: {
     read: async (bytes, ids) => {

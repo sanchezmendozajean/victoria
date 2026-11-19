@@ -117,7 +117,7 @@ function isLabels(v: unknown): v is DialogLabels {
   return typeof labels.title === 'string' && typeof labels.filterName === 'string';
 }
 
-const withExtension = (file: string) => (path.extname(file).toLowerCase() === `.${EXTENSION}` ? file : `${file}.${EXTENSION}`);
+const withExtension = (file: string, ext: string = EXTENSION) => (path.extname(file).toLowerCase() === `.${ext}` ? file : `${file}.${ext}`);
 
 export async function openFile(win: BrowserWindow, labels: unknown): Promise<OpenedFile | null> {
   if (!isLabels(labels)) throw new Error('Invalid dialog labels');
@@ -179,18 +179,20 @@ export async function saveFile(win: BrowserWindow, request: SaveRequest): Promis
   if (!request || !isLabels(request.labels) || typeof request.suggestedName !== 'string' || !(request.bytes instanceof Uint8Array)) {
     throw new Error('Invalid save request');
   }
+  if (request.format !== undefined && request.format !== 'vict' && request.format !== 'svg') throw new Error('Invalid save request');
+  const ext = request.format ?? EXTENSION;
   let target = request.path !== null && granted.has(request.path) ? request.path : null;
   if (!target) {
-    const safeName = path.basename(request.suggestedName) || `Documento.${EXTENSION}`;
+    const safeName = path.basename(request.suggestedName) || `Documento.${ext}`;
     // A document that already has a file starts in its own folder; a new one in the last folder used.
     const own = request.path && path.isAbsolute(request.path) ? await existingDir(path.dirname(request.path), '') : '';
     const result = await dialog.showSaveDialog(win, {
       title: request.labels.title,
-      defaultPath: path.join(own || (await startDir(app.getPath('documents'))), withExtension(safeName)),
-      filters: [{ name: request.labels.filterName, extensions: [EXTENSION] }],
+      defaultPath: path.join(own || (await startDir(app.getPath('documents'))), withExtension(safeName, ext)),
+      filters: [{ name: request.labels.filterName, extensions: [ext] }],
     });
     if (result.canceled || !result.filePath) return null;
-    target = withExtension(result.filePath);
+    target = withExtension(result.filePath, ext);
     granted.add(target);
   }
   await writeFileAtomic(target, request.bytes);

@@ -59,6 +59,8 @@ export interface SaveRequest {
   suggestedName: string;
   bytes: Uint8Array;
   labels: DialogLabels;
+  /** File type to write: a Victoria document (default) or an SVG that replaces the file it was opened from. */
+  format?: 'vict' | 'svg';
 }
 
 export interface SaveResult {

@@ -32,7 +32,7 @@ import { parseXml, textContent, XmlError, type XmlElement } from './xml';
 // clip paths, embedded images and simple text. What it cannot represent is listed in `warnings` instead of failing.
 
 export interface SvgWarning {
-  code: 'text-path' | 'text' | 'mask' | 'filter' | 'pattern' | 'external-image' | 'svg-image' | 'selector' | 'path' | 'element' | 'gradient' | 'clip' | 'use' | 'size';
+  code: 'text-path' | 'text-layout' | 'mask' | 'filter' | 'pattern' | 'external-image' | 'svg-image' | 'selector' | 'path' | 'element' | 'gradient' | 'clip' | 'use' | 'size';
   detail?: string;
 }
 
@@ -478,7 +478,7 @@ function textNode(el: XmlElement, style: Style, ctx: Context, transform: Matrix)
   const first = (v: string | undefined, ref: number, s: Style): number | null => {
     if (v === undefined) return null;
     const parts = v.trim().split(/[\s,]+/).filter((p) => p.length > 0);
-    if (parts.length > 1) warn(ctx, 'text', 'position-list');
+    if (parts.length > 1) warn(ctx, 'text-layout', 'position-list');
     return parts[0] === undefined ? null : toUserUnits(parts[0], ref, s.fontSize);
   };
   const styleOf = (s: Style): TextStyle => {
@@ -493,7 +493,7 @@ function textNode(el: XmlElement, style: Style, ctx: Context, transform: Matrix)
     return out;
   };
   const checkAttrs = (node: XmlElement) => {
-    for (const name of TEXT_UNSUPPORTED) if (node.attrs[name] !== undefined && !(name === 'dx' && Number.parseFloat(node.attrs[name] ?? '') === 0)) warn(ctx, 'text', name);
+    for (const name of TEXT_UNSUPPORTED) if (node.attrs[name] !== undefined && !(name === 'dx' && Number.parseFloat(node.attrs[name] ?? '') === 0)) warn(ctx, 'text-layout', name);
   };
   checkAttrs(el);
   const x0 = first(el.attrs.x, vw, style) ?? 0;
@@ -525,11 +525,11 @@ function textNode(el: XmlElement, style: Style, ctx: Context, transform: Matrix)
         const y = ny ?? line.y + (dy ?? 0);
         const x = nx ?? line.x;
         if (nx === null && ny === null) {
-          warn(ctx, 'text', 'dy'); // a baseline shift, not a new line
+          warn(ctx, 'text-layout', 'dy'); // a baseline shift, not a new line
         } else if (line.runs.length === 0 && lines.length === 1) {
           Object.assign(line, { x, y, anchor: cs.textAnchor, tail: styleOf(cs) });
         } else if (Math.abs(y - line.y) < 1e-6) {
-          if (Math.abs(x - line.x) > 1e-6) warn(ctx, 'text', 'x');
+          if (Math.abs(x - line.x) > 1e-6) warn(ctx, 'text-layout', 'x');
         } else {
           lines.push({ x, y, anchor: cs.textAnchor, runs: [], tail: styleOf(cs) });
         }
@@ -554,11 +554,11 @@ function textNode(el: XmlElement, style: Style, ctx: Context, transform: Matrix)
     if (prev) {
       const pitch = line.y - prev.y;
       const size = Math.max(prev.tail.size, ...prev.runs.map((r) => r.style.size));
-      if (!(pitch > 0)) warn(ctx, 'text', 'line-order');
+      if (!(pitch > 0)) warn(ctx, 'text-layout', 'line-order');
       else if (Math.abs(pitch - size * AUTO_LEADING) > 1e-3) for (const r of prev.runs) r.style.leading = pitch;
     }
     if (i < lines.length - 1) story.push({ text: '\n', style: { ...(line.runs[line.runs.length - 1]?.style ?? line.tail) } });
-    if (Math.abs(line.x - x0) > 1e-3) warn(ctx, 'text', 'line-offset');
+    if (Math.abs(line.x - x0) > 1e-3) warn(ctx, 'text-layout', 'line-offset');
   });
   const node = createText(ctx.ids, { kind: 'point' }, story);
   node.transform = multiply(transform, translation(x0, y0));

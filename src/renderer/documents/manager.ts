@@ -8,6 +8,8 @@ import {
   documentFromDrawings,
   brokenLinks,
   hashesToEmbed,
+  canEditSvgInPlace,
+  writeDocumentSvg,
   imageNodes,
   sniffImage,
   importSvg,
@@ -65,6 +67,8 @@ export interface Names {
   epsItem(code: EpsWarning['code']): string;
   /** Notice after importing an SVG or PDF: what was left out (already joined). */
   importSkipped?(items: string): string;
+  /** Same, for an SVG that could not be edited in its own file and opened as a copy. */
+  svgOpenedAsCopy?(items: string): string;
   brokenLinks?(count: number): string;
   importItem?(code: string): string;
   /** Suggested file name of a copy ("Cartel copia"). */
@@ -72,6 +76,8 @@ export interface Names {
   saveFailed: string;
   openLabels: DialogLabels;
   saveLabels: DialogLabels;
+  /** Labels of the dialog that saves an SVG; defaults to `saveLabels`. */
+  saveSvgLabels?: DialogLabels;
 }
 
 export interface ManagerDeps {
@@ -83,6 +89,8 @@ export interface ManagerDeps {
   prompts: Prompts;
   names: Names;
   appVersion: string;
+  /** Loads what writing the document as SVG needs (the fonts of its text, its images) before it is laid out. */
+  prepareSvg?(session: DocumentSession): Promise<void>;
   /** Opens PDF files; without it a PDF cannot be opened. */
   pdf?: PdfReader;
   ids?: IdGenerator;
@@ -94,8 +102,10 @@ export interface OpenDocument {
   /** Stable key of the tab and of its autosave file (not the document's own meta.id). */
   id: string;
   session: DocumentSession;
-  /** Absolute path of the .vict, or null while the document has never been saved. */
+  /** Absolute path of its file (the .vict, or the .svg it edits), or null while the document has never been saved. */
   path: string | null;
+  /** 'svg' while the document edits an SVG in its own file (specs/02 · Modo SVG); Guardar then writes SVG. */
+  format: 'vict' | 'svg';
   policy: AutosavePolicy;
   /** True while an autosave file exists for this document. */
   hasAutosave: boolean;
@@ -159,11 +169,12 @@ export class DocumentManager {
 
   // ── Creating and opening ──
 
-  private adopt(session: DocumentSession, path: string | null, autosaveId = this.ids(), hasAutosave = false): OpenDocument {
+  private adopt(session: DocumentSession, path: string | null, autosaveId = this.ids(), hasAutosave = false, format: OpenDocument['format'] = 'vict'): OpenDocument {
     const doc: OpenDocument = {
       id: autosaveId,
       session,
       path,
+      format,
       policy: new AutosavePolicy(session.revision, this.clock()),
       hasAutosave,
     };
@@ -307,7 +318,7 @@ export class DocumentManager {
   }
 
   /** Imported drawings open as a new, unsaved document; what had to be left out is reported afterwards. */
-  private async adoptDrawings(picked: { path: string }, drawings: ImportedDrawing[], warningCodes: string[]): Promise<OpenDocument> {
+  private async adoptDrawings(picked: { path: string }, drawings: ImportedDrawing[], warningCodes: string[], inPlace = false, notice?: (items: string) => string): Promise<OpenDocument> {
     const { names } = this.deps;
     const { document, images } = documentFromDrawings(
       drawings,
@@ -315,16 +326,21 @@ export class DocumentManager {
       this.ids,
       new Date(this.clock()).toISOString(),
     );
-    const opened = this.adopt(new DocumentSession(document, { ids: this.ids, images }), null);
+    const session = new DocumentSession(document, { ids: this.ids, images });
+    const opened = inPlace ? this.adopt(session, picked.path, this.ids(), false, 'svg') : this.adopt(session, null);
     const skipped = [...new Set(warningCodes.map((code) => names.importItem?.(code) ?? code))];
-    if (skipped.length > 0 && names.importSkipped) await this.deps.prompts.reportError(names.importSkipped(skipped.join(', ')));
+    const say = notice ?? names.importSkipped;
+    if (skipped.length > 0 && say) await this.deps.prompts.reportError(say(skipped.join(', ')));
     return opened;
   }
 
-  /** An SVG opens as a document with one artboard of the size of the drawing. */
+  /**
+   * An SVG opens as a document with one artboard of the size of the drawing. When nothing had to be left out it is edited in
+   * its own file (Guardar writes the SVG); otherwise it opens as a new, unsaved document and the file is not touched.
+   */
   private async importSvgFile(picked: { path: string; bytes: Uint8Array }): Promise<OpenDocument> {
     const result = importSvg(picked.bytes, this.ids);
-    return this.adoptDrawings(picked, [result], result.warnings.map((w) => w.code));
+    return this.adoptDrawings(picked, [result], result.warnings.map((w) => w.code), canEditSvgInPlace(result), this.deps.names.svgOpenedAsCopy);
   }
 
   /** A PDF opens as a document with a Space for every page (up to the limit of the reader). */
@@ -370,16 +386,49 @@ export class DocumentManager {
     try {
       // The preview is decoration: a document that cannot be drawn is still saved.
       const thumbnail = await this.deps.thumbnail?.(doc.session).catch(() => null);
-      const bytes = this.serialize(doc, thumbnail);
+      const svg = doc.format === 'svg';
+      const bytes = svg ? await this.serializeSvg(doc) : this.serialize(doc, thumbnail);
       const result = await files.saveFile({
         path: forceDialog ? null : doc.path,
-        suggestedName: displayName(doc),
+        suggestedName: svg && !doc.path ? `${doc.session.document.meta.name}.svg` : displayName(doc),
         bytes,
-        labels: names.saveLabels,
+        labels: svg ? (names.saveSvgLabels ?? names.saveLabels) : names.saveLabels,
+        ...(svg ? { format: 'svg' as const } : {}),
       });
       if (!result) return false;
       doc.path = result.path;
       doc.session.markSaved(); // emits → UI refresh
+      doc.policy.markSaved(doc.session.revision, this.clock());
+      await this.dropAutosave(doc);
+      this.changed();
+      return true;
+    } catch (error) {
+      await this.deps.prompts.reportError(`${names.saveFailed} ${error instanceof Error ? error.message : ''}`.trim());
+      return false;
+    }
+  }
+
+  /** The SVG that replaces the file of an SVG document. */
+  private async serializeSvg(doc: OpenDocument): Promise<Uint8Array> {
+    await this.deps.prepareSvg?.(doc.session);
+    return new TextEncoder().encode(writeDocumentSvg(doc.session.document, doc.session.images).svg);
+  }
+
+  /**
+   * Archivo › Guardar como documento Victoria…: writes the full .vict and turns the document into one, with every feature
+   * unlocked. The SVG it came from is left as it was. For a document that is already a .vict it is just Guardar como.
+   */
+  async saveAsVict(id = this.activeId_): Promise<boolean> {
+    const doc = this.docs_.find((d) => d.id === id);
+    if (!doc) return false;
+    if (doc.format === 'vict') return this.saveAs(id);
+    const { files, names } = this.deps;
+    try {
+      const result = await files.saveFile({ path: null, suggestedName: `${doc.session.document.meta.name}.vict`, bytes: this.serialize(doc), labels: names.saveLabels });
+      if (!result) return false;
+      doc.path = result.path;
+      doc.format = 'vict';
+      doc.session.markSaved();
       doc.policy.markSaved(doc.session.revision, this.clock());
       await this.dropAutosave(doc);
       this.changed();
