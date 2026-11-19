@@ -9,7 +9,8 @@ import { colorBetween, sortStops } from '../model/gradient';
 import { colorToRgb } from '../model/color';
 import { IDENTITY, invert, isIdentity, translation } from '../model/matrix';
 import { isLayer } from '../model/queries';
-import type { Appearance, BlendMode, Layer, LayerChild, Matrix, Node, Paint, Resources, Space, StrokeStyle, Vec2 } from '../model/types';
+import type { Appearance, BlendMode, Layer, LayerChild, Matrix, Node, Paint, Resources, Space, StrokeStyle, TextNode, TextStyle, Vec2 } from '../model/types';
+import { textGeometry } from '../text/geometry';
 
 // The scene is what an export draws: the evaluated geometry of every visible object, already resolved into
 // plain fills, strokes, images and groups. SVG and PDF writers read the same scene, so they cannot disagree
@@ -54,7 +55,16 @@ export interface SceneEffect {
   blur: number;
 }
 
+/** One line of live text: its baseline, how it is anchored at x = 0 and its pieces, each with its own style. */
+export interface SceneTextLine {
+  y: number;
+  anchor: 'start' | 'middle' | 'end';
+  spans: { text: string; style: TextStyle }[];
+}
+
 export type SceneOp =
+  /** Live point text (only when `SceneOptions.liveText` is set and the object can be written as text). */
+  | { kind: 'text'; lines: SceneTextLine[]; paint: ScenePaint; opacity: number }
   | { kind: 'fill'; path: ScenePath; paint: ScenePaint; opacity: number }
   | {
       kind: 'stroke';
@@ -180,6 +190,7 @@ function paintOf(paint: Paint, resources: Resources): ScenePaint | null {
 
 interface Context {
   resources: Resources;
+  liveText: boolean;
 }
 
 const group = (matrix: Matrix, opacity: number, blend: BlendMode, children: SceneOp[], clip: { path: ScenePath; matrix: Matrix } | null = null, effect: SceneEffect | null = null): SceneOp => ({
@@ -314,7 +325,52 @@ function primitiveOf(node: Node): ScenePrimitive | null {
   return null;
 }
 
+/** Style keys a live `<text>` can hold. The rest only count when they are at their neutral value. */
+const LIVE_STYLE_KEYS = new Set(['fontFamily', 'fontStyle', 'size', 'leading', 'tracking', 'underline', 'strikethrough', 'language']);
+const NEUTRAL_STYLE_VALUES: Record<string, unknown> = { kerning: 'auto', hScale: 100, vScale: 100, baselineShift: 0, charRotation: 0, caps: false, smallCaps: false, superscript: false, subscript: false };
+const LIVE_FONT_STYLES = new Set(['Regular', 'Bold', 'Italic', 'Bold Italic']);
+
+export function isLiveTextStyle(style: TextStyle): boolean {
+  if (!LIVE_FONT_STYLES.has(style.fontStyle)) return false;
+  for (const [key, value] of Object.entries(style)) {
+    if (value === undefined || LIVE_STYLE_KEYS.has(key)) continue;
+    if (key in NEUTRAL_STYLE_VALUES && value === NEUTRAL_STYLE_VALUES[key]) continue;
+    return false;
+  }
+  return true;
+}
+
+/** The text as `<text>` lines when it is plain point text; null when only outlines can draw it faithfully. */
+function liveTextOp(node: TextNode, ctx: Context): SceneOp | null {
+  const only = node.appearance.items.length === 1 ? node.appearance.items[0] : undefined;
+  if (node.kind !== 'point' || !only || only.kind !== 'fill' || only.modifiers.length > 0 || only.opacity <= 0) return null;
+  const paint = paintOf(only.paint, ctx.resources);
+  if (!paint) return null;
+  const aligns = (node.paragraphs ?? []).map((p) => p?.align ?? 'left');
+  const plainParagraphs = (node.paragraphs ?? []).every((p) => !p || Object.entries(p).every(([k, v]) => v === undefined || (k === 'align' && (v === 'left' || v === 'center' || v === 'right')) || (k === 'hyphenate' && v === false) || ((k === 'indentLeft' || k === 'indentRight' || k === 'indentFirst' || k === 'spaceBefore' || k === 'spaceAfter') && v === 0)));
+  if (!plainParagraphs || !node.story.every((r) => isLiveTextStyle(r.style))) return null;
+  const layout = textGeometry(node).layout;
+  const lines: SceneTextLine[] = [{ y: 0, anchor: 'start', spans: [] }];
+  for (const run of node.story) {
+    run.text.split('\n').forEach((piece, i) => {
+      if (i > 0) lines.push({ y: 0, anchor: 'start', spans: [] });
+      if (piece.length > 0) (lines[lines.length - 1] as SceneTextLine).spans.push({ text: piece, style: run.style });
+    });
+  }
+  if (!layout || layout.lines.length !== lines.length) return null;
+  lines.forEach((line, i) => {
+    line.y = (layout.lines[i] as { y: number }).y;
+    const align = aligns[i] ?? 'left';
+    line.anchor = align === 'center' ? 'middle' : align === 'right' ? 'end' : 'start';
+  });
+  return { kind: 'text', lines, paint, opacity: only.opacity };
+}
+
 function geometryOps(node: Node, ctx: Context): SceneOp[] {
+  if (ctx.liveText && node.type === 'text') {
+    const live = liveTextOp(node, ctx);
+    if (live) return [live];
+  }
   const evaluated: Evaluated | null = evaluateNode(node);
   const shape: NodeGeometry | null = evaluated ? evaluated.paintShape : renderGeometry(node);
   if (!shape) return [];
@@ -420,12 +476,14 @@ export interface SceneOptions {
   /** What to draw, in Space coordinates (an artboard, with its bleed if asked). */
   region: Rect;
   background?: 'transparent' | RGB;
+  /** Point text as live text lines instead of glyph outlines (the SVG mode's way of saving). */
+  liveText?: boolean;
 }
 
 /** Drawing of one rectangle of a Space: the region's top-left corner becomes (0, 0). */
 export function buildScene(space: Space, options: SceneOptions): Scene {
   const { region } = options;
-  const ctx: Context = { resources: options.resources };
+  const ctx: Context = { resources: options.resources, liveText: options.liveText === true };
   const layers: readonly Layer[] = space.layers;
   const ops: SceneOp[] = [];
   for (const layer of layers) {

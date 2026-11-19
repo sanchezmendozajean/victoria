@@ -11,6 +11,7 @@ import {
   createGroup,
   createPath,
   createRect,
+  createText,
   defaultParams,
   defaultStroke,
   DocumentSession,
@@ -18,6 +19,7 @@ import {
   importSvg,
   newModifier,
   sequentialIds,
+  textGeometry,
   setNodeAppearance,
   SVG_BLOCKED,
   SVG_ROUND_TRIP,
@@ -29,6 +31,8 @@ import {
   type Node,
   type PathNode,
   type StrokeStyle,
+  type TextNode,
+  type TextRun,
   type SvgRoundTripFeature,
 } from '../..';
 
@@ -54,7 +58,7 @@ function setup() {
   };
   /** Exports the active space and reads it back. */
   const trip = () => {
-    const scene = buildScene(space(), { resources: session.document.resources, region: { minX: 0, minY: 0, maxX: 300, maxY: 200 } });
+    const scene = buildScene(space(), { resources: session.document.resources, region: { minX: 0, minY: 0, maxX: 300, maxY: 200 }, liveText: true });
     const { svg } = writeSvg(scene, session.images, { structure: 'semantic' });
     return { svg, back: importSvg(svg, sequentialIds('b')) };
   };
@@ -71,7 +75,34 @@ const first = (nodes: Node[]) => leaf(nodes[0]!);
 const items = (n: Node) => n.appearance.items;
 const A = (x: number, y: number, extra: Partial<Anchor> = {}): Anchor => ({ p: { x, y }, in: null, out: null, kind: 'corner', ...extra });
 
+const run = (text: string, patch: Partial<TextRun['style']> = {}): TextRun => ({ text, style: { fontFamily: 'Open Sans', fontStyle: 'Regular', size: 12, ...patch } });
+
 const CASES: Record<SvgRoundTripFeature, () => void> = {
+  'text.point': () => {
+    const s = setup();
+    const t = createText(s.ids, { kind: 'point' }, [run('Hola ', { tracking: 50, underline: true }), run('mundo', { fontStyle: 'Bold Italic', tracking: 50, underline: true }), run('\n'), run('segunda línea', { size: 12, leading: 20 }), run('\n'), run('tercera')]);
+    t.transform = [1, 0, 0, 1, 30, 50];
+    t.paragraphs = [{ align: 'center' }, { align: 'center' }, { align: 'center' }];
+    s.add(t);
+    const { svg, back } = s.trip();
+    expect(svg).toMatch(/<text transform="matrix\(1 0 0 1 30 50\)" xml:space="preserve"/);
+    expect(svg).not.toContain('<path');
+    const out = first(back.nodes) as TextNode;
+    expect(out.type).toBe('text');
+    expect(out.kind).toBe('point');
+    expect(out.story.map((r) => r.text).join('')).toBe('Hola mundo\nsegunda línea\ntercera');
+    expect(out.story[0]!.style).toMatchObject({ fontFamily: 'Open Sans', fontStyle: 'Regular', size: 12, underline: true });
+    expect(out.story[0]!.style.tracking).toBeCloseTo(50, 2);
+    expect(out.story[1]!.style).toMatchObject({ fontStyle: 'Bold Italic' });
+    expect(out.paragraphs?.map((p) => p.align)).toEqual(['center', 'center', 'center']);
+    expect(out.transform).toEqual([1, 0, 0, 1, 30, 50]);
+    // Same line positions after the trip: the layout of the read-back text matches the original.
+    const again = s.trip();
+    expect(again.back.warnings).toEqual([]);
+    const l1 = textGeometry(t).layout!.lines.map((l) => l.y);
+    const l2 = textGeometry(out).layout!.lines.map((l) => l.y);
+    l1.forEach((y, i) => expect(l2[i]).toBeCloseTo(y, 2));
+  },
   'shape.rect': () => {
     const s = setup();
     s.add(createRect(s.ids, 80, 40, 6), fill());
@@ -228,6 +259,43 @@ describe('SVG mode · the default export still writes the drawing', () => {
     s.add(e, fill());
     s.add(r, fill());
     expect(s.trip().svg).not.toMatch(/<(rect|ellipse|circle)/);
+  });
+});
+
+describe('SVG mode · live text', () => {
+  it('stays as outlines when the text uses what <text> cannot hold, and without liveText', () => {
+    const s = setup();
+    s.add(createText(s.ids, { kind: 'point' }, [run('Hola', { hScale: 80 })]));
+    expect(s.trip().svg).not.toContain('<text');
+    const t = setup();
+    t.add(createText(t.ids, { kind: 'point' }, [run('Hola')]));
+    const scene = buildScene(t.space(), { resources: t.session.document.resources, region: { minX: 0, minY: 0, maxX: 100, maxY: 100 } });
+    expect(writeSvg(scene, t.session.images, { structure: 'semantic' }).svg).not.toContain('<text');
+  });
+
+  it('area text, text on a path and non-plain font styles stay outlines', () => {
+    const s = setup();
+    s.add(createText(s.ids, { kind: 'point' }, [run('Light', { fontStyle: 'Light' })]));
+    expect(s.trip().svg).not.toContain('<text');
+  });
+
+  it('escapes markup and keeps the spaces', () => {
+    const s = setup();
+    s.add(createText(s.ids, { kind: 'point' }, [run('a < b & "c"  d')]));
+    const { svg, back } = s.trip();
+    expect(svg).toContain('a &lt; b &amp; "c"  d');
+    expect((first(back.nodes) as TextNode).story.map((r) => r.text).join('')).toBe('a < b & "c"  d');
+  });
+
+  it('refuses what it cannot keep: the importer warns so the file is not edited in place', () => {
+    const doc = (body: string) => importSvg(`<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">${body}</svg>`, sequentialIds('w')).warnings.filter((w) => w.code === 'text').map((w) => w.detail);
+    expect(doc('<text x="0" y="10" rotate="10 20">ab</text>')).toEqual(['rotate']);
+    expect(doc('<text x="0" y="10" dx="5">ab</text>')).toEqual(['dx']);
+    expect(doc('<text x="0 5 10" y="10">abc</text>')).toEqual(['position-list']);
+    expect(doc('<text x="0" y="10">a<tspan dy="-3">b</tspan></text>')).toEqual(['dy']);
+    expect(doc('<text x="0" y="10">a<tspan x="20">b</tspan></text>')).toEqual(['x']);
+    expect(doc('<text x="0" y="10">ab</text>')).toEqual([]);
+    expect(doc('<text x="0" y="10">a<tspan x="0" y="22">b</tspan></text>')).toEqual([]);
   });
 });
 

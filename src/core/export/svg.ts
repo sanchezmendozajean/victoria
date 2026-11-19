@@ -1,5 +1,5 @@
 import type { ImageStore } from '../io/imageStore';
-import type { ImageResource, Matrix } from '../model/types';
+import type { ImageResource, Matrix, TextStyle } from '../model/types';
 import { toBase64 } from './base64';
 import { outsideClipPath, segmentIsStraight, type RGB, type Scene, type SceneEffect, type SceneOp, type ScenePaint, type ScenePath } from './scene';
 
@@ -126,6 +126,42 @@ export function writeSvg(scene: Scene, images: ImageStore, options: SvgOptions =
   };
   const fillRule = (path: ScenePath): string => (path.rule === 'evenodd' && !(semantic && path.primitive) ? ' fill-rule="evenodd"' : '');
 
+  const esc = (t: string): string => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const q = (t: string): string => esc(t).replace(/"/g, '&quot;');
+
+  /** Font attributes of a span; with a base given, only what differs from it (a tspan inherits the rest). */
+  const fontAttrs = (style: TextStyle, base?: TextStyle): string => {
+    const out: string[] = [];
+    const has = (v: boolean | undefined) => v === true;
+    const differs = <T,>(get: (st: TextStyle) => T) => base === undefined || get(style) !== get(base);
+    if (differs((st) => st.fontFamily)) out.push(`font-family="${q(style.fontFamily)}"`);
+    if (differs((st) => st.size)) out.push(`font-size="${num(style.size)}"`);
+    if (differs((st) => st.fontStyle.includes('Bold'))) out.push(`font-weight="${style.fontStyle.includes('Bold') ? 'bold' : 'normal'}"`);
+    if (differs((st) => st.fontStyle.includes('Italic'))) out.push(`font-style="${style.fontStyle.includes('Italic') ? 'italic' : 'normal'}"`);
+    const spacing = (st: TextStyle) => ((st.tracking ?? 0) / 1000) * st.size;
+    if (base === undefined ? spacing(style) !== 0 : spacing(style) !== spacing(base)) out.push(`letter-spacing="${num(spacing(style))}"`);
+    const decoration = (st: TextStyle) => [has(st.underline) ? 'underline' : '', has(st.strikethrough) ? 'line-through' : ''].filter(Boolean).join(' ');
+    if (base === undefined ? decoration(style) !== '' : decoration(style) !== decoration(base)) out.push(`text-decoration="${decoration(style) || 'none'}"`);
+    return out.join(' ');
+  };
+
+  /** Live point text on one line of markup (spaces inside are significant): a `<tspan x y>` per line, in the object's own space. */
+  const textElement = (op: Extract<SceneOp, { kind: 'text' }>): string => {
+    const base = op.lines.flatMap((l) => l.spans)[0]?.style ?? op.lines[0]?.spans[0]?.style;
+    const head = [`xml:space="preserve"`, base ? fontAttrs(base) : '', paintAttr(op.paint, 'fill', op.opacity)].filter((p) => p.length > 0).join(' ');
+    const lines = op.lines.map((line) => {
+      const anchor = line.anchor === 'start' ? '' : ` text-anchor="${line.anchor}"`;
+      const spans = line.spans
+        .map((span) => {
+          const attrs = base ? fontAttrs(span.style, base) : '';
+          return attrs ? `<tspan ${attrs}>${esc(span.text)}</tspan>` : esc(span.text);
+        })
+        .join('');
+      return `<tspan x="0" y="${num(line.y)}"${anchor}>${spans}</tspan>`;
+    });
+    return `<text ${head}>${lines.join('')}</text>`;
+  };
+
   /** Stroke presentation attributes (everything but the path and the paint of the fill). */
   const strokeAttrs = (op: Extract<SceneOp, { kind: 'stroke' }>, width: number): string => {
     const dash = op.dash && op.dash.length > 0 ? ` stroke-dasharray="${op.dash.map(num).join(' ')}"` : '';
@@ -171,6 +207,10 @@ export function writeSvg(scene: Scene, images: ImageStore, options: SvgOptions =
         emit(depth, '</g>');
         return;
       }
+      case 'text': {
+        emit(depth, textElement(op));
+        return;
+      }
       case 'image': {
         const id = imageDef(op.hash);
         if (id) emit(depth, `<use href="#${id}" width="${num(op.width)}" height="${num(op.height)}"/>`);
@@ -192,7 +232,7 @@ export function writeSvg(scene: Scene, images: ImageStore, options: SvgOptions =
           const at = body.length;
           writeAll(op.children, depth);
           const line = body[at] ?? '';
-          if (body.length - at === 1 && /^\s*<(path|rect|circle|ellipse) .*\/>$/.test(line)) {
+          if (body.length - at === 1 && /^\s*<(path|rect|circle|ellipse) .*\/>$|^\s*<text .*<\/text>$/.test(line)) {
             body[at] = line.replace(/^(\s*<\w+)/, `$1 ${attrs.join(' ')}`);
             return;
           }

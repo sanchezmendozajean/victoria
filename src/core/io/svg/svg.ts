@@ -9,6 +9,7 @@ import { IDENTITY, multiply, scaling, translation } from '../../model/matrix';
 import type { Anchor, Appearance, AppearanceItem, BlendMode, Gradient, GradientStop, ImageResource, Matrix, Node, Paint, ParagraphStyle, StrokeStyle, TextRun, TextStyle } from '../../model/types';
 import { hashBytes } from '../imageStore';
 import { sniffImage } from '../imageInfo';
+import { AUTO_LEADING } from '../../text/layout';
 import { parsePathData, type PathContour } from './pathData';
 import {
   isPhysicalUnit,
@@ -31,7 +32,7 @@ import { parseXml, textContent, XmlError, type XmlElement } from './xml';
 // clip paths, embedded images and simple text. What it cannot represent is listed in `warnings` instead of failing.
 
 export interface SvgWarning {
-  code: 'text-path' | 'mask' | 'filter' | 'pattern' | 'external-image' | 'svg-image' | 'selector' | 'path' | 'element' | 'gradient' | 'clip' | 'use' | 'size';
+  code: 'text-path' | 'text' | 'mask' | 'filter' | 'pattern' | 'external-image' | 'svg-image' | 'selector' | 'path' | 'element' | 'gradient' | 'clip' | 'use' | 'size';
   detail?: string;
 }
 
@@ -75,6 +76,10 @@ interface Style {
   bold: boolean;
   italic: boolean;
   textAnchor: 'start' | 'middle' | 'end';
+  /** In user units (0 = normal). */
+  letterSpacing: number;
+  underline: boolean;
+  strike: boolean;
 }
 
 const ROOT_STYLE: Style = {
@@ -94,12 +99,15 @@ const ROOT_STYLE: Style = {
   bold: false,
   italic: false,
   textAnchor: 'start',
+  letterSpacing: 0,
+  underline: false,
+  strike: false,
 };
 
 /** Properties that take part in the cascade (presentation attributes, CSS and `style=""`). */
 const PROPERTIES = new Set([
   'fill', 'fill-opacity', 'fill-rule', 'stroke', 'stroke-opacity', 'stroke-width', 'stroke-linecap', 'stroke-linejoin', 'stroke-miterlimit', 'stroke-dasharray',
-  'color', 'font-family', 'font-size', 'font-weight', 'font-style', 'text-anchor', 'opacity', 'display', 'visibility', 'clip-path', 'mix-blend-mode', 'stop-color', 'stop-opacity', 'mask', 'filter',
+  'color', 'font-family', 'font-size', 'font-weight', 'font-style', 'text-anchor', 'letter-spacing', 'text-decoration', 'opacity', 'display', 'visibility', 'clip-path', 'mix-blend-mode', 'stop-color', 'stop-opacity', 'mask', 'filter',
 ]);
 
 interface Context {
@@ -181,6 +189,11 @@ function computeStyle(parent: Style, d: Record<string, string>, ctx: Context): S
   if (d['font-family'] !== undefined) style.fontFamily = d['font-family'];
   if (d['font-weight'] !== undefined) style.bold = d['font-weight'] === 'bold' || d['font-weight'] === 'bolder' || Number.parseInt(d['font-weight'], 10) >= 600;
   if (d['font-style'] !== undefined) style.italic = d['font-style'] === 'italic' || d['font-style'] === 'oblique';
+  if (d['letter-spacing'] !== undefined) style.letterSpacing = d['letter-spacing'] === 'normal' ? 0 : (toUserUnits(d['letter-spacing'], style.fontSize, style.fontSize) ?? style.letterSpacing);
+  if (d['text-decoration'] !== undefined) {
+    style.underline = /\bunderline\b/.test(d['text-decoration']);
+    style.strike = /\bline-through\b/.test(d['text-decoration']);
+  }
   if (d['text-anchor'] === 'middle' || d['text-anchor'] === 'end' || d['text-anchor'] === 'start') style.textAnchor = d['text-anchor'];
   return style;
 }
@@ -448,23 +461,52 @@ function blendOf(value: string | undefined): BlendMode {
   return value === 'multiply' || value === 'screen' || value === 'overlay' || value === 'darken' || value === 'lighten' ? value : 'normal';
 }
 
+/** Attributes that move single characters: a live text object cannot hold them, so the file is not edited in place. */
+const TEXT_UNSUPPORTED = ['rotate', 'textLength', 'lengthAdjust', 'dx', 'writing-mode', 'baseline-shift'];
+
+interface TextLine {
+  x: number;
+  y: number;
+  anchor: Style['textAnchor'];
+  runs: TextRun[];
+  /** Style the line's newline takes (an empty line has no run of its own). */
+  tail: TextStyle;
+}
+
 function textNode(el: XmlElement, style: Style, ctx: Context, transform: Matrix): Node | null {
   const { w: vw, h: vh } = ctx.viewport;
-  const x = toUserUnits(el.attrs.x?.split(/[\s,]+/)[0], vw, style.fontSize) ?? 0;
-  const y = toUserUnits(el.attrs.y?.split(/[\s,]+/)[0], vh, style.fontSize) ?? 0;
-  const runs: TextRun[] = [];
-  const styleOf = (s: Style): TextStyle => ({
-    fontFamily: (s.fontFamily.split(',')[0] ?? 'sans-serif').trim().replace(/^['"]|['"]$/g, ''),
-    fontStyle: s.bold && s.italic ? 'Bold Italic' : s.bold ? 'Bold' : s.italic ? 'Italic' : 'Regular',
-    size: s.fontSize,
-  });
-  let first = true;
-  const walk = (node: XmlElement, s: Style) => {
+  const first = (v: string | undefined, ref: number, s: Style): number | null => {
+    if (v === undefined) return null;
+    const parts = v.trim().split(/[\s,]+/).filter((p) => p.length > 0);
+    if (parts.length > 1) warn(ctx, 'text', 'position-list');
+    return parts[0] === undefined ? null : toUserUnits(parts[0], ref, s.fontSize);
+  };
+  const styleOf = (s: Style): TextStyle => {
+    const out: TextStyle = {
+      fontFamily: (s.fontFamily.split(',')[0] ?? 'sans-serif').trim().replace(/^['"]|['"]$/g, ''),
+      fontStyle: s.bold && s.italic ? 'Bold Italic' : s.bold ? 'Bold' : s.italic ? 'Italic' : 'Regular',
+      size: s.fontSize,
+    };
+    if (s.letterSpacing !== 0 && s.fontSize > 0) out.tracking = (s.letterSpacing / s.fontSize) * 1000;
+    if (s.underline) out.underline = true;
+    if (s.strike) out.strikethrough = true;
+    return out;
+  };
+  const checkAttrs = (node: XmlElement) => {
+    for (const name of TEXT_UNSUPPORTED) if (node.attrs[name] !== undefined && !(name === 'dx' && Number.parseFloat(node.attrs[name] ?? '') === 0)) warn(ctx, 'text', name);
+  };
+  checkAttrs(el);
+  const x0 = first(el.attrs.x, vw, style) ?? 0;
+  const y0 = first(el.attrs.y, vh, style) ?? 0;
+  const lines: TextLine[] = [{ x: x0, y: y0, anchor: style.textAnchor, runs: [], tail: styleOf(style) }];
+  const current = () => lines[lines.length - 1] as TextLine;
+  const walk = (node: XmlElement, s: Style, preserve: boolean) => {
     for (const child of node.children) {
       if (typeof child === 'string') {
-        const text = child.replace(/\s+/g, ' ');
-        if (text.trim().length > 0 || (runs.length > 0 && text.length > 0)) runs.push({ text: first ? text.replace(/^ /, '') : text, style: styleOf(s) });
-        if (text.trim().length > 0) first = false;
+        const text = preserve ? child.replace(/[\r\n\t]/g, ' ') : child.replace(/\s+/g, ' ');
+        const line = current();
+        if (text.length === 0 || (!preserve && text.trim().length === 0 && line.runs.length === 0)) continue;
+        line.runs.push({ text: !preserve && line.runs.length === 0 ? text.replace(/^ /, '') : text, style: styleOf(s) });
         continue;
       }
       const tag = localName(child.name);
@@ -473,20 +515,54 @@ function textNode(el: XmlElement, style: Style, ctx: Context, transform: Matrix)
         continue;
       }
       if (tag !== 'tspan') continue;
-      if ((child.attrs.x !== undefined || child.attrs.y !== undefined) && runs.length > 0) runs.push({ text: '\n', style: styleOf(s) });
-      walk(child, computeStyle(s, declaredStyle(child, ctx), ctx));
+      const cs = computeStyle(s, declaredStyle(child, ctx), ctx);
+      checkAttrs(child);
+      const nx = first(child.attrs.x, vw, cs);
+      const ny = first(child.attrs.y, vh, cs);
+      const dy = first(child.attrs.dy, vh, cs);
+      const line = current();
+      if (nx !== null || ny !== null || dy !== null) {
+        const y = ny ?? line.y + (dy ?? 0);
+        const x = nx ?? line.x;
+        if (nx === null && ny === null) {
+          warn(ctx, 'text', 'dy'); // a baseline shift, not a new line
+        } else if (line.runs.length === 0 && lines.length === 1) {
+          Object.assign(line, { x, y, anchor: cs.textAnchor, tail: styleOf(cs) });
+        } else if (Math.abs(y - line.y) < 1e-6) {
+          if (Math.abs(x - line.x) > 1e-6) warn(ctx, 'text', 'x');
+        } else {
+          lines.push({ x, y, anchor: cs.textAnchor, runs: [], tail: styleOf(cs) });
+        }
+      }
+      walk(child, cs, preserve || child.attrs['xml:space'] === 'preserve');
     }
   };
-  walk(el, style);
-  const last = runs[runs.length - 1];
-  if (last) last.text = last.text.replace(/ $/, '');
-  if (runs.every((r) => r.text.trim().length === 0)) return null;
-  const node = createText(ctx.ids, { kind: 'point' }, runs);
-  node.transform = multiply(transform, translation(x, y));
-  if (style.textAnchor !== 'start') {
-    const align: ParagraphStyle['align'] = style.textAnchor === 'middle' ? 'center' : 'right';
-    node.paragraphs = [{ align }];
+  walk(el, style, el.attrs['xml:space'] === 'preserve');
+
+  const preserved = el.attrs['xml:space'] === 'preserve';
+  if (!preserved) for (const line of lines) {
+    const last = line.runs[line.runs.length - 1];
+    if (last) last.text = last.text.replace(/ $/, '');
   }
+  if (lines.every((l) => l.runs.every((r) => r.text.trim().length === 0))) return null;
+
+  // One paragraph per line: its text, then a newline. Line spacing is the distance between baselines.
+  const story: TextRun[] = [];
+  lines.forEach((line, i) => {
+    story.push(...line.runs.filter((r) => r.text.length > 0));
+    const prev = lines[i - 1];
+    if (prev) {
+      const pitch = line.y - prev.y;
+      const size = Math.max(prev.tail.size, ...prev.runs.map((r) => r.style.size));
+      if (!(pitch > 0)) warn(ctx, 'text', 'line-order');
+      else if (Math.abs(pitch - size * AUTO_LEADING) > 1e-3) for (const r of prev.runs) r.style.leading = pitch;
+    }
+    if (i < lines.length - 1) story.push({ text: '\n', style: { ...(line.runs[line.runs.length - 1]?.style ?? line.tail) } });
+    if (Math.abs(line.x - x0) > 1e-3) warn(ctx, 'text', 'line-offset');
+  });
+  const node = createText(ctx.ids, { kind: 'point' }, story);
+  node.transform = multiply(transform, translation(x0, y0));
+  if (lines.some((l) => l.anchor !== 'start')) node.paragraphs = lines.map((l) => ({ align: (l.anchor === 'middle' ? 'center' : l.anchor === 'end' ? 'right' : 'left') as ParagraphStyle['align'] }));
   return node;
 }
 

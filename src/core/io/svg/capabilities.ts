@@ -46,6 +46,7 @@ export const SVG_ROUND_TRIP = [
   'shape.rect',
   'shape.ellipse',
   'path',
+  'text.point',
   'compound',
   'group',
   'clip-group',
