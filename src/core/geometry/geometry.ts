@@ -100,10 +100,10 @@ export function geometryBounds(geometry: NodeGeometry): Rect | null {
 }
 
 export const strokesOf = (appearance: Appearance): StrokeStyle[] =>
-  appearance.items.flatMap((i) => (i.kind === 'stroke' && i.paint.type !== 'none' && i.opacity > 0 ? [i.stroke] : []));
+  appearance.items.flatMap((i) => (i.kind === 'stroke' && i.visible !== false && i.paint.type !== 'none' && i.opacity > 0 ? [i.stroke] : []));
 
 export const hasFill = (appearance: Appearance): boolean =>
-  appearance.items.some((i) => i.kind === 'fill' && i.paint.type !== 'none' && i.opacity > 0);
+  appearance.items.some((i) => i.kind === 'fill' && i.visible !== false && i.paint.type !== 'none' && i.opacity > 0);
 
 /** Conservative growth of the bounds caused by strokes (miter joins can reach `miterLimit` × half width). */
 function strokeInflation(appearance: Appearance): number {

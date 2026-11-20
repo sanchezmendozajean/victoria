@@ -76,8 +76,11 @@ Rectángulo, Rectángulo redondeado, Elipse (tamaño absoluto o relativo). Estru
 | Sombra paralela | modo, opacidad, X, Y, desenfoque, color | No | 1 |
 | Resplandor exterior | modo, color, opacidad, desenfoque | No | 1 |
 | Resplandor interior | modo, color, opacidad, desenfoque, centro/borde | No | 2 |
+| Desenfoque gaussiano | radio | No | 1 |
 | Desvanecer (Feather) | radio | No | 2 |
 | Añadir puntas de flecha | (heredado; preferir panel Trazo) | No | — |
+
+El **Desenfoque gaussiano** es el único desenfoque propio: un solo parámetro (radio en pt; σ = radio / 2, igual que el desenfoque de la sombra). Desenfoca el propio objeto (o solo el relleno/trazo en el que se coloque), no una sombra. No hay variantes artísticas (movimiento, radial, etc.): ver «Qué NO hacer» en `CLAUDE.md`. Al «Aplicar modificadores» se pierde (no hay desenfoque en geometría vectorial) y el objeto queda nítido; en PDF no se aplica y el objeto se dibuja nítido con un aviso.
 
 Los de apariencia se renderizan con `ctx.filter`/`shadowBlur` en Canvas y como `<filter>` en SVG; en PDF se rasterizan a 300 ppp.
 

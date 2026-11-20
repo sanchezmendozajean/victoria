@@ -27,7 +27,9 @@ export type ParamField =
 /** How an appearance modifier changes the way the object is painted. */
 export type AppearanceEffect =
   | { type: 'shadow'; color: Color; opacity: number; dx: number; dy: number; blur: number }
-  | { type: 'glow'; color: Color; opacity: number; blur: number };
+  | { type: 'glow'; color: Color; opacity: number; blur: number }
+  /** Gaussian blur of the object itself (radius in pt: the blur reaches about that far, as in the shadow's `blur`). */
+  | { type: 'blur'; blur: number };
 
 export interface ModifierContext {
   /** Bounds of the geometry being modified. */

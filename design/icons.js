@@ -252,6 +252,7 @@
       ['outer-glow', 'custom', R(7, 7, 10, 10, 2) + R(3, 3, 18, 18, 5, 'stroke-dasharray="1.5 2.5"')],
       ['inner-glow', 'custom', R(3, 3, 18, 18, 3) + R(7, 7, 10, 10, 2, 'stroke-dasharray="1.5 2.5"')],
       ['feather', 'custom', C(12, 12, 5) + C(12, 12, 9, 'stroke-dasharray="1 2.5"')],
+      ['blur', 'custom', C(12, 12, 3) + C(12, 12, 6.5, 'stroke-dasharray="1.5 2"') + C(12, 12, 10, 'stroke-dasharray="0.5 3" opacity=".6"')],
       ['convert-rect', 'custom', C(12, 12, 9, D) + R(6, 6, 12, 12)],
       ['convert-rounded', 'custom', R(3, 3, 18, 18, 0, D) + R(6, 6, 12, 12, 4)],
       ['convert-ellipse', 'custom', R(3, 3, 18, 18, 0, D) + `<ellipse cx="12" cy="12" rx="7" ry="6"/>`],

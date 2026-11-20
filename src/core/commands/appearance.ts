@@ -39,6 +39,15 @@ function ensureItem(appearance: Draft<Appearance>, kind: Target): DraftPaintItem
   return primary(appearance, kind) as DraftPaintItem;
 }
 
+/** The fill or stroke to edit: the first of a kind, or the item at a position of the appearance list. */
+function pickItem(appearance: Draft<Appearance>, target: Target | number): DraftPaintItem | undefined {
+  if (typeof target === 'number') {
+    const item = appearance.items[target];
+    return item && item.kind !== 'modifier' ? (item as DraftPaintItem) : undefined;
+  }
+  return primary(appearance, target);
+}
+
 const mergeKeyOf = (label: string, key?: string) => (key ? { mergeKey: `${label}:${key}` } : {});
 
 /** Sets the fill or stroke paint of the selected objects (Relleno y color, Muestras, barra de herramientas). */
@@ -158,7 +167,7 @@ export interface GradientPaintInit {
  * Gives the selected objects a gradient fill or stroke. The gradient resource is added to the document
  * (one per call: objects that receive it together share it).
  */
-export const applyGradient = (spaceId: string, ids: readonly string[], target: Target, init: GradientPaintInit, transforms?: ReadonlyMap<string, Matrix>, mergeKey?: string): Command => ({
+export const applyGradient = (spaceId: string, ids: readonly string[], target: Target | number, init: GradientPaintInit, transforms?: ReadonlyMap<string, Matrix>, mergeKey?: string): Command => ({
   label: target === 'fill' ? 'appearance.fill' : 'appearance.stroke',
   spaceId,
   ...mergeKeyOf('appearance.gradient', mergeKey),
@@ -167,14 +176,14 @@ export const applyGradient = (spaceId: string, ids: readonly string[], target: T
     if (!space) return;
     if (!d.resources.gradients.some((g) => g.id === init.gradient.id)) d.resources.gradients.push(deepClone(init.gradient) as Draft<Gradient>);
     for (const node of targetsOf(space, ids)) {
-      const item = ensureItem(node.appearance, target);
+      const item = (typeof target === 'number' ? pickItem(node.appearance, target) : undefined) ?? ensureItem(node.appearance, typeof target === 'number' ? 'fill' : target);
       item.paint = { type: init.type, gradientId: init.gradient.id, transform: [...(transforms?.get(node.id) ?? init.transform)] as Matrix } as Draft<Paint>;
     }
   },
 });
 
 /** Replaces the transform (direction, length, aspect) of the selected objects' gradient paints. */
-export const setGradientTransform = (spaceId: string, ids: readonly string[], target: Target, transforms: ReadonlyMap<string, Matrix>, type?: 'linear' | 'radial', mergeKey?: string): Command => ({
+export const setGradientTransform = (spaceId: string, ids: readonly string[], target: Target | number, transforms: ReadonlyMap<string, Matrix>, type?: 'linear' | 'radial', mergeKey?: string): Command => ({
   label: 'appearance.gradient',
   spaceId,
   ...mergeKeyOf('appearance.gradient', mergeKey),
@@ -182,7 +191,7 @@ export const setGradientTransform = (spaceId: string, ids: readonly string[], ta
     const space = findSpace(d, spaceId);
     if (!space) return;
     for (const node of targetsOf(space, ids)) {
-      const item = primary(node.appearance, target);
+      const item = pickItem(node.appearance, target);
       const transform = transforms.get(node.id);
       if (!item || !transform || (item.paint.type !== 'linear' && item.paint.type !== 'radial')) continue;
       item.paint.transform = [...transform] as Matrix as Draft<Matrix>;
@@ -195,7 +204,7 @@ export const setGradientTransform = (spaceId: string, ids: readonly string[], ta
  * Edits the gradient the selected objects use. A gradient shared with objects outside the edit is
  * copied first (so duplicating an object never links their gradients).
  */
-export const editGradients = (spaceId: string, ids: readonly string[], target: Target, mutate: (gradient: Draft<Gradient>) => void, newId: () => string, mergeKey?: string): Command => ({
+export const editGradients = (spaceId: string, ids: readonly string[], target: Target | number, mutate: (gradient: Draft<Gradient>) => void, newId: () => string, mergeKey?: string): Command => ({
   label: 'appearance.gradient',
   spaceId,
   ...mergeKeyOf('appearance.gradient', mergeKey),
@@ -204,7 +213,7 @@ export const editGradients = (spaceId: string, ids: readonly string[], target: T
     if (!space) return;
     const mine = new Map<string, Draft<Paint>[]>();
     for (const node of targetsOf(space, ids)) {
-      const item = primary(node.appearance, target);
+      const item = pickItem(node.appearance, target);
       if (item && (item.paint.type === 'linear' || item.paint.type === 'radial')) {
         const list = mine.get(item.paint.gradientId) ?? [];
         list.push(item.paint);
@@ -331,7 +340,7 @@ export const duplicateAppearanceItem = (spaceId: string, id: string, index: numb
 });
 
 /** Edits one fill or stroke of an object by its position in the list (panel Apariencia): its paint and/or stroke weight. */
-export const setPaintItem = (spaceId: string, id: string, index: number, patch: { paint?: Paint; width?: number }, mergeKey?: string): Command => ({
+export const setPaintItem = (spaceId: string, id: string, index: number, patch: { paint?: Paint; width?: number; visible?: boolean }, mergeKey?: string): Command => ({
   label: 'appearance.item',
   spaceId,
   ...mergeKeyOf('appearance.item', mergeKey ? `${id}:${index}:${mergeKey}` : undefined),
@@ -342,5 +351,6 @@ export const setPaintItem = (spaceId: string, id: string, index: number, patch: 
     if (!item || item.kind === 'modifier') return;
     if (patch.paint) item.paint = deepClone(patch.paint) as Draft<Paint>;
     if (patch.width !== undefined && item.kind === 'stroke') item.stroke.width = Math.max(0, patch.width);
+    if (patch.visible !== undefined) item.visible = patch.visible;
   },
 });

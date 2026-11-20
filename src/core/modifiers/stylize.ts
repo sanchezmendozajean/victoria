@@ -42,3 +42,15 @@ export const outerGlow: ModifierDef = {
     return { effect: { type: 'glow', color: color(params, 'color', { model: 'rgb', values: [255, 224, 102] }), opacity: num(params, 'opacity', 75) / 100, blur: Math.max(0, num(params, 'blur', 8)) } };
   },
 };
+
+export const blur: ModifierDef = {
+  id: 'blur',
+  icon: 'blur',
+  category: 'stylize',
+  affectsGeometry: false,
+  defaults: { radius: 5 },
+  schema: [{ type: 'number', key: 'radius', unit: 'length', min: 0, step: 1, decimals: 2, slider: true }],
+  apply(_input, params) {
+    return { effect: { type: 'blur', blur: Math.max(0, num(params, 'radius', 5)) } };
+  },
+};

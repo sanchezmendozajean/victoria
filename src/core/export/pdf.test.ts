@@ -195,6 +195,16 @@ describe('PDF export', () => {
     expect(await pageContent(bytes)).toContain('1 0 0 rg');
   });
 
+  it('draws a blurred object sharp, with a warning', async () => {
+    const s = setup();
+    const r = s.add(createRect(s.ids, 50, 50));
+    s.look(r.id, fillRed());
+    s.session.run(addModifier(s.space().id, [{ nodeId: r.id, mod: newModifier(s.ids, 'blur', { radius: 6 }) }]));
+    const { bytes, warnings } = await s.pdf();
+    expect(warnings.map((w) => w.code)).toEqual(['effects-unsupported']);
+    expect(await pageContent(bytes)).toContain('1 0 0 rg');
+  });
+
   it('paints the background behind everything', async () => {
     const s = setup();
     const r = s.add(createRect(s.ids, 10, 10));

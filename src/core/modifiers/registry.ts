@@ -1,7 +1,7 @@
 import type { ShapeOp } from '../geometry/booleans';
 import { puckerBloat, roughen, roundCorners, transformModifier, zigzag } from './distort';
 import { offsetPath, outlineStroke } from './offset';
-import { dropShadow, outerGlow } from './stylize';
+import { blur, dropShadow, outerGlow } from './stylize';
 import type { ModifierDef, Params } from './types';
 import { warpArc, warpFlag, warpInflate, warpWave } from './warp';
 
@@ -37,6 +37,7 @@ const DEFS: readonly ModifierDef[] = [
   warpInflate,
   dropShadow,
   outerGlow,
+  blur,
 ];
 
 const byId = new Map(DEFS.map((d) => [d.id, d]));

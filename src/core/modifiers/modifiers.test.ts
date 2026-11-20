@@ -41,7 +41,7 @@ function run(id: string, params: Params = {}, input: Geometry = square, c: Modif
 describe('modifier registry', () => {
   it('lists the v1 catalog with a schema and defaults for every entry', () => {
     const ids = listModifiers().map((m) => m.id);
-    for (const id of ['offset-path', 'outline-stroke', 'pf-unite', 'pf-minus-front', 'pf-intersect', 'pf-exclude', 'round-corners', 'zigzag', 'pucker-bloat', 'roughen', 'transform', 'warp-arc', 'warp-flag', 'warp-wave', 'warp-inflate', 'drop-shadow', 'outer-glow']) {
+    for (const id of ['offset-path', 'outline-stroke', 'pf-unite', 'pf-minus-front', 'pf-intersect', 'pf-exclude', 'round-corners', 'zigzag', 'pucker-bloat', 'roughen', 'transform', 'warp-arc', 'warp-flag', 'warp-wave', 'warp-inflate', 'drop-shadow', 'outer-glow', 'blur']) {
       expect(ids).toContain(id);
     }
     for (const def of listModifiers()) {
@@ -50,7 +50,7 @@ describe('modifier registry', () => {
   });
 
   it('only the appearance modifiers leave the geometry alone', () => {
-    expect(listModifiers().filter((m) => !m.affectsGeometry).map((m) => m.id)).toEqual(['drop-shadow', 'outer-glow']);
+    expect(listModifiers().filter((m) => !m.affectsGeometry).map((m) => m.id)).toEqual(['drop-shadow', 'outer-glow', 'blur']);
   });
 });
 
@@ -157,6 +157,8 @@ describe('appearance modifiers', () => {
     expect(s.effect).toMatchObject({ type: 'shadow', dx: 3, dy: 4, blur: 6, opacity: 0.5 });
     expect(s.effect && 'color' in s.effect && s.effect.color.values).toEqual([255, 0, 0]);
     expect(run('outer-glow', { blur: 12 }).effect).toMatchObject({ type: 'glow', blur: 12 });
+    expect(run('blur', { radius: 7 }).effect).toEqual({ type: 'blur', blur: 7 });
+    expect(run('blur', { radius: -3 }).effect).toEqual({ type: 'blur', blur: 0 });
   });
 });
 

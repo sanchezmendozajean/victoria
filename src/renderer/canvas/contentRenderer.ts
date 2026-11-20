@@ -367,6 +367,25 @@ function paintStroke(env: Env, path: Path2D, rule: CanvasFillRule, stroke: Strok
   }
 }
 
+type CastEffect = Exclude<AppearanceEffect, { type: 'blur' }>;
+const isCast = (e: AppearanceEffect): e is CastEffect => e.type !== 'blur';
+
+/** Runs `draw` through a Gaussian blur (`radius` in pt, σ = radius / 2 as in the SVG export) when there is one. */
+function withBlur(env: Env, effects: readonly AppearanceEffect[], draw: () => void): void {
+  const radius = effects.reduce((m, e) => (e.type === 'blur' ? Math.max(m, e.blur) : m), 0);
+  if (radius <= 0) {
+    draw();
+    return;
+  }
+  const { ctx } = env;
+  const t = ctx.getTransform();
+  const scale = Math.sqrt(Math.abs(t.a * t.d - t.b * t.c)) || 1;
+  ctx.save();
+  ctx.filter = `blur(${(radius * scale) / 2}px)`;
+  draw();
+  ctx.restore();
+}
+
 /** Far enough off screen that only the shadow of a shape drawn there lands on the canvas. */
 const OFFSCREEN = 100000;
 
@@ -374,7 +393,7 @@ const OFFSCREEN = 100000;
  * Shadows and glows are drawn under what they belong to. Its silhouette (`draw`) is cast from outside the
  * canvas, so only the shadow shows; the shadow follows the fills and strokes that `draw` paints.
  */
-function paintEffects(env: Env, effects: readonly AppearanceEffect[], alpha: number, draw: () => void): void {
+function paintEffects(env: Env, effects: readonly CastEffect[], alpha: number, draw: () => void): void {
   const { ctx } = env;
   const t = ctx.getTransform();
   const scale = Math.sqrt(Math.abs(t.a * t.d - t.b * t.c)) || 1;
@@ -398,7 +417,7 @@ function paintEffects(env: Env, effects: readonly AppearanceEffect[], alpha: num
 /** A fill or stroke as a solid silhouette (what a shadow is cast from). */
 function paintSilhouette(env: Env, item: Extract<Appearance['items'][number], { kind: 'fill' | 'stroke' }>, path: Path2D, rule: CanvasFillRule, outline: Path2D | null): void {
   const { ctx } = env;
-  if (item.paint.type === 'none' || item.opacity <= 0) return;
+  if (item.paint.type === 'none' || item.opacity <= 0 || item.visible === false) return;
   if (item.kind === 'fill') ctx.fill(path, rule);
   else if (outline) ctx.fill(outline, 'nonzero');
   else {
@@ -425,37 +444,43 @@ function paintAppearance(env: Env, path: Path2D, rule: CanvasFillRule, appearanc
     };
   };
   // Effects of the object as a whole come first, cast by every fill and stroke together.
-  if (evaluated && evaluated.effects.length > 0) {
-    paintEffects(env, evaluated.effects, alpha, () => {
-      appearance.items.forEach((item, index) => {
-        if (item.kind === 'modifier') return;
-        const sh = shapeOf(index);
-        paintSilhouette(env, item, sh.path, sh.rule, sh.outline);
+  const casts = evaluated?.effects.filter(isCast) ?? [];
+  withBlur(env, evaluated?.effects ?? [], () => {
+    if (casts.length > 0) {
+      paintEffects(env, casts, alpha, () => {
+        appearance.items.forEach((item, index) => {
+          if (item.kind === 'modifier') return;
+          const sh = shapeOf(index);
+          paintSilhouette(env, item, sh.path, sh.rule, sh.outline);
+        });
+      });
+    }
+    appearance.items.forEach((item, index) => {
+      if (item.kind === 'modifier' || item.opacity <= 0 || item.visible === false) return; // modifiers act through the evaluated geometry and effects
+      const sh = shapeOf(index);
+      withBlur(env, sh.effects, () => {
+        // Effects of this fill or stroke alone are cast by it only.
+        const own = sh.effects.filter(isCast);
+        if (own.length > 0) paintEffects(env, own, alpha * item.opacity, () => paintSilhouette(env, item, sh.path, sh.rule, sh.outline));
+        if (item.kind === 'fill' && (item.paint.type === 'linear' || item.paint.type === 'radial')) {
+          if (fillGradient(env, sh.path, sh.rule, item.paint, alpha * item.opacity)) return;
+        }
+        const style = paintStyle(ctx, item.paint, resources);
+        if (style === null) return;
+        ctx.globalAlpha = alpha * item.opacity;
+        if (item.kind === 'fill') {
+          ctx.fillStyle = style;
+          ctx.fill(sh.path, sh.rule);
+        } else if (sh.outline) {
+          // Outline Stroke: the stroke is a filled contour painted with the stroke's paint.
+          ctx.fillStyle = style;
+          ctx.fill(sh.outline, 'nonzero');
+        } else {
+          ctx.strokeStyle = style;
+          paintStroke(env, sh.path, sh.rule, item.stroke, style, sh.subpaths);
+        }
       });
     });
-  }
-  appearance.items.forEach((item, index) => {
-    if (item.kind === 'modifier' || item.opacity <= 0) return; // modifiers act through the evaluated geometry and effects
-    const sh = shapeOf(index);
-    // Effects of this fill or stroke alone are cast by it only.
-    if (sh.effects.length > 0) paintEffects(env, sh.effects, alpha * item.opacity, () => paintSilhouette(env, item, sh.path, sh.rule, sh.outline));
-    if (item.kind === 'fill' && (item.paint.type === 'linear' || item.paint.type === 'radial')) {
-      if (fillGradient(env, sh.path, sh.rule, item.paint, alpha * item.opacity)) return;
-    }
-    const style = paintStyle(ctx, item.paint, resources);
-    if (style === null) return;
-    ctx.globalAlpha = alpha * item.opacity;
-    if (item.kind === 'fill') {
-      ctx.fillStyle = style;
-      ctx.fill(sh.path, sh.rule);
-    } else if (sh.outline) {
-      // Outline Stroke: the stroke is a filled contour painted with the stroke's paint.
-      ctx.fillStyle = style;
-      ctx.fill(sh.outline, 'nonzero');
-    } else {
-      ctx.strokeStyle = style;
-      paintStroke(env, sh.path, sh.rule, item.stroke, style, sh.subpaths);
-    }
   });
 }
 

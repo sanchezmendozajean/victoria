@@ -70,7 +70,7 @@ type StrokeContext = ModifierContext['stroke'];
 const strokeContext = (stroke: { width: number; cap: 'butt' | 'round' | 'square'; join: 'miter' | 'round' | 'bevel'; miterLimit: number }): StrokeContext => ({ width: stroke.width, cap: stroke.cap, join: stroke.join, miterLimit: stroke.miterLimit });
 
 function firstStroke(node: Node): StrokeContext {
-  for (const item of node.appearance.items) if (item.kind === 'stroke' && item.paint.type !== 'none' && item.opacity > 0) return strokeContext(item.stroke);
+  for (const item of node.appearance.items) if (item.kind === 'stroke' && item.visible !== false && item.paint.type !== 'none' && item.opacity > 0) return strokeContext(item.stroke);
   return null;
 }
 

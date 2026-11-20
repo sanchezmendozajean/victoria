@@ -208,6 +208,7 @@ export const ICONS = {
   "outer-glow": "<rect x=\"7\" y=\"7\" width=\"10\" height=\"10\" rx=\"2\" /><rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"5\" stroke-dasharray=\"1.5 2.5\"/>",
   "inner-glow": "<rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"3\" /><rect x=\"7\" y=\"7\" width=\"10\" height=\"10\" rx=\"2\" stroke-dasharray=\"1.5 2.5\"/>",
   "feather": "<circle cx=\"12\" cy=\"12\" r=\"5\" /><circle cx=\"12\" cy=\"12\" r=\"9\" stroke-dasharray=\"1 2.5\"/>",
+  "blur": "<circle cx=\"12\" cy=\"12\" r=\"3\" /><circle cx=\"12\" cy=\"12\" r=\"6.5\" stroke-dasharray=\"1.5 2\"/><circle cx=\"12\" cy=\"12\" r=\"10\" stroke-dasharray=\"0.5 3\" opacity=\".6\"/>",
   "convert-rect": "<circle cx=\"12\" cy=\"12\" r=\"9\" stroke-dasharray=\"2 2.5\"/><rect x=\"6\" y=\"6\" width=\"12\" height=\"12\" rx=\"0\" />",
   "convert-rounded": "<rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"0\" stroke-dasharray=\"2 2.5\"/><rect x=\"6\" y=\"6\" width=\"12\" height=\"12\" rx=\"4\" />",
   "convert-ellipse": "<rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"0\" stroke-dasharray=\"2 2.5\"/><ellipse cx=\"12\" cy=\"12\" rx=\"7\" ry=\"6\"/>",

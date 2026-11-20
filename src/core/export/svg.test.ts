@@ -19,6 +19,7 @@ import {
   placeImage,
   sequentialIds,
   setNodeAppearance,
+  setPaintItem,
   translation,
   writeSvg,
   type Appearance,
@@ -218,6 +219,26 @@ describe('SVG export', () => {
     const objectAt = svg.indexOf('fill="#ff0000"');
     expect(shadowAt).toBeGreaterThan(-1);
     expect(shadowAt).toBeLessThan(objectAt);
+  });
+
+  it('a hidden fill is not written', () => {
+    const s = setup();
+    const r = s.add(createRect(s.ids, 50, 50));
+    s.look(r.id, fillRed());
+    s.session.run(setPaintItem(s.space().id, r.id, 0, { visible: false }));
+    expect(s.svg().svg).not.toContain('fill="#ff0000"');
+    s.session.run(setPaintItem(s.space().id, r.id, 0, { visible: true }));
+    expect(s.svg().svg).toContain('fill="#ff0000"');
+  });
+
+  it('a blur wraps the object itself in a Gaussian blur filter', () => {
+    const s = setup();
+    const r = s.add(createRect(s.ids, 50, 50));
+    s.look(r.id, fillRed());
+    s.session.run(addModifier(s.space().id, [{ nodeId: r.id, mod: newModifier(s.ids, 'blur', { radius: 8 }) }]));
+    const { svg } = s.svg();
+    expect(svg).toMatch(/<filter id="f\d+"[^>]*><feGaussianBlur stdDeviation="4"\/><\/filter>/);
+    expect(svg.indexOf('filter="url(')).toBeLessThan(svg.indexOf('fill="#ff0000"'));
   });
 
   it('paints the background first and can be written without line breaks', () => {

@@ -90,6 +90,10 @@ export function writeSvg(scene: Scene, images: ImageStore, options: SvgOptions =
 
   const filterDef = (effect: SceneEffect): string => {
     const id = nextId('f');
+    if (effect.type === 'blur') {
+      defs.push(`<filter id="${id}" x="-50%" y="-50%" width="200%" height="200%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="${num(effect.blur / 2)}"/></filter>`);
+      return id;
+    }
     const offset = effect.type === 'shadow' ? `<feOffset dx="${num(effect.dx)}" dy="${num(effect.dy)}" result="o"/>` : '';
     const blurred = `<feGaussianBlur in="SourceAlpha" stdDeviation="${num(effect.blur / 2)}"${offset ? '' : ' result="o"'}/>`;
     defs.push(

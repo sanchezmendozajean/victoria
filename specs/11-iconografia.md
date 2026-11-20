@@ -88,7 +88,7 @@ font `type` · font-style `custom` · font-size `a-large-small` · leading `cust
 
 ### Apariencia y Modificadores
 fx `custom (texto "fx" estilizado)` · mod-structural `custom (rombo de nodo)` · mod-appearance `custom (halo)` · mod-apply `custom (rayo/expandir)` · add-fill · add-stroke · clear-appearance `eraser` · duplicate-item `copy` · delete-item `trash-2` · visibility `eye` / `eye-off`.
-Un ícono propio por modificador: offset-path, outline-stroke, round-corners, zigzag, pucker-bloat, twist, roughen, transform, free-distort, warp-* (uno por estilo), drop-shadow, outer-glow, inner-glow, feather, convert-rect, convert-rounded, convert-ellipse.
+Un ícono propio por modificador: offset-path, outline-stroke, round-corners, zigzag, pucker-bloat, twist, roughen, transform, free-distort, warp-* (uno por estilo), drop-shadow, outer-glow, inner-glow, feather, blur, convert-rect, convert-rounded, convert-ellipse.
 
 ### Capas
 layer-new `custom` · sublayer-new `custom` · clip-mask `custom` · locate-object `locate` · lock `lock` / `lock-open` · target `circle-dot` · delete `trash-2`.

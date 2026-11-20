@@ -59,8 +59,9 @@ export interface ModifierInstance {
 }
 
 export type AppearanceItem =
-  | { kind: 'fill'; paint: Paint; opacity: number; modifiers: ModifierInstance[] }
-  | { kind: 'stroke'; paint: Paint; stroke: StrokeStyle; opacity: number; modifiers: ModifierInstance[] }
+  /** `visible: false` hides the fill or stroke without deleting it (absent = shown). */
+  | { kind: 'fill'; paint: Paint; opacity: number; modifiers: ModifierInstance[]; visible?: boolean }
+  | { kind: 'stroke'; paint: Paint; stroke: StrokeStyle; opacity: number; modifiers: ModifierInstance[]; visible?: boolean }
   | { kind: 'modifier'; mod: ModifierInstance };
 
 export interface Appearance {

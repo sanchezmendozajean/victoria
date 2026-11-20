@@ -218,9 +218,9 @@ async function writeOp(st: PageState, op: SceneOp, carry: Carry): Promise<void> 
     }
     case 'group': {
       if (op.effect) {
-        // PDF has no blur: a shadow or glow is left out (the object itself is still drawn).
+        // PDF has no blur: a shadow or glow is left out (the object itself is still drawn); a blurred object is drawn sharp.
         if (!st.warnings.some((w) => w.code === 'effects-unsupported')) st.warnings.push({ code: 'effects-unsupported' });
-        return;
+        if (op.effect.type !== 'blur') return;
       }
       st.lines.push('q');
       if (op.matrix.some((v, i) => v !== IDENTITY[i])) st.lines.push(`${op.matrix.map(n).join(' ')} cm`);

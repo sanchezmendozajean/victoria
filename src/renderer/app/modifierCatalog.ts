@@ -345,6 +345,13 @@ export const MODIFIER_MENU: readonly ModifierMenuCategory[] = [
         v2: false
       },
       {
+        id: 'blur',
+        label: 'modifier.blur',
+        icon: 'blur',
+        kind: 'appearance',
+        v2: false
+      },
+      {
         id: 'inner-glow',
         label: 'modifier.innerGlow',
         icon: 'inner-glow',

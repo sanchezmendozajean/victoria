@@ -281,7 +281,7 @@ function strokeOps(item: Extract<Item, { kind: 'stroke' }>, paint: ScenePaint, s
 
 /** A fill or stroke as a solid black silhouette: what a shadow is cast from. */
 function silhouetteOps(item: Item, sh: ItemShape): SceneOp[] {
-  if (item.paint.type === 'none' || item.opacity <= 0) return [];
+  if (item.paint.type === 'none' || item.opacity <= 0 || item.visible === false) return [];
   if (item.kind === 'fill') return [{ kind: 'fill', path: sh.path, paint: BLACK, opacity: 1 }];
   if (sh.outline) return [{ kind: 'fill', path: sh.outline, paint: BLACK, opacity: 1 }];
   return [
@@ -300,7 +300,13 @@ function silhouetteOps(item: Item, sh: ItemShape): SceneOp[] {
   ];
 }
 
-const effectOf = (effect: AppearanceEffect, opacity: number): SceneEffect => ({
+type CastEffect = Exclude<AppearanceEffect, { type: 'blur' }>;
+const isCast = (e: AppearanceEffect): e is CastEffect => e.type !== 'blur';
+const blurOf = (effects: readonly AppearanceEffect[]): number => effects.reduce((m, e) => (e.type === 'blur' ? Math.max(m, e.blur) : m), 0);
+const blurGroup = (radius: number, children: SceneOp[]): SceneOp[] =>
+  radius > 0 && children.length > 0 ? [group(IDENTITY, 1, 'normal', children, null, { type: 'blur', rgb: [0, 0, 0], opacity: 1, dx: 0, dy: 0, blur: radius })] : children;
+
+const effectOf = (effect: CastEffect, opacity: number): SceneEffect => ({
   type: effect.type,
   rgb: colorToRgb(effect.color),
   opacity: Math.min(1, Math.max(0, effect.opacity * (effect.color.alpha ?? 1) * opacity)),
@@ -343,7 +349,7 @@ export function isLiveTextStyle(style: TextStyle): boolean {
 /** The text as `<text>` lines when it is plain point text; null when only outlines can draw it faithfully. */
 function liveTextOp(node: TextNode, ctx: Context): SceneOp | null {
   const only = node.appearance.items.length === 1 ? node.appearance.items[0] : undefined;
-  if (node.kind !== 'point' || !only || only.kind !== 'fill' || only.modifiers.length > 0 || only.opacity <= 0) return null;
+  if (node.kind !== 'point' || !only || only.kind !== 'fill' || only.modifiers.length > 0 || only.opacity <= 0 || only.visible === false) return null;
   const paint = paintOf(only.paint, ctx.resources);
   if (!paint) return null;
   const aligns = (node.paragraphs ?? []).map((p) => p?.align ?? 'left');
@@ -391,24 +397,28 @@ function geometryOps(node: Node, ctx: Context): SceneOp[] {
 
   const ops: SceneOp[] = [];
   // Effects of the object as a whole come first, cast by every fill and stroke together.
-  if (evaluated && evaluated.effects.length > 0) {
+  const casts = evaluated?.effects.filter(isCast) ?? [];
+  if (evaluated && casts.length > 0) {
     const silhouette: SceneOp[] = [];
     node.appearance.items.forEach((item, index) => {
       if (item.kind !== 'modifier') silhouette.push(...silhouetteOps(item, shapeOf(index)));
     });
-    for (const effect of evaluated.effects) ops.push(group(IDENTITY, 1, 'normal', silhouette, null, effectOf(effect, 1)));
+    for (const effect of casts) ops.push(group(IDENTITY, 1, 'normal', silhouette, null, effectOf(effect, 1)));
   }
 
   node.appearance.items.forEach((item, index) => {
-    if (item.kind === 'modifier' || item.opacity <= 0) return;
+    if (item.kind === 'modifier' || item.opacity <= 0 || item.visible === false) return;
     const sh = shapeOf(index);
-    for (const effect of sh.effects) ops.push(group(IDENTITY, 1, 'normal', silhouetteOps(item, sh), null, effectOf(effect, item.opacity)));
+    const own: SceneOp[] = [];
+    for (const effect of sh.effects.filter(isCast)) own.push(group(IDENTITY, 1, 'normal', silhouetteOps(item, sh), null, effectOf(effect, item.opacity)));
     const paint = paintOf(item.paint, ctx.resources);
-    if (!paint) return;
-    if (item.kind === 'fill') ops.push({ kind: 'fill', path: sh.path, paint, opacity: item.opacity });
-    else ops.push(...strokeOps(item, paint, sh));
+    if (paint) {
+      if (item.kind === 'fill') own.push({ kind: 'fill', path: sh.path, paint, opacity: item.opacity });
+      else own.push(...strokeOps(item, paint, sh));
+    }
+    ops.push(...blurGroup(blurOf(sh.effects), own));
   });
-  return ops;
+  return blurGroup(blurOf(evaluated?.effects ?? []), ops);
 }
 
 function nodeOps(node: Node, cull: Rect, ctx: Context): SceneOp | null {
