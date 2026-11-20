@@ -90,6 +90,7 @@ export function CanvasArea() {
         paragraphStyle: () => useUi.getState().paragraphStyle,
         pendingTextStyle: () => useUi.getState().pendingTextStyle,
         consumePendingTextStyle: () => useUi.getState().setPendingTextStyle(null),
+        pointTextOnly: () => manager.active?.format === 'svg',
         onTextEditing: (editing) => useUi.getState().setTextEditing(editing),
         onSwitchTool: (tool) => useUi.getState().setActiveTool(tool),
         onTextEditRequest: (request) => useUi.getState().setTextEditRequest(request),

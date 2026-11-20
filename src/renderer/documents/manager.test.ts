@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createImage, getActiveSpace, placeImage, readVict, renameSpace, sequentialIds } from '../../core';
+import { addModifier, createImage, defaultParams, getActiveSpace, newModifier, placeImage, readVict, renameSpace, sequentialIds, type SvgGate } from '../../core';
 import type { AutosaveEntry, OpenedFile, SaveRequest } from '../../shared/ipc';
 import { DocumentManager, displayName, type CloseChoice, type FilesPort } from './manager';
 
@@ -8,6 +8,7 @@ function fakeEnv() {
   const autosaves = new Map<string, { bytes: Uint8Array; modified: number }>();
   const errors: string[] = [];
   const requests: SaveRequest[] = [];
+  const blocked: SvgGate[] = [];
   const state = { now: 1_000_000, nextPick: null as OpenedFile | null, savePath: 'C:\\docs\\a.vict' as string | null, close: 'discard' as CloseChoice, pdfFails: false, pdfPages: 2, thumbnail: null as 'png' | 'fails' | null };
 
   const files: FilesPort = {
@@ -53,11 +54,12 @@ function fakeEnv() {
       if (state.thumbnail === 'fails') throw new Error('cannot draw');
       return state.thumbnail === 'png' ? Uint8Array.from([137, 80, 78, 71]) : null;
     },
+    svgBlocked: (gate) => void blocked.push(gate),
     appVersion: '0.2.0',
     ids: sequentialIds('m'),
     clock: () => state.now,
   });
-  return { manager, disk, autosaves, errors, state, requests };
+  return { manager, disk, autosaves, errors, state, requests, blocked };
 }
 
 const edit = (m: DocumentManager, name = 'Edited') => {
@@ -172,6 +174,31 @@ describe('DocumentManager', () => {
       edit(manager);
       await manager.save();
       expect(requests.at(-1)?.format).toBeUndefined();
+    });
+
+    it('refuses a command that adds what an SVG cannot hold, says why, and leaves the document as it was', async () => {
+      const { manager, doc, blocked } = await open(CLEAN);
+      const space = getActiveSpace(doc.session.document);
+      const node = space.layers[0]!.children[0] as { id: string };
+      const revision = doc.session.revision;
+      const mod = newModifier(sequentialIds('t'), 'drop-shadow', defaultParams('drop-shadow'));
+      expect(doc.session.run(addModifier(space.id, [{ nodeId: node.id, mod }]))).toBe(false);
+      expect(blocked).toEqual(['effect.filter']);
+      expect(doc.session.revision).toBe(revision);
+      expect(doc.session.dirty).toBe(false);
+      edit(manager); // anything an SVG can hold still goes through
+      expect(doc.session.dirty).toBe(true);
+    });
+
+    it('lets everything through once it is a Victoria document', async () => {
+      const { manager, doc, state, blocked } = await open(CLEAN);
+      state.savePath = 'C:/docs/logo.vict';
+      await manager.saveAsVict();
+      const space = getActiveSpace(doc.session.document);
+      const node = space.layers[0]!.children[0] as { id: string };
+      const mod = newModifier(sequentialIds('t'), 'drop-shadow', defaultParams('drop-shadow'));
+      expect(doc.session.run(addModifier(space.id, [{ nodeId: node.id, mod }]))).toBe(true);
+      expect(blocked).toEqual([]);
     });
 
     it('prepares the document (fonts, images) before laying it out for the SVG', async () => {

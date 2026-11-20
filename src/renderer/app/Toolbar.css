@@ -76,6 +76,16 @@
   background: var(--bg-active);
   color: var(--icon-active);
 }
+.vc-toolbar__tool.is-blocked,
+.vc-flyout__item.is-blocked {
+  color: var(--text-disabled);
+  cursor: not-allowed;
+}
+.vc-toolbar__tool.is-blocked:hover,
+.vc-flyout__item.is-blocked:hover {
+  background: transparent;
+  color: var(--text-disabled);
+}
 .vc-toolbar__corner {
   position: absolute;
   right: 3px;

@@ -18,6 +18,8 @@ export interface MenuItem {
   checked?: boolean;
   /** Greyed out and not selectable (e.g. Undo with nothing to undo). */
   disabled?: boolean;
+  /** Shown on hover; used to say why an entry is disabled. */
+  tooltip?: string;
   /** Not available yet; shown as a small tag such as "v2". */
   badge?: string;
   /** Modifier kind chip (structural / appearance). */
@@ -188,6 +190,7 @@ function MenuList({ entries, anchor, onClose, minWidth, depth, onBack }: ListPro
               role="menuitem"
               aria-haspopup={entry.submenu ? 'menu' : undefined}
               aria-checked={entry.checked}
+              {...(entry.tooltip ? { 'data-tip': entry.tooltip } : {})}
               className={cx(
                 'vc-menu__item',
                 entry.danger && 'vc-menu__item--danger',

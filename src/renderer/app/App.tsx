@@ -25,11 +25,13 @@ import { ShapeDialog } from './ShapeDialog';
 import { TransformDialog } from './TransformDialog';
 import { Toolbar } from './Toolbar';
 import { useAppEffects } from './useAppEffects';
+import { useSvgModeWiring } from './svgMode';
 import { useDocumentLifecycle } from './useDocumentLifecycle';
 import './App.css';
 
 export function App() {
   useAppEffects();
+  useSvgModeWiring();
   useDocumentLifecycle();
   const hasDocuments = useDocuments().documents.length > 0;
 

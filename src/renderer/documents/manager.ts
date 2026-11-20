@@ -9,6 +9,7 @@ import {
   brokenLinks,
   hashesToEmbed,
   canEditSvgInPlace,
+  svgGuard,
   writeDocumentSvg,
   imageNodes,
   sniffImage,
@@ -20,6 +21,7 @@ import {
   type EpsWarning,
   type ImportedDrawing,
   type PdfPageImport,
+  type SvgGate,
   type IdGenerator,
   type Selection,
   type Units,
@@ -89,6 +91,8 @@ export interface ManagerDeps {
   prompts: Prompts;
   names: Names;
   appVersion: string;
+  /** Tells the person why an SVG-mode document refused a command (what an SVG file cannot hold). */
+  svgBlocked?(gate: SvgGate): void;
   /** Loads what writing the document as SVG needs (the fonts of its text, its images) before it is laid out. */
   prepareSvg?(session: DocumentSession): Promise<void>;
   /** Opens PDF files; without it a PDF cannot be opened. */
@@ -182,6 +186,7 @@ export class DocumentManager {
       if (session.selection.ids.length > 0) lastSelections.set(session, session.selection);
       this.changed();
     });
+    if (format === 'svg') session.setGuard(svgGuard((gate) => this.deps.svgBlocked?.(gate)));
     this.docs_ = [...this.docs_, doc];
     this.activeId_ = doc.id;
     this.changed();
@@ -428,6 +433,7 @@ export class DocumentManager {
       if (!result) return false;
       doc.path = result.path;
       doc.format = 'vict';
+      doc.session.setGuard(null);
       doc.session.markSaved();
       doc.policy.markSaved(doc.session.revision, this.clock());
       await this.dropAutosave(doc);

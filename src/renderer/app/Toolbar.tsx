@@ -7,6 +7,7 @@ import { tip } from '../components/Tooltip';
 import { t } from '../i18n';
 import { formatAccelerator } from './shortcuts';
 import { currentSlotTool, useUi } from './store';
+import { toolBlockReason, useSvgMode } from './svgMode';
 import { TOOL_SECTIONS, toolAccelerator, type ToolId, type ToolSlot } from './tools';
 import { PaintModes, PaintWidget } from '../panels/PaintWidget';
 import './Toolbar.css';
@@ -27,6 +28,9 @@ export function Toolbar() {
   const twoColumns = useUi((s) => s.toolbarTwoColumns);
   const setActiveTool = useUi((s) => s.setActiveTool);
   const toggleColumns = useUi((s) => s.toggleToolbarColumns);
+  // In SVG mode some tools are unavailable: they stay in place, greyed out, and their tooltip says why.
+  const svgMode = useSvgMode();
+  const blockedBy = (tool: ToolId): string | null => (svgMode ? toolBlockReason(tool) : null);
 
   const [flyout, setFlyout] = useState<FlyoutState | null>(null);
   const holdTimer = useRef<number | undefined>(undefined);
@@ -77,6 +81,7 @@ export function Toolbar() {
       heldOpen.current = false;
       return;
     }
+    if (blockedBy(shown)) return;
     if (altKey && slot.tools.length > 1) {
       // Alt+click rotates through the tools of the group.
       const next = slot.tools[(slot.tools.indexOf(shown) + 1) % slot.tools.length] as ToolId;
@@ -98,16 +103,20 @@ export function Toolbar() {
             const shown = currentSlotTool(slotTool, slot.id);
             const isGroup = slot.tools.length > 1;
             const isActive = slot.tools.includes(activeTool);
-            const display = isActive ? activeTool : shown;
+            const preferred = isActive ? activeTool : shown;
+            // A slot never shows a tool it cannot use while another one of the group is free.
+            const display = blockedBy(preferred) ? (slot.tools.find((tool) => !blockedBy(tool)) ?? preferred) : preferred;
+            const blocked = blockedBy(display);
             const key = keyOf(display);
             return (
               <button
                 key={slot.id}
                 type="button"
-                className={cx('vc-toolbar__tool', isActive && 'is-active')}
+                className={cx('vc-toolbar__tool', isActive && 'is-active', blocked && 'is-blocked')}
                 data-tool={display}
                 aria-pressed={isActive}
-                {...tip(t(`tool.${display}`), key)}
+                aria-disabled={blocked ? true : undefined}
+                {...(blocked ? tip(`${t(`tool.${display}`)}. ${blocked}`) : tip(t(`tool.${display}`), key))}
                 onPointerDown={(event) => onPointerDown(slot, event)}
                 onPointerLeave={() => window.clearTimeout(holdTimer.current)}
                 onClick={(event) => onClick(slot, display, event.altKey)}
@@ -152,11 +161,12 @@ export function Toolbar() {
                 key={tool}
                 type="button"
                 role="menuitem"
-                className={cx('vc-flyout__item', tool === activeTool && 'is-active')}
+                className={cx('vc-flyout__item', tool === activeTool && 'is-active', blockedBy(tool) && 'is-blocked')}
                 data-tool={tool}
-                aria-label={t(`tool.${tool}`)}
-                {...tip(t(`tool.${tool}`), key)}
+                aria-disabled={blockedBy(tool) ? true : undefined}
+                {...(blockedBy(tool) ? tip(`${t(`tool.${tool}`)}. ${blockedBy(tool)}`) : tip(t(`tool.${tool}`), key))}
                 onClick={() => {
+                  if (blockedBy(tool)) return;
                   setActiveTool(tool);
                   setFlyout(null);
                 }}

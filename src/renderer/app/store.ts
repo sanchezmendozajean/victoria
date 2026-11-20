@@ -210,6 +210,8 @@ interface UiState {
   saveWorkspaceAs(name: string): void;
   deleteWorkspace(id: string): void;
   setActiveTool(tool: ToolId): void;
+  /** Set by the SVG mode: a tool that the open document cannot use returns why (null = usable). */
+  toolBlock: ((tool: ToolId) => string | null) | null;
   toggleToolbarColumns(): void;
   openPanel(panel: PanelId): void;
   selectPanelTab(groupId: string, panel: PanelId): void;
@@ -439,7 +441,9 @@ export const useUi = create<UiState>()((set, get) => ({
         : { customWorkspaces, savedLayouts };
     }),
 
+  toolBlock: null,
   setActiveTool: (tool) => {
+    if (get().toolBlock?.(tool)) return;
     const slot = slotOf(tool);
     set((s) => ({
       activeTool: tool,

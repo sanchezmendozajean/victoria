@@ -4,6 +4,7 @@ import { getActiveSpace, type DocumentSession } from '../../core';
 import { prepareAssets, rasterize } from '../export/raster';
 import { t, type TranslationKey } from '../i18n';
 import { getPreferences } from '../prefs/preferences';
+import { showSvgBlocked } from '../app/svgNotice';
 import { DocumentManager, type CloseChoice } from './manager';
 
 /** The one manager of the window; talks to the main process through the typed preload API. */
@@ -29,6 +30,7 @@ async function thumbnailOf(session: DocumentSession): Promise<Uint8Array | null>
 
 export const manager = new DocumentManager({
   thumbnail: thumbnailOf,
+  svgBlocked: showSvgBlocked,
   prepareSvg: async (session) => prepareAssets(getActiveSpace(session.document), session.images),
   autosaveIntervalMs: () => getPreferences().autosaveMinutes * 60_000,
   files: {

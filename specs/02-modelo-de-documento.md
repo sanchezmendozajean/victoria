@@ -199,12 +199,15 @@ Un elemento bloqueado queda con el aspecto de deshabilitado y su tooltip dice **
 
 | Bloqueado | Motivo (resumen) |
 |---|---|
-| Texto de área y texto en trazado; en Carácter y Párrafo: escala horizontal/vertical, rotación de carácter, versalitas, sangrías, espacio antes/después, justificación, guionado | SVG solo guarda texto de punto con los atributos de «Texto vivo» |
-| Modificadores vivos, Mezcla (Objeto › Mezcla), perfiles de ancho y puntas de flecha de trazo, esquinas vivas, Calco de imagen vivo | SVG guarda la geometría final, no el efecto vivo |
-| Sombras y resplandores | Se guardan como `<filter>`, que Victoria no reabre |
+| Texto de área y texto en trazado; en texto de punto: escala horizontal/vertical, rotación de carácter, versalitas, superíndices, sangrías, espaciado de párrafo, justificación, estilos de fuente que no sean Regular/Bold/Italic/Bold Italic, y relleno que no sea uno solo y visible | SVG solo guarda texto de punto con los atributos de «Texto vivo» |
+| Modificadores vivos, Mezcla (Objeto › Mezcla), perfiles de ancho y puntas de flecha de trazo, esquinas vivas (en trazados, polígonos y estrellas, y esquinas desiguales o no redondas de rectángulos), Calco de imagen vivo | SVG guarda la geometría final, no el efecto vivo |
+| Sombras, resplandores y desenfoque | Se guardan como `<filter>`, que Victoria no reabre |
 | Alineación de trazo interior/exterior | Se guarda como recorte, no como trazo |
-| Aspecto con más de un relleno o trazo por objeto | SVG tiene un relleno y un trazo por elemento |
-| Más mesas y Espacios: herramienta Mesa de trabajo, panel Mesas, Espacios | Un SVG es una sola mesa |
+| Aspecto con más de un relleno o trazo, o con el trazo debajo del relleno | SVG tiene un relleno y un trazo por elemento, el trazo encima |
+| Rellenos y trazos ocultos | SVG no puede ocultar sin borrar |
+| Más de una mesa o de un Espacio: herramienta Mesa de trabajo, panel Mesas, Espacios | Un SVG es una sola mesa |
+
+**Cómo se garantiza (implementado en 13.4).** El bloqueo no depende de que cada control se acuerde de desactivarse: `DocumentSession.setGuard` instala en el documento SVG la regla `svgGuard` (basada en `svgViolations`), que **rechaza cualquier comando** que añada una puerta que el documento no tenía. El comando no se registra, el documento no cambia, y la barra de estado muestra el motivo unos segundos. Deshacer y rehacer no se comprueban (solo vuelven a estados ya aceptados). Encima de esa garantía, la interfaz avisa antes: la barra de herramientas muestra desactivadas, con tooltip, las herramientas Texto de área, Texto en trazado y Mesa de trabajo; los menús Modificador (todo él), Objeto › Mezcla › Crear y Texto › Opciones de texto en trazado quedan desactivados con tooltip; la herramienta Texto crea siempre texto de punto (un arrastre no crea área, y no pone texto sobre un trazado). Una cadena «Modo SVG» en la barra de estado lo recuerda. Los controles de paneles (Carácter, Trazo, Apariencia…) no se desactivan uno a uno: si un valor no es posible, el comando se rechaza y se explica el motivo.
 
 La lista es **código**: un solo registro `svgCapabilities` en `core` (id de función → motivo) que consultan menús, barra de herramientas, paneles y atajos, para que no haya dos listas. **Se amplía solo con una prueba** que demuestre que la función hace el viaje de ida y vuelta.
 

@@ -373,7 +373,7 @@ export function createTextTool(id: ToolId, mode: TextToolMode): Tool {
 
       // A path: Area Type / T on a closed path flows text inside it; Type on a Path / T on an open path puts text on it.
       const hit = host.hitTest(event.doc).find((h) => h.node.type === 'path' || h.node.type === 'shape');
-      if (hit && (mode !== 'point' || true)) {
+      if (hit && !host.pointTextOnly?.()) {
         const frame = pathFrameOf(sp, hit.node.id);
         if (frame && (frame.owner.type === 'path' || frame.live)) {
           const closed = frame.path.closed;
@@ -404,7 +404,7 @@ export function createTextTool(id: ToolId, mode: TextToolMode): Tool {
 
     onPointerMove(event, host) {
       pointer = event.doc;
-      if (state.kind === 'create' && dragged(event.screen, state.screen)) {
+      if (state.kind === 'create' && dragged(event.screen, state.screen) && !host.pointTextOnly?.()) {
         const a = state.doc;
         const x0 = Math.min(a.x, event.doc.x);
         const y0 = Math.min(a.y, event.doc.y);

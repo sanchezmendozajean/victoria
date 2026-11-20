@@ -11,6 +11,7 @@ import { useDocuments } from '../documents';
 import { t } from '../i18n';
 import { formatAccelerator, SHORTCUTS } from './shortcuts';
 import { useUi } from './store';
+import { useSvgMode, useSvgNotice } from './svgMode';
 import './StatusBar.css';
 
 const percent = (zoom: number) => `${Math.round(zoom * 10000) / 100}%`.replace('.', ',');
@@ -31,6 +32,8 @@ export function StatusBar() {
   const activeArtboard = useUi((s) => s.activeArtboard);
   const setActiveArtboard = useUi((s) => s.setActiveArtboard);
   const documents = useDocuments();
+  const svgMode = useSvgMode();
+  const notice = useSvgNotice((s) => s.message);
   const session = documents.active?.session;
   const space = session ? getActiveSpace(session.document) : null;
   const units = session?.document.meta.units ?? 'mm';
@@ -140,6 +143,12 @@ export function StatusBar() {
         <Icon id={activeTool} size={14} className="vc-statusbar__icon" />
         {t(`tool.${activeTool}`)}
       </div>
+      {svgMode && (
+        <div className="vc-statusbar__cell" data-testid="status-svg-mode" {...tip(t('svg.modeTip'))}>
+          <Icon id="file" size={14} className="vc-statusbar__icon" />
+          <span>{t('svg.mode')}</span>
+        </div>
+      )}
       <div className="vc-statusbar__cell" data-testid="status-cursor" {...tip(t('status.cursor'))}>
         <Icon id="locate-object" size={14} className="vc-statusbar__icon" />
         <span>
@@ -150,6 +159,12 @@ export function StatusBar() {
         </span>
       </div>
       <div className="vc-statusbar__spacer" />
+      {notice && (
+        <div className="vc-statusbar__cell vc-statusbar__notice" data-testid="status-svg-notice" role="status" {...tip(notice)}>
+          <Icon id="info" size={14} className="vc-statusbar__icon" />
+          <span>{notice}</span>
+        </div>
+      )}
       {busy && (
         <div className="vc-statusbar__cell" data-testid="status-busy" role="status">
           <Icon id="pf-unite" size={14} className="vc-statusbar__icon" />

@@ -92,6 +92,7 @@ export interface CanvasCallbacks {
   paragraphStyle(): ParagraphStyle;
   pendingTextStyle(): Partial<TextStyle> | null;
   consumePendingTextStyle(): void;
+  pointTextOnly?(): boolean;
   onTextEditing(editing: { id: string; from: number; to: number } | null): void;
   onTextInput(state: { active: boolean; at?: Vec2 }): void;
   onSwitchTool(tool: ToolId): void;
@@ -415,6 +416,9 @@ export class CanvasController implements ToolHost, CanvasApi {
   }
   consumePendingTextStyle(): void {
     this.callbacks.consumePendingTextStyle();
+  }
+  pointTextOnly(): boolean {
+    return this.callbacks.pointTextOnly?.() === true;
   }
   reportTextEditing(editing: { id: string; from: number; to: number } | null): void {
     this.callbacks.onTextEditing(editing);

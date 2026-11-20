@@ -14,6 +14,8 @@ import { actionContext, canMakeBlend, canResetBoundingBoxSelection, canUngroup, 
 import { moveToSpaceEntries } from './spaceMenus';
 import { goToSpaceIndex } from '../documents/spaceActions';
 import { manager } from '../documents';
+import { gateReason, isSvgMode } from './svgMode';
+import type { SvgGate } from '../../core';
 
 export interface MenuContext {
   os: OsFamily;
@@ -98,6 +100,9 @@ export function recentEntries(files: readonly RecentFile[]): MenuEntry[] {
   });
 }
 
+/** Menu ids of the modifiers an SVG would save as a filter (it drops those on reading). */
+const FILTER_MODIFIER_IDS = new Set(['drop-shadow', 'outer-glow', 'blur']);
+
 export function buildMenus(ctx: MenuContext): MenuDef[] {
   const keys = (action: ShortcutAction) => formatAccelerator(SHORTCUTS[action], ctx.os);
 
@@ -114,6 +119,11 @@ export function buildMenus(ctx: MenuContext): MenuDef[] {
   const sub = (id: string, label: TranslationKey, icon: IconId, submenu: MenuEntry[]): MenuItem => item(id, label, icon, undefined, { submenu });
 
   const hasSelection = (actionContext()?.ids.length ?? 0) > 0;
+  // In an SVG document an entry that adds what an SVG cannot hold is disabled and says why.
+  const svgOff = (gate: SvgGate): Partial<MenuItem> => {
+    const reason = gateReason(gate);
+    return reason ? { disabled: true, tooltip: reason } : {};
+  };
 
   const file: MenuEntry[] = [
     item('new', 'menu.file.new', 'new', 'file.new'),
@@ -122,6 +132,7 @@ export function buildMenus(ctx: MenuContext): MenuDef[] {
     sep('s1'),
     item('save', 'menu.file.save', 'save', 'file.save'),
     item('save-as', 'menu.file.saveAs', 'save-as', 'file.saveAs'),
+    ...(isSvgMode() ? [item('save-vict', 'menu.file.saveAsVict', 'file', undefined, { onSelect: () => void manager.saveAsVict() })] : []),
     item('save-copy', 'menu.file.saveCopy', 'copy', 'file.saveCopy'),
     sep('s2'),
     item('place', 'menu.file.place', 'place', 'file.place'),
@@ -191,7 +202,7 @@ export function buildMenus(ctx: MenuContext): MenuDef[] {
     item('join', 'menu.object.join', 'join', 'object.join'),
     item('average', 'menu.object.average', 'average', 'object.average'),
     sub('blend', 'menu.object.blend', 'blend-objects', [
-      item('blend-make', 'menu.object.blendMake', 'blend-objects', 'object.blendMake', { disabled: !canMakeBlend() }),
+      item('blend-make', 'menu.object.blendMake', 'blend-objects', 'object.blendMake', { disabled: !canMakeBlend(), ...svgOff('blend.live') }),
       item('blend-release', 'menu.object.blendRelease', 'blend-release', 'object.blendRelease', { disabled: selectedBlends().length === 0 }),
       item('blend-expand', 'menu.object.blendExpand', 'blend-expand', undefined, { onSelect: expandBlendSelection, disabled: selectedBlends().length === 0 }),
       sep('blend-sep'),
@@ -215,7 +226,7 @@ export function buildMenus(ctx: MenuContext): MenuDef[] {
     sep('s1'),
     item('outlines', 'menu.type.createOutlines', 'create-outlines', 'type.createOutlines', { disabled: selectedTextIds().length === 0 }),
     sep('s2'),
-    item('path-options', 'menu.type.pathOptions', 'text-on-path-options', undefined, { disabled: !selectedPathText(), onSelect: () => useUi.getState().setPathTextDialog(true) }),
+    item('path-options', 'menu.type.pathOptions', 'text-on-path-options', undefined, { disabled: !selectedPathText(), onSelect: () => useUi.getState().setPathTextDialog(true), ...svgOff('text.onPath') }),
     item('area-options', 'menu.type.areaOptions', 'area-type-options', undefined, { disabled: true }),
   ];
 
@@ -237,6 +248,7 @@ export function buildMenus(ctx: MenuContext): MenuDef[] {
           badge: entry.v2 ? 'v2' : undefined,
           disabled: entry.v2 || !hasSelection,
           ...(entry.v2 ? {} : { onSelect: () => openModifier(entry.id) }),
+          ...(entry.v2 ? {} : svgOff(FILTER_MODIFIER_IDS.has(entry.id) ? 'effect.filter' : 'modifier.live')),
         }),
       );
     });
@@ -244,8 +256,8 @@ export function buildMenus(ctx: MenuContext): MenuDef[] {
   });
 
   const modifier: MenuEntry[] = [
-    item('apply-last', 'menu.modifier.applyLast', 'mod-apply', 'modifier.applyLast', { disabled: !useUi.getState().lastModifier || !hasSelection }),
-    item('last-dialog', 'menu.modifier.lastDialog', 'fx', 'modifier.lastDialog', { disabled: !useUi.getState().lastModifier || !hasSelection }),
+    item('apply-last', 'menu.modifier.applyLast', 'mod-apply', 'modifier.applyLast', { disabled: !useUi.getState().lastModifier || !hasSelection, ...svgOff('modifier.live') }),
+    item('last-dialog', 'menu.modifier.lastDialog', 'fx', 'modifier.lastDialog', { disabled: !useUi.getState().lastModifier || !hasSelection, ...svgOff('modifier.live') }),
     sep('s1'),
     ...modifierCategories,
     sep('s2'),

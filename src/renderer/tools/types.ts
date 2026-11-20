@@ -87,6 +87,8 @@ export interface ToolHost {
   /** Attributes chosen in the Character panel with a collapsed caret: they apply to the next characters typed. */
   readonly pendingTextStyle: Partial<TextStyle> | null;
   consumePendingTextStyle(): void;
+  /** The document can only hold point text (an SVG being edited in place): no area or on-path text is created. */
+  pointTextOnly?(): boolean;
   /** What the panels need to know about the text being edited (null = not editing). */
   reportTextEditing(editing: { id: string; from: number; to: number } | null): void;
   /** Focuses (or releases) the hidden input that receives typing, accents and IME, placed at `at` (screen px). */

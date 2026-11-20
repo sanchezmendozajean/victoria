@@ -91,3 +91,13 @@
   height: 8px;
   border-radius: 50%;
 }
+
+.vc-statusbar__notice {
+  min-width: 0;
+  max-width: 52%;
+  color: var(--text);
+}
+.vc-statusbar__notice span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
