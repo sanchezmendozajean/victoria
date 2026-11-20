@@ -430,6 +430,12 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
     },
 
     onKey(key, host) {
+      if (key === 'Enter') {
+        // Like Illustrator: Enter on a selection opens the numeric transform dialog.
+        const ids = host.session?.selection.ids ?? [];
+        if (state.kind === 'idle' && ids.length > 0 && !widgets.active && !textWidgets.active) host.openTransformDialog('transform', null);
+        return;
+      }
       if (key !== 'Escape') return;
       if (widgets.active || textWidgets.active) {
         widgets.cancel(host);

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   getActiveSpace,
   isIdentity,
+  multiply,
   reflectAbout,
   rectCenter,
   rotateAbout,
@@ -23,6 +24,7 @@ import '../components/DialogHost.css';
 import './TransformDialog.css';
 import { DialogTitle } from '../components/DialogTitle';
 import { Icon } from '../components/Icon';
+import { CheckRow } from '../panels/kit';
 
 /** Rotar…, Escala…, Reflejar… and Mover… with live preview, Copiar, Cancelar and Aceptar (specs/03 · Rotar, Reflejar, Escala). */
 export function TransformDialog() {
@@ -58,6 +60,9 @@ function TransformForm({ kind, origin, ids }: FormProps) {
   const [dx, setDx] = useState(0);
   const [dy, setDy] = useState(0);
   const [preview, setPreview] = useState(true);
+  const [duplicate, setDuplicate] = useState(false);
+  const [copies, setCopies] = useState(1);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
 
   // The origin is fixed for the lifetime of the dialog: the selection centre unless a tool set one.
   const center = useMemo<Vec2>(() => {
@@ -76,28 +81,44 @@ function TransformForm({ kind, origin, ids }: FormProps) {
         return reflectAbout(axis === 'h' ? 0 : axis === 'v' ? Math.PI / 2 : toRadians(-angle), center);
       case 'move':
         return translation(unitToPt(dx, units), unitToPt(dy, units));
+      case 'transform':
+        // Scale, then rotate (both about the centre), then move.
+        return multiply(translation(unitToPt(dx, units), unitToPt(dy, units)), multiply(rotateAbout(toRadians(-angle), center), scaleAbout(percent / 100, percent / 100, center)));
     }
   }, [kind, angle, uniform, percent, percentH, percentV, axis, dx, dy, center, units]);
 
-  const applied = useRef(false);
+  // Number of provisional history steps the preview has on the document (one per copy when duplicating).
+  const applied = useRef(0);
   const committed = useRef(false);
 
   const dropPreview = () => {
-    if (applied.current) {
+    while (applied.current > 0) {
       session.rollback();
-      applied.current = false;
+      applied.current--;
     }
   };
 
-  // Live preview: every change replaces the previous provisional step.
+  // Duplicar: the originals stay and each copy is the previous one moved by the same step.
+  const applySteps = () => {
+    const space = getActiveSpace(session.document);
+    if (!duplicate) {
+      applyTransform(session, space, ids, matrix, false, nextTransformKey());
+      applied.current = 1;
+      return;
+    }
+    let source = ids;
+    for (let i = 0; i < Math.max(1, Math.round(copies)); i++) {
+      source = applyTransform(session, getActiveSpace(session.document), source, matrix, true, nextTransformKey());
+      applied.current++;
+    }
+  };
+
+  // Live preview: every change replaces the previous provisional steps.
   useEffect(() => {
     dropPreview();
-    if (preview && !isIdentity(matrix)) {
-      applyTransform(session, getActiveSpace(session.document), ids, matrix, false, nextTransformKey());
-      applied.current = true;
-    }
+    if (preview && !isIdentity(matrix)) applySteps();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [matrix, preview]);
+  }, [matrix, preview, duplicate, copies]);
 
   // Closing for any other reason must not leave the preview behind.
   useEffect(
@@ -109,12 +130,9 @@ function TransformForm({ kind, origin, ids }: FormProps) {
   );
 
   const accept = () => {
-    if (!applied.current && !isIdentity(matrix)) {
-      applyTransform(session, getActiveSpace(session.document), ids, matrix, false, nextTransformKey());
-      applied.current = true;
-    }
+    if (applied.current === 0 && !isIdentity(matrix)) applySteps();
     committed.current = true;
-    setLast({ matrix, copy: false });
+    setLast({ matrix, copy: duplicate });
     close();
   };
 
@@ -136,9 +154,22 @@ function TransformForm({ kind, origin, ids }: FormProps) {
   const sizeText = formatLength(1, units);
 
   return (
-    <div className="vc-dialog__backdrop" data-testid="transform-dialog">
+    <div className="vc-dialog__backdrop vc-dialog__backdrop--clear" data-testid="transform-dialog">
       <form
-        className="vc-dialog vc-transform"
+        className="vc-dialog vc-dialog--movable vc-transform"
+        style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }}
+        onPointerDown={(event) => {
+          const target = event.target as HTMLElement;
+          if (!target.closest('.vc-dialog__header') || target.closest('button')) return;
+          const start = { x: event.clientX - offset.x, y: event.clientY - offset.y };
+          const move = (e: PointerEvent) => setOffset({ x: e.clientX - start.x, y: e.clientY - start.y });
+          const up = () => {
+            window.removeEventListener('pointermove', move);
+            window.removeEventListener('pointerup', up);
+          };
+          window.addEventListener('pointermove', move);
+          window.addEventListener('pointerup', up);
+        }}
         role="dialog"
         aria-label={t(`transform.${kind}`)}
         onSubmit={(event) => {
@@ -153,6 +184,27 @@ function TransformForm({ kind, origin, ids }: FormProps) {
         }}
       >
         <DialogTitle icon="transform" onClose={cancel}>{t(`transform.${kind}`)}</DialogTitle>
+
+        {kind === 'transform' && (
+          <>
+            <div className="vc-form__row">
+              <label>{t('transform.horizontal')}</label>
+              <NumberInput value={dx} onCommit={setDx} suffix={units} lengthUnit={units} step={1} decimals={3} width={110} testId="transform-h" tooltip={t('transform.horizontal')} />
+            </div>
+            <div className="vc-form__row">
+              <label>{t('transform.vertical')}</label>
+              <NumberInput value={dy} onCommit={setDy} suffix={units} lengthUnit={units} step={1} decimals={3} width={110} testId="transform-v" tooltip={t('transform.vertical')} />
+            </div>
+            <div className="vc-form__row">
+              <label>{t('transform.angle')}</label>
+              <NumberInput value={angle} onCommit={setAngle} suffix="°" step={1} decimals={3} width={110} testId="transform-angle" tooltip={t('transform.angle')} />
+            </div>
+            <div className="vc-form__row">
+              <label>{t('transform.scale')}</label>
+              <NumberInput value={percent} onCommit={setPercent} suffix="%" step={1} min={0.01} decimals={3} width={110} testId="transform-scale" tooltip={t('transform.scale')} />
+            </div>
+          </>
+        )}
 
         {kind === 'rotate' && (
           <div className="vc-form__row">
@@ -255,11 +307,18 @@ function TransformForm({ kind, origin, ids }: FormProps) {
           </>
         )}
 
+        <div className="vc-transform__options">
+          <CheckRow checked={preview} label={t('transform.preview')} testId="transform-preview" onChange={setPreview} />
+          {kind !== 'reflect' && (
+            <div className="vc-transform__duplicate">
+              <CheckRow checked={duplicate} label={t('transform.duplicate')} testId="transform-duplicate" onChange={setDuplicate} />
+              <span className="vc-transform__spacer" />
+              <label className={duplicate ? '' : 'is-disabled'}>{t('transform.copies')}</label>
+              <NumberInput value={copies} onCommit={(v) => setCopies(Math.max(1, Math.round(v)))} step={1} min={1} max={999} decimals={0} width={70} disabled={!duplicate} testId="transform-copies" tooltip={t('transform.copies')} />
+            </div>
+          )}
+        </div>
         <div className="vc-dialog__buttons vc-transform__footer">
-          <label className="vc-form__check">
-            <input type="checkbox" checked={preview} onChange={(event) => setPreview(event.target.checked)} data-testid="transform-preview" />
-            {t('transform.preview')}
-          </label>
           <span className="vc-transform__spacer" />
           <button type="button" className="vc-dialog__button" data-testid="transform-copy" onClick={copy}>
             <Icon id="copy" size={14} />

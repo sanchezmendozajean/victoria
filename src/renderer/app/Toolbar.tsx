@@ -154,14 +154,14 @@ export function Toolbar() {
                 role="menuitem"
                 className={cx('vc-flyout__item', tool === activeTool && 'is-active')}
                 data-tool={tool}
+                aria-label={t(`tool.${tool}`)}
+                {...tip(t(`tool.${tool}`), key)}
                 onClick={() => {
                   setActiveTool(tool);
                   setFlyout(null);
                 }}
               >
                 <Icon id={tool} size={16} />
-                <span>{t(`tool.${tool}`)}</span>
-                {key && <span className="vc-flyout__key">{key}</span>}
               </button>
             );
           })}

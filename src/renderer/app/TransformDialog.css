@@ -53,3 +53,19 @@
   color: inherit;
   font: inherit;
 }
+
+.vc-transform__options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+.vc-transform__duplicate {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--fs-label);
+}
+.vc-transform__duplicate .is-disabled {
+  opacity: 0.45;
+}

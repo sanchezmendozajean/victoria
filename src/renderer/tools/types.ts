@@ -26,7 +26,8 @@ export interface ToolKeyEvent {
   metaKey: boolean;
 }
 
-export type TransformKind = 'rotate' | 'scale' | 'reflect' | 'move';
+/** 'transform' is the combined Move + Rotate + Scale dialog opened with Enter. */
+export type TransformKind = 'rotate' | 'scale' | 'reflect' | 'move' | 'transform';
 
 export interface DialogSpec {
   title: string;

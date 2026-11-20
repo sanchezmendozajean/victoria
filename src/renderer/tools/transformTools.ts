@@ -39,7 +39,7 @@ interface Gesture {
  * Rotate (R), Reflect (O) and Scale (S). Click sets the origin; drag transforms around it (Alt+drag
  * copies, Alt+click opens the dialog). Reflect: click the origin, then click or drag to give the axis.
  */
-export function createTransformTool(kind: Exclude<TransformKind, 'move'>): Tool {
+export function createTransformTool(kind: Exclude<TransformKind, 'move' | 'transform'>): Tool {
   let origin: Vec2 | null = null;
   let gesture: Gesture | null = null;
   let cursorPoint: Vec2 | null = null;
