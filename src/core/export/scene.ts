@@ -346,15 +346,21 @@ export function isLiveTextStyle(style: TextStyle): boolean {
   return true;
 }
 
+/** Plain point text: what a live `<text>` can hold (one shown fill, left/centre/right paragraphs, simple styles). */
+export function isPlainPointText(node: TextNode): boolean {
+  const only = node.appearance.items.length === 1 ? node.appearance.items[0] : undefined;
+  if (node.kind !== 'point' || !only || only.kind !== 'fill' || only.modifiers.length > 0 || only.visible === false) return false;
+  const plainParagraphs = (node.paragraphs ?? []).every((p) => !p || Object.entries(p).every(([k, v]) => v === undefined || (k === 'align' && (v === 'left' || v === 'center' || v === 'right')) || (k === 'hyphenate' && v === false) || ((k === 'indentLeft' || k === 'indentRight' || k === 'indentFirst' || k === 'spaceBefore' || k === 'spaceAfter') && v === 0)));
+  return plainParagraphs && node.story.every((r) => isLiveTextStyle(r.style));
+}
+
 /** The text as `<text>` lines when it is plain point text; null when only outlines can draw it faithfully. */
 function liveTextOp(node: TextNode, ctx: Context): SceneOp | null {
-  const only = node.appearance.items.length === 1 ? node.appearance.items[0] : undefined;
-  if (node.kind !== 'point' || !only || only.kind !== 'fill' || only.modifiers.length > 0 || only.opacity <= 0 || only.visible === false) return null;
+  const only = node.appearance.items[0];
+  if (!isPlainPointText(node) || !only || only.kind !== 'fill' || only.opacity <= 0) return null;
   const paint = paintOf(only.paint, ctx.resources);
   if (!paint) return null;
   const aligns = (node.paragraphs ?? []).map((p) => p?.align ?? 'left');
-  const plainParagraphs = (node.paragraphs ?? []).every((p) => !p || Object.entries(p).every(([k, v]) => v === undefined || (k === 'align' && (v === 'left' || v === 'center' || v === 'right')) || (k === 'hyphenate' && v === false) || ((k === 'indentLeft' || k === 'indentRight' || k === 'indentFirst' || k === 'spaceBefore' || k === 'spaceAfter') && v === 0)));
-  if (!plainParagraphs || !node.story.every((r) => isLiveTextStyle(r.style))) return null;
   const layout = textGeometry(node).layout;
   const lines: SceneTextLine[] = [{ y: 0, anchor: 'start', spans: [] }];
   for (const run of node.story) {

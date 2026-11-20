@@ -310,7 +310,7 @@ describe('SVG mode · what the round trip changes (so it is blocked)', () => {
     expect(JSON.stringify(out.appearance)).not.toContain('zigzag');
   });
 
-  it('effect.shadow: a shadow is saved as a filter and dropped on reading', () => {
+  it('effect.filter: a shadow is saved as a filter and dropped on reading', () => {
     const s = setup();
     const n = s.add(createRect(s.ids, 60, 40), fill());
     s.session.run(addModifier(s.space().id, [{ nodeId: n.id, mod: newModifier(s.ids, 'drop-shadow', defaultParams('drop-shadow')) }]));

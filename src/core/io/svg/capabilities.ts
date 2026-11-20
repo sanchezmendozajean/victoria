@@ -7,12 +7,14 @@ export type SvgBlockReason =
   | 'text-layout'
   /** SVG stores the final geometry, not the live effect. */
   | 'live-effect'
-  /** Shadows and glows are saved as `<filter>`, which the importer drops. */
+  /** Shadows, glows and blur are saved as `<filter>`, which the importer drops. */
   | 'filter'
   /** Inside and outside strokes are saved as clip paths, not as strokes. */
   | 'stroke-align'
   /** SVG has one fill and one stroke per element. */
   | 'multiple-paints'
+  /** An SVG cannot hide a fill or a stroke without deleting it. */
+  | 'hidden-paint'
   /** An SVG is one artboard. */
   | 'single-artboard';
 
@@ -27,9 +29,10 @@ export const SVG_BLOCKED = {
   'stroke.arrow': 'live-effect',
   'corner.live': 'live-effect',
   'trace.live': 'live-effect',
-  'effect.shadow': 'filter',
+  'effect.filter': 'filter',
   'stroke.align': 'stroke-align',
   'appearance.multiple': 'multiple-paints',
+  'appearance.hidden': 'hidden-paint',
   'artboard.multiple': 'single-artboard',
   'space.multiple': 'single-artboard',
 } as const satisfies Record<string, SvgBlockReason>;

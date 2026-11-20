@@ -54,6 +54,7 @@ export { importPdfPage } from './io/pdf/pdf';
 export * from './io/importDocument';
 export type { PdfHost, PdfPageData, PdfPageImport, PdfTextItem, PdfWarning } from './io/pdf/pdf';
 export type { SvgImport, SvgWarning } from './io/svg/svg';
+export { svgGuard, svgViolations } from './io/svg/violations';
 export { canEditSvgInPlace, writeDocumentSvg } from './io/svg/save';
 export { SVG_BLOCKED, SVG_ROUND_TRIP, svgBlockReason } from './io/svg/capabilities';
 export type { SvgBlockReason, SvgGate, SvgRoundTripFeature } from './io/svg/capabilities';

@@ -56,6 +56,7 @@ export class DocumentSession {
   private serialCounter = 0;
   private savedSerial: number;
   private rev = 0;
+  private guard: ((next: Document, current: Document) => boolean) | null = null;
   private readonly listeners = new Set<(change: SessionChange) => void>();
 
   constructor(document: Document, options: SessionOptions = {}) {
@@ -101,6 +102,15 @@ export class DocumentSession {
     return this.topSerial() !== this.savedSerial;
   }
 
+  /**
+   * A rule every new command must keep: it gets the document a command would produce and the current one, and returns
+   * false to reject the command (the session stays as it was). Undo and redo are not checked: they only go back to
+   * states the rule already accepted. Used by the SVG mode to refuse what an SVG file cannot hold.
+   */
+  setGuard(guard: ((next: Document, current: Document) => boolean) | null): void {
+    this.guard = guard;
+  }
+
   setHistoryLimit(limit: number): void {
     this.limit = Math.max(1, limit);
     this.trim();
@@ -139,6 +149,8 @@ export class DocumentSession {
     });
     const patches = [...applyPatchesList, ...blendPatches, ...stampPatches];
     const inverse = [...stampInverse, ...blendInverse, ...applyInverse];
+
+    if (this.guard && !this.guard(next, this.doc)) return false;
 
     const selectionBefore = this.sel;
     const selectionAfter = nextSelection ?? this.sel;
