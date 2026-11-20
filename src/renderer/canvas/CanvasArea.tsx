@@ -32,6 +32,8 @@ export function CanvasArea() {
   const theme = useUi((s) => s.theme);
   const viewOptions = useUi((s) => s.viewOptions);
   const activeArtboard = useUi((s) => s.activeArtboard);
+  const activePaint = useUi((s) => s.activePaint);
+  const activeItem = useUi((s) => s.activeItem);
   const setZoom = useUi((s) => s.setZoom);
   const setCursor = useUi((s) => s.setCursor);
 
@@ -135,6 +137,11 @@ export function CanvasArea() {
       controller.destroy();
     };
   }, [setCursor, setZoom]);
+
+  // The gradient tool shows the fill or stroke picked in Apariencia: redraw its guides when that changes.
+  useEffect(() => {
+    controllerRef.current?.invalidateOverlay();
+  }, [activePaint, activeItem]);
 
   useEffect(() => {
     controllerRef.current?.update({

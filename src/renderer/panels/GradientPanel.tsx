@@ -37,6 +37,7 @@ type GradientPaint = Extract<Paint, { type: 'linear' | 'radial' }>;
 export function GradientPanel() {
   const { look, resources, ctx } = usePaintLook();
   const active = useUi((s) => s.activePaint);
+  const pickedItem = useUi((s) => s.activeItem);
   const [selected, setSelected] = useState(0);
   const key = useRef<string | undefined>(undefined);
   const bar = useRef<HTMLDivElement>(null);
@@ -44,7 +45,12 @@ export function GradientPanel() {
   if (!ctx) return <div className="vc-pempty">{t('fill.noDocument')}</div>;
   if (ctx.leaves.length === 0) return <div className="vc-pempty">{t('gradient.selectFirst')}</div>;
 
-  const first = ctx.leaves.map((n) => ({ node: n, item: primaryItem(n.appearance, active) })).find((x) => x.item && (x.item.paint.type === 'linear' || x.item.paint.type === 'radial'));
+  // With a single object, the fill or stroke picked in Apariencia (when it is one of its own) is the one edited.
+  const single = ctx.ids.length === 1 && ctx.leaves.length === 1 && ctx.leaves[0]?.id === ctx.ids[0] ? ctx.leaves[0] : undefined;
+  const pickedAt = single && pickedItem?.nodeId === single.id && single.appearance.items[pickedItem.index]?.kind !== 'modifier' && single.appearance.items[pickedItem.index] ? pickedItem.index : undefined;
+  const target: 'fill' | 'stroke' | number = pickedAt ?? active;
+  const itemOf = (n: (typeof ctx.leaves)[number]) => (pickedAt !== undefined && n.id === single?.id ? (n.appearance.items[pickedAt] as ReturnType<typeof primaryItem>) : primaryItem(n.appearance, active));
+  const first = ctx.leaves.map((n) => ({ node: n, item: itemOf(n) })).find((x) => x.item && (x.item.paint.type === 'linear' || x.item.paint.type === 'radial'));
   const paint = first?.item?.paint as GradientPaint | undefined;
   const gradient = paint ? resources.gradients.find((g) => g.id === paint.gradientId) : undefined;
   void look;
@@ -55,7 +61,7 @@ export function GradientPanel() {
         <Section title={t('gradient.title')}>
           <p className="vc-phint">{t('gradient.none')}</p>
           <Row>
-            <button type="button" className="vc-pbutton" data-testid="gradient-apply" onClick={() => paintAsGradient(active)}>
+            <button type="button" className="vc-pbutton" data-testid="gradient-apply" onClick={() => paintAsGradient(target)}>
               <Icon id="paint-gradient" size={16} />
               {t('gradient.apply')}
             </button>
@@ -71,7 +77,7 @@ export function GradientPanel() {
   const stop = stops[index] as GradientStop;
   const axis = gradientAxis(paint.transform);
 
-  const edit = (mutate: (g: Gradient) => void, k = key.current) => session.run(editGradients(space.id, ids, active, mutate as Parameters<typeof editGradients>[3], session.ids, k));
+  const edit = (mutate: (g: Gradient) => void, k = key.current) => session.run(editGradients(space.id, ids, target, mutate as Parameters<typeof editGradients>[3], session.ids, k));
   const editStop = (i: number, patch: Partial<GradientStop>, k = key.current) =>
     edit((g) => {
       const sorted = sortStops(g.stops);
@@ -83,12 +89,12 @@ export function GradientPanel() {
   const transformsWith = (fn: (m: Matrix) => Matrix) => {
     const map = new Map<string, Matrix>();
     for (const n of ctx.leaves) {
-      const p = primaryItem(n.appearance, active)?.paint;
+      const p = itemOf(n)?.paint;
       if (p && (p.type === 'linear' || p.type === 'radial')) map.set(n.id, fn(p.transform));
     }
     return map;
   };
-  const setTransform = (fn: (m: Matrix) => Matrix, k = key.current) => session.run(setGradientTransform(space.id, ids, active, transformsWith(fn), undefined, k));
+  const setTransform = (fn: (m: Matrix) => Matrix, k = key.current) => session.run(setGradientTransform(space.id, ids, target, transformsWith(fn), undefined, k));
 
   const positionOf = (e: React.PointerEvent) => {
     const r = bar.current?.getBoundingClientRect();
@@ -206,6 +212,7 @@ export function GradientPanel() {
                 data-testid="gradient-stop"
                 style={{ left: `${s.offset * 100}%` }}
                 onPointerDown={dragStop(i)}
+                onDoubleClick={(e) => useUi.getState().openColorPicker(active, e.currentTarget, undefined, { index: i, color: s.color, ...(pickedAt !== undefined ? { item: pickedAt } : {}) })}
               >
                 <i style={{ background: colorToHex(s.color) }} />
               </span>

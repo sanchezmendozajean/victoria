@@ -907,8 +907,15 @@
   padding-left: 28px;
   background: color-mix(in srgb, var(--bg-input) 85%, var(--text) 4%);
 }
-.vc-appearance__row[draggable='true'] {
+.vc-appearance__row[data-drop-key] {
   cursor: grab;
+  touch-action: none;
+}
+/* While an item is being dragged the whole window shows the closed hand. */
+.vc-grabbing,
+.vc-grabbing * {
+  cursor: grabbing !important;
+  user-select: none !important;
 }
 .vc-appearance__zone {
   display: flex;
@@ -927,11 +934,29 @@
   background: var(--bg-active);
   color: var(--text);
 }
-.vc-appearance__row.is-over,
-.vc-appearance__zone.is-over {
-  outline: 1px dashed var(--accent);
-  outline-offset: -1px;
-  background: var(--bg-hover);
+/* Drop marker: the usual blue line where the dragged item will land. */
+.vc-appearance__row,
+.vc-appearance__zone {
+  position: relative;
+}
+.vc-appearance__row.is-drop-before::after,
+.vc-appearance__row.is-drop-after::after,
+.vc-appearance__zone.is-drop-after::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--accent);
+  pointer-events: none;
+  z-index: 1;
+}
+.vc-appearance__row.is-drop-before::after {
+  top: -1px;
+}
+.vc-appearance__row.is-drop-after::after,
+.vc-appearance__zone.is-drop-after::after {
+  bottom: -1px;
 }
 .vc-appearance__rest {
   flex: 1;

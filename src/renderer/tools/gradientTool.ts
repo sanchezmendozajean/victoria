@@ -22,6 +22,7 @@ import {
   type Paint,
   type Vec2,
 } from '../../core';
+import { useUi } from '../app/store';
 import { constrainTo45 } from './boxGeometry';
 import { currentSelection, dragged, snapTo, topLevelIds } from './shared';
 import type { CanvasPointerEvent, Tool, ToolHost } from './types';
@@ -67,12 +68,28 @@ export function createGradientTool(): Tool {
     return selection && host.space ? paintTargets(host.space, topLevelIds(host.space, selection.ids)) : [];
   };
 
+  /** The fill or stroke the tool edits: the one picked in Apariencia (single object) or the active kind. */
+  const targetOf = (host: ToolHost): 'fill' | 'stroke' | number => {
+    const picked = useUi.getState().activeItem;
+    const nodes = leaves(host);
+    const only = nodes.length === 1 ? nodes[0] : undefined;
+    const selection = currentSelection(host);
+    const top = selection && host.space ? topLevelIds(host.space, selection.ids) : [];
+    const item = only && picked && picked.nodeId === only.id && top.length === 1 && top[0] === only.id ? only.appearance.items[picked.index] : undefined;
+    return item && item.kind !== 'modifier' && picked ? picked.index : host.activePaint;
+  };
+  const itemOf = (node: Node, host: ToolHost) => {
+    const target = targetOf(host);
+    const picked = typeof target === 'number' ? node.appearance.items[target] : undefined;
+    return picked && picked.kind !== 'modifier' ? picked : primaryItem(node.appearance, typeof target === 'number' ? host.activePaint : target);
+  };
+
   function annotator(host: ToolHost): Annotator | null {
     const space = host.space;
     const nodes = leaves(host);
     const node = nodes.length === 1 ? nodes[0] : undefined;
     if (!space || !node) return null;
-    const paint = primaryItem(node.appearance, host.activePaint)?.paint;
+    const paint = itemOf(node, host)?.paint;
     if (!paint || (paint.type !== 'linear' && paint.type !== 'radial')) return null;
     const gradient = host.session?.document.resources.gradients.find((g) => g.id === paint.gradientId);
     const frame = frameOf(space, node.id);
@@ -124,11 +141,11 @@ export function createGradientTool(): Tool {
     const transforms = new Map<string, Matrix>();
     for (const node of leaves(host)) {
       const frame = frameOf(space, node.id);
-      const paint = primaryItem(node.appearance, host.activePaint)?.paint;
+      const paint = itemOf(node, host)?.paint;
       if (!frame || !paint || (paint.type !== 'linear' && paint.type !== 'radial')) continue;
       transforms.set(node.id, gradientTransform(worldToLocal(frame.world, start), worldToLocal(frame.world, end), aspect ?? gradientAxis(paint.transform).aspect));
     }
-    if (transforms.size > 0) session.run(setGradientTransform(space.id, selection.ids, host.activePaint, transforms, undefined, key));
+    if (transforms.size > 0) session.run(setGradientTransform(space.id, selection.ids, targetOf(host), transforms, undefined, key));
   }
 
   /** Gives the objects without a gradient one running `start`→`end`, and re-aims the others. */
@@ -138,19 +155,19 @@ export function createGradientTool(): Tool {
     if (!session || !space || !selection) return;
     const missing: Node[] = [];
     for (const node of leaves(host)) {
-      const paint = primaryItem(node.appearance, host.activePaint)?.paint;
+      const paint = itemOf(node, host)?.paint;
       if (!paint || (paint.type !== 'linear' && paint.type !== 'radial')) missing.push(node);
     }
     if (missing.length > 0) {
       const first = missing[0] as Node;
-      const base = primaryItem(first.appearance, host.activePaint)?.paint;
+      const base = itemOf(first, host)?.paint;
       const gradient = defaultGradientFor(session.ids, 'linear', base?.type === 'solid' ? base.color : null);
       const transforms = new Map<string, Matrix>();
       for (const node of missing) {
         const frame = frameOf(space, node.id);
         if (frame) transforms.set(node.id, gradientTransform(worldToLocal(frame.world, start), worldToLocal(frame.world, end), 1));
       }
-      session.run(applyGradient(space.id, missing.map((n) => n.id), host.activePaint, { type: 'linear', gradient, transform: [1, 0, 0, 1, 0, 0] }, transforms, key));
+      session.run(applyGradient(space.id, missing.map((n) => n.id), targetOf(host), { type: 'linear', gradient, transform: [1, 0, 0, 1, 0, 0] }, transforms, key));
     }
     setAxis(host, start, end, key);
   }
@@ -202,7 +219,7 @@ export function createGradientTool(): Tool {
         if (part?.kind === 'handle') {
           const i = part.index;
           if (part.handle === 'stop' && event.clickCount >= 2 && stops.length > 2) {
-            session.run(editGradients(space.id, [a.node.id], host.activePaint, (g) => void (g.stops = sortStops(g.stops).filter((_, j) => j !== i)), session.ids, key));
+            session.run(editGradients(space.id, [a.node.id], targetOf(host), (g) => void (g.stops = sortStops(g.stops).filter((_, j) => j !== i)), session.ids, key));
             return;
           }
           state = mk(part.handle, i);
@@ -217,7 +234,7 @@ export function createGradientTool(): Tool {
             editGradients(
               space.id,
               [a.node.id],
-              host.activePaint,
+              targetOf(host),
               (g) => {
                 g.stops.push({ offset, color, opacity });
                 g.stops = sortStops(g.stops);
@@ -283,7 +300,7 @@ export function createGradientTool(): Tool {
           editGradients(
             space.id,
             [a.node.id],
-            host.activePaint,
+            targetOf(host),
             (g) => {
               const at = back === null ? from : dragGradientStop(g, from, back);
               next = dragGradientStop(g, at, offset, duplicate);
@@ -307,7 +324,7 @@ export function createGradientTool(): Tool {
           editGradients(
             space.id,
             [a.node.id],
-            host.activePaint,
+            targetOf(host),
             (g) => {
               const sorted = sortStops(g.stops);
               if (sorted[i]) sorted[i].midpoint = Math.round(mid * 1000) / 1000;
@@ -330,11 +347,11 @@ export function createGradientTool(): Tool {
       if (s.kind === 'define' && !s.created) {
         // A plain click gives objects without a gradient one that fills their bounds.
         const missing = leaves(host).filter((n) => {
-          const p = primaryItem(n.appearance, host.activePaint)?.paint;
+          const p = itemOf(n, host)?.paint;
           return !p || (p.type !== 'linear' && p.type !== 'radial');
         });
         if (missing.length > 0) {
-          const base = primaryItem((missing[0] as Node).appearance, host.activePaint)?.paint;
+          const base = itemOf((missing[0] as Node), host)?.paint;
           const gradient = defaultGradientFor(session.ids, 'linear', base?.type === 'solid' ? base.color : null);
           const transforms = new Map<string, Matrix>();
           for (const node of missing) {
@@ -342,7 +359,7 @@ export function createGradientTool(): Tool {
             const bounds = g ? geometryBounds(g) : null;
             if (bounds) transforms.set(node.id, defaultGradientTransform(bounds, 'linear', 0));
           }
-          session.run(applyGradient(space.id, missing.map((n) => n.id), host.activePaint, { type: 'linear', gradient, transform: [1, 0, 0, 1, 0, 0] }, transforms));
+          session.run(applyGradient(space.id, missing.map((n) => n.id), targetOf(host), { type: 'linear', gradient, transform: [1, 0, 0, 1, 0, 0] }, transforms));
         }
       }
       void event;

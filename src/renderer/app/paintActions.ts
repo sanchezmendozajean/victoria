@@ -145,11 +145,13 @@ const localBounds = (node: Node) => {
 };
 
 /** "Degradado" button (`.`): a linear gradient from the current colour to white (or black) over each object. */
-export function paintAsGradient(target: Target): void {
+export function paintAsGradient(target: Target | number): void {
   const s = selectedLeaves();
   if (!s || s.nodes.length === 0) return;
-  const current = primaryItem({ items: s.nodes[0]?.appearance.items ?? [] }, target);
-  const from = current?.paint.type === 'solid' ? current.paint.color : lastSolid[target];
+  const items = s.nodes[0]?.appearance.items ?? [];
+  const picked = typeof target === 'number' ? items[target] : undefined;
+  const current = picked && picked.kind !== 'modifier' ? picked : primaryItem({ items }, typeof target === 'number' ? 'fill' : target);
+  const from = current?.paint.type === 'solid' ? current.paint.color : lastSolid[current?.kind ?? (typeof target === 'number' ? 'fill' : target)];
   const gradient = defaultGradientFor(s.c.session.ids, 'linear', from);
   const transforms = new Map<string, Matrix>();
   for (const node of s.nodes) {

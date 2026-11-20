@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { COLOR_CHANNELS, setPaintItem, colorToCss, colorToHex, convertColor, deepClone, hexToColor, toWebSafe, type Appearance, type Color, type Paint, type DocumentSession } from '../../core';
+import { COLOR_CHANNELS, editGradients, setPaintItem, sortStops, type Gradient, colorToCss, colorToHex, convertColor, deepClone, hexToColor, toWebSafe, type Appearance, type Color, type Paint, type DocumentSession } from '../../core';
 import { canvasApi } from '../canvas/api';
 import { Icon } from '../components/Icon';
 import { NumberInput } from '../components/NumberInput';
@@ -22,8 +22,8 @@ export function ColorPickerDialog() {
   if (!picker) return null;
   const target = picker.target;
   const paint = look[target];
-  const original = picker.item ? picker.item.color : !paint.mixed ? solidColorOf(paint.value, resources) : null;
-  return <PickerForm key={`${target}:${picker.item?.nodeId ?? ''}:${picker.item?.index ?? ''}`} item={picker.item} anchor={picker.anchor} target={target} original={original ?? { model: 'rgb', values: [0, 0, 0] }} hasSelection={!!picker.item || (!!ctx && ctx.leaves.length > 0)} session={ctx?.session} />;
+  const original = picker.stop ? picker.stop.color : picker.item ? picker.item.color : !paint.mixed ? solidColorOf(paint.value, resources) : null;
+  return <PickerForm key={`${target}:${picker.item?.nodeId ?? ''}:${picker.item?.index ?? ''}:${picker.stop?.index ?? ''}`} item={picker.item} stop={picker.stop} gradientIds={ctx?.ids} anchor={picker.anchor} target={target} original={original ?? { model: 'rgb', values: [0, 0, 0] }} hasSelection={!!picker.item || (!!ctx && ctx.leaves.length > 0)} session={ctx?.session} />;
 }
 
 type Anchor = { left: number; top: number; right: number; bottom: number };
@@ -40,7 +40,7 @@ function placeBeside(anchor: Anchor): { left: number; top: number } {
   return { left, top };
 }
 
-function PickerForm({ target, original, hasSelection, session, anchor, item }: { item: { nodeId: string; index: number } | undefined; target: 'fill' | 'stroke'; original: Color; hasSelection: boolean; session: DocumentSession | undefined; anchor: Anchor }) {
+function PickerForm({ target, original, hasSelection, session, anchor, item, stop, gradientIds }: { item: { nodeId: string; index: number } | undefined; stop: { index: number; item?: number } | undefined; gradientIds: string[] | undefined; target: 'fill' | 'stroke'; original: Color; hasSelection: boolean; session: DocumentSession | undefined; anchor: Anchor }) {
   const close = useUi((s) => s.closeColorPicker);
   const initial = convertColor(original, 'hsb');
   const [hsb, setHsb] = useState<[number, number, number]>([initial.values[0] ?? 0, initial.values[1] ?? 0, initial.values[2] ?? 0]);
@@ -55,7 +55,18 @@ function PickerForm({ target, original, hasSelection, session, anchor, item }: {
   // Pointed at one item of the Appearance list the paint goes there; otherwise to the selection and the next objects.
   const applyPaint = (to: 'fill' | 'stroke', paint: Paint, mergeKey: string) => {
     const space = session?.document.spaces.find((sp) => sp.id === session.document.activeSpaceId);
-    if (item && session && space) session.run(setPaintItem(space.id, item.nodeId, item.index, { paint }, mergeKey));
+    if (stop && session && space && gradientIds && paint.type === 'solid') {
+      // Recolouring a gradient stop: keep the stop's own opacity, take only the colour.
+      const color = paint.color;
+      session.run(
+        editGradients(space.id, gradientIds, stop.item ?? useUi.getState().activePaint, ((g: Gradient) => {
+          const hit = sortStops(g.stops)[stop.index];
+          if (!hit) return;
+          hit.color = color;
+          g.stops = sortStops(g.stops);
+        }) as Parameters<typeof editGradients>[3], session.ids, mergeKey),
+      );
+    } else if (item && session && space) session.run(setPaintItem(space.id, item.nodeId, item.index, { paint }, mergeKey));
     else applyLookPaint(to, paint, mergeKey);
   };
   const colorOf = (v: [number, number, number]): Color => {

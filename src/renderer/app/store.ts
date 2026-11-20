@@ -103,7 +103,7 @@ interface UiState {
   /** Fill and stroke of the next object drawn (and what the toolbar shows with nothing selected). */
   newLook: Appearance;
   /** Colour picker dialog (double click on the fill or stroke chip). */
-  colorPicker: { target: 'fill' | 'stroke'; anchor: { left: number; top: number; right: number; bottom: number }; item?: { nodeId: string; index: number; color: Color } } | null;
+  colorPicker: { target: 'fill' | 'stroke'; anchor: { left: number; top: number; right: number; bottom: number }; item?: { nodeId: string; index: number; color: Color }; /** A gradient stop of the selection's gradient (sorted index) being recoloured. */ stop?: { index: number; color: Color; item?: number } } | null;
   /** Layer that receives new objects when nothing is selected, per Space (Layers panel). */
   activeLayer: Record<string, string>;
   /** Character and paragraph attributes of the next text created (and shown by the panels with no text selected). */
@@ -115,6 +115,8 @@ interface UiState {
   textEditRequest: { id: string; at: Vec2 } | null;
   /** Which of fill and stroke the colour controls edit. */
   activePaint: 'fill' | 'stroke';
+  /** The fill or stroke picked in the Apariencia list (position in the object's appearance): Degradado edits that one. */
+  activeItem: { nodeId: string; index: number } | null;
   /** Align panel: the object the others align to when "Alinear a objeto clave" is chosen. */
   keyObject: string | null;
   alignTo: 'selection' | 'key' | 'artboard';
@@ -161,9 +163,10 @@ interface UiState {
   setActiveLayer(spaceId: string, layerId: string): void;
   /** Opens the colour popover next to `anchor` (the chip that was clicked). */
   /** `item` points the picker at one fill or stroke of an object (panel Apariencia) instead of the selection's look. */
-  openColorPicker(target: 'fill' | 'stroke', anchor: Element, item?: { nodeId: string; index: number; color: Color }): void;
+  openColorPicker(target: 'fill' | 'stroke', anchor: Element, item?: { nodeId: string; index: number; color: Color }, stop?: { index: number; color: Color; item?: number }): void;
   closeColorPicker(): void;
   setActivePaint(target: 'fill' | 'stroke'): void;
+  setActiveItem(item: { nodeId: string; index: number } | null): void;
   setKeyObject(id: string | null): void;
   setAlignTo(mode: 'selection' | 'key' | 'artboard'): void;
   setAlignPreviewBounds(on: boolean): void;
@@ -310,6 +313,7 @@ export const useUi = create<UiState>()((set, get) => ({
   textEditRequest: null,
   activeLayer: {},
   activePaint: 'fill',
+  activeItem: null,
   keyObject: null,
   alignTo: 'selection',
   alignPreviewBounds: false,
@@ -359,12 +363,13 @@ export const useUi = create<UiState>()((set, get) => ({
   setTextEditing: (textEditing) => set({ textEditing }),
   setTextEditRequest: (textEditRequest) => set({ textEditRequest }),
   setActiveLayer: (spaceId, layerId) => set((s) => ({ activeLayer: { ...s.activeLayer, [spaceId]: layerId } })),
-  openColorPicker: (target, anchor, item) => {
+  openColorPicker: (target, anchor, item, stop) => {
     const r = anchor.getBoundingClientRect();
-    set({ colorPicker: { target, anchor: { left: r.left, top: r.top, right: r.right, bottom: r.bottom }, ...(item ? { item } : {}) }, activePaint: target });
+    set({ colorPicker: { target, anchor: { left: r.left, top: r.top, right: r.right, bottom: r.bottom }, ...(item ? { item } : {}), ...(stop ? { stop } : {}) }, activePaint: target });
   },
   closeColorPicker: () => set({ colorPicker: null }),
-  setActivePaint: (activePaint) => set({ activePaint }),
+  setActivePaint: (activePaint) => set({ activePaint, activeItem: null }),
+  setActiveItem: (activeItem) => set({ activeItem }),
   setKeyObject: (keyObject) => set({ keyObject }),
   setAlignTo: (alignTo) => set({ alignTo }),
   setAlignPreviewBounds: (alignPreviewBounds) => set({ alignPreviewBounds }),

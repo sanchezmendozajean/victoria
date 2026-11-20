@@ -1,4 +1,4 @@
-import { useState, type DragEvent } from 'react';
+import { useState, type PointerEvent as ReactPointerEvent } from 'react';
 import {
   addPaintItem,
   copyAppearance,
@@ -64,7 +64,9 @@ export function FxButton({ testId = 'appearance-fx', target }: { testId?: string
   );
 }
 
-const MODIFIER_DRAG = 'application/x-victoria-modifier';
+/** What is being dragged, and where a drop can land (a row, the "whole object" zone). */
+type DragSource = { kind: 'paint'; index: number } | { kind: 'modifier'; id: string };
+type DropSpot = { paint?: number; target: ModifierTarget; position?: number };
 
 /** What is selected in the list: a fill or stroke (by its position), a modifier (by id) or the "whole object" zone. */
 type Pick = { kind: 'paint'; index: number } | { kind: 'modifier'; id: string; target: ModifierTarget; position: number } | { kind: 'object' } | null;
@@ -78,6 +80,9 @@ export function AppearancePanel() {
   const ctx = usePanelContext();
   const [pick, setPick] = useState<Pick>(null);
   const [over, setOver] = useState<string | null>(null);
+  // Index of the fill or stroke being dragged: tells on which side of the target row it will land.
+  const setActiveItem = useUi((s) => s.setActiveItem);
+  const [paintFrom, setPaintFrom] = useState<number | null>(null);
   if (!ctx) return <div className="vc-pempty">{t('fill.noDocument')}</div>;
   if (ctx.ids.length === 0) return <div className="vc-pempty">{t('appearance.noSelection')}</div>;
   const node: Node | undefined = ctx.ids.length === 1 ? locateNode(ctx.space, ctx.ids[0] as string)?.node : undefined;
@@ -135,22 +140,68 @@ export function AppearancePanel() {
   }
 
   const items = node.appearance.items;
+  // Picking a fill or stroke also points Degradado (and the fill/stroke being edited) at it.
+  const pickPaint = (index: number) => {
+    setPick({ kind: 'paint', index });
+    const picked = node.appearance.items[index];
+    if (picked && picked.kind !== 'modifier') {
+      useUi.getState().setActivePaint(picked.kind);
+      setActiveItem({ nodeId: node.id, index });
+    }
+  };
   const paint = items.map((item, index) => ({ item, index })).filter((x): x is { item: Extract<AppearanceItem, { kind: 'fill' | 'stroke' }>; index: number } => x.item.kind !== 'modifier');
   const objectMods = items.flatMap((i) => (i.kind === 'modifier' ? [i.mod] : []));
 
-  // Dropping a modifier moves it to a zone, before `position` (at the end when omitted).
-  const dropOn = (target: ModifierTarget, position?: number) => (event: DragEvent) => {
-    const id = event.dataTransfer.getData(MODIFIER_DRAG);
-    setOver(null);
-    if (!id) return;
-    event.preventDefault();
-    event.stopPropagation();
-    run(moveModifier(spaceId, node.id, id, target, position));
-  };
-  const hover = (key: string) => (event: DragEvent) => {
-    if (!event.dataTransfer.types.includes(MODIFIER_DRAG)) return;
-    event.preventDefault();
-    setOver(key);
+  // Items are dragged with the pointer (not native drag and drop) so the cursor can be the closed hand while dragging.
+  const beginDrag = (event: ReactPointerEvent, source: DragSource) => {
+    if (event.button !== 0 || (event.target as HTMLElement).closest('button,input,select,textarea')) return;
+    const from = { x: event.clientX, y: event.clientY };
+    let active = false;
+    let key: string | null = null;
+    const spotAt = (x: number, y: number): [string, DropSpot] | null => {
+      const el = document.elementFromPoint(x, y)?.closest('[data-drop-key]') as HTMLElement | null;
+      const k = el?.dataset.dropKey;
+      const spot = el?.dataset.drop ? (JSON.parse(el.dataset.drop) as DropSpot) : undefined;
+      return k && spot && (source.kind === 'modifier' || spot.paint !== undefined) ? [k, spot] : null;
+    };
+    const stop = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      window.removeEventListener('keydown', onKey, true);
+      document.body.classList.remove('vc-grabbing');
+      setOver(null);
+      setPaintFrom(null);
+    };
+    const move = (ev: PointerEvent) => {
+      if (!active) {
+        if (Math.hypot(ev.clientX - from.x, ev.clientY - from.y) < 4) return;
+        active = true;
+        document.body.classList.add('vc-grabbing');
+        if (source.kind === 'paint') setPaintFrom(source.index);
+      }
+      key = spotAt(ev.clientX, ev.clientY)?.[0] ?? null;
+      setOver(key);
+    };
+    const up = (ev: PointerEvent) => {
+      const hit = active ? spotAt(ev.clientX, ev.clientY) : null;
+      stop();
+      if (!hit) return;
+      const spot = hit[1];
+      if (source.kind === 'paint') {
+        if (spot.paint === undefined || spot.paint === source.index) return;
+        run(moveAppearanceItem(spaceId, node!.id, source.index, spot.paint));
+        pickPaint(spot.paint);
+      } else run(moveModifier(spaceId, node!.id, source.id, spot.target, spot.position));
+    };
+    const onKey = (ev: KeyboardEvent) => {
+      if (ev.key !== 'Escape') return;
+      ev.stopPropagation();
+      active = false;
+      stop();
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    window.addEventListener('keydown', onKey, true);
   };
 
   const modifierRow = (mod: ModifierInstance, target: ModifierTarget, position: number, count: number, nested: boolean) => {
@@ -160,19 +211,14 @@ export function AppearancePanel() {
     return (
       <div
         key={mod.id}
-        className={cx('vc-appearance__row', nested && 'vc-appearance__row--nested', selected && 'is-selected', !mod.enabled && 'is-off', over === `m:${mod.id}` && 'is-over')}
+        className={cx('vc-appearance__row', nested && 'vc-appearance__row--nested', selected && 'is-selected', !mod.enabled && 'is-off', over === `m:${mod.id}` && 'is-drop-before')}
         role="listitem"
         data-testid="appearance-row"
         data-kind="modifier"
         data-zone={target.zone}
-        draggable
-        onDragStart={(event) => {
-          event.dataTransfer.setData(MODIFIER_DRAG, mod.id);
-          event.dataTransfer.effectAllowed = 'move';
-        }}
-        onDragOver={hover(`m:${mod.id}`)}
-        onDragLeave={() => setOver(null)}
-        onDrop={dropOn(target, position)}
+        data-drop-key={`m:${mod.id}`}
+        data-drop={JSON.stringify({ target, position })}
+        onPointerDown={(event) => beginDrag(event, { kind: 'modifier', id: mod.id })}
         onClick={() => setPick({ kind: 'modifier', id: mod.id, target, position })}
         onDoubleClick={() => editModifier(node.id, mod.id, mod.modifierId)}
       >
@@ -184,34 +230,27 @@ export function AppearancePanel() {
         <button type="button" className="vc-layerrow__btn" aria-label={t('appearance.edit')} {...tip(t('appearance.edit'))} onClick={(e) => { e.stopPropagation(); editModifier(node.id, mod.id, mod.modifierId); }}>
           <Icon id="fx" size={12} />
         </button>
-        <button type="button" className="vc-layerrow__btn" aria-label={t('appearance.up')} disabled={position <= 0} onClick={(e) => { e.stopPropagation(); run(moveModifier(spaceId, node.id, mod.id, target, position - 1)); }}>
-          <Icon id="chevron-up" size={12} />
-        </button>
-        <button type="button" className="vc-layerrow__btn" aria-label={t('appearance.down')} disabled={position >= count - 1} onClick={(e) => { e.stopPropagation(); run(moveModifier(spaceId, node.id, mod.id, target, position + 2)); }}>
-          <Icon id="chevron-down" size={12} />
-        </button>
       </div>
     );
   };
 
   const paintRow = (item: Extract<AppearanceItem, { kind: 'fill' | 'stroke' }>, index: number) => {
-    // The paint order: up = painted later, so it swaps places with the next fill or stroke of the list.
-    const later = paint.find((p) => p.index > index);
-    const earlier = [...paint].reverse().find((p) => p.index < index);
     const selected = pick?.kind === 'paint' && pick.index === index;
     return (
       <div
         key={`paint${index}`}
-        className={cx('vc-appearance__row', selected && 'is-selected', over === `p:${index}` && 'is-over')}
+        className={cx('vc-appearance__row', selected && 'is-selected', item.visible === false && 'is-off', over === `p:${index}` && (paintFrom !== null && paintFrom > index ? 'is-drop-after' : 'is-drop-before'))}
         role="listitem"
         data-testid="appearance-row"
         data-kind={item.kind}
-        onDragOver={hover(`p:${index}`)}
-        onDragLeave={() => setOver(null)}
-        onDrop={dropOn({ zone: 'item', index })}
-        onClick={() => setPick({ kind: 'paint', index })}
+        data-drop-key={`p:${index}`}
+        data-drop={JSON.stringify({ paint: index, target: { zone: 'item', index } })}
+        onPointerDown={(event) => beginDrag(event, { kind: 'paint', index })}
+        onClick={() => pickPaint(index)}
       >
-        <span className="vc-layerrow__btn" style={{ visibility: 'hidden' }} />
+        <button type="button" className="vc-layerrow__btn" data-testid="appearance-eye" aria-pressed={item.visible !== false} {...tip(t('appearance.toggle'))} onClick={(e) => { e.stopPropagation(); run(setPaintItem(spaceId, node.id, index, { visible: item.visible === false })); }}>
+          <Icon id={item.visible === false ? 'visibility-off' : 'visibility'} size={14} />
+        </button>
         <Icon id={item.kind === 'fill' ? 'fill' : 'stroke'} size={14} className="vc-field__icon" />
         <span className="vc-appearance__name">{item.kind === 'fill' ? t('appearance.fill') : t('appearance.stroke')}</span>
         <span
@@ -227,12 +266,6 @@ export function AppearancePanel() {
         {item.kind === 'stroke' && (
           <NumberInput value={Math.round(item.stroke.width * 100) / 100} onCommit={(v) => run(setPaintItem(spaceId, node.id, index, { width: v }))} min={0} step={0.25} decimals={2} suffix="pt" width={64} testId="appearance-weight" tooltip={t('stroke.weight')} />
         )}
-        <button type="button" className="vc-layerrow__btn" aria-label={t('appearance.up')} disabled={!later} onClick={(e) => { e.stopPropagation(); if (later) { run(moveAppearanceItem(spaceId, node.id, index, later.index)); setPick({ kind: 'paint', index: later.index }); } }}>
-          <Icon id="chevron-up" size={12} />
-        </button>
-        <button type="button" className="vc-layerrow__btn" aria-label={t('appearance.down')} disabled={!earlier} onClick={(e) => { e.stopPropagation(); if (earlier) { run(moveAppearanceItem(spaceId, node.id, index, earlier.index)); setPick({ kind: 'paint', index: earlier.index }); } }}>
-          <Icon id="chevron-down" size={12} />
-        </button>
       </div>
     );
   };
@@ -252,19 +285,18 @@ export function AppearancePanel() {
           </div>
         ))}
         <div
-          className={cx('vc-appearance__zone', pick?.kind === 'object' && 'is-selected', over === 'object' && 'is-over')}
+          className={cx('vc-appearance__zone', pick?.kind === 'object' && 'is-selected', over === 'object' && 'is-drop-after')}
           data-testid="appearance-zone"
           {...tip(t('appearance.wholeObjectTip'))}
           onClick={() => setPick({ kind: 'object' })}
-          onDragOver={hover('object')}
-          onDragLeave={() => setOver(null)}
-          onDrop={dropOn({ zone: 'object' })}
+          data-drop-key="object"
+          data-drop={JSON.stringify({ target: { zone: 'object' } })}
         >
           <Icon id={nodeIcon(node)} size={14} className="vc-field__icon" />
           <span className="vc-appearance__name">{t('appearance.wholeObject')}</span>
         </div>
         {objectMods.map((mod, position) => modifierRow(mod, { zone: 'object' }, position, objectMods.length, false))}
-        <div className="vc-appearance__rest" onDragOver={hover('rest')} onDrop={dropOn({ zone: 'object' })} />
+        <div className="vc-appearance__rest" data-drop-key="rest" data-drop={JSON.stringify({ target: { zone: 'object' } })} />
       </div>
       {toolbar}
     </div>
