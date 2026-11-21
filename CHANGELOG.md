@@ -1,12 +1,11 @@
 # Changelog
 
-## Sin publicar — Actualizaciones automáticas
+## 0.1.9 — Actualizaciones automáticas y modo SVG
 - **Victoria se actualiza sola** (instalador de Windows y AppImage de Linux): busca una versión nueva poco después de iniciar, la descarga en segundo plano y ofrece *Reiniciar ahora* o instalarla al cerrar. Reiniciar sigue el cierre normal, así que antes pregunta por los cambios sin guardar. La versión portátil, el `.deb` y el `.rpm` no se actualizan solos.
 - **Ayuda › Buscar actualizaciones…** busca a demanda y siempre responde. Preferencias › Archivos: «Buscar actualizaciones al iniciar» (activa por defecto).
 - Los Releases incluyen ahora `latest.yml`, `latest-linux.yml` y los `.blockmap`, que las copias instaladas necesitan para ver la versión nueva. Dependencia nueva: `electron-updater`.
 - **Limitaciones conocidas**: la primera versión con esta función no puede actualizarse desde una anterior (hay que instalarla a mano una vez); los instaladores siguen sin firmar, así que no se verifica al editor; no se ha probado la actualización de punta a punta con un Release real.
 
-## Sin publicar — Modo SVG
 - **Editar un SVG en su propio archivo**: al abrir un `.svg` sin nada que Victoria no pueda representar, el documento conserva su ruta y **Guardar** reescribe el SVG (antes siempre se importaba a un documento nuevo). Si el SVG usa algo no soportado (máscaras, filtros, motivos, `<textPath>`, texto con letras sueltas o giradas…) se abre como antes, como copia, con un aviso que lo explica, y el archivo no se toca.
 - **Lo que un SVG no puede guardar se bloquea con su motivo**: modificadores vivos, Mezcla, sombras, resplandores y desenfoque, trazos interiores/exteriores, perfiles de ancho, flechas, esquinas vivas, Calco vivo, varios rellenos o trazos por objeto, rellenos ocultos, texto de área y en trazado, y más de una mesa o Espacio. Un validador en la sesión (`DocumentSession.setGuard`, `svgGuard`) rechaza cualquier comando que lo añada y la barra de estado dice por qué; la barra de herramientas y los menús muestran desactivado, con tooltip, lo más visible. La herramienta Texto crea solo texto de punto.
 - **Guardar como documento Victoria…** convierte el documento en `.vict` con todas las funciones y deja el SVG original intacto. **Guardar el texto como contornos** (Archivo, solo en SVG) guarda ese archivo con el texto en curvas. Antes del primer guardado de cada sesión se avisa de lo que la reescritura pierde (identificadores, clases, comentarios, metadatos, orden del XML); se puede desactivar en Preferencias.
