@@ -143,7 +143,23 @@ export interface SystemFont {
   path: string;
 }
 
+/** Why this copy of Victoria cannot update itself. */
+export type UpdateUnsupportedReason = 'dev' | 'portable' | 'package';
+
+/** Where the automatic update is. `ready` = downloaded; it installs when Victoria closes, or on request. */
+export type UpdateState =
+  | { status: 'idle' }
+  | { status: 'unsupported'; reason: UpdateUnsupportedReason }
+  | { status: 'checking' }
+  | { status: 'none' }
+  | { status: 'downloading'; version: string; percent: number }
+  | { status: 'ready'; version: string }
+  | { status: 'error'; message: string };
+
 export const IPC = {
+  updateCheck: 'update:check',
+  updateInstall: 'update:install',
+  updateState: 'update:state',
   getPlatformInfo: 'platform:get-info',
   minimizeWindow: 'window:minimize',
   toggleMaximizeWindow: 'window:toggle-maximize',
@@ -238,6 +254,13 @@ export interface VictoriaApi {
   listFonts(): Promise<SystemFont[]>;
   /** Bytes of a font returned by `listFonts`; null for anything else. */
   readFont(path: string): Promise<Uint8Array | null>;
+
+  /** Looks for a newer version and starts downloading it. Resolves once the check is over (the download goes on in the background). Never rejects. */
+  checkForUpdates(): Promise<UpdateState>;
+  /** Closes Victoria (asking about unsaved work first), installs the downloaded update and starts the new version. Only valid in `ready`. */
+  installUpdate(): void;
+  /** Progress of the automatic update. Returns an unsubscribe function. */
+  onUpdateState(listener: (state: UpdateState) => void): () => void;
 
   /**
    * Called when the user closes the window. The handler asks about unsaved work and finishes the autosaves;

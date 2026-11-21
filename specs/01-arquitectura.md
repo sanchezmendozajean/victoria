@@ -127,6 +127,29 @@ Reglas:
 - Scripts de `package.json` multiplataforma (`cross-env`, `rimraf`; nada de `cmd` ni `bash` exclusivos).
 - **CI** (GitHub Actions): matriz `windows-latest` + `ubuntu-latest` para lint, pruebas unitarias, e2e (Linux con `xvfb-run`) y empaquetado; los artefactos de ambos se adjuntan a cada release.
 
+## Actualizaciones
+
+Victoria se actualiza sola con `electron-updater`, que lee los archivos `latest.yml` / `latest-linux.yml` del último GitHub Release (`publish` en `electron-builder.yml`). Todo ocurre en `src/main/updater.ts`; el renderer solo ve el estado (`UpdateState`) por el preload (`checkForUpdates`, `installUpdate`, `onUpdateState`).
+
+| Copia de Victoria | Se actualiza sola |
+|---|---|
+| Windows, instalador NSIS | Sí |
+| Windows, versión portátil | No (se reemplaza a mano) |
+| Linux, AppImage | Sí |
+| Linux, `.deb` / `.rpm` | No (lo gestiona el gestor de paquetes) |
+| Desarrollo (`pnpm dev`) | No |
+
+Comportamiento:
+- **Buscar**: 8 s después de iniciar, si la preferencia «Buscar actualizaciones al iniciar» está activa (por defecto sí), y a demanda con Ayuda › Buscar actualizaciones…, que siempre responde (al día, descargando, lista, error o «esta copia no se actualiza sola»).
+- **Descargar**: en segundo plano, solo versiones estables y nunca hacia atrás (`allowPrerelease` y `allowDowngrade` desactivados). El trabajo no se interrumpe.
+- **Instalar**: al terminar la descarga se ofrece *Reiniciar ahora* o *Al cerrar*. Si no se elige nada, se instala al salir de Victoria (`autoInstallOnAppQuit`).
+- **Reiniciar ahora** sigue el cierre normal de la ventana (pregunta por los cambios sin guardar y vacía los autoguardados); solo cuando la ventana ya se cerró se instala y se relanza la app. Si la persona cancela el cierre, la actualización espera al siguiente.
+- Un fallo de red o de descarga nunca interrumpe: la búsqueda automática calla; la manual muestra el motivo.
+
+Publicación: el workflow `release.yml` adjunta al Release los instaladores, los `*.blockmap` y los `latest*.yml`. Sin esos archivos las copias instaladas no ven la versión nueva. El Release debe ser público y no estar en borrador ni marcado como prerrelease.
+
+Seguridad: la descarga va por HTTPS y `electron-updater` comprueba el SHA-512 de `latest.yml`, pero los instaladores **no están firmados** (ver README): no hay verificación de firma del editor. Firmar el instalador de Windows y declarar `publisherName` queda pendiente.
+
 ## Seguridad Electron
 
 `contextIsolation: true`, `sandbox: true`, `nodeIntegration: false`, CSP estricta, sin `remote`. El preload expone solo funciones con nombres explícitos (`openFile`, `saveFile`, `listFonts`, `print`, `exportFile`…).

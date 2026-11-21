@@ -7,7 +7,7 @@ describe('preferences', () => {
     expect(sanitizePreferences(null)).toEqual(DEFAULT_PREFERENCES);
     expect(sanitizePreferences('x')).toEqual(DEFAULT_PREFERENCES);
     expect(sanitizePreferences({ autoAddDelete: 'yes', pencilFidelity: 9, autosaveMinutes: -3 })).toEqual(DEFAULT_PREFERENCES);
-    expect(sanitizePreferences({ autoAddDelete: false, pencilFidelity: 5, autosaveMinutes: 10.4 })).toEqual({ autoAddDelete: false, pencilFidelity: 5, autosaveMinutes: 10, startScreen: true, placeLinked: false, shortcuts: {}, linuxNoticeSeen: false, moveArtworkWithArtboard: true, tracePreset: 'colors16', svgSaveNotice: true, arrange: DEFAULT_PREFERENCES.arrange });
+    expect(sanitizePreferences({ autoAddDelete: false, pencilFidelity: 5, autosaveMinutes: 10.4 })).toEqual({ autoAddDelete: false, pencilFidelity: 5, autosaveMinutes: 10, startScreen: true, placeLinked: false, shortcuts: {}, linuxNoticeSeen: false, moveArtworkWithArtboard: true, tracePreset: 'colors16', svgSaveNotice: true, autoUpdate: true, arrange: DEFAULT_PREFERENCES.arrange });
   });
 
   it('the trace preset must be a known one', () => {

@@ -54,6 +54,7 @@
     "zustand": "^5.0.15"
   },
   "dependencies": {
+    "electron-updater": "^6.8.11",
     "opentype.js": "^2.0.0",
     "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^6.4.299"

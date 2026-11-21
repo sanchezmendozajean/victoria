@@ -1,10 +1,12 @@
 import { app, BrowserWindow, screen, session } from 'electron';
 import path from 'node:path';
+import { autoUpdater } from 'electron-updater';
 import type { OverlayColors, PlatformInfo, WindowChrome } from '../shared/ipc';
 import { IPC } from '../shared/ipc';
 import { broadcastWindowState, registerIpc } from './ipc';
 import { installApplicationMenu } from './menu';
 import { getPlatform } from './platform';
+import { createUpdater, updateSupport, type UpdaterBackend } from './updater';
 
 app.setName('Victoria');
 // Tests run beside a real session: a separate userData also gives them their own single-instance lock.
@@ -28,6 +30,16 @@ function resolveChrome(): WindowChrome {
 const chrome = resolveChrome();
 
 let mainWindow: BrowserWindow | null = null;
+
+// Automatic updates (specs/01 · Actualizaciones). electron-updater is only loaded when this copy can update itself.
+const unsupportedUpdates = updateSupport({ platform: process.platform, packaged: app.isPackaged, env: process.env });
+const updater = createUpdater({
+  backend: unsupportedUpdates ? null : (autoUpdater as unknown as UpdaterBackend),
+  unsupported: unsupportedUpdates,
+  onState: (state) => {
+    if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send(IPC.updateState, state);
+  },
+});
 
 /** Window and taskbar icon: the multi-size .ico on Windows, the .png elsewhere. Packaged: extraResources; dev: build/. */
 function appIconPath(): string {
@@ -79,6 +91,7 @@ function createWindow(): BrowserWindow {
   win.webContents.ipc.on(IPC.closeCancel, () => {
     clearTimeout(closeTimer);
     closeRequested = false;
+    updater.cancelInstall(); // the person kept the window open: the update waits for the next close
   });
   const notify = () => broadcastWindowState(win);
   // F12 / Ctrl+Shift+I / Ctrl+Alt+I toggle the developer tools (the app has no native menu to carry the accelerator).
@@ -96,6 +109,7 @@ function createWindow(): BrowserWindow {
   win.on('leave-full-screen', notify);
   win.on('closed', () => {
     if (mainWindow === win) mainWindow = null;
+    updater.windowClosed(); // installs and relaunches when the person asked to restart for an update
   });
 
   if (DEV_URL) {
@@ -138,7 +152,7 @@ if (!app.requestSingleInstanceLock()) {
       ...(process.env.XDG_CURRENT_DESKTOP ? { desktop: process.env.XDG_CURRENT_DESKTOP } : {}),
       testing: !app.isPackaged && !!process.env.VICTORIA_USER_DATA,
     };
-    registerIpc({ platform, info, getWindow: () => mainWindow });
+    registerIpc({ platform, info, updater, getWindow: () => mainWindow });
     mainWindow = createWindow();
 
     app.on('activate', () => {

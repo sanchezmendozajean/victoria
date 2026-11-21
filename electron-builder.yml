@@ -9,6 +9,13 @@ files:
   - dist-electron/**
   - package.json
 asar: true
+# Where the installed app looks for updates: the assets of the latest GitHub Release (latest.yml, latest-linux.yml).
+# Builds never upload on their own (--publish never); the Release workflow attaches the files.
+publish:
+  provider: github
+  owner: sanchezmendozajean
+  repo: victoria
+  releaseType: release
 icon: build/icon.png
 extraResources:
   # The window icon (Linux taskbar, development) is read from here at run time.

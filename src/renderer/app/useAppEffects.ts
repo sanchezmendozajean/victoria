@@ -11,6 +11,7 @@ import { PANEL_BY_ACTION } from './menus';
 import { findShortcutAction } from './shortcuts';
 import { useUi } from './store';
 import { toolFromAction } from './tools';
+import { watchUpdates } from './updates';
 
 /** Once, on Linux: some window managers take Alt+drag for themselves, which Duplicar-while-dragging uses (specs/09). */
 async function linuxNotice(info: PlatformInfo): Promise<void> {
@@ -58,6 +59,9 @@ export function useAppEffects() {
       unsubscribe();
     };
   }, [setPlatform, setMaximized]);
+
+  // Automatic updates: the install offer when a download is ready, and the check shortly after start.
+  useEffect(() => watchUpdates(), []);
 
   // Theme: tokens switch through [data-theme]; native caption buttons must follow.
   useEffect(() => {

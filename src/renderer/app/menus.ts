@@ -14,6 +14,7 @@ import { actionContext, canMakeBlend, canResetBoundingBoxSelection, canUngroup, 
 import { moveToSpaceEntries } from './spaceMenus';
 import { goToSpaceIndex } from '../documents/spaceActions';
 import { manager } from '../documents';
+import { checkForUpdatesNow } from './updates';
 import { gateReason, isSvgMode } from './svgMode';
 import type { SvgGate } from '../../core';
 
@@ -339,6 +340,7 @@ export function buildMenus(ctx: MenuContext): MenuDef[] {
     item('help', 'menu.help.help', 'help'),
     item('shortcuts', 'menu.help.shortcuts', 'keyboard'),
     sep('s1'),
+    item('checkUpdates', 'menu.help.checkUpdates', 'cloud-check', undefined, { onSelect: () => void checkForUpdatesNow() }),
     item('about', 'menu.help.about', 'info'),
   ];
 

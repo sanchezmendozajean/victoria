@@ -69,6 +69,8 @@ jobs:
             release/*.AppImage
             release/*.deb
             release/*.rpm
+            release/*.blockmap
+            release/latest*.yml
 
   publish:
     name: Publish release
@@ -103,6 +105,8 @@ jobs:
 
           - Windows: `Victoria-Setup-<versión>.exe` (instalador) o la versión portátil.
           - Linux: AppImage, `.deb` o `.rpm`.
+
+          El instalador de Windows y el AppImage se actualizan solos; la versión portátil, el `.deb` y el `.rpm` se reemplazan a mano.
 
           Documentación: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
           NOTES

@@ -3,6 +3,7 @@ import { IPC, type ClipboardContents, type ExportSaveRequest, type PrintOutcome,
 import * as files from './files';
 import { cachedFonts, readListedFont } from './fonts';
 import type { Platform } from './platform';
+import type { Updater } from './updater';
 import { validateJob } from './printJob';
 
 /** Clipboard format of Victoria objects: a Chromium web custom format, which behaves the same on Windows and Linux. */
@@ -20,6 +21,7 @@ function isOverlayColors(v: unknown): v is OverlayColors {
 export interface IpcContext {
   platform: Platform;
   info: PlatformInfo;
+  updater: Updater;
   getWindow(): BrowserWindow | null;
 }
 
@@ -39,6 +41,13 @@ export function registerIpc(ctx: IpcContext): void {
     else win.maximize();
   });
   ipcMain.on(IPC.closeWindow, (event) => fromAppWindow(event)?.close());
+
+  ipcMain.handle(IPC.updateCheck, async (event) => (fromAppWindow(event) ? ctx.updater.check() : ctx.updater.state()));
+  ipcMain.on(IPC.updateInstall, (event) => {
+    const win = fromAppWindow(event);
+    // The normal close runs first (it asks about unsaved work); the install follows the 'closed' event.
+    if (win && ctx.updater.requestInstall()) win.close();
+  });
 
   ipcMain.handle(IPC.listFonts, async (event) => (fromAppWindow(event) ? cachedFonts(() => ctx.platform.listFonts()) : []));
   ipcMain.handle(IPC.readFont, async (event, file: unknown) => (fromAppWindow(event) ? readListedFont(() => ctx.platform.listFonts(), file) : null));

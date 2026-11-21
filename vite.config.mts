@@ -44,7 +44,8 @@ export default defineConfig({
     electron({
       main: {
         entry: 'src/main/index.ts',
-        vite: { build: { outDir: 'dist-electron/main' } },
+        // electron-updater loads its platform updaters lazily: it stays a real dependency of the package.
+        vite: { build: { outDir: 'dist-electron/main', rolldownOptions: { external: ['electron-updater'] } } },
       },
       preload: {
         input: 'src/preload/index.ts',

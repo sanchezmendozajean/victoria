@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer, webUtils } from 'electron';
-import { IPC, type VictoriaApi, type WindowState } from '../shared/ipc';
+import { IPC, type UpdateState, type VictoriaApi, type WindowState } from '../shared/ipc';
 
 // Only named functions cross the bridge; never expose ipcRenderer itself.
 const api: VictoriaApi = {
@@ -43,6 +43,13 @@ const api: VictoriaApi = {
   autosaveRead: (docId) => ipcRenderer.invoke(IPC.autosaveRead, docId),
   listFonts: () => ipcRenderer.invoke(IPC.listFonts),
   readFont: (path) => ipcRenderer.invoke(IPC.readFont, path),
+  checkForUpdates: () => ipcRenderer.invoke(IPC.updateCheck),
+  installUpdate: () => ipcRenderer.send(IPC.updateInstall),
+  onUpdateState: (listener) => {
+    const handler = (_event: Electron.IpcRendererEvent, state: UpdateState) => listener(state);
+    ipcRenderer.on(IPC.updateState, handler);
+    return () => ipcRenderer.removeListener(IPC.updateState, handler);
+  },
   onBeforeClose: (handler) => {
     const listener = () => {
       ipcRenderer.send(IPC.closeAck); // the renderer is alive: the main process stops its safety timer while a dialog is open
