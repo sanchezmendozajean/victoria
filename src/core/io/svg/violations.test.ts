@@ -91,7 +91,7 @@ describe('svgViolations', () => {
     expect(run((ids) => createPolygon(ids, 9, 5, 2), { items: [fillItem] })).toContain('corner.live');
     expect(run((ids) => createPath(ids, [{ p: { x: 0, y: 0 }, in: null, out: null, kind: 'corner', cornerRadius: 3 }, { p: { x: 9, y: 0 }, in: null, out: null, kind: 'corner' }], false))).toContain('corner.live');
     const uneven = createRect(sequentialIds('u'), 9, 9);
-    uneven.params.radii = [1, 2, 3, 4];
+    Object.assign(uneven.params, { radii: [1, 2, 3, 4] });
     expect(run(() => uneven)).toContain('corner.live');
     expect(run((ids) => createText(ids, { kind: 'point' }, [{ text: 'A', style: { fontFamily: 'X', fontStyle: 'Regular', size: 12, hScale: 80 } }]))).toContain('text.advanced');
     expect(run((ids) => createText(ids, { kind: 'area', frame: { anchors: [], closed: true } }, [{ text: 'A', style: { fontFamily: 'X', fontStyle: 'Regular', size: 12 } }]))).toContain('text.area');

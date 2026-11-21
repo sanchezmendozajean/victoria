@@ -9,7 +9,7 @@ function fakeEnv() {
   const errors: string[] = [];
   const requests: SaveRequest[] = [];
   const blocked: SvgGate[] = [];
-  const state = { now: 1_000_000, nextPick: null as OpenedFile | null, savePath: 'C:\\docs\\a.vict' as string | null, close: 'discard' as CloseChoice, pdfFails: false, pdfPages: 2, thumbnail: null as 'png' | 'fails' | null };
+  const state = { now: 1_000_000, nextPick: null as OpenedFile | null, savePath: 'C:\\docs\\a.vict' as string | null, close: 'discard' as CloseChoice, confirm: true, confirms: 0, pdfFails: false, pdfPages: 2, thumbnail: null as 'png' | 'fails' | null };
 
   const files: FilesPort = {
     openFile: async () => state.nextPick,
@@ -28,7 +28,7 @@ function fakeEnv() {
 
   const manager = new DocumentManager({
     files,
-    prompts: { askSaveBeforeClose: async () => state.close, reportError: async (m) => void errors.push(m) },
+    prompts: { askSaveBeforeClose: async () => state.close, confirmSvgSave: async () => (state.confirms++, state.confirm), reportError: async (m) => void errors.push(m) },
     names: {
       untitled: (n) => `Sin título-${n}`,
       space: (n) => `Espacio ${n}`,
@@ -199,6 +199,48 @@ describe('DocumentManager', () => {
       const mod = newModifier(sequentialIds('t'), 'drop-shadow', defaultParams('drop-shadow'));
       expect(doc.session.run(addModifier(space.id, [{ nodeId: node.id, mod }]))).toBe(true);
       expect(blocked).toEqual([]);
+    });
+
+    it('asks once per session before the first save over the SVG, and a "no" saves nothing and asks again', async () => {
+      const { manager, doc, disk, state } = await open(CLEAN);
+      edit(manager);
+      state.confirm = false;
+      expect(await manager.save()).toBe(false);
+      expect(disk.has('C:/art/logo.svg')).toBe(false);
+      expect(doc.session.dirty).toBe(true);
+      state.confirm = true;
+      expect(await manager.save()).toBe(true);
+      expect(state.confirms).toBe(2);
+      edit(manager, 'Again');
+      expect(await manager.save()).toBe(true);
+      expect(state.confirms).toBe(2);
+    });
+
+    it('does not ask for Guardar como (a new file), nor for a document that is not an SVG', async () => {
+      const { manager, state } = await open(CLEAN);
+      state.savePath = 'C:/art/other.svg';
+      await manager.saveAs();
+      expect(state.confirms).toBe(0);
+      const plain = fakeEnv();
+      plain.manager.newDocument();
+      await plain.manager.save();
+      expect(plain.state.confirms).toBe(0);
+    });
+
+    it('writes the text as live text, or as outlines when the document asks for it', async () => {
+      const withText = '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="40"><text x="5" y="20" font-family="Open Sans" font-size="12" fill="#000000">Hola</text></svg>';
+      const live = await open(withText);
+      expect(live.doc.format).toBe('svg');
+      edit(live.manager);
+      await live.manager.save();
+      expect(new TextDecoder().decode(live.disk.get('C:/art/logo.svg'))).toContain('<text');
+      const outlined = await open(withText);
+      outlined.manager.setSvgTextAsOutlines(true);
+      edit(outlined.manager);
+      await outlined.manager.save();
+      const text = new TextDecoder().decode(outlined.disk.get('C:/art/logo.svg'));
+      expect(text).not.toContain('<text');
+      expect(text).toContain('<path');
     });
 
     it('prepares the document (fonts, images) before laying it out for the SVG', async () => {

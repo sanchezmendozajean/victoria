@@ -132,7 +132,16 @@ export function buildMenus(ctx: MenuContext): MenuDef[] {
     sep('s1'),
     item('save', 'menu.file.save', 'save', 'file.save'),
     item('save-as', 'menu.file.saveAs', 'save-as', 'file.saveAs'),
-    ...(isSvgMode() ? [item('save-vict', 'menu.file.saveAsVict', 'file', undefined, { onSelect: () => void manager.saveAsVict() })] : []),
+    ...(isSvgMode()
+      ? [
+          item('save-vict', 'menu.file.saveAsVict', 'file', undefined, { onSelect: () => void manager.saveAsVict() }),
+          item('svg-text-outlines', 'svg.textOutlines', 'create-outlines', undefined, {
+            checked: manager.active?.svgTextAsOutlines === true,
+            tooltip: t('svg.textOutlinesTip'),
+            onSelect: () => manager.setSvgTextAsOutlines(manager.active?.svgTextAsOutlines !== true),
+          }),
+        ]
+      : []),
     item('save-copy', 'menu.file.saveCopy', 'copy', 'file.saveCopy'),
     sep('s2'),
     item('place', 'menu.file.place', 'place', 'file.place'),

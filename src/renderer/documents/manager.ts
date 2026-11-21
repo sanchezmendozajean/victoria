@@ -54,6 +54,8 @@ export type CloseChoice = 'save' | 'discard' | 'cancel';
 /** Everything that talks to the user: dialogs live in the UI layer, not here. */
 export interface Prompts {
   askSaveBeforeClose(name: string): Promise<CloseChoice>;
+  /** Before the first save of an SVG document in a session: false cancels the save. */
+  confirmSvgSave?(name: string): Promise<boolean>;
   reportError(message: string): Promise<void>;
 }
 
@@ -108,6 +110,10 @@ export interface OpenDocument {
   session: DocumentSession;
   /** Absolute path of its file (the .vict, or the .svg it edits), or null while the document has never been saved. */
   path: string | null;
+  /** SVG documents: write the text as outlines instead of live text (set from Archivo, lasts for the session). */
+  svgTextAsOutlines: boolean;
+  /** SVG documents: the person already accepted that saving rewrites the file, in this session. */
+  svgSaveConfirmed: boolean;
   /** 'svg' while the document edits an SVG in its own file (specs/02 · Modo SVG); Guardar then writes SVG. */
   format: 'vict' | 'svg';
   policy: AutosavePolicy;
@@ -179,6 +185,8 @@ export class DocumentManager {
       session,
       path,
       format,
+      svgTextAsOutlines: false,
+      svgSaveConfirmed: false,
       policy: new AutosavePolicy(session.revision, this.clock()),
       hasAutosave,
     };
@@ -388,6 +396,11 @@ export class DocumentManager {
     const doc = this.docs_.find((d) => d.id === id);
     if (!doc) return false;
     const { files, names } = this.deps;
+    // The first save over an SVG file in a session says what the rewrite loses; the person may decline.
+    if (doc.format === 'svg' && !forceDialog && !doc.svgSaveConfirmed && this.deps.prompts.confirmSvgSave) {
+      if (!(await this.deps.prompts.confirmSvgSave(displayName(doc)))) return false;
+      doc.svgSaveConfirmed = true;
+    }
     try {
       // The preview is decoration: a document that cannot be drawn is still saved.
       const thumbnail = await this.deps.thumbnail?.(doc.session).catch(() => null);
@@ -413,10 +426,18 @@ export class DocumentManager {
     }
   }
 
+  /** Archivo › Guardar el texto como contornos: whether this SVG document is written with its text converted to curves. */
+  setSvgTextAsOutlines(value: boolean, id = this.activeId_): void {
+    const doc = this.docs_.find((d) => d.id === id);
+    if (!doc || doc.format !== 'svg' || doc.svgTextAsOutlines === value) return;
+    doc.svgTextAsOutlines = value;
+    this.changed();
+  }
+
   /** The SVG that replaces the file of an SVG document. */
   private async serializeSvg(doc: OpenDocument): Promise<Uint8Array> {
     await this.deps.prepareSvg?.(doc.session);
-    return new TextEncoder().encode(writeDocumentSvg(doc.session.document, doc.session.images).svg);
+    return new TextEncoder().encode(writeDocumentSvg(doc.session.document, doc.session.images, { textAsOutlines: doc.svgTextAsOutlines }).svg);
   }
 
   /**

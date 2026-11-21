@@ -22,6 +22,8 @@ export interface Preferences {
   moveArtworkWithArtboard: boolean;
   /** Calco de imagen: the preset the Calcar button uses (the last one picked from its menu). */
   tracePreset: TracePresetId;
+  /** Before the first save of an SVG document in a session, warn that the file is rewritten (and what is lost). */
+  svgSaveNotice: boolean;
   /** Last values of Reorganizar mesas (columns 0 = pick from the count; spacing in pt). */
   arrange: ArrangeSettings;
 }
@@ -36,7 +38,7 @@ export interface ArrangeSettings {
 const ARRANGE_DIRECTIONS: readonly ArtboardArrangeDirection[] = ['row', 'row-rtl', 'column'];
 export const DEFAULT_ARRANGE: ArrangeSettings = { columns: 0, spacing: (20 * 72) / 25.4, direction: 'row', moveArtwork: true };
 
-export const DEFAULT_PREFERENCES: Preferences = { autoAddDelete: true, pencilFidelity: 3, autosaveMinutes: 1, startScreen: true, placeLinked: false, shortcuts: {}, linuxNoticeSeen: false, moveArtworkWithArtboard: true, tracePreset: 'colors16', arrange: DEFAULT_ARRANGE };
+export const DEFAULT_PREFERENCES: Preferences = { autoAddDelete: true, pencilFidelity: 3, autosaveMinutes: 1, startScreen: true, placeLinked: false, shortcuts: {}, linuxNoticeSeen: false, moveArtworkWithArtboard: true, tracePreset: 'colors16', svgSaveNotice: true, arrange: DEFAULT_ARRANGE };
 
 export const AUTOSAVE_MINUTES = { min: 1, max: 30 } as const;
 const STORAGE_KEY = 'victoria.preferences';
@@ -60,6 +62,7 @@ export function sanitizePreferences(raw: unknown): Preferences {
     linuxNoticeSeen: source.linuxNoticeSeen === true,
     moveArtworkWithArtboard: typeof source.moveArtworkWithArtboard === 'boolean' ? source.moveArtworkWithArtboard : DEFAULT_PREFERENCES.moveArtworkWithArtboard,
     tracePreset: typeof source.tracePreset === 'string' && Object.hasOwn(TRACE_PRESETS, source.tracePreset) ? (source.tracePreset as TracePresetId) : DEFAULT_PREFERENCES.tracePreset,
+    svgSaveNotice: typeof source.svgSaveNotice === 'boolean' ? source.svgSaveNotice : DEFAULT_PREFERENCES.svgSaveNotice,
     arrange: sanitizeArrange(source.arrange),
   };
 }

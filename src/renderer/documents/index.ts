@@ -3,7 +3,7 @@ import { askUser } from '../app/dialogs';
 import { getActiveSpace, type DocumentSession } from '../../core';
 import { prepareAssets, rasterize } from '../export/raster';
 import { t, type TranslationKey } from '../i18n';
-import { getPreferences } from '../prefs/preferences';
+import { getPreferences, usePreferences } from '../prefs/preferences';
 import { showSvgBlocked } from '../app/svgNotice';
 import { DocumentManager, type CloseChoice } from './manager';
 
@@ -56,6 +56,20 @@ export const manager = new DocumentManager({
         ],
       });
       return answer as CloseChoice;
+    },
+    confirmSvgSave: async (name) => {
+      if (!getPreferences().svgSaveNotice) return true;
+      const answer = await askUser({
+        title: t('svg.confirmTitle'),
+        detail: t('svg.confirmDetail', { name }),
+        buttons: [
+          { id: 'cancel', label: t('dialog.cancel') },
+          { id: 'always', label: t('svg.confirmAlways') },
+          { id: 'save', label: t('svg.confirmSave'), variant: 'primary' },
+        ],
+      });
+      if (answer === 'always') usePreferences.getState().set({ svgSaveNotice: false });
+      return answer === 'save' || answer === 'always';
     },
     reportError: async (message) => {
       await askUser({ title: t('dialog.error'), message, buttons: [{ id: 'ok', label: t('dialog.ok'), variant: 'primary' }] });

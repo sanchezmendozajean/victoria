@@ -15,11 +15,11 @@ import type { SvgImport } from './svg';
 export const canEditSvgInPlace = (result: Pick<SvgImport, 'warnings'>): boolean => result.warnings.length === 0;
 
 /** The document as the SVG that replaces its file: the first artboard, structure kept, text as text where it can be. */
-export function writeDocumentSvg(document: Document, images: ImageStore, options: { minify?: boolean } = {}): { svg: string; warnings: ExportWarning[] } {
+export function writeDocumentSvg(document: Document, images: ImageStore, options: { minify?: boolean; /** Text as outlines instead of live text (the file is then readable anywhere, but the text is no longer text). */ textAsOutlines?: boolean } = {}): { svg: string; warnings: ExportWarning[] } {
   const space = getActiveSpace(document);
   const board = space.artboards[0];
   if (!board) throw new Error('The document has no artboard');
-  const scene = buildScene(space, { resources: document.resources, region: artboardRegion(board, false), liveText: true });
+  const scene = buildScene(space, { resources: document.resources, region: artboardRegion(board, false), liveText: options.textAsOutlines !== true });
   const formats: Record<string, ImageResource['format']> = Object.fromEntries(Object.entries(document.resources.images).map(([hash, r]) => [hash, r.format]));
-  return writeSvg(scene, images, { ...options, structure: 'semantic', imageFormats: formats });
+  return writeSvg(scene, images, { ...(options.minify === undefined ? {} : { minify: options.minify }), structure: 'semantic', imageFormats: formats });
 }

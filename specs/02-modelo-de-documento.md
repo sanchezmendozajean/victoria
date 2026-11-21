@@ -233,6 +233,11 @@ En modo SVG el texto de punto se guarda como `<text>` y se reabre igual de edita
 - **Implementación (13.3).** `OpenDocument.format` vale `'svg'` o `'vict'`; `SaveRequest.format` lo lleva al proceso principal, que ajusta el filtro y la extensión del diálogo. El proceso principal solo escribe en rutas que el usuario eligió en un diálogo, como antes. El guardado a SVG (`writeDocumentSvg`) escribe la primera mesa; antes de maquetar se cargan fuentes e imágenes (`prepareSvg`). El autoguardado sigue escribiendo `.vict` en `userData`: recuperar un documento SVG lo devuelve como documento Victoria sin archivo asociado. Las advertencias de texto usan el código `text-layout`.
 - Los objetos vivos de un `.vict` (polígono, estrella, texto…) no pasan a un SVG: se tratan como en la exportación actual (geometría).
 
+### Avisos y opciones (implementado en 13.5)
+
+- **Primer guardado de la sesión.** Antes de reescribir el `.svg` por primera vez en una sesión, un diálogo explica qué se pierde y ofrece Guardar, Guardar y no volver a avisar, o Cancelar (preferencia «Avisar antes de guardar un SVG por primera vez en una sesión», activada por defecto). Cancelar no guarda nada y vuelve a preguntar la próxima vez. Guardar como (un archivo nuevo) no pregunta.
+- **Texto como contornos.** Entrada de Archivo, solo en documentos SVG, con marca: el archivo se guarda con el texto convertido a curvas. Dura la sesión del documento; no se guarda en ningún archivo.
+
 ### Aceptación
 
 - Para cada elemento del registro de capacidades permitido: `exportSvg(importSvg(x))` produce la misma escena (prueba en `core/io/svg`).

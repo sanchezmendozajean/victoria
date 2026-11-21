@@ -253,9 +253,9 @@ describe('SVG mode · the default export still writes the drawing', () => {
   it('a modifier, partial ellipse or uneven corners are paths, not primitives', () => {
     const s = setup();
     const e = createEllipse(s.ids, 20, 20);
-    e.params.endAngle = 180;
+    Object.assign(e.params, { endAngle: 180 });
     const r = createRect(s.ids, 20, 20);
-    r.params.radii = [1, 2, 3, 4];
+    Object.assign(r.params, { radii: [1, 2, 3, 4] });
     s.add(e, fill());
     s.add(r, fill());
     expect(s.trip().svg).not.toMatch(/<(rect|ellipse|circle)/);
