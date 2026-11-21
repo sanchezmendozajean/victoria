@@ -21,7 +21,7 @@ import type { ToolId } from '../app/tools';
 import { isolatedCompound, pickedSubPaths, subPathSelection, subPathsBounds, transformedCopies, transformSubPaths } from './subPathSelection';
 
 const IDENTITY: Matrix = [1, 0, 0, 1, 0, 0];
-const IDS: Record<TransformKind, ToolId> = { rotate: 'tool-rotate', scale: 'tool-scale', reflect: 'tool-reflect', move: 'tool-select' };
+const IDS: Record<TransformKind, ToolId> = { rotate: 'tool-rotate', scale: 'tool-scale', reflect: 'tool-reflect', move: 'tool-select', transform: 'tool-select' };
 
 interface Gesture {
   screen: Vec2;
