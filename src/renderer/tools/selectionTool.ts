@@ -17,6 +17,8 @@ import {
   translation,
   rotation,
   multiply,
+  pathsOfNodes,
+  withAnchors,
   addToSelection,
   isSelected,
   type Matrix,
@@ -70,6 +72,15 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
   let ctrlHeld = false;
   const ctrlDown = (e: { ctrlKey: boolean; metaKey: boolean }) => e.ctrlKey || e.metaKey;
   const asDirect = () => forwarded !== null || (ctrlHeld && state.kind === 'idle');
+  /** Entering the Direct Selection mode with objects selected: every anchor of them starts selected. */
+  const selectAllAnchors = (host: ToolHost) => {
+    const { session, space } = host;
+    const selection = currentSelection(host);
+    if (!session || !space || !selection || selection.ids.length === 0) return;
+    const anchors: { [pathId: string]: number[] } = {};
+    for (const frame of pathsOfNodes(space, selection.ids)) anchors[frame.path.id] = frame.path.anchors.map((_, i) => i);
+    session.select(withAnchors(selection, anchors));
+  };
   const widgets = createWidgetDrag(false);
   const textWidgets = createTextWidgets();
   let hoverCursor = 'default';
@@ -342,6 +353,7 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
       }
       const wasCtrl = ctrlHeld;
       ctrlHeld = ctrlDown(event);
+      if (ctrlHeld && !wasCtrl && state.kind === 'idle') selectAllAnchors(host);
       if (ctrlHeld && state.kind === 'idle') {
         direct.onPointerMove(event, host);
         return;
@@ -459,6 +471,7 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
 
     onKeyDown(event: ToolKeyEvent, host) {
       if (event.key === 'Control' || event.key === 'Meta') {
+        if (!ctrlHeld && state.kind === 'idle') selectAllAnchors(host);
         ctrlHeld = true;
         host.invalidateOverlay();
         return false;

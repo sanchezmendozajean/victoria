@@ -485,6 +485,16 @@ describe('Selection tool · keyboard', () => {
     expect(tool.onKeyDown?.(key('ArrowRight', { ctrlKey: true }), t.host)).toBe(false);
     expect(tool.onKeyDown?.(key('a'), t.host)).toBe(false);
   });
+
+  it('holding Ctrl (Direct Selection) selects every anchor of the selected objects', () => {
+    const { t, tool } = setup();
+    const a = t.rect(0, 0);
+    click(tool, t, 50, 50);
+    expect(Object.keys(t.session.selection.anchors ?? {})).toHaveLength(0);
+    tool.onKeyDown?.(key('Control', { ctrlKey: true }), t.host);
+    expect(Object.values(t.session.selection.anchors ?? {}).flat().length).toBeGreaterThan(0);
+    expect(selectedIds(t)).toEqual([a.id]);
+  });
 });
 
 describe('Selection tool · snapping', () => {
