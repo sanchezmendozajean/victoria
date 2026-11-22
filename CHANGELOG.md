@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.1.10 — Selección directa con Ctrl
+- Con la herramienta Selección, al mantener Ctrl (selección directa temporal) quedan seleccionadas todas las anclas de los objetos seleccionados.
+
 ## 0.1.9 — Actualizaciones automáticas y modo SVG
 - **Victoria se actualiza sola** (instalador de Windows y AppImage de Linux): busca una versión nueva poco después de iniciar, la descarga en segundo plano y ofrece *Reiniciar ahora* o instalarla al cerrar. Reiniciar sigue el cierre normal, así que antes pregunta por los cambios sin guardar. La versión portátil, el `.deb` y el `.rpm` no se actualizan solos.
 - **Ayuda › Buscar actualizaciones…** busca a demanda y siempre responde. Preferencias › Archivos: «Buscar actualizaciones al iniciar» (activa por defecto).
