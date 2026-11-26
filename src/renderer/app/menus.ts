@@ -15,6 +15,7 @@ import { moveToSpaceEntries } from './spaceMenus';
 import { goToSpaceIndex } from '../documents/spaceActions';
 import { manager } from '../documents';
 import { checkForUpdatesNow } from './updates';
+import { askUser } from './dialogs';
 import { gateReason, isSvgMode } from './svgMode';
 import type { SvgGate } from '../../core';
 
@@ -341,7 +342,14 @@ export function buildMenus(ctx: MenuContext): MenuDef[] {
     item('shortcuts', 'menu.help.shortcuts', 'keyboard'),
     sep('s1'),
     item('checkUpdates', 'menu.help.checkUpdates', 'cloud-check', undefined, { onSelect: () => void checkForUpdatesNow() }),
-    item('about', 'menu.help.about', 'info'),
+    item('about', 'menu.help.about', 'info', undefined, {
+      onSelect: () =>
+        void askUser({
+          title: t('menu.help.about'),
+          detail: t('about.detail', { version: __APP_VERSION__ }),
+          buttons: [{ id: 'ok', label: t('dialog.ok'), variant: 'primary' }],
+        }),
+    }),
   ];
 
   return [
