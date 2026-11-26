@@ -47,11 +47,12 @@ export const manager = new DocumentManager({
   prompts: {
     askSaveBeforeClose: async (name) => {
       const answer = await askUser({
-        title: t('doc.closeUnsaved', { name }),
+        title: t('doc.closeUnsavedTitle'),
+        message: t('doc.closeUnsaved', { name }),
         detail: t('doc.closeUnsavedDetail'),
         buttons: [
+          { id: 'cancel', label: t('dialog.cancel'), start: true },
           { id: 'discard', label: t('dialog.discard') },
-          { id: 'cancel', label: t('dialog.cancel') },
           { id: 'save', label: t('dialog.save'), variant: 'primary' },
         ],
       });

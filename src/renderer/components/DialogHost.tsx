@@ -50,7 +50,7 @@ export function DialogHost() {
               ref={button.id === defaultButton?.id ? primary : undefined}
               type="button"
               data-testid={`dialog-${button.id}`}
-              className={cx('vc-dialog__button', button.variant && `vc-dialog__button--${button.variant}`)}
+              className={cx('vc-dialog__button', button.variant && `vc-dialog__button--${button.variant}`, button.start && 'vc-dialog__button--start')}
               onClick={() => answerDialog(button.id)}
             >
               {BUTTON_ICONS[button.id] && <Icon id={BUTTON_ICONS[button.id] as IconId} size={14} />}

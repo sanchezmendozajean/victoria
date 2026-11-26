@@ -4,6 +4,8 @@ export interface DialogButton {
   id: string;
   label: string;
   variant?: 'primary' | 'danger';
+  /** Pins the button to the left edge of the footer (the others stay on the right). */
+  start?: boolean;
 }
 
 export interface DialogSpec {
