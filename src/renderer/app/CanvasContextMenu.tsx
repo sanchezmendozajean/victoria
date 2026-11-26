@@ -6,7 +6,7 @@ import { runAction } from './actions';
 import type { IconId } from '../components/Icon';
 import { formatAccelerator, SHORTCUTS, type ShortcutAction } from './shortcuts';
 import { canMoveToSpace, moveToSpaceEntries } from './spaceMenus';
-import { actionContext, isCompoundSelection } from './selectionActions';
+import { actionContext, isClipSelection, isCompoundSelection } from './selectionActions';
 import { embedSelectedImage, imageFactsOf, relinkSelectedImage, unembedSelectedImage } from './imageObjectActions';
 import { useUi } from './store';
 
@@ -50,7 +50,9 @@ export function CanvasContextMenu() {
       act('group', t('menu.object.group'), 'group', 'object.group'),
       isCompoundSelection()
         ? act('compound-release', t('menu.object.compoundReleaseFull'), 'compound-path', 'object.compoundRelease')
-        : act('ungroup', t('menu.object.ungroup'), 'ungroup', 'object.ungroup'),
+        : isClipSelection()
+          ? act('clip-release', t('layers.clipRelease'), 'clip-mask', 'object.clipRelease')
+          : act('ungroup', t('menu.object.ungroup'), 'ungroup', 'object.ungroup'),
       { type: 'separator', id: 's1' },
       act('front', t('menu.object.bringToFront'), 'arrange-front', 'object.bringToFront'),
       act('back', t('menu.object.sendToBack'), 'arrange-back', 'object.sendToBack'),

@@ -91,6 +91,12 @@ export function isCompoundSelection(): boolean {
   return !!c && c.ids.length > 0 && c.ids.every((id) => locateNode(c.space, id)?.node.type === 'compound');
 }
 
+/** True when the selection is made of clipping groups only (the "Desagrupar" slot then becomes "Liberar máscara de recorte"). */
+export function isClipSelection(): boolean {
+  const c = actionContext();
+  return !!c && c.ids.length > 0 && c.ids.every((id) => locateNode(c.space, id)?.node.type === 'clipGroup');
+}
+
 export function ungroupSelection(): void {
   const c = actionContext();
   if (!c) return;
