@@ -262,7 +262,7 @@ export class DocumentManager {
     try {
       if (/\.epsf?$/i.test(picked.path)) return await this.importEps(picked);
       if (/\.svg$/i.test(picked.path)) return await this.importSvgFile(picked);
-      if (/\.pdf$/i.test(picked.path)) return await this.importPdfFile(picked);
+      if (/\.(pdf|ai)$/i.test(picked.path)) return await this.importPdfFile(picked);
       const { document, images } = readVict(picked.bytes);
       await this.loadLinked(document, images);
       const opened = this.adopt(new DocumentSession(document, { ids: this.ids, images: new ImageStore(images) }), picked.path);
@@ -299,7 +299,7 @@ export class DocumentManager {
     if (broken.length > 0 && this.deps.names.brokenLinks) await this.deps.prompts.reportError(this.deps.names.brokenLinks(broken.length));
   }
 
-  /** An EPS opens as a new, unsaved document with one artboard of the size of its bounding box. */
+  /** An EPS opens as a new, unsaved document; its artboard is the page size from the XMP when there is one, else the bounding box. */
   private async importEps(picked: { path: string; bytes: Uint8Array }): Promise<OpenDocument> {
     const { names } = this.deps;
     const result = readEps(picked.bytes, this.ids);

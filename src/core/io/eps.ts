@@ -12,6 +12,8 @@ export interface EpsResult {
   /** Size of the bounding box, pt. */
   width: number;
   height: number;
+  /** Set when the file records an artboard larger than the artwork's box (the nodes are already centred in it). */
+  page?: { width: number; height: number };
   /** Top-level objects, bottom to top, in artboard coordinates (Y down, origin at the box corner). */
   nodes: Node[];
   /** What was skipped or approximated (already-translated strings are the caller's job: these are codes + detail). */
@@ -57,6 +59,18 @@ function latin1(bytes: Uint8Array): string {
   let out = '';
   for (let i = 0; i < bytes.length; i += 8192) out += String.fromCharCode(...bytes.subarray(i, i + 8192));
   return out;
+}
+
+const XMP_UNIT_PT: Record<string, number> = { points: 1, pixels: 1, inches: 72, centimeters: 72 / 2.54, millimeters: 72 / 25.4, picas: 12 };
+
+/** The page size Illustrator records in the XMP packet (`xmpTPg:MaxPageSize`), in pt. */
+function xmpPageSize(text: string): { width: number; height: number } | null {
+  const block = /<xmpTPg:MaxPageSize[^>]*>([\s\S]*?)<\/xmpTPg:MaxPageSize>/.exec(text)?.[1];
+  if (!block) return null;
+  const w = Number(/<stDim:w>\s*([\d.]+)\s*</.exec(block)?.[1]);
+  const h = Number(/<stDim:h>\s*([\d.]+)\s*</.exec(block)?.[1]);
+  const k = XMP_UNIT_PT[(/<stDim:unit>\s*(\w+)\s*</.exec(block)?.[1] ?? '').toLowerCase()];
+  return k && w > 0 && h > 0 ? { width: w * k, height: h * k } : null;
 }
 
 /** Unwraps a DOS EPS binary header (preview + PostScript sections) and returns the PostScript text. */
@@ -229,6 +243,14 @@ export function readEps(bytes: Uint8Array, ids: IdGenerator): EpsResult {
   let text = postscriptOf(bytes);
   if (!text.startsWith('%!')) throw new EpsFormatError('not a PostScript file');
   const [llx, lly, urx, ury] = boundingBox(text);
+  // The EPS box is only the artwork's bounds. With a larger artboard in the XMP, keep its size and centre the artwork in it
+  // (the exact position is not in the PostScript).
+  const xmp = xmpPageSize(text);
+  const bw = urx - llx;
+  const bh = ury - lly;
+  const page = xmp && (xmp.width > bw + 1 || xmp.height > bh + 1) ? { width: Math.max(xmp.width, bw), height: Math.max(xmp.height, bh) } : undefined;
+  const padX = page ? (page.width - bw) / 2 : 0;
+  const padY = page ? (page.height - bh) / 2 : 0;
   const warnings: EpsWarning[] = [];
   const agm = /^%%BeginResource: procset Adobe_AGM_Core/m.test(text);
   const illustrator = /^%%Creator:.*Illustrator/m.test(text) || /^%AI\d*_/m.test(text);
@@ -331,7 +353,7 @@ export function readEps(bytes: Uint8Array, ids: IdGenerator): EpsResult {
     const out: PathNode[] = [];
     for (const sp of subpaths) {
       if (sp.anchors.length === 0 || (sp.anchors.length === 1 && !sp.closed)) continue;
-      const flip = (p: Vec2): Vec2 => ({ x: Math.round((p.x - llx) * 1000) / 1000, y: Math.round((ury - p.y) * 1000) / 1000 });
+      const flip = (p: Vec2): Vec2 => ({ x: Math.round((p.x - llx + padX) * 1000) / 1000, y: Math.round((ury - p.y + padY) * 1000) / 1000 });
       let anchors: Anchor[] = sp.anchors.map((a) => ({ p: flip(a.p), in: a.in ? flip(a.in) : null, out: a.out ? flip(a.out) : null, kind: 'corner' as const }));
       if (sp.closed && anchors.length > 2) {
         const first = anchors[0] as Anchor;
@@ -703,5 +725,5 @@ export function readEps(bytes: Uint8Array, ids: IdGenerator): EpsResult {
       warn('halted', error instanceof Error ? error.message : String(error));
     }
   }
-  return { width: urx - llx, height: ury - lly, nodes: root, warnings };
+  return { width: page?.width ?? bw, height: page?.height ?? bh, ...(page ? { page } : {}), nodes: root, warnings };
 }

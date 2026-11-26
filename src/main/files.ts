@@ -125,7 +125,7 @@ export async function openFile(win: BrowserWindow, labels: unknown): Promise<Ope
     title: labels.title,
     defaultPath: await startDir(app.getPath('documents')),
     properties: ['openFile'],
-    filters: [{ name: labels.filterName, extensions: [EXTENSION] }, ...(labels.importFilterName ? [{ name: labels.importFilterName, extensions: ['eps', 'epsf', 'svg', 'pdf'] }] : [])],
+    filters: [{ name: labels.filterName, extensions: [EXTENSION] }, ...(labels.importFilterName ? [{ name: labels.importFilterName, extensions: ['eps', 'epsf', 'svg', 'pdf', 'ai'] }] : [])],
   });
   const file = result.filePaths[0];
   if (result.canceled || !file) return null;
