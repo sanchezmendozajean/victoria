@@ -10,6 +10,7 @@ Este repositorio contiene **Victoria**, un editor vectorial de escritorio (Elect
 
 ## Idioma
 
+- Respuestas de Claude al usuario: **siempre en español**.
 - Interfaz de usuario: **español** (todas las cadenas en `src/renderer/i18n/es.json`, nunca literales en componentes).
 - Código, nombres de archivos, identificadores y commits: **inglés**.
 - Comentarios: inglés, breves.
