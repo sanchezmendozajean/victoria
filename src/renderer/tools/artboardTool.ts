@@ -189,9 +189,10 @@ export function createArtboardTool(): Tool {
       } else if (state.kind === 'move') {
         // Alt pressed in the middle of the drag: the board goes back to where it was and a copy is dragged instead (as in Illustrator).
         if (event.altKey && !state.copied) {
-          const original = space.artboards.find((a) => a.id === state.id);
+          const movedId = state.id;
+          const original = space.artboards.find((a) => a.id === movedId);
           if (state.moved) session.rollback();
-          const fresh = host.space?.artboards.find((a) => a.id === state.id) ?? original;
+          const fresh = host.space?.artboards.find((a) => a.id === movedId) ?? original;
           const copy = fresh ? copyBoard(host, fresh) : null;
           if (copy) {
             state = { ...state, id: copy.board.id, start: { x: copy.board.x, y: copy.board.y, w: copy.board.w, h: copy.board.h }, content: copy.content, applied: { x: 0, y: 0 }, key: host.gestureKey(), fit: null, copied: true, moved: false };
