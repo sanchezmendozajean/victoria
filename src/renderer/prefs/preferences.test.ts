@@ -7,7 +7,13 @@ describe('preferences', () => {
     expect(sanitizePreferences(null)).toEqual(DEFAULT_PREFERENCES);
     expect(sanitizePreferences('x')).toEqual(DEFAULT_PREFERENCES);
     expect(sanitizePreferences({ autoAddDelete: 'yes', pencilFidelity: 9, autosaveMinutes: -3 })).toEqual(DEFAULT_PREFERENCES);
-    expect(sanitizePreferences({ autoAddDelete: false, pencilFidelity: 5, autosaveMinutes: 10.4 })).toEqual({ autoAddDelete: false, pencilFidelity: 5, autosaveMinutes: 10, startScreen: true, placeLinked: false, shortcuts: {}, linuxNoticeSeen: false, moveArtworkWithArtboard: true, tracePreset: 'colors16', svgSaveNotice: true, autoUpdate: true, arrange: DEFAULT_PREFERENCES.arrange });
+    expect(sanitizePreferences({ autoAddDelete: false, pencilFidelity: 5, autosaveMinutes: 10.4 })).toEqual({ autoAddDelete: false, pencilFidelity: 5, autosaveMinutes: 10, startScreen: true, placeLinked: false, shortcuts: {}, linuxNoticeSeen: false, moveArtworkWithArtboard: true, tracePreset: 'colors16', svgSaveNotice: true, autoUpdate: true, arrange: DEFAULT_PREFERENCES.arrange, exportMemory: DEFAULT_PREFERENCES.exportMemory });
+  });
+
+  it('keeps valid export settings and cleans the rest', () => {
+    const kept = sanitizePreferences({ exportMemory: { format: 'jpg', scope: 'all-spaces', ppi: 300, background: 'white', includeBleed: true, rows: [{ format: 'png', ppi: 144, suffix: '@2x' }] } }).exportMemory;
+    expect(kept).toMatchObject({ format: 'jpg', scope: 'all-spaces', ppi: 300, background: 'white', includeBleed: true, rows: [{ format: 'png', ppi: 144, suffix: '@2x' }] });
+    expect(sanitizePreferences({ exportMemory: { format: 'bmp', scope: 'x', ppi: 99999, background: 'red', rows: [{ format: 'zip' }] } }).exportMemory).toEqual(DEFAULT_PREFERENCES.exportMemory);
   });
 
   it('the trace preset must be a known one', () => {

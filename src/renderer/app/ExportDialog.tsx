@@ -7,6 +7,7 @@ import { ExportError } from '../export/raster';
 import { countFiles, DEFAULT_EXPORT_OPTIONS, generateExport, type BackgroundChoice, type ExportOptions, type OutputSpec } from '../export/exporter';
 import { deliver, type Destination } from '../export/deliver';
 import { t, type TranslationKey } from '../i18n';
+import { getPreferences, usePreferences } from '../prefs/preferences';
 import { Choice, CheckRow } from '../panels/kit';
 import { askUser } from './dialogs';
 import { useUi } from './store';
@@ -63,10 +64,19 @@ function ExportForm({ mode }: { mode: 'as' | 'screens' }) {
   const doc = session.document;
   const documentName = doc.meta.name;
 
-  const [format, setFormat] = useState<ExportFormat>('png');
-  const [scope, setScope] = useState<ExportScope>('active-artboard');
-  const [ppi, setPpi] = useState<number>(72);
-  const [options, setOptions] = useState<ExportOptions>({ ...DEFAULT_EXPORT_OPTIONS, pdfSinglePdf: mode === 'as' });
+  // The dialogs open with what was used last time (saved when Exportar is pressed).
+  const [memory] = useState(() => getPreferences().exportMemory);
+  const [format, setFormat] = useState<ExportFormat>(memory.format);
+  const [scope, setScope] = useState<ExportScope>(memory.scope);
+  const [ppi, setPpi] = useState<number>(memory.ppi);
+  const [options, setOptions] = useState<ExportOptions>({
+    ...DEFAULT_EXPORT_OPTIONS,
+    background: memory.background,
+    includeBleed: memory.includeBleed,
+    jpgQuality: memory.jpgQuality,
+    minifySvg: memory.minifySvg,
+    pdfSinglePdf: mode === 'as' ? memory.pdfSinglePdf : false,
+  });
   const [busy, setBusy] = useState<string | null>(null);
   const patch = (p: Partial<ExportOptions>) => setOptions((o) => ({ ...o, ...p }));
 
@@ -76,15 +86,17 @@ function ExportForm({ mode }: { mode: 'as' | 'screens' }) {
   const activeSpace = doc.spaces.find((s) => s.id === doc.activeSpaceId);
   const [checked, setChecked] = useState<Set<string>>(() => new Set(everyTarget.filter((tg) => tg.space.id === doc.activeSpaceId).map(keyOf)));
   const [spaceFilter, setSpaceFilter] = useState<string>('all');
-  const [rows, setRows] = useState<OutputSpec[]>([{ format: 'png', ppi: 72, suffix: '' }]);
+  const [rows, setRows] = useState<OutputSpec[]>(memory.rows);
   const [folder, setFolder] = useState<string | null>(null);
-  const [openWhenDone, setOpenWhenDone] = useState(true);
+  const [openWhenDone, setOpenWhenDone] = useState(memory.openWhenDone);
 
   const visibleTargets = everyTarget.filter((tg) => spaceFilter === 'all' || tg.space.id === spaceFilter);
   const rasterFormat = format === 'png' || format === 'jpg';
 
   const run = async () => {
     if (busy) return;
+    const common = { background: options.background, includeBleed: options.includeBleed, jpgQuality: options.jpgQuality, minifySvg: options.minifySvg };
+    usePreferences.getState().set({ exportMemory: { ...memory, ...common, ...(mode === 'as' ? { format, scope, ppi, pdfSinglePdf: options.pdfSinglePdf } : { rows, openWhenDone }) } });
     setBusy(t('export.running', { done: 0, total: 0 }));
     const finished = await runJob(
       mode === 'as'

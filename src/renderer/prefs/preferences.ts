@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import { TRACE_PRESETS, type ArtboardArrangeDirection, type TracePresetId } from '../../core';
+import { TRACE_PRESETS, type ArtboardArrangeDirection, type ExportFormat, type ExportScope, type TracePresetId } from '../../core';
+import type { BackgroundChoice, OutputSpec } from '../export/exporter';
 import { DEFAULT_SHORTCUTS, isShortcutAction, isValidAccelerator, normalizeAccelerator, setShortcutOverrides } from '../app/shortcuts';
 
 /** What the user can set in Edición › Preferencias (Ctrl+K). Kept per user, outside any document. */
@@ -28,6 +29,63 @@ export interface Preferences {
   autoUpdate: boolean;
   /** Last values of Reorganizar mesas (columns 0 = pick from the count; spacing in pt). */
   arrange: ArrangeSettings;
+  /** Last values used in Archivo › Exportar… and Exportar para pantallas…, so the dialogs open as they were left. */
+  exportMemory: ExportMemory;
+}
+
+export interface ExportMemory {
+  format: ExportFormat;
+  scope: ExportScope;
+  ppi: number;
+  background: BackgroundChoice;
+  includeBleed: boolean;
+  jpgQuality: number;
+  minifySvg: boolean;
+  pdfSinglePdf: boolean;
+  /** Exportar para pantallas: the formats list and "open the folder when done". */
+  rows: OutputSpec[];
+  openWhenDone: boolean;
+}
+
+const EXPORT_FORMATS: readonly ExportFormat[] = ['png', 'jpg', 'svg', 'pdf'];
+const EXPORT_SCOPES: readonly ExportScope[] = ['active-artboard', 'space-artboards', 'all-spaces'];
+const EXPORT_BACKGROUNDS: readonly BackgroundChoice[] = ['transparent', 'white', 'artboard'];
+export const DEFAULT_EXPORT_MEMORY: ExportMemory = {
+  format: 'png',
+  scope: 'active-artboard',
+  ppi: 72,
+  background: 'transparent',
+  includeBleed: false,
+  jpgQuality: 90,
+  minifySvg: false,
+  pdfSinglePdf: true,
+  rows: [{ format: 'png', ppi: 72, suffix: '' }],
+  openWhenDone: true,
+};
+
+function sanitizeExportMemory(raw: unknown): ExportMemory {
+  const d = DEFAULT_EXPORT_MEMORY;
+  const e = typeof raw === 'object' && raw !== null ? (raw as Record<string, unknown>) : {};
+  const num = (v: unknown, min: number, max: number, fallback: number) => (typeof v === 'number' && Number.isFinite(v) && v >= min && v <= max ? Math.round(v) : fallback);
+  const rows = Array.isArray(e.rows)
+    ? e.rows.slice(0, 12).flatMap((r): OutputSpec[] => {
+        const row = typeof r === 'object' && r !== null ? (r as Record<string, unknown>) : {};
+        const format = EXPORT_FORMATS.find((f) => f === row.format);
+        return format ? [{ format, ppi: num(row.ppi, 1, 1200, 72), suffix: typeof row.suffix === 'string' ? row.suffix.slice(0, 40) : '' }] : [];
+      })
+    : [];
+  return {
+    format: EXPORT_FORMATS.find((f) => f === e.format) ?? d.format,
+    scope: EXPORT_SCOPES.find((s) => s === e.scope) ?? d.scope,
+    ppi: num(e.ppi, 1, 1200, d.ppi),
+    background: EXPORT_BACKGROUNDS.find((b) => b === e.background) ?? d.background,
+    includeBleed: typeof e.includeBleed === 'boolean' ? e.includeBleed : d.includeBleed,
+    jpgQuality: num(e.jpgQuality, 1, 100, d.jpgQuality),
+    minifySvg: typeof e.minifySvg === 'boolean' ? e.minifySvg : d.minifySvg,
+    pdfSinglePdf: typeof e.pdfSinglePdf === 'boolean' ? e.pdfSinglePdf : d.pdfSinglePdf,
+    rows: rows.length > 0 ? rows : d.rows,
+    openWhenDone: typeof e.openWhenDone === 'boolean' ? e.openWhenDone : d.openWhenDone,
+  };
 }
 
 export interface ArrangeSettings {
@@ -40,7 +98,7 @@ export interface ArrangeSettings {
 const ARRANGE_DIRECTIONS: readonly ArtboardArrangeDirection[] = ['row', 'row-rtl', 'column'];
 export const DEFAULT_ARRANGE: ArrangeSettings = { columns: 0, spacing: (20 * 72) / 25.4, direction: 'row', moveArtwork: true };
 
-export const DEFAULT_PREFERENCES: Preferences = { autoAddDelete: true, pencilFidelity: 3, autosaveMinutes: 1, startScreen: true, placeLinked: false, shortcuts: {}, linuxNoticeSeen: false, moveArtworkWithArtboard: true, tracePreset: 'colors16', svgSaveNotice: true, autoUpdate: true, arrange: DEFAULT_ARRANGE };
+export const DEFAULT_PREFERENCES: Preferences = { autoAddDelete: true, pencilFidelity: 3, autosaveMinutes: 1, startScreen: true, placeLinked: false, shortcuts: {}, linuxNoticeSeen: false, moveArtworkWithArtboard: true, tracePreset: 'colors16', svgSaveNotice: true, autoUpdate: true, arrange: DEFAULT_ARRANGE, exportMemory: DEFAULT_EXPORT_MEMORY };
 
 export const AUTOSAVE_MINUTES = { min: 1, max: 30 } as const;
 const STORAGE_KEY = 'victoria.preferences';
@@ -67,6 +125,7 @@ export function sanitizePreferences(raw: unknown): Preferences {
     svgSaveNotice: typeof source.svgSaveNotice === 'boolean' ? source.svgSaveNotice : DEFAULT_PREFERENCES.svgSaveNotice,
     autoUpdate: typeof source.autoUpdate === 'boolean' ? source.autoUpdate : DEFAULT_PREFERENCES.autoUpdate,
     arrange: sanitizeArrange(source.arrange),
+    exportMemory: sanitizeExportMemory(source.exportMemory),
   };
 }
 
