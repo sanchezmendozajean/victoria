@@ -8,6 +8,8 @@ export interface HoverTarget {
   world: Matrix;
   /** Outline colour: the colour of the node's layer (specs/03 · Selección › Hover). */
   color: string;
+  /** A selected object under the cursor (a possible key object): thicker, in the accent colour, so it stands out from its selection outline. */
+  strong?: boolean;
 }
 
 export interface OverlayOptions {
@@ -43,8 +45,8 @@ function outline(ctx: CanvasRenderingContext2D, o: OverlayOptions, target: Hover
   const world = new Path2D();
   world.addPath(path, ctx.getTransform());
   ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.lineWidth = o.dpr;
-  ctx.strokeStyle = target.color;
+  ctx.lineWidth = target.strong ? 3 * o.dpr : o.dpr;
+  ctx.strokeStyle = target.strong ? o.theme.accent : target.color;
   ctx.stroke(world);
   ctx.restore();
 }

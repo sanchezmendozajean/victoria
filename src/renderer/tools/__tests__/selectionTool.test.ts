@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { cornerAnchor, createCompound, createPath, pathFrameOf, selectionBounds, translation, type PathNode } from '../../../core';
+import { cornerAnchor, createCompound, createPath, pathFrameOf, selectionBounds, selectOnly, translation, type PathNode } from '../../../core';
 import { createSelectionTool } from '../selectionTool';
 import { createTransformTool } from '../transformTools';
 import { click, createTestHost, drag, ev, nodeX, nodeY, selectedIds } from './fakeHost';
@@ -233,6 +233,25 @@ describe('Selection tool · moving', () => {
     click(tool, t, 50, 50);
     expect(t.host.setKeyObject).toHaveBeenLastCalledWith(a.id);
     expect(selectedIds(t)).toEqual([a.id, b.id]);
+  });
+
+  it('an object with no fill and no stroke can be made the key object by clicking its path, and is highlighted on hover', () => {
+    const { t, tool } = setup();
+    const ghost = t.rect(0, 0, 100, 100, { fill: false }); // no fill and no stroke
+    const solid = t.rect(300, 0, 100, 100);
+    t.session.select(selectOnly(t.spaceId(), [ghost.id, solid.id]));
+    tool.onPointerMove(ev(50, 0), t.host); // on the top edge of the ghost
+    expect(t.host.setHover).toHaveBeenLastCalledWith(expect.objectContaining({ id: ghost.id }), true);
+    click(tool, t, 50, 0);
+    expect(t.host.setKeyObject).toHaveBeenLastCalledWith(ghost.id);
+  });
+
+  it('an unselected object with no fill and no stroke is highlighted on hover by its path, even under a painted object', () => {
+    const { t, tool } = setup();
+    const ghost = t.rect(0, 0, 100, 100, { fill: false });
+    t.rect(0, 0, 100, 100); // painted, covering it
+    tool.onPointerMove(ev(50, 0), t.host);
+    expect(t.host.setHover).toHaveBeenLastCalledWith(expect.objectContaining({ id: ghost.id }), false);
   });
 
   it('clicking the key object again lets go of it', () => {
@@ -580,7 +599,7 @@ describe('Selection tool · hover', () => {
     const { t, tool } = setup();
     const a = t.rect(0, 0);
     tool.onPointerMove(ev(50, 50), t.host);
-    expect(t.host.setHover).toHaveBeenLastCalledWith(expect.objectContaining({ id: a.id }));
+    expect(t.host.setHover).toHaveBeenLastCalledWith(expect.objectContaining({ id: a.id }), false);
     tool.onLeave?.(t.host);
     expect(t.host.setHover).toHaveBeenLastCalledWith(null);
   });

@@ -21,6 +21,8 @@ import {
   withAnchors,
   addToSelection,
   isSelected,
+  hitUnpainted,
+  type Hit,
   type Matrix,
   type Node,
   type Rect,
@@ -250,6 +252,23 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
     return true;
   }
 
+  /**
+   * The object under the cursor. One that has no fill and no stroke (so no body to click) is still picked by its path;
+   * with several objects selected also by its area when nothing painted is there, which lets it become the key object.
+   */
+  function pickAt(host: ToolHost, doc: Vec2): Hit | null {
+    const space = host.space;
+    if (!space) return null;
+    const options = { tolerance: host.pickTolerance, isolation: host.isolation };
+    // Any object without paint is found by its path (so it highlights and can be clicked), even under painted ones.
+    const edge = host.outlineView ? null : hitUnpainted(space, doc, null, { ...options, edgeOnly: true })[0];
+    if (edge) return edge;
+    const hit = host.hitTest(doc)[0];
+    if (hit) return hit;
+    const selected = selectedTopLevel(host);
+    return selected.length < 2 ? null : (hitUnpainted(space, doc, new Set(selected), options)[0] ?? null);
+  }
+
   function updateHover(event: CanvasPointerEvent, host: ToolHost): void {
     const ids = units(host);
     const box = boxFor(host, ids);
@@ -266,7 +285,9 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
       if (handle) hoverCursor = cursorForTurnedHandle(handle, box.theta);
       else if (rotateCornerAt(sbox, pointer)) hoverCursor = ROTATE_CURSOR;
     }
-    host.setHover(hoverCursor === 'default' ? host.hitAt(event.doc) : null);
+    const over = hoverCursor === 'default' ? pickAt(host, event.doc) : null;
+    const selected = over ? selectedTopLevel(host) : [];
+    host.setHover(over, !!over && selected.length > 1 && selected.includes(over.ancestors[0]?.id ?? over.id));
   }
 
   return {
@@ -314,7 +335,7 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
       }
 
       // 2. An object: select it (Shift toggles) and prepare to move.
-      const hit = host.hitTest(event.doc)[0];
+      const hit = pickAt(host, event.doc);
       const target = hit ? selectionTarget(hit, host.isolation) : null;
       // An isolated compound path: its sub-paths are picked one by one, like separate objects.
       const compound = isolatedCompound(host);

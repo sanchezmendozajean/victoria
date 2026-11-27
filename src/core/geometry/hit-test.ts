@@ -88,6 +88,31 @@ export function hitTest(space: Space, point: Vec2, options: HitOptions): Hit[] {
 }
 
 /**
+ * Selected objects with no visible paint (no fill, no stroke) have no body to click, so a plain hit test never finds them.
+ * This one finds them by their path (within `tolerance`) and, unless `edgeOnly`, also by the area their path encloses.
+ * `units` are the top-level ids to consider (null: every object); the topmost match comes first. Used to highlight and pick such objects.
+ */
+export function hitUnpainted(space: Space, point: Vec2, units: ReadonlySet<string> | null, options: { tolerance: number; isolation?: string | null; edgeOnly?: boolean }): Hit[] {
+  const { tolerance, isolation = null, edgeOnly = false } = options;
+  const hits: Hit[] = [];
+  for (const item of indexFor(space).atPoint(point, tolerance)) {
+    const unit = item.ancestors[0]?.id ?? item.id;
+    if ((units && !units.has(unit)) || item.locked || !insideIsolation(item, isolation)) continue;
+    const { node } = item;
+    if (node.type === 'image' || node.type === 'text' || hasFill(node.appearance) || strokesOf(node.appearance).length > 0) continue;
+    const geometry = hitGeometry(node);
+    const local = toLocal(item.world, point);
+    if (!geometry || !local || local.scale === 0) continue;
+    const tolLocal = tolerance / local.scale;
+    const flat = flattenGeometry(geometry, Math.max(tolLocal / 4, 1e-4));
+    const base = { id: item.id, node, ancestors: item.ancestors, layer: item.layer, world: item.world, generated: item.generated };
+    if (distanceToOutline(flat, local.point) <= tolLocal) hits.push({ ...base, part: 'stroke' });
+    else if (!edgeOnly && pointInFill(flat, local.point, geometry.fillRule)) hits.push({ ...base, part: 'fill' });
+  }
+  return hits;
+}
+
+/**
  * The clipping path of the isolated clip group, so it can be selected and painted like any path. It is picked by
  * its outline (it usually has no stroke to hit), on top of whatever it clips; clicking inside still picks the content.
  */

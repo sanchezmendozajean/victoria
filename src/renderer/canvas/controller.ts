@@ -315,8 +315,8 @@ export class CanvasController implements ToolHost, CanvasApi {
     this.invalidate('overlay');
   }
 
-  setHover(hit: Hit | null): void {
-    let next: HoverTarget | null = hit ? { node: hit.node, world: hit.world, color: hit.layer.color } : null;
+  setHover(hit: Hit | null, strong = false): void {
+    let next: HoverTarget | null = hit ? { node: hit.node, world: hit.world, color: hit.layer.color, ...(strong ? { strong } : {}) } : null;
     // Under a clip group the outline is the clipping shape, not what it hides.
     const clip = hit?.ancestors.find((a) => a.type === 'clipGroup');
     const space = this.currentSpace();
@@ -325,7 +325,7 @@ export class CanvasController implements ToolHost, CanvasApi {
       const frame = frameOf(space, clip.id);
       if (mask && frame) next = { node: mask, world: multiply(frame.world, mask.transform), color: hit.layer.color };
     }
-    if (next?.node === this.hover?.node && next?.world === this.hover?.world) return;
+    if (next?.node === this.hover?.node && next?.world === this.hover?.world && !next?.strong === !this.hover?.strong) return;
     this.hover = next;
     this.invalidate('overlay');
   }

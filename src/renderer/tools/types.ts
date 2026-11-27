@@ -43,7 +43,8 @@ export interface ToolHost {
   setView(view: Viewport): void;
   invalidateOverlay(): void;
   /** Highlights the object under the cursor (null clears it). */
-  setHover(hit: Hit | null): void;
+  /** `strong` marks a selected object (several are selected) so its hover outline stands out from the selection outline. */
+  setHover(hit: Hit | null, strong?: boolean): void;
   /** Topmost pickable object at a document point, using a screen-sized tolerance. */
   hitAt(doc: Vec2): Hit | null;
 
