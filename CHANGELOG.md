@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.0 — Buscatrazos compuestos, objetos sin pintura y memoria de exportación
+- **Buscatrazos › Unir** deja un solo trazado compuesto cuando el resultado tiene partes separadas (antes quedaba un objeto por cada parte). Menos Frente, Intersecar, Excluir y Menos Fondo hacen lo mismo cuando alguna entrada ya era un trazado compuesto.
+- **Mesa de trabajo**: pulsar Alt a mitad del arrastre también duplica la mesa (la original vuelve a su sitio y se arrastra la copia, con su contenido si «Mover con contenido» está activo).
+- **Objetos sin relleno ni trazo**: se resaltan al pasar el cursor por su trazado y se pueden seleccionar con un clic, aunque haya algo pintado encima. Con varios objetos seleccionados, un clic en uno de ellos (también en el interior de uno invisible) lo convierte en objeto clave de la alineación, y el hover de los seleccionados se dibuja más grueso y en el color de acento.
+- **Exportar** recuerda los últimos valores (formato, qué exportar, resolución, fondo, sangrado, calidad JPG, formatos de «Exportar para pantallas», etc.); se guardan al pulsar Exportar, en las preferencias de usuario.
+- `CLAUDE.md`: las respuestas de Claude al usuario son siempre en español.
+- **Limitaciones conocidas**: ninguna prueba cubre aún Unir con formas separadas; cualquier trazado sin apariencia (no solo los invisibles a propósito) se resalta y se puede clicar por su borde.
+
 ## 0.1.10 — Selección directa con Ctrl
 - Con la herramienta Selección, al mantener Ctrl (selección directa temporal) quedan seleccionadas todas las anclas de los objetos seleccionados.
 

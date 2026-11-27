@@ -1,7 +1,7 @@
 {
   "name": "victoria",
   "productName": "Victoria",
-  "version": "0.1.11",
+  "version": "0.2.0",
   "description": "Editor vectorial de escritorio con la sensación de dibujo de Illustrator",
   "private": true,
   "main": "dist-electron/main/index.js",
