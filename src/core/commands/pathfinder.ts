@@ -113,15 +113,27 @@ export function containerInverse(space: Space, id: string): Matrix {
   return invert(parentWorld) ?? [1, 0, 0, 1, 0, 0];
 }
 
+/**
+ * Shape modes (Unite, Minus Front, Intersect, Exclude, Minus Back) with a compound path among the inputs: disjoint results stay ONE compound object (its parts belong together),
+ * instead of one object per region. Outer contours and holes keep their nesting, so even-odd draws them right.
+ */
+function keepCompound(pieces: BooleanPiece[], operands: readonly Operand[], always = false): BooleanPiece[] {
+  if (pieces.length < 2 || (!always && !operands.some((o) => o.shape.subpaths.length > 1))) return pieces;
+  const last = pieces[pieces.length - 1] as BooleanPiece;
+  return [{ subpaths: pieces.flatMap((p) => p.subpaths), fillRule: 'evenodd', source: last.source }];
+}
+
 export function computePieces(op: PathfinderOp, operands: readonly Operand[]): ComputedPieces {
   const shapes = operands.map((o) => o.shape);
   switch (op) {
     case 'unite':
+      // Unite always yields a compound path when the shapes are disjoint (as in Illustrator).
+      return { pieces: keepCompound(shapeOperation(op, shapes), operands, true), look: 'full', grouped: false };
     case 'minusFront':
     case 'intersect':
     case 'exclude':
     case 'minusBack':
-      return { pieces: shapeOperation(op, shapes), look: 'full', grouped: false };
+      return { pieces: keepCompound(shapeOperation(op, shapes), operands), look: 'full', grouped: false };
     case 'divide':
       return { pieces: divideShapes(shapes), look: 'full', grouped: true };
     case 'trim':
