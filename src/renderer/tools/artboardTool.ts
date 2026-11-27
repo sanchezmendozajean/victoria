@@ -97,7 +97,7 @@ function boardAt(space: Space, p: Vec2): Artboard | null {
 }
 
 type State =
-  | { kind: 'move'; id: string; start: Rect; from: Vec2; content: string[]; applied: Vec2; key: string; fit: Rect | null }
+  | { kind: 'move'; id: string; start: Rect; from: Vec2; content: string[]; applied: Vec2; key: string; fit: Rect | null; copied: boolean; moved: boolean }
   | { kind: 'resize'; id: string; handle: HandleId; start: Rect; key: string }
   | { kind: 'create'; id: string; from: Vec2; fromScreen: Vec2; key: string; fit: Rect | null }
   | null;
@@ -113,6 +113,18 @@ function objectBoundsAt(host: ToolHost, p: Vec2): Rect | null {
 
 /** The next free name "Mesa n". */
 const nextName = (space: Space) => t('doc.defaultArtboard', { n: space.artboards.length + 1 });
+
+/** Adds a copy of `board` (with its artwork when the toggle is on), makes it the active one and returns it with the clones to keep dragging. */
+function copyBoard(host: ToolHost, board: Artboard): { board: Artboard; content: string[] } | null {
+  const { session, space } = host;
+  if (!session || !space) return null;
+  const copy = copyArtboard(board, session.ids(), nextName(space));
+  const duplicated = duplicateArtboard(space, board.id, copy, session.ids, getPreferences().moveArtworkWithArtboard);
+  if (!duplicated) return null;
+  session.run(duplicated.command);
+  useUi.getState().setActiveArtboard(space.id, copy.id);
+  return { board: copy, content: duplicated.artworkIds };
+}
 
 /**
  * Mesa de trabajo (Mayús+O): drag on empty canvas draws a new artboard, a click on an object makes an artboard fitted to it (stroke included), a click on an artboard activates it, handles resize the
@@ -142,18 +154,17 @@ export function createArtboardTool(): Tool {
         let target = hit;
         // The artwork that travels with the board: the clones for Alt (a copy), the objects on it for a plain move.
         let content: string[] = getPreferences().moveArtworkWithArtboard && !event.altKey ? artworkOnBoard(space, hit) : [];
+        let copied = false;
         if (event.altKey) {
-          const copy = copyArtboard(hit, session.ids(), nextName(space));
-          const duplicated = duplicateArtboard(space, hit.id, copy, session.ids, getPreferences().moveArtworkWithArtboard);
-          if (duplicated) {
-            session.run(duplicated.command);
-            content = duplicated.artworkIds;
-            ui.setActiveArtboard(space.id, copy.id);
-            target = copy;
+          const copy = copyBoard(host, hit);
+          if (copy) {
+            content = copy.content;
+            target = copy.board;
+            copied = true;
           }
         }
         const start = { x: target.x, y: target.y, w: target.w, h: target.h };
-        state = { kind: 'move', id: target.id, start, from: event.doc, content, applied: { x: 0, y: 0 }, key: host.gestureKey(), fit: event.altKey ? null : objectBoundsAt(host, event.doc) };
+        state = { kind: 'move', id: target.id, start, from: event.doc, content, applied: { x: 0, y: 0 }, key: host.gestureKey(), fit: event.altKey ? null : objectBoundsAt(host, event.doc), copied, moved: false };
         host.invalidateOverlay();
         return;
       }
@@ -176,6 +187,16 @@ export function createArtboardTool(): Tool {
         const next = resizeRect(state.start, state.handle, to, event.shiftKey);
         session.run(updateArtboard(space.id, state.id, next, state.key));
       } else if (state.kind === 'move') {
+        // Alt pressed in the middle of the drag: the board goes back to where it was and a copy is dragged instead (as in Illustrator).
+        if (event.altKey && !state.copied) {
+          const original = space.artboards.find((a) => a.id === state.id);
+          if (state.moved) session.rollback();
+          const fresh = host.space?.artboards.find((a) => a.id === state.id) ?? original;
+          const copy = fresh ? copyBoard(host, fresh) : null;
+          if (copy) {
+            state = { ...state, id: copy.board.id, start: { x: copy.board.x, y: copy.board.y, w: copy.board.w, h: copy.board.h }, content: copy.content, applied: { x: 0, y: 0 }, key: host.gestureKey(), fit: null, copied: true, moved: false };
+          }
+        }
         const dx = event.doc.x - state.from.x;
         const dy = event.doc.y - state.from.y;
         const commands: Command[] = [updateArtboard(space.id, state.id, { x: state.start.x + dx, y: state.start.y + dy }, state.key)];
@@ -183,6 +204,7 @@ export function createArtboardTool(): Tool {
         if (state.content.length > 0 && (step.x !== 0 || step.y !== 0)) commands.push(transformNodes(space.id, state.content, translation(step.x, step.y)));
         session.run(combineCommands('artboard.update', commands));
         state.applied = { x: dx, y: dy };
+        state.moved = true;
       } else {
         const dragged = Math.hypot(event.screen.x - state.fromScreen.x, event.screen.y - state.fromScreen.y) >= MIN_NEW;
         if (!dragged && !state.id) return;

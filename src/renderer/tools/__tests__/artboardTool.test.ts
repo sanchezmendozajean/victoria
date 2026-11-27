@@ -91,6 +91,29 @@ describe('Alt+drag on an artboard', () => {
     expect(xs[1]).toBeCloseTo(board.x + 10 + board.w + 100, 6);
   });
 
+  it('Alt pressed in the middle of the drag leaves the original in place and drags a copy with its artwork', async () => {
+    const { createTestHost, ev } = await import('./fakeHost');
+    const { usePreferences } = await import('../../prefs/preferences');
+    usePreferences.getState().set({ moveArtworkWithArtboard: true });
+    const t = createTestHost();
+    const board = getActiveSpace(t.session.document).artboards[0]!;
+    t.rect(board.x + 10, board.y + 10, 20, 20);
+    const tool = (await import('../artboardTool')).createArtboardTool();
+    const from = { x: board.x + board.w / 2, y: board.y + board.h / 2 };
+    const at = (dx: number, alt: boolean) => ev(from.x + dx, from.y, { altKey: alt });
+    tool.onPointerDown(at(0, false), t.host);
+    tool.onPointerMove(at(50, false), t.host);
+    tool.onPointerMove(at(board.w + 100, true), t.host);
+    tool.onPointerUp(at(board.w + 100, true), t.host);
+    const space = getActiveSpace(t.session.document);
+    expect(space.artboards).toHaveLength(2);
+    expect(space.artboards[0]!.x).toBe(board.x);
+    expect(space.artboards[1]!.x).toBeCloseTo(board.x + board.w + 100, 6);
+    const xs = (space.layers[0]!.children as { transform: number[] }[]).map((n) => n.transform[4]).sort((a, b) => a! - b!);
+    expect(xs[0]).toBeCloseTo(board.x + 10, 6);
+    expect(xs[1]).toBeCloseTo(board.x + 10 + board.w + 100, 6);
+  });
+
   it('copies only the board when the option is off', async () => {
     const { t } = await run(false);
     const space = getActiveSpace(t.session.document);
