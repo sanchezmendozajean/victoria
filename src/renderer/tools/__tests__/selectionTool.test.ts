@@ -527,6 +527,30 @@ describe('Selection tool · keyboard', () => {
   });
 });
 
+describe('Selection tool · Ctrl released during a Direct Selection drag', () => {
+  const squares = (tool: ReturnType<typeof createSelectionTool>, t: ReturnType<typeof createTestHost>) => {
+    let drawn = 0;
+    const ctx = new Proxy({} as Record<string, unknown>, { get: (_t, k) => (k === 'fillRect' ? () => drawn++ : () => undefined), set: () => true });
+    tool.drawOverlay?.(ctx as never, t.host, { accent: '#00f' } as never);
+    return drawn;
+  };
+
+  it('paints the anchors while Ctrl is held and stops painting them once it is let go, but the drag goes on', () => {
+    const { t, tool } = setup();
+    const a = t.rect(0, 0);
+    click(tool, t, 50, 50);
+    tool.onKeyDown?.({ key: 'Control', shiftKey: false, altKey: false, ctrlKey: true, metaKey: false } as never, t.host);
+    tool.onPointerDown(ev(0, 0, { ctrlKey: true }), t.host); // on its top-left anchor
+    tool.onPointerMove(ev(20, 20, { ctrlKey: true }), t.host);
+    expect(squares(tool, t)).toBeGreaterThan(0);
+    tool.onPointerMove(ev(40, 40, { ctrlKey: false }), t.host); // Ctrl let go mid-drag
+    expect(squares(tool, t)).toBe(0);
+    tool.onPointerUp(ev(40, 40, { ctrlKey: false }), t.host);
+    expect(Object.values(t.session.selection.anchors ?? {}).flat()).toHaveLength(0);
+    expect(selectedIds(t)).toEqual([a.id]);
+  });
+});
+
 describe('Selection tool · snapping', () => {
   it('smart guides align a moving object with the edges of others', () => {
     const { t, tool } = setup({ options: { smartGuides: true } });

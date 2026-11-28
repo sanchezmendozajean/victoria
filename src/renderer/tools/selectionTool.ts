@@ -306,6 +306,7 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
       if (!session || !space) return;
       if (event.button === 0 && ctrlDown(event) && state.kind === 'idle') {
         host.setHover(null);
+        ctrlHeld = true;
         forwarded = direct;
         direct.onPointerDown(event, host);
         return;
@@ -376,6 +377,12 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
 
     onPointerMove(event, host) {
       if (forwarded) {
+        // The pointer events carry the Ctrl state too: Ctrl let go mid-drag hides the anchors even if the key event was missed.
+        const held = ctrlDown(event);
+        if (held !== ctrlHeld) {
+          ctrlHeld = held;
+          host.invalidateOverlay();
+        }
         forwarded.onPointerMove(event, host);
         return;
       }
@@ -547,6 +554,8 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
 
     drawOverlay(ctx, host, theme) {
       if (asDirect()) {
+        // Ctrl let go mid-drag: the drag goes on, but without painting every anchor (slow on big selections).
+        if (forwarded && !ctrlHeld) return;
         (forwarded ?? direct).drawOverlay?.(ctx, host, theme);
         return;
       }
