@@ -392,9 +392,11 @@ export const duplicateNodes = (spaceId: string, ids: readonly string[], clones: 
     if (!space) return;
     // Every array is rebuilt once with each copy right above its original (splicing one by one is quadratic).
     const copyOf = new Map<string, Node>();
+    // The move is in Space coordinates: inside a transformed group it is made in the group's own space.
+    const parents = matrix ? parentMatricesOf(space as Space, ids) : null;
     ids.forEach((id, i) => {
       const clone = clones[i];
-      if (clone) copyOf.set(id, matrix ? { ...clone, transform: multiply(matrix, clone.transform) } : clone);
+      if (clone) copyOf.set(id, matrix ? { ...clone, transform: multiply(inParentSpace(matrix, parents?.get(id)), clone.transform) } : clone);
     });
     const arrays = new Set(locateNodes(space, copyOf.keys()).map((l) => l.siblings));
     for (const siblings of arrays) {

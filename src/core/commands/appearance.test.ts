@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   addNode,
   addPaintItem,
+  cloneNodes,
+  duplicateNodes,
   frameOf,
   transformNodes,
   boundsInParent,
@@ -359,5 +361,19 @@ describe('moving objects inside a transformed group', () => {
     expect(after[4] - before[4]).toBeCloseTo(10);
     expect(after[5] - before[5]).toBeCloseTo(0);
     expect(find<Node>(g.id).transform).toEqual([-1, 0, 0, -1, 0, 0]);
+  });
+});
+
+describe('duplicating objects inside a transformed group', () => {
+  it('the copy lands where the Space-coordinates move says, also inside a rotated group', () => {
+    const { add, session, space } = setup();
+    const child = createRect(session.ids, 10, 10);
+    add({ ...createGroup(session.ids, [child]), transform: [-1, 0, 0, -1, 0, 0] as Node['transform'] });
+    const [clone] = cloneNodes([child], session.ids);
+    session.run(duplicateNodes(space().id, [child.id], [clone!], [1, 0, 0, 1, 10, 0]));
+    const original = frameOf(space(), child.id)!.world;
+    const copy = frameOf(space(), clone!.id)!.world;
+    expect(copy[4] - original[4]).toBeCloseTo(10);
+    expect(copy[5] - original[5]).toBeCloseTo(0);
   });
 });
