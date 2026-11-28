@@ -1,6 +1,9 @@
 import {
   addAnchors,
   addToSelection,
+  cloneNodes,
+  duplicateNodes,
+  locateNode,
   anchorsInRect,
   convertShapeToPath,
   emptySelection,
@@ -52,7 +55,7 @@ type State =
   | { kind: 'idle' }
   | { kind: 'press'; screen: Vec2; doc: Vec2; action: Action }
   | { kind: 'confirming'; released: boolean }
-  | { kind: 'drag'; doc: Vec2; action: Action; key: string; originals: Map<string, { frame: PathFrame; anchors: Anchor[] }>; ids: string[]; bounds: Rect | null; applied: Vec2; snapPoints: Vec2[] | null; /** Segments of the edited paths that stay put (the anchor can land on them). */ snapSegments?: Segment[]; /** Live shapes with every anchor picked: they move whole and stay live. */ wholes?: Map<string, { frame: PathFrame; anchors: Anchor[] }> }
+  | { kind: 'drag'; doc: Vec2; action: Action; key: string; originals: Map<string, { frame: PathFrame; anchors: Anchor[] }>; ids: string[]; bounds: Rect | null; applied: Vec2; snapPoints: Vec2[] | null; /** Segments of the edited paths that stay put (the anchor can land on them). */ snapSegments?: Segment[]; /** Live shapes with every anchor picked: they move whole and stay live. */ wholes?: Map<string, { frame: PathFrame; anchors: Anchor[] }>; /** Alt duplicates when every anchor of every object being dragged is picked: those objects, and the selection to go back to. */ copyOf?: { ids: string[]; selection: Selection }; /** The copies made by Alt (they take the move while the originals stay put). */ copies?: string[]; /** Something was moved already (so toggling Alt has to undo it). */ moved?: boolean }
   | { kind: 'marquee'; screen: Vec2; doc: Vec2; current: Vec2; shift: boolean };
 
 /** World delta → local delta (the linear part of the inverse matrix; anchors live in the path's local space). */
@@ -223,7 +226,11 @@ export function createDirectSelectionTool(id: 'tool-direct-select' | 'tool-group
         : action.type === 'anchors'
           ? { ...action, primary: { ...action.primary, frame: originals.get(action.primary.frame.path.id)?.frame ?? action.primary.frame } }
           : action;
-    state = { kind: 'drag', doc: press.doc, action: relocatedAction, key, originals, ids: [], bounds: null, applied: { x: 0, y: 0 }, snapPoints: collectSnapPoints(host, relocatedAction, originals, selection), snapSegments: collectSnapSegments(host, relocatedAction, originals, selection), wholes };
+    // Alt copies whole objects: only when every anchor of every path of the dragged objects is picked (a plain "grab the object by an anchor").
+    const owners = [...new Set(picked.map((f) => f.owner.id))];
+    const allPicked = action.type === 'anchors' && picked.length > 0 && picked.every((f) => selectedAnchorIndices(selection, f.path.id).length >= f.path.anchors.length) && owners.every((id) => pathsOfNodes(fresh, [id]).length === picked.filter((f) => f.owner.id === id).length);
+    const copyOf = allPicked ? { ids: owners, selection } : undefined;
+    state = { kind: 'drag', doc: press.doc, action: relocatedAction, key, originals, ids: [], bounds: null, applied: { x: 0, y: 0 }, snapPoints: collectSnapPoints(host, relocatedAction, originals, selection), snapSegments: collectSnapSegments(host, relocatedAction, originals, selection), wholes, copyOf };
     drag(event, host, state);
   }
 
@@ -362,9 +369,40 @@ export function createDirectSelectionTool(id: 'tool-direct-select' | 'tool-group
       if (primary) {
         // Snap the anchor under the pointer, so the whole selection follows the correction.
         const start = toWorld(primary.frame.world, primary.anchors[action.primary.index]?.p ?? { x: 0, y: 0 });
-        const moving = new Set([primary.frame.owner.id, ...[...(s.wholes?.values() ?? [])].map((w) => w.frame.owner.id)]);
+        const moving = new Set([primary.frame.owner.id, ...[...(s.wholes?.values() ?? [])].map((w) => w.frame.owner.id), ...(s.copies ?? [])]);
         const target = snapDragged(host, { x: start.x + d.x, y: start.y + d.y }, moving, s.snapPoints, s.snapSegments);
         d = { x: target.x - start.x, y: target.y - start.y };
+      }
+      // Alt (read on every move, so it can be pressed or released mid-drag): the objects stay and copies take the move.
+      if (s.copyOf) {
+        const copy = event.altKey;
+        if (copy !== !!s.copies && (s.copies || s.moved)) {
+          // The gesture so far is undone and the drag starts over from the pressed state.
+          session.rollback();
+          session.select(s.copyOf.selection);
+          s.copies = undefined;
+          s.moved = false;
+          s.applied = { x: 0, y: 0 };
+        }
+        if (copy) {
+          const current = host.space ?? space;
+          const step = { x: d.x - s.applied.x, y: d.y - s.applied.y };
+          if (!s.copies) {
+            const nodes = s.copyOf.ids.map((id) => locateNode(current, id)?.node).filter((n): n is NonNullable<typeof n> => !!n);
+            const clones = cloneNodes(nodes, session.ids);
+            session.run(duplicateNodes(current.id, s.copyOf.ids, clones, translation(d.x, d.y), s.key));
+            const after = host.space ?? current;
+            const picked: { [pathId: string]: number[] } = {};
+            for (const f of pathsOfNodes(after, clones.map((c) => c.id))) picked[f.path.id] = f.path.anchors.map((_, i) => i);
+            session.select(withAnchors({ ...emptySelection(current.id), ids: clones.map((c) => c.id) }, picked));
+            s.copies = clones.map((c) => c.id);
+          } else if (step.x !== 0 || step.y !== 0) {
+            session.run(transformNodes(current.id, s.copies, translation(step.x, step.y), s.key));
+          }
+          s.applied = d;
+          s.moved = true;
+          return;
+        }
       }
       const selection = currentSelection(host) ?? emptySelection(space.id);
       const commands: Command[] = [];
@@ -379,6 +417,7 @@ export function createDirectSelectionTool(id: 'tool-direct-select' | 'tool-group
       }
       // One command per move with the drag's key, so the whole drag stays one undo step.
       if (commands.length > 0) session.run({ ...combineCommands('path.edit', commands), mergeKey: `path.edit:${s.key}` });
+      s.moved = true;
       return;
     }
 

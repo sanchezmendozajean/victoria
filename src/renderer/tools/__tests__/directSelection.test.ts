@@ -99,6 +99,52 @@ describe('Direct Selection · moving anchors', () => {
     expect(anchorsOf(t, a.id)[1]!.p).toEqual({ x: 100, y: 0 });
   });
 
+  it('Alt while dragging an anchor of an object with every anchor picked leaves the object and moves a copy; releasing Alt undoes the copy', () => {
+    const { t, tool } = setup();
+    const a = square(t, 0, 0, 100);
+    click(tool, t, 50, 50);
+    // Every anchor picked, as Ctrl does in the Selection tool.
+    t.session.select(withAnchors(t.session.selection, { [a.id]: [0, 1, 2, 3] }));
+    const count = () => (t.space().layers[0]!.children as Node[]).length;
+    tool.onPointerDown(ev(0, 0), t.host);
+    tool.onPointerMove(ev(10, 10), t.host);
+    tool.onPointerMove(ev(30, 40), t.host);
+    expect(count()).toBe(1);
+    expect(anchorsOf(t, a.id)[0]!.p).toEqual({ x: 30, y: 40 });
+    tool.onPointerMove(ev(30, 40, { altKey: true }), t.host); // Alt pressed mid-drag
+    expect(count()).toBe(2);
+    expect(anchorsOf(t, a.id)[0]!.p).toEqual({ x: 0, y: 0 }); // the original is back
+    const copy = selectedIds(t)[0]!;
+    expect(copy).not.toBe(a.id);
+    // The copy moves through its transform (where its first anchor lands on the page is what counts).
+    const at = (id: string) => {
+      const f = pathFrameOf(t.space(), id)!;
+      const p = f.path.anchors[0]!.p;
+      return { x: f.world[0] * p.x + f.world[2] * p.y + f.world[4], y: f.world[1] * p.x + f.world[3] * p.y + f.world[5] };
+    };
+    expect(at(copy)).toEqual({ x: 30, y: 40 });
+    tool.onPointerMove(ev(50, 60, { altKey: true }), t.host);
+    expect(at(copy)).toEqual({ x: 50, y: 60 });
+    expect(anchorsOf(t, a.id)[0]!.p).toEqual({ x: 0, y: 0 });
+    tool.onPointerMove(ev(50, 60, { altKey: false }), t.host); // Alt released: no copy, the original moves
+    expect(count()).toBe(1);
+    expect(anchorsOf(t, a.id)[0]!.p).toEqual({ x: 50, y: 60 });
+    tool.onPointerUp(ev(50, 60), t.host);
+  });
+
+  it('Alt does not copy when only some anchors of the object are picked', () => {
+    const { t, tool } = setup();
+    const a = square(t, 0, 0, 100);
+    click(tool, t, 50, 50);
+    click(tool, t, 0, 0);
+    tool.onPointerDown(ev(0, 0), t.host);
+    tool.onPointerMove(ev(10, 10, { altKey: true }), t.host);
+    tool.onPointerMove(ev(30, 40, { altKey: true }), t.host);
+    expect((t.space().layers[0]!.children as Node[]).length).toBe(1);
+    expect(anchorsOf(t, a.id)[0]!.p).toEqual({ x: 30, y: 40 });
+    tool.onPointerUp(ev(30, 40), t.host);
+  });
+
   it('Shift constrains the move to 45°', () => {
     const { t, tool } = setup();
     const p = square(t, 0, 0, 100);
