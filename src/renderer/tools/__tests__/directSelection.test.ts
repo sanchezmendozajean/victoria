@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createCompound, createLine, createPath, pathFrameOf, pointOnSegment, segmentsOf, selectOnly, translation, withAnchors, type Anchor, type Node, type PathNode } from '../../../core';
+import { createCompound, createGroup, createLine, createPath, pathFrameOf, pointOnSegment, segmentsOf, selectOnly, translation, withAnchors, type Anchor, type Node, type PathNode } from '../../../core';
 import { createDirectSelectionTool } from '../directSelectionTool';
 import { createLassoTool } from '../lassoTool';
 import { click, createTestHost, drag, ev, selectedIds, type TestHost } from './fakeHost';
@@ -130,6 +130,88 @@ describe('Direct Selection · moving anchors', () => {
     expect(count()).toBe(1);
     expect(anchorsOf(t, a.id)[0]!.p).toEqual({ x: 50, y: 60 });
     tool.onPointerUp(ev(50, 60), t.host);
+  });
+
+  it('the copy follows the cursor also when the object lives in a rotated group', () => {
+    const { t, tool } = setup();
+    const child = createPath(t.ids, [corner(0, 0), corner(100, 0), corner(100, 100), corner(0, 100)], true);
+    const g = createGroup(t.ids, [child]);
+    g.transform = [-1, 0, 0, -1, 300, 300]; // turned 180°: the child's (0, 0) is at (300, 300) on the page
+    t.add(g);
+    t.session.select(withAnchors(selectOnly(t.space().id, [child.id]), { [child.id]: [0, 1, 2, 3] }));
+    const world = (id: string) => {
+      const f = pathFrameOf(t.space(), id)!;
+      const p = f.path.anchors[0]!.p;
+      return { x: f.world[0] * p.x + f.world[2] * p.y + f.world[4], y: f.world[1] * p.x + f.world[3] * p.y + f.world[5] };
+    };
+    tool.onPointerDown(ev(300, 300), t.host);
+    tool.onPointerMove(ev(310, 310), t.host);
+    tool.onPointerMove(ev(350, 360), t.host);
+    expect(world(child.id)).toEqual({ x: 350, y: 360 });
+    tool.onPointerMove(ev(350, 360, { altKey: true }), t.host);
+    const copy = selectedIds(t)[0]!;
+    expect(copy).not.toBe(child.id);
+    expect(world(child.id)).toEqual({ x: 300, y: 300 });
+    expect(world(copy)).toEqual({ x: 350, y: 360 });
+    tool.onPointerMove(ev(380, 400, { altKey: true }), t.host);
+    expect(world(copy)).toEqual({ x: 380, y: 400 });
+    expect(world(child.id)).toEqual({ x: 300, y: 300 });
+    tool.onPointerUp(ev(380, 400), t.host);
+  });
+
+  it('the copy follows the cursor in nested groups with scale, flip and an own rotation', () => {
+    const { t, tool } = setup();
+    const child = createPath(t.ids, [corner(0, 0), corner(100, 0), corner(100, 100), corner(0, 100)], true);
+    child.transform = [0, 1, -1, 0, 5, 7]; // turned 90° on its own
+    const inner = createGroup(t.ids, [child]);
+    inner.transform = [-0.5, 0, 0, 0.5, 40, 10]; // flipped and halved
+    const outer = createGroup(t.ids, [inner]);
+    outer.transform = [-0.8, 0.6, 0.6, 0.8, 300, 200]; // reflected and turned
+    t.add(outer);
+    t.session.select(withAnchors(selectOnly(t.space().id, [child.id]), { [child.id]: [0, 1, 2, 3] }));
+    const world = (id: string) => {
+      const f = pathFrameOf(t.space(), id)!;
+      const p = f.path.anchors[0]!.p;
+      return { x: f.world[0] * p.x + f.world[2] * p.y + f.world[4], y: f.world[1] * p.x + f.world[3] * p.y + f.world[5] };
+    };
+    const start = world(child.id);
+    tool.onPointerDown(ev(start.x, start.y), t.host);
+    tool.onPointerMove(ev(start.x + 10, start.y + 10), t.host);
+    tool.onPointerMove(ev(start.x + 50, start.y + 60), t.host);
+    tool.onPointerMove(ev(start.x + 50, start.y + 60, { altKey: true }), t.host);
+    const copy = selectedIds(t)[0]!;
+    tool.onPointerMove(ev(start.x + 80, start.y + 90, { altKey: true }), t.host);
+    const at = world(copy);
+    expect(at.x).toBeCloseTo(start.x + 80);
+    expect(at.y).toBeCloseTo(start.y + 90);
+    expect(world(child.id).x).toBeCloseTo(start.x);
+    expect(world(child.id).y).toBeCloseTo(start.y);
+    tool.onPointerUp(ev(start.x + 80, start.y + 90), t.host);
+  });
+
+  it('the copy of live shapes (every anchor picked) follows the cursor too', () => {
+    const { t, tool } = setup();
+    const r = t.rect(0, 0, 100, 100);
+    t.session.select(selectOnly(t.space().id, [r.id]));
+    const frame = pathFrameOf(t.space(), r.id)!;
+    t.session.select(withAnchors(selectOnly(t.space().id, [r.id]), { [frame.path.id]: frame.path.anchors.map((_, i) => i) }));
+    const world = (id: string) => {
+      const f = pathFrameOf(t.space(), id)!;
+      const p = f.path.anchors[0]!.p;
+      return { x: f.world[0] * p.x + f.world[2] * p.y + f.world[4], y: f.world[1] * p.x + f.world[3] * p.y + f.world[5] };
+    };
+    const start = world(r.id);
+    tool.onPointerDown(ev(start.x, start.y), t.host);
+    tool.onPointerMove(ev(start.x + 10, start.y + 10), t.host);
+    tool.onPointerMove(ev(start.x + 50, start.y + 60), t.host);
+    tool.onPointerMove(ev(start.x + 50, start.y + 60, { altKey: true }), t.host);
+    const copy = selectedIds(t)[0]!;
+    expect(copy).not.toBe(r.id);
+    tool.onPointerMove(ev(start.x + 80, start.y + 90, { altKey: true }), t.host);
+    expect(world(copy).x).toBeCloseTo(start.x + 80);
+    expect(world(copy).y).toBeCloseTo(start.y + 90);
+    expect(world(r.id).x).toBeCloseTo(start.x);
+    tool.onPointerUp(ev(start.x + 80, start.y + 90), t.host);
   });
 
   it('Alt does not copy when only some anchors of the object are picked', () => {
