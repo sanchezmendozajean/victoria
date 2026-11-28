@@ -1,6 +1,6 @@
 # Changelog
 
-## Sin publicar — Apariencia de grupos
+## 0.2.1 — Apariencia de grupos y selección directa
 - **Un grupo tiene relleno y trazo propios**, como en Illustrator: nace sin ellos; los que se añaden en Apariencia se pintan sobre la silueta unida de su contenido (también en SVG, PDF e impresión) y los hijos conservan su apariencia. La fila **Contenido** marca qué se pinta detrás del contenido y qué delante, y se arrastra como las demás. Antes, las filas Relleno y Trazo de un grupo eran decorativas: no se dibujaban.
 - Añadir un relleno o trazo con un grupo seleccionado lo añade al grupo (antes se aplicaba a cada hijo sin aparecer en la lista). Los paneles Relleno y Trazo siguen cambiando los hijos.
 - Se quita la zona «Todo el objeto» de la lista de Apariencia; los modificadores de objeto se listan al final y se arrastran al espacio libre para aplicarlos a todo.
