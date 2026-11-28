@@ -1,6 +1,7 @@
 import { strToU8, zipSync } from 'fflate';
 import { describe, expect, it } from 'vitest';
 import { readVict } from '../io/vict';
+import { migrateDocument } from '../io/migrations';
 import { cloneSpace } from '../model/clone';
 import { createGroup, createLayer, createRect } from '../model/factory';
 import { collectIds, countObjects, getActiveSpace, isLayer, locateLayer, locateNode, walkLayers } from '../model/queries';
@@ -205,7 +206,7 @@ describe('format 1 → 2 migration (layers became tree nodes)', () => {
 
   it('opens a version 1 file: layers gain their type and the version is stamped', () => {
     const read = readVict(zip(v1Document(), 1));
-    expect(read.document.meta.version).toBe(2);
+    expect(read.document.meta.version).toBe(3);
     expect(read.document.spaces[0]?.layers[0]?.type).toBe('layer');
     expect(read.document.spaces[0]?.layers[0]?.name).toBe('Layer 1');
   });
@@ -231,5 +232,34 @@ describe('format 1 → 2 migration (layers became tree nodes)', () => {
     const bad = JSON.parse(JSON.stringify(sampleDocument(sequentialIds('b'))));
     bad.spaces[0].layers[0].type = 'folder';
     expect(() => readVict(zip(bad, 2))).toThrow(/layers\[0\]\.type/);
+  });
+});
+
+describe('migration 2 → 3: group appearance', () => {
+  it('drops the fill and stroke groups carried without painting, but keeps a live pathfinder group as it is', () => {
+    const paint = { kind: 'fill', paint: { type: 'none' }, opacity: 1, modifiers: [] };
+    const doc = {
+      meta: { version: 2 },
+      spaces: [
+        {
+          layers: [
+            {
+              type: 'layer',
+              children: [
+                { type: 'group', appearance: { items: [paint] }, children: [{ type: 'group', appearance: { items: [paint] }, children: [] }] },
+                { type: 'group', appearance: { items: [paint, { kind: 'modifier', mod: { id: 'm', modifierId: 'pathfinder.unite' } }] }, children: [] },
+                { type: 'path', appearance: { items: [paint] } },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    const out = migrateDocument(doc, 2) as typeof doc;
+    const [plain, live, path] = out.spaces[0]!.layers[0]!.children as { appearance: { items: unknown[] }; children?: { appearance: { items: unknown[] } }[] }[];
+    expect(plain!.appearance.items).toHaveLength(0);
+    expect(plain!.children![0]!.appearance.items).toHaveLength(0);
+    expect(live!.appearance.items).toHaveLength(2);
+    expect(path!.appearance.items).toHaveLength(1);
   });
 });

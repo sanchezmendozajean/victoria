@@ -60,7 +60,7 @@ test.describe('modifiers (phase 9)', () => {
     await expect(page.getByTestId('color-picker')).toHaveCount(0);
     await expect(page.getByTestId('appearance-weight')).toHaveValue(/7/);
     // leave the whole object as the target of fx for the next tests
-    await page.getByTestId('appearance-zone').click();
+    await page.getByTestId('appearance-rest').click();
   });
 
   test('a modifier from the fx menu is a single undo step and shows in the Appearance list', async () => {
@@ -115,7 +115,6 @@ test.describe('modifiers (phase 9)', () => {
 
   test('a modifier acts on one stroke or fill, or on the whole object: drag it between zones', async () => {
     const { page } = ctx;
-    await expect(page.getByTestId('appearance-zone')).toContainText('Todo el objeto');
     // With the stroke selected, fx adds the modifier to that stroke only (nested under it).
     await page.locator('[data-testid="appearance-row"][data-kind="stroke"]').click();
     await addFromFx(page, /Distorsionar/, /Zigzag/);
@@ -123,8 +122,8 @@ test.describe('modifiers (phase 9)', () => {
     const row = modifierRows(page);
     await expect(row).toHaveCount(1);
     await expect(row).toHaveAttribute('data-zone', 'item');
-    // Dragged to "Todo el objeto" it now acts on the object as a whole...
-    await row.dragTo(page.getByTestId('appearance-zone'));
+    // Dragged to the free space of the list it now acts on the object as a whole...
+    await row.dragTo(page.getByTestId('appearance-rest'));
     await expect(modifierRows(page)).toHaveAttribute('data-zone', 'object');
     // ...and dropped on the fill it acts on the fill alone.
     await modifierRows(page).dragTo(page.locator('[data-testid="appearance-row"][data-kind="fill"]'));

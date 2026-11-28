@@ -1,11 +1,11 @@
 import { useState, type PointerEvent as ReactPointerEvent } from 'react';
 import {
   addPaintItem,
-  copyAppearance,
-  defaultAppearance,
+  clearOwnAppearance,
   duplicateAppearanceItem,
   duplicateModifier,
   getModifier,
+  isGroupShape,
   locateNode,
   moveAppearanceItem,
   moveModifier,
@@ -65,16 +65,17 @@ export function FxButton({ testId = 'appearance-fx', target }: { testId?: string
 }
 
 /** What is being dragged, and where a drop can land (a row, the "whole object" zone). */
-type DragSource = { kind: 'paint'; index: number } | { kind: 'modifier'; id: string };
-type DropSpot = { paint?: number; target: ModifierTarget; position?: number };
+type DragSource = { kind: 'paint'; index: number } | { kind: 'modifier'; id: string } | { kind: 'content' };
+type DropSpot = { paint?: number | 'content'; target: ModifierTarget; position?: number };
 
-/** What is selected in the list: a fill or stroke (by its position), a modifier (by id) or the "whole object" zone. */
-type Pick = { kind: 'paint'; index: number } | { kind: 'modifier'; id: string; target: ModifierTarget; position: number } | { kind: 'object' } | null;
+/** What is selected in the list: a fill or stroke (by its position), a modifier (by id) or the "Contenido" row of a group. */
+type Pick = { kind: 'paint'; index: number } | { kind: 'modifier'; id: string; target: ModifierTarget; position: number } | { kind: 'content' } | null;
 
 /**
  * Apariencia (specs/06): fills and strokes from top to bottom, the modifiers of each nested under it, then the
- * "Todo el objeto" zone with the modifiers that act on the object as a whole (fills and strokes together).
- * A modifier can be dragged from one zone to another to change what it acts on.
+ * the modifiers that act on the object as a whole (fills and strokes together) at the end. A group also has a
+ * "Contenido" row: what is listed below it is painted behind the group's content, what is above it over it.
+ * A modifier can be dragged onto a fill or stroke (to act on just that one) or onto the free space (to act on all).
  */
 export function AppearancePanel() {
   const ctx = usePanelContext();
@@ -117,13 +118,13 @@ export function AppearancePanel() {
       <button type="button" className="vc-pbutton vc-pbutton--icon" data-testid="appearance-apply" {...tip(t('appearance.apply'))} disabled={!selectionHasModifiers()} onClick={() => applyModifiersToSelection()}>
         <Icon id="mod-apply" size={16} />
       </button>
-      <button type="button" className="vc-pbutton vc-pbutton--icon" data-testid="appearance-clear" {...tip(t('appearance.clear'))} onClick={() => run(copyAppearance(spaceId, ctx.ids, defaultAppearance()))}>
+      <button type="button" className="vc-pbutton vc-pbutton--icon" data-testid="appearance-clear" {...tip(t('appearance.clear'))} onClick={() => run(clearOwnAppearance(spaceId, ctx.ids))}>
         <Icon id="clear-appearance" size={16} />
       </button>
-      <button type="button" className="vc-pbutton vc-pbutton--icon" data-testid="appearance-duplicate" {...tip(t('appearance.duplicate'))} disabled={!node || !pick || pick.kind === 'object'} onClick={() => duplicateSelected()}>
+      <button type="button" className="vc-pbutton vc-pbutton--icon" data-testid="appearance-duplicate" {...tip(t('appearance.duplicate'))} disabled={!node || !pick || pick.kind === 'content'} onClick={() => duplicateSelected()}>
         <Icon id="duplicate-item" size={16} />
       </button>
-      <button type="button" className="vc-pbutton vc-pbutton--icon" data-testid="appearance-delete" {...tip(t('appearance.delete'))} disabled={!node || !pick || pick.kind === 'object'} onClick={() => deleteSelected()}>
+      <button type="button" className="vc-pbutton vc-pbutton--icon" data-testid="appearance-delete" {...tip(t('appearance.delete'))} disabled={!node || !pick || pick.kind === 'content'} onClick={() => deleteSelected()}>
         <Icon id="delete-item" size={16} />
       </button>
     </div>
@@ -149,6 +150,8 @@ export function AppearancePanel() {
       setActiveItem({ nodeId: node.id, index });
     }
   };
+  const showContent = node.type === 'group' && !isGroupShape(node);
+  const contentAt = showContent ? Math.min(items.length, node.appearance.contentIndex ?? items.length) : 0;
   const paint = items.map((item, index) => ({ item, index })).filter((x): x is { item: Extract<AppearanceItem, { kind: 'fill' | 'stroke' }>; index: number } => x.item.kind !== 'modifier');
   const objectMods = items.flatMap((i) => (i.kind === 'modifier' ? [i.mod] : []));
 
@@ -187,10 +190,14 @@ export function AppearancePanel() {
       stop();
       if (!hit) return;
       const spot = hit[1];
-      if (source.kind === 'paint') {
+      if (source.kind === 'content') {
+        if (typeof spot.paint === 'number') run(moveAppearanceItem(spaceId, node!.id, 'content', spot.paint));
+      } else if (source.kind === 'paint') {
         if (spot.paint === undefined || spot.paint === source.index) return;
         run(moveAppearanceItem(spaceId, node!.id, source.index, spot.paint));
-        pickPaint(spot.paint);
+        // In a group the rows shift around the "Contenido" marker: the selection is left empty rather than on the wrong row.
+        if (typeof spot.paint === 'number' && !showContent) pickPaint(spot.paint);
+        else setPick(null);
       } else run(moveModifier(spaceId, node!.id, source.id, spot.target, spot.position));
     };
     const onKey = (ev: KeyboardEvent) => {
@@ -270,6 +277,13 @@ export function AppearancePanel() {
     );
   };
 
+  const paintGroup = ({ item, index }: { item: Extract<AppearanceItem, { kind: 'fill' | 'stroke' }>; index: number }) => (
+    <div key={`group${index}`}>
+      {paintRow(item, index)}
+      {(item.modifiers as ModifierInstance[]).map((mod, position, all) => modifierRow(mod, { zone: 'item', index }, position, all.length, true))}
+    </div>
+  );
+
   return (
     <div className="vc-panelbody vc-appearance" data-testid="appearance-panel">
       <div className="vc-propheader">
@@ -278,25 +292,24 @@ export function AppearancePanel() {
       </div>
       <div className="vc-appearance__list" role="list">
         {/* Top of the list = painted last, as in Illustrator; each fill or stroke carries its own modifiers. */}
-        {[...paint].reverse().map(({ item, index }) => (
-          <div key={`group${index}`}>
-            {paintRow(item, index)}
-            {(item.modifiers as ModifierInstance[]).map((mod, position, all) => modifierRow(mod, { zone: 'item', index }, position, all.length, true))}
+        {[...paint].reverse().filter((x) => x.index >= contentAt).map(paintGroup)}
+        {showContent && (
+          <div
+            className={cx('vc-appearance__row', pick?.kind === 'content' && 'is-selected', over === 'content' && 'is-drop-before')}
+            role="listitem"
+            data-testid="appearance-content"
+            data-drop-key="content"
+            data-drop={JSON.stringify({ paint: 'content', target: { zone: 'object' } })}
+            onPointerDown={(event) => beginDrag(event, { kind: 'content' })}
+            onClick={() => setPick({ kind: 'content' })}
+          >
+            <Icon id={nodeIcon(node)} size={14} className="vc-field__icon" />
+            <span className="vc-appearance__name">{t('appearance.content')}</span>
           </div>
-        ))}
-        <div
-          className={cx('vc-appearance__zone', pick?.kind === 'object' && 'is-selected', over === 'object' && 'is-drop-after')}
-          data-testid="appearance-zone"
-          {...tip(t('appearance.wholeObjectTip'))}
-          onClick={() => setPick({ kind: 'object' })}
-          data-drop-key="object"
-          data-drop={JSON.stringify({ target: { zone: 'object' } })}
-        >
-          <Icon id={nodeIcon(node)} size={14} className="vc-field__icon" />
-          <span className="vc-appearance__name">{t('appearance.wholeObject')}</span>
-        </div>
+        )}
+        {[...paint].reverse().filter((x) => x.index < contentAt).map(paintGroup)}
         {objectMods.map((mod, position) => modifierRow(mod, { zone: 'object' }, position, objectMods.length, false))}
-        <div className="vc-appearance__rest" data-drop-key="rest" data-drop={JSON.stringify({ target: { zone: 'object' } })} />
+        <div className="vc-appearance__rest" data-testid="appearance-rest" onClick={() => setPick(null)} data-drop-key="rest" data-drop={JSON.stringify({ target: { zone: 'object' } })} />
       </div>
       {toolbar}
     </div>

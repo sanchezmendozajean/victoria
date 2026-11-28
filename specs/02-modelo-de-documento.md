@@ -101,11 +101,14 @@ Ver `07-texto.md`. `kind: 'point' | 'area' | 'onPath'`, `story: TextRun[]`, `are
 ```ts
 interface Appearance {
   items: AppearanceItem[];   // orden = orden de pintado (de abajo hacia arriba)
+  contentIndex?: number;     // solo grupos: cuántos items se pintan detrás del contenido (fila «Contenido»); ausente = todos
 }
 type AppearanceItem =
   | { kind: 'fill';   paint: Paint; opacity: number; modifiers: ModifierInstance[] }
   | { kind: 'stroke'; paint: Paint; stroke: StrokeStyle; opacity: number; modifiers: ModifierInstance[] }
   | { kind: 'modifier'; mod: ModifierInstance };  // a nivel de objeto
+
+**Apariencia de un grupo (como Illustrator).** Un grupo nace **sin** relleno ni trazo. Los que se le añaden en el panel Apariencia se pintan sobre la **silueta unida** de todo lo que contiene (los hijos conservan su propia apariencia): los que quedan debajo de la fila **Contenido** se pintan detrás de los hijos y los que quedan encima, delante. La fila Contenido se arrastra como cualquier otra. Los paneles Relleno y Trazo, con un grupo seleccionado, siguen cambiando la apariencia de los objetos que contiene. Un grupo con Buscatrazos en vivo se pinta como una sola forma y no tiene fila Contenido. Las formas y trazados no tienen zona «Todo el objeto»: sus modificadores de objeto se listan al final, y se mueven entre filas arrastrándolos (a un relleno o trazo, o al espacio libre de la lista para que actúen sobre todo).
 
 type Paint = { type: 'none' }
            | { type: 'solid'; color: Color }

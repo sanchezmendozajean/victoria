@@ -127,6 +127,8 @@ function computeBounds(node: Node, withStroke: boolean): Rect | null {
     // A clip group shows only what the mask (first child) covers.
     const members = node.type === 'clipGroup' ? node.children.slice(0, 1) : node.children;
     for (const child of members) local = unionRect(local, computeBounds(child, withStroke));
+    // A stroke of the group itself reaches past what is inside.
+    if (local && withStroke && node.type === 'group') local = inflateRect(local, strokeInflation(node.appearance));
   } else if (node.type === 'text') {
     local = textGeometry(node).bounds;
     if (local && withStroke) local = inflateRect(local, strokeInflation(node.appearance));

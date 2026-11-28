@@ -24,7 +24,26 @@ const v1ToV2: Migration = (doc) => {
   };
 };
 
-export const MIGRATIONS: Record<number, Migration> = { 1: v1ToV2 };
+/**
+ * 2 → 3: a group can now paint its own fill and stroke over its contents. Until then the fill and stroke every group
+ * carried were never drawn, so they are dropped (a group with a live pathfinder is drawn as one shape and keeps them).
+ */
+const v2ToV3: Migration = (doc) => {
+  const visit = (value: unknown): unknown => {
+    if (Array.isArray(value)) return value.map(visit);
+    if (!isRecord(value)) return value;
+    const out: Record<string, unknown> = {};
+    for (const [key, child] of Object.entries(value)) out[key] = visit(child);
+    const appearance = out.appearance;
+    if (out.type === 'group' && isRecord(appearance) && Array.isArray(appearance.items) && !appearance.items.some((i) => isRecord(i) && i.kind === 'modifier')) {
+      out.appearance = { ...appearance, items: [] };
+    }
+    return out;
+  };
+  return { ...doc, spaces: visit(doc.spaces) };
+};
+
+export const MIGRATIONS: Record<number, Migration> = { 1: v1ToV2, 2: v2ToV3 };
 
 export class UnsupportedVersionError extends Error {
   constructor(

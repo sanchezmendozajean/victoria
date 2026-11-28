@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   addNode,
+  addPaintItem,
+  boundsInParent,
+  groupPaint,
+  moveAppearanceItem,
+  removeAppearanceItem,
   applyGradient,
   colorToHex,
   commonItemOpacity,
@@ -303,5 +308,39 @@ describe('gradients', () => {
     expect(r[0]!.color.values).toEqual([100, 200, 50]);
     expect(r[2]!.color.values).toEqual([0, 0, 0]);
     expect(gradientColorAt(g.stops, -1).opacity).toBe(1);
+  });
+});
+
+describe('group appearance (Contenido)', () => {
+  it('a new group has no fill or stroke; one added goes right behind the content and can be moved over it', () => {
+    const { add, session, space, find } = setup();
+    const g = add(createGroup(session.ids, [createRect(session.ids, 10, 10), createRect(session.ids, 10, 10)]));
+    expect(g.appearance.items).toEqual([]);
+    session.run(addPaintItem(space().id, [g.id], 'stroke', { type: 'solid', color: rgb(0, 0, 0) }));
+    session.run(addPaintItem(space().id, [g.id], 'fill', { type: 'solid', color: rgb(255, 0, 0) }));
+    // Items are bottom to top: both are behind the content.
+    expect(find<Node>(g.id).appearance.contentIndex).toBe(2);
+    expect(groupPaint(find<Node>(g.id))?.below).not.toBeNull();
+    expect(groupPaint(find<Node>(g.id))?.above).toBeNull();
+    // Dragging the content marker below the first item puts the rest over the content.
+    session.run(moveAppearanceItem(space().id, g.id, 'content', 0));
+    expect(find<Node>(g.id).appearance.contentIndex).toBe(0);
+    expect(groupPaint(find<Node>(g.id))?.above).not.toBeNull();
+    // Children are left alone: adding to the group does not touch them.
+    expect(paintTargets(space(), [g.id]).every((n) => n.appearance.items.length === 2)).toBe(true);
+    session.run(removeAppearanceItem(space().id, g.id, 0));
+    expect(find<Node>(g.id).appearance.items).toHaveLength(1);
+  });
+
+  it('the silhouette of the group covers every child', () => {
+    const { add, session, space, find } = setup();
+    const a = createRect(session.ids, 10, 10);
+    const b = { ...createRect(session.ids, 10, 10), transform: [1, 0, 0, 1, 5, 5] as Node['transform'] };
+    const g = add(createGroup(session.ids, [a, b]));
+    session.run(addPaintItem(space().id, [g.id], 'stroke', { type: 'solid', color: rgb(0, 0, 0) }));
+    const own = groupPaint(find<Node>(g.id));
+    expect(own?.below?.type).toBe('compound');
+    // Children bring their own 1 pt stroke (5 pt of miter reach each side); the group stroke adds the same again.
+    expect(boundsInParent(find<Node>(g.id))).toEqual({ minX: -10, minY: -10, maxX: 25, maxY: 25 });
   });
 });

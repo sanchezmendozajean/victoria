@@ -1,5 +1,5 @@
 import type { FillRule } from '../geometry/booleans';
-import { evaluateNode, type Evaluated } from '../modifiers/evaluate';
+import { evaluateNode, groupPaint, type Evaluated } from '../modifiers/evaluate';
 import type { AppearanceEffect } from '../modifiers/types';
 import { isGroupShape, nodeGeometry, renderGeometry, boundsInParent, type NodeGeometry } from '../geometry/geometry';
 import { segmentsOf, type Segment, type SubPath } from '../geometry/path';
@@ -435,7 +435,12 @@ function nodeOps(node: Node, cull: Rect, ctx: Context): SceneOp | null {
   let clip: { path: ScenePath; matrix: Matrix } | null = null;
   switch (node.type) {
     case 'group':
-      children = isGroupShape(node) ? geometryOps(node, ctx) : childOps(node.children, localCull, ctx);
+      if (isGroupShape(node)) children = geometryOps(node, ctx);
+      else {
+        // The group's own fill and stroke: behind the content or over it, on the silhouette of everything inside.
+        const own = groupPaint(node);
+        children = [...(own?.below ? geometryOps(own.below, ctx) : []), ...childOps(node.children, localCull, ctx), ...(own?.above ? geometryOps(own.above, ctx) : [])];
+      }
       break;
     case 'clipGroup': {
       const [mask, ...rest] = node.children;

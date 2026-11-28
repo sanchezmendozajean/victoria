@@ -8,6 +8,7 @@ import {
   nodeGeometry,
   renderGeometry,
   evaluateNode,
+  groupPaint,
   type Evaluated,
   isGroupShape,
   segmentsOf,
@@ -526,7 +527,13 @@ function drawNode(env: Env, node: Node, cull: Rect, layer: Layer, alpha: number,
     case 'group':
       if (node.trace?.view && node.trace.view !== 'result') drawTraceView(env, node, node.trace, a, localCull, layer, inIsolation);
       else if (isGroupShape(node)) paintGeometry(env, node, layer, a);
-      else drawChildren(env, node.children, localCull, layer, a, inIsolation);
+      else {
+        // The group's own fill and stroke: behind the content or over it, on the silhouette of everything inside.
+        const own = env.outline || layer.outline ? null : groupPaint(node);
+        if (own?.below) paintGeometry(env, own.below, layer, a);
+        drawChildren(env, node.children, localCull, layer, a, inIsolation);
+        if (own?.above) paintGeometry(env, own.above, layer, a);
+      }
       break;
     case 'clipGroup': {
       const [mask, ...rest] = node.children;

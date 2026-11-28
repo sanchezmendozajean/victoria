@@ -25,7 +25,7 @@ export * from './geometry/booleans';
 export * from './geometry/distort';
 export * from './modifiers/types';
 export { getModifier, listModifiers, defaultParams, isStructural } from './modifiers/registry';
-export { evaluateNode, evaluatedGeometry, objectModifiers, itemModifiers, type Evaluated, type ItemEvaluated } from './modifiers/evaluate';
+export { groupPaint, type GroupPaint, evaluateNode, evaluatedGeometry, objectModifiers, itemModifiers, type Evaluated, type ItemEvaluated } from './modifiers/evaluate';
 export { offsetGeometry } from './modifiers/offset';
 export * from './snap/snap';
 export * from './model/transforms';

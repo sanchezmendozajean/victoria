@@ -67,6 +67,11 @@ export type AppearanceItem =
 export interface Appearance {
   /** Paint order, bottom to top. */
   items: AppearanceItem[];
+  /**
+   * Groups only ("Contenido" row of the panel): how many items are painted below the group's content; the rest
+   * are painted over it. Absent = all of them below.
+   */
+  contentIndex?: number;
 }
 
 export type BlendMode = 'normal' | 'multiply' | 'screen' | 'overlay' | 'darken' | 'lighten';

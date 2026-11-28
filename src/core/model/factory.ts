@@ -22,7 +22,7 @@ import type {
   Anchor,
 } from './types';
 
-export const CURRENT_FORMAT_VERSION = 2;
+export const CURRENT_FORMAT_VERSION = 3;
 
 export const WHITE: Color = { model: 'rgb', values: [255, 255, 255] };
 export const BLACK: Color = { model: 'rgb', values: [0, 0, 0] };
@@ -71,7 +71,8 @@ export function createCompound(ids: IdGenerator, children: PathNode[], fillRule:
 }
 
 export function createGroup(ids: IdGenerator, children: GroupNode['children']): GroupNode {
-  return { ...baseNode(ids), type: 'group', children };
+  // A group starts without fill or stroke of its own (they are added on demand, as in Illustrator).
+  return { ...baseNode(ids), type: 'group', children, appearance: { items: [] } };
 }
 
 export function createClipGroup(ids: IdGenerator, children: ClipGroupNode['children'] = []): ClipGroupNode {

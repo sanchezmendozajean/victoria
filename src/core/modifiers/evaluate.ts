@@ -162,6 +162,65 @@ function compute(node: Node): Evaluated | null {
   };
 }
 
+/** Contours of the visible leaves under a group (a clip group counts only its mask), in the group's coordinates. */
+function visibleLeafShapes(node: Node, matrix: Matrix, out: BooleanShape[]): void {
+  if (node.type === 'group' || node.type === 'clipGroup') {
+    const members = node.type === 'clipGroup' ? node.children.slice(0, 1) : node.children;
+    for (const child of members) if (child.visible) visibleLeafShapes(child, multiply(matrix, child.transform), out);
+    return;
+  }
+  leafShapes(node, matrix, out);
+}
+
+export interface GroupPaint {
+  /** Fills and strokes painted behind the group's content, as an object to paint. */
+  below: Node | null;
+  /** Fills and strokes painted over the group's content. */
+  above: Node | null;
+}
+
+const groupPaintCache = new WeakMap<Node, GroupPaint | null>();
+
+/**
+ * The fill and stroke of a group (Illustrator style): painted on the united silhouette of everything inside,
+ * the ones listed below "Contenido" behind the content and the rest over it. Each side is a synthetic object
+ * (identity transform) in the group's own coordinates; null when the group has nothing to paint.
+ */
+export function groupPaint(node: Node): GroupPaint | null {
+  if (node.type !== 'group') return null;
+  if (groupPaintCache.has(node)) return groupPaintCache.get(node) ?? null;
+  const result = computeGroupPaint(node);
+  groupPaintCache.set(node, result);
+  return result;
+}
+
+function computeGroupPaint(node: Node & { type: 'group' }): GroupPaint | null {
+  const items = node.appearance.items;
+  if (!items.some((i) => i.kind !== 'modifier')) return null;
+  if (evaluateNode(node)?.groupAsShape === true) return null;
+  const shapes: BooleanShape[] = [];
+  visibleLeafShapes(node, [1, 0, 0, 1, 0, 0], shapes);
+  if (shapes.length === 0) return null;
+  let subpaths: NodeGeometry['subpaths'];
+  const fillRule: NodeGeometry['fillRule'] = 'evenodd';
+  try {
+    subpaths = shapeOperation('unite', shapes).flatMap((p) => p.subpaths);
+  } catch {
+    return null;
+  }
+  if (subpaths.length === 0) return null;
+  const split = Math.max(0, Math.min(items.length, node.appearance.contentIndex ?? items.length));
+  const side = (kind: 'below' | 'above', part: typeof items): Node | null => {
+    if (!part.some((i) => i.kind !== 'modifier')) return null;
+    const base = { ...node, id: `${node.id}:${kind}`, transform: [1, 0, 0, 1, 0, 0] as Matrix, opacity: 1, blendMode: 'normal' as const, trace: undefined, appearance: { items: part } };
+    const children = subpaths.map((s, i) => ({ ...base, id: `${base.id}:${i}`, type: 'path' as const, closed: true, anchors: s.anchors }));
+    return { ...base, type: 'compound', children, fillRule } as unknown as Node;
+  };
+  const below = side('below', items.slice(0, split));
+  const above = side('above', items.slice(split));
+  return below || above ? { below, above } : null;
+}
+
 /** Geometry to paint and hit-test: the evaluated one when the object has modifiers, else the base contours. */
 export const evaluatedGeometry = (node: Node): NodeGeometry | null => evaluateNode(node)?.shape ?? nodeGeometry(node);
 
