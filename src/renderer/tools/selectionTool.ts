@@ -19,6 +19,7 @@ import {
   multiply,
   pathsOfNodes,
   withAnchors,
+  hasAnchorSelection,
   addToSelection,
   isSelected,
   hitUnpainted,
@@ -82,6 +83,12 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
     const anchors: { [pathId: string]: number[] } = {};
     for (const frame of pathsOfNodes(space, selection.ids)) anchors[frame.path.id] = frame.path.anchors.map((_, i) => i);
     session.select(withAnchors(selection, anchors));
+  };
+  /** Leaving the Direct Selection mode: the anchors stop being selected, so they are no longer painted (they cost time on big selections). */
+  const clearAnchors = (host: ToolHost) => {
+    const { session } = host;
+    const selection = currentSelection(host);
+    if (session && selection && hasAnchorSelection(selection)) session.select(withAnchors(selection, {}));
   };
   const widgets = createWidgetDrag(false);
   const textWidgets = createTextWidgets();
@@ -417,6 +424,8 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
         const tool = forwarded;
         forwarded = null;
         tool.onPointerUp(event, host);
+        // Ctrl was let go during the drag: the temporary Direct Selection ends with it.
+        if (!ctrlDown(event) && !ctrlHeld) clearAnchors(host);
         return;
       }
       if (widgets.release(event, host) || textWidgets.release(event, host)) return;
@@ -511,6 +520,8 @@ export function createSelectionTool(id: ToolId = 'tool-select'): Tool {
     onKeyUp(key, host) {
       if (key === 'Control' || key === 'Meta') {
         ctrlHeld = false;
+        // Mid-drag the gesture still owns the anchors; its pointer-up clears them.
+        if (forwarded === null) clearAnchors(host);
         host.setHover(null);
         host.invalidateOverlay();
       }

@@ -514,6 +514,17 @@ describe('Selection tool · keyboard', () => {
     expect(Object.values(t.session.selection.anchors ?? {}).flat().length).toBeGreaterThan(0);
     expect(selectedIds(t)).toEqual([a.id]);
   });
+
+  it('letting go of Ctrl drops the anchors again (they are no longer painted) and keeps the objects', () => {
+    const { t, tool } = setup();
+    const a = t.rect(0, 0);
+    click(tool, t, 50, 50);
+    tool.onKeyDown?.(key('Control', { ctrlKey: true }), t.host);
+    expect(Object.values(t.session.selection.anchors ?? {}).flat().length).toBeGreaterThan(0);
+    tool.onKeyUp?.('Control', t.host);
+    expect(Object.values(t.session.selection.anchors ?? {}).flat()).toHaveLength(0);
+    expect(selectedIds(t)).toEqual([a.id]);
+  });
 });
 
 describe('Selection tool · snapping', () => {
