@@ -85,6 +85,37 @@ export function framesOf(space: Space, ids: Iterable<string> | null): Map<string
   return out;
 }
 
+/**
+ * For each of `ids` that sits inside a transformed group, the matrix of its parent (Space ← parent). Nodes whose
+ * parents are all untransformed are left out, so callers can skip the conversion for them. One walk of the Space.
+ */
+export function parentMatricesOf(space: Space, ids: Iterable<string>): Map<string, Matrix> {
+  const wanted = new Set(ids);
+  const out = new Map<string, Matrix>();
+  const isIdentity = (m: Matrix) => m[0] === 1 && m[1] === 0 && m[2] === 0 && m[3] === 1 && m[4] === 0 && m[5] === 0;
+  const walk = (children: readonly LayerChild[], parent: Matrix | null): void => {
+    for (const child of children) {
+      if (isLayer(child)) {
+        walk(child.children, parent);
+        continue;
+      }
+      if (parent && wanted.has(child.id)) out.set(child.id, parent);
+      if (child.type === 'group' || child.type === 'clipGroup') {
+        const own = isIdentity(child.transform) ? parent : parent ? multiply(parent, child.transform) : child.transform;
+        walk(child.children, own);
+      }
+    }
+  };
+  if (wanted.size > 0) for (const layer of space.layers) walk(layer.children, null);
+  return out;
+}
+
+/** `matrix` (in Space coordinates) expressed in the space of a parent whose Space ← parent matrix is `parent`. */
+export function inParentSpace(matrix: Matrix, parent: Matrix | undefined): Matrix {
+  const inverse = parent ? invert(parent) : null;
+  return parent && inverse ? multiply(inverse, multiply(matrix, parent)) : matrix;
+}
+
 const virtualPaths = new WeakMap<Node, PathNode | null>();
 
 /** The contour of a live shape as a path (same id, so selected anchors keep pointing at it after conversion). */

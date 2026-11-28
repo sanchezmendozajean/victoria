@@ -1,7 +1,7 @@
 import type { Draft } from 'immer';
 import { applyToPoint, invert, multiply } from '../model/matrix';
 import { locateLayer, locateNode, locateNodes, walkNodes } from '../model/queries';
-import { frameOf, pathFrameOf } from '../geometry/world';
+import { frameOf, inParentSpace, parentMatricesOf, pathFrameOf } from '../geometry/world';
 import { shapeSubPaths } from '../geometry/shapes';
 import { deepClone } from '../model/deepClone';
 import type { Anchor, Appearance, BaseNode, ClipGroupNode, CompoundNode, TextNode, Document, GroupNode, LayerChild, Matrix, Node, PathNode, ShapeNode, Space } from '../model/types';
@@ -66,8 +66,11 @@ export const transformNodes = (spaceId: string, ids: readonly string[], matrix: 
   apply: (d) => {
     const space = findSpace(d, spaceId);
     if (!space) return;
-    for (const found of locateNodes(space, ids, true)) {
-      found.node.transform = multiply(matrix, found.node.transform);
+    const located = locateNodes(space, ids, true);
+    // Inside a rotated, scaled or flipped group the move is made in the group's own space.
+    const parents = parentMatricesOf(space as Space, located.map((l) => l.node.id));
+    for (const found of located) {
+      found.node.transform = multiply(inParentSpace(matrix, parents.get(found.node.id)), found.node.transform);
       if (found.node.type === 'text' && (found.node.kind === 'point' || found.node.kind === 'area')) bakeTextScale(found.node as Draft<TextNode>);
     }
   },
@@ -541,9 +544,11 @@ export const translateNodes = (spaceId: string, deltas: ReadonlyMap<string, { x:
   apply: (d) => {
     const space = findSpace(d, spaceId);
     if (!space) return;
-    for (const found of locateNodes(space, deltas.keys())) {
+    const located = locateNodes(space, deltas.keys());
+    const parents = parentMatricesOf(space as Space, located.map((l) => l.node.id));
+    for (const found of located) {
       const delta = deltas.get(found.node.id);
-      if (delta) found.node.transform = multiply([1, 0, 0, 1, delta.x, delta.y], found.node.transform);
+      if (delta) found.node.transform = multiply(inParentSpace([1, 0, 0, 1, delta.x, delta.y], parents.get(found.node.id)), found.node.transform);
     }
   },
 });

@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   addNode,
   addPaintItem,
+  frameOf,
+  transformNodes,
   boundsInParent,
   groupPaint,
   moveAppearanceItem,
@@ -342,5 +344,20 @@ describe('group appearance (Contenido)', () => {
     expect(own?.below?.type).toBe('compound');
     // Children bring their own 1 pt stroke (5 pt of miter reach each side); the group stroke adds the same again.
     expect(boundsInParent(find<Node>(g.id))).toEqual({ minX: -10, minY: -10, maxX: 25, maxY: 25 });
+  });
+});
+
+describe('moving objects inside a transformed group', () => {
+  it('a move in Space coordinates reaches the object in the space of its rotated group', () => {
+    const { add, session, space, find } = setup();
+    const child = createRect(session.ids, 10, 10);
+    const g = add({ ...createGroup(session.ids, [child]), transform: [-1, 0, 0, -1, 0, 0] as Node['transform'] });
+    const before = frameOf(space(), child.id)!.world;
+    session.run(transformNodes(space().id, [child.id], [1, 0, 0, 1, 10, 0]));
+    const after = frameOf(space(), child.id)!.world;
+    // On screen the object moved +10 in x, although its own space is turned around.
+    expect(after[4] - before[4]).toBeCloseTo(10);
+    expect(after[5] - before[5]).toBeCloseTo(0);
+    expect(find<Node>(g.id).transform).toEqual([-1, 0, 0, -1, 0, 0]);
   });
 });

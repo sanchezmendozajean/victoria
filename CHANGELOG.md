@@ -5,6 +5,7 @@
 - Añadir un relleno o trazo con un grupo seleccionado lo añade al grupo (antes se aplicaba a cada hijo sin aparecer en la lista). Los paneles Relleno y Trazo siguen cambiando los hijos.
 - Se quita la zona «Todo el objeto» de la lista de Apariencia; los modificadores de objeto se listan al final y se arrastran al espacio libre para aplicarlos a todo.
 - Formato de archivo 3: al abrir un archivo anterior se descartan el relleno y el trazo que cada grupo llevaba sin pintarse (los grupos con Buscatrazos en vivo se respetan).
+- **Corrección**: mover un objeto dentro de un grupo girado, reflejado o escalado (por ejemplo al entrar en un grupo girado 180°) lo desplazaba al revés o con otra escala. Mover, alinear, distribuir y las demás transformaciones usan ahora el espacio del grupo.
 - **Limitaciones conocidas**: los grupos de recorte (máscara) no tienen aún relleno y trazo propios; el modo Contorno no dibuja la silueta del grupo; no se ha comprobado a mano en la aplicación ni corrido `pnpm test` completo (Vitest no arrancaba en este entorno: se validaron las pruebas con un ejecutor propio).
 
 ## 0.2.0 — Buscatrazos compuestos, objetos sin pintura y memoria de exportación
